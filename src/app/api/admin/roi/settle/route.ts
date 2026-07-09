@@ -57,8 +57,10 @@ export async function POST() {
     await supabase
       .from("roi_investments")
       .update({
-        accrued_ngn: accrued,
-        status: "closed",
+        accrued_ngn: 0,
+        status: "active",
+        cycle_started_at: currentTickerWindowLagos(now).start.toISOString(),
+        cycle_ends_at: currentTickerWindowLagos(now).end.toISOString(),
         last_ticker_at: now.toISOString()
       })
       .eq("id", inv.id);

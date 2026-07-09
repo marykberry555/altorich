@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { OtpModal } from "@/components/auth/OtpModal";
+import { PinField } from "@/components/ui/PinField";
 import { MathChallenge, useMathChallenge } from "@/components/ui/MathChallenge";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
@@ -94,16 +95,7 @@ export function RegisterForm() {
           />
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <Input label="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="080..." />
-          <Input
-            label="6-digit pin"
-            type="password"
-            inputMode="numeric"
-            pattern="\d{6}"
-            maxLength={6}
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            required
-          />
+          <PinField value={pin} onChange={setPin} autoComplete="new-password" />
           <Input label="Referral code (optional)" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} />
           <MathChallenge challenge={math.challenge} answer={math.answer} onAnswerChange={math.setAnswer} />
           {error ? <p className="text-xs text-red-600">{error}</p> : null}

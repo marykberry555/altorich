@@ -17,7 +17,16 @@ function splitSeconds(total: number) {
   return { days, hours, minutes, seconds };
 }
 
-function CountdownBlock({ value, label }: { value: string; label: string }) {
+function CountdownBlock({ value, label, compact }: { value: string; label: string; compact?: boolean }) {
+  if (compact) {
+    return (
+      <div className="flex flex-col items-center rounded-lg border border-[var(--emerald)]/30 bg-[var(--emerald-soft)]/40 px-1.5 py-1 min-w-[2.5rem]">
+        <span className="text-sm font-bold tabular-nums text-[var(--emerald)]">{value}</span>
+        <span className="text-[8px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-w-[4.25rem] flex-1 flex-col items-center rounded-xl border-2 border-[var(--emerald)]/45 bg-[var(--surface-raised)] px-2 py-2.5 shadow-sm sm:min-w-[5rem] sm:px-3">
       <span className="flex h-10 w-full min-w-[2.75rem] items-center justify-center rounded-lg bg-[var(--emerald)] text-xl font-bold tabular-nums text-white sm:h-11 sm:text-2xl">
@@ -30,10 +39,12 @@ function CountdownBlock({ value, label }: { value: string; label: string }) {
 
 export function WeeklyCountdown({
   className,
-  label = "Payout completes in"
+  label = "Payout in",
+  compact = false
 }: {
   className?: string;
   label?: string;
+  compact?: boolean;
 }) {
   const [now, setNow] = useState(() => new Date());
 
@@ -44,6 +55,23 @@ export function WeeklyCountdown({
 
   const remaining = useMemo(() => weeklyCountdownTarget(now).secondsRemaining, [now]);
   const { days, hours, minutes, seconds } = splitSeconds(remaining);
+
+  if (compact) {
+    return (
+      <div className={cn("w-full", className)} role="timer" aria-live="polite">
+        <div className="flex items-center gap-1.5">
+          <Clock size={14} className="shrink-0 text-[var(--emerald)]" aria-hidden />
+          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--emerald)]">{label}</p>
+        </div>
+        <div className="mt-2 flex gap-1">
+          <CountdownBlock value={String(days)} label="D" compact />
+          <CountdownBlock value={pad2(hours)} label="H" compact />
+          <CountdownBlock value={pad2(minutes)} label="M" compact />
+          <CountdownBlock value={pad2(seconds)} label="S" compact />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -69,7 +97,7 @@ export function WeeklyCountdown({
       </div>
 
       <p className="mt-3 text-center text-xs text-[var(--text-muted)] sm:text-left">
-        Next payout window: <span className="font-semibold text-[var(--heading)]">Monday 09:00 WAT</span>
+        Next payout: <span className="font-semibold text-[var(--heading)]">Monday 09:00 WAT</span>
       </p>
     </div>
   );

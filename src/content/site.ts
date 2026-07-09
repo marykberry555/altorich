@@ -3,7 +3,7 @@ import { PACKAGE_IMAGES } from "@/lib/images";
 
 export const hero = {
   eyebrow: "Premium wealth · built for clarity",
-  title: "Grow wealth with transparent records and disciplined cycles.",
+  title: "Invest with us today and earn 12% to 40% every week!",
   subtitle:
     "A fintech platform for individuals and businesses — verified contributions, clear rules, and an auditable wallet ledger.",
   ctaPrimary: "Get Started",
@@ -168,7 +168,7 @@ export const leadership = [
 ];
 
 export const branches = [
-  { city: "Lagos", address: "Victoria Island · By appointment", phone: "support@altorich.com" },
-  { city: "Abuja", address: "Central Business District · By appointment", phone: "support@altorich.com" },
+  { city: "Lagos", address: "Victoria Island · By appointment", phone: COMPANY.supportEmail },
+  { city: "Abuja", address: "Central Business District · By appointment", phone: COMPANY.supportEmail },
   { city: "London", address: COMPANY.addressFull, phone: COMPANY.supportEmail }
 ];

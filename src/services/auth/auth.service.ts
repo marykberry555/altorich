@@ -5,7 +5,14 @@ import { Errors, AppError } from "@/lib/errors";
 import { hashPin, isValidPin, verifyPin } from "@/lib/auth/pin";
 import { generateOtpCode, otpExpiresAt } from "@/lib/auth/otp";
 import { getDeviceFingerprint } from "@/lib/auth/device";
-import { magicLinkEmailHtml, otpEmailHtml, sendAuthEmail, usernameRecoveryEmailHtml } from "@/services/auth/email.service";
+import {
+  deviceVerificationEmailHtml,
+  pinRecoveryEmailHtml,
+  registrationVerificationEmailHtml,
+  sendAuthEmail,
+  usernameRecoveryEmailHtml,
+  welcomeEmailHtml
+} from "@/services/auth/email.service";
 import { getPublicEnv } from "@/lib/env";
 
 type Client = SupabaseClient<Database>;
@@ -64,55 +71,88 @@ export class AuthService {
     }
     if (!isValidPin(input.pin)) throw new AppError("Pin must be exactly 6 digits.", 400, "INVALID_PIN");
 
+    const email = input.email.trim().toLowerCase();
+    const phone = input.phone.replace(/\s+/g, "").trim();
+    if (phone.length < 10) throw new AppError("Enter a valid phone number.", 400, "INVALID_PHONE");
+
     const { data: existingUsername } = await this.supabase.from("profiles").select("id").eq("username", username).maybeSingle();
     if (existingUsername) throw new AppError("Username is already taken.", 409, "USERNAME_TAKEN");
+
+    const existingEmail = await this.findUserByEmail(email);
+    if (existingEmail) throw new AppError("This email is already registered.", 409, "EMAIL_TAKEN");
+
+    const { data: existingPhone } = await this.supabase.from("profiles").select("id").eq("phone", phone).maybeSingle();
+    if (existingPhone) throw new AppError("This phone number is already registered.", 409, "PHONE_TAKEN");
 
     const password = this.internalPassword();
     const pinHash = hashPin(input.pin);
 
     const { data: created, error } = await this.supabase.auth.admin.createUser({
-      email: input.email.toLowerCase(),
+      email,
       password,
       email_confirm: false,
       user_metadata: {
         full_name: input.fullName,
-        phone: input.phone,
+        phone,
         username,
         pin_hash: pinHash,
         referral_code: input.referralCode ?? null,
         must_change_pin: false
       }
     });
-    if (error) throw error;
+    if (error) {
+      if (/already been registered|already exists|duplicate/i.test(error.message)) {
+        throw new AppError("This email is already registered.", 409, "EMAIL_TAKEN");
+      }
+      throw error;
+    }
     if (!created.user) throw Errors.internal();
 
-    await this.supabase.from("profiles").update({ username, pin_hash: pinHash }).eq("id", created.user.id);
+    await this.supabase.from("profiles").update({ username, pin_hash: pinHash, phone, full_name: input.fullName.trim() }).eq("id", created.user.id);
 
-    const otp = await this.createOtp(input.email, "register", created.user.id);
-    await sendAuthEmail({
-      to: input.email,
-      subject: "Verify your AltoRich account",
-      html: otpEmailHtml(otp, "Complete your registration")
-    });
+    const otp = await this.createOtp(email, "register", created.user.id);
 
     const env = getPublicEnv();
     const magicToken = randomBytes(24).toString("hex");
     await this.supabase.from("auth_otps").insert({
-      email: input.email.toLowerCase(),
+      email,
       code: magicToken,
       purpose: "register",
       user_id: created.user.id,
-      expires_at: otpExpiresAt(60)
+      expires_at: otpExpiresAt(10)
     });
 
-    const magicLink = `${env.NEXT_PUBLIC_SITE_URL}/auth/verify?email=${encodeURIComponent(input.email)}&token=${magicToken}`;
+    const verifyLink = `${env.NEXT_PUBLIC_SITE_URL}/auth/verify?email=${encodeURIComponent(email)}&token=${magicToken}`;
     await sendAuthEmail({
-      to: input.email,
-      subject: "Your AltoRich verification link",
-      html: magicLinkEmailHtml(magicLink)
+      to: email,
+      subject: "Verify your AltoRich account",
+      html: registrationVerificationEmailHtml(otp, verifyLink)
     });
 
-    return { userId: created.user.id, email: input.email };
+    return { userId: created.user.id, email };
+  }
+
+  private async sendWelcomeEmail(userId: string) {
+    const { data: profile } = await this.supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", userId)
+      .maybeSingle();
+    const { data: authUser } = await this.supabase.auth.admin.getUserById(userId);
+    const user = authUser.user;
+    if (!user?.email) return;
+
+    const metaName = user.user_metadata?.full_name;
+    const firstName =
+      profile?.full_name?.trim().split(/\s+/)[0] ??
+      (typeof metaName === "string" ? metaName.trim().split(/\s+/)[0] : undefined) ??
+      "Member";
+
+    await sendAuthEmail({
+      to: user.email,
+      subject: "Welcome to AltoRich",
+      html: welcomeEmailHtml(firstName)
+    });
   }
 
   async verifyRegistrationOtp(email: string, code: string) {
@@ -125,6 +165,7 @@ export class AuthService {
       .update({ email_verified_at: new Date().toISOString() })
       .eq("id", otp.user_id);
 
+    await this.sendWelcomeEmail(otp.user_id);
     return this.createSessionForUser(otp.user_id);
   }
 
@@ -148,6 +189,7 @@ export class AuthService {
       .update({ email_verified_at: new Date().toISOString() })
       .eq("id", data.user_id);
 
+    await this.sendWelcomeEmail(data.user_id);
     return this.createSessionForUser(data.user_id);
   }
 
@@ -177,7 +219,7 @@ export class AuthService {
       await sendAuthEmail({
         to: authUser.user.email,
         subject: "Verify your device",
-        html: otpEmailHtml(otp, "New device sign-in verification")
+        html: deviceVerificationEmailHtml(otp)
       });
       return {
         requiresDeviceOtp: true as const,
@@ -274,7 +316,7 @@ export class AuthService {
     await sendAuthEmail({
       to: email,
       subject: "Reset your AltoRich pin",
-      html: otpEmailHtml(otp, "Pin recovery verification")
+      html: pinRecoveryEmailHtml(otp)
     });
     return { ok: true };
   }

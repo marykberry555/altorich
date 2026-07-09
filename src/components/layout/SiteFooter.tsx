@@ -17,6 +17,10 @@ export function SiteFooter() {
               {COMPANY.addressFull}
               <br />
               Operations: {COMPANY.nigeriaOffice}
+              <br />
+              <a href={`mailto:${COMPANY.supportEmail}`} className="text-white/70 hover:text-white">
+                {COMPANY.supportEmail}
+              </a>
             </p>
           </div>
 

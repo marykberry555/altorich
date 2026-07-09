@@ -3,6 +3,8 @@ import type { Database, Deposit, Json } from "@/types/database";
 import { AppError } from "@/lib/errors";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
+import { RoiService } from "@/services/roi/roi.service";
+import { getPublicEnv } from "@/lib/env";
 
 type Client = SupabaseClient<Database>;
 
@@ -126,6 +128,11 @@ export class DepositService {
         amount: Number(deposit.amount),
         deposit_id: depositId
       });
+
+      if (getPublicEnv().NEXT_PUBLIC_ROI_MODE_ENABLED) {
+        const roi = new RoiService(this.supabase);
+        await roi.resetWeeklyCycle(userId).catch(() => null);
+      }
     }
 
     const { data, error } = await this.supabase

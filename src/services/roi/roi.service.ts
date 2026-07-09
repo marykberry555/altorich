@@ -110,6 +110,30 @@ export class RoiService {
   }
 
   /**
+   * Restart the weekly interest cycle from zero (e.g. after deposit approval funds an investment).
+   */
+  async resetWeeklyCycle(userId: string) {
+    const active = await this.getActiveInvestment(userId);
+    if (!active) return null;
+
+    const { start, end } = currentTickerWindowLagos(new Date());
+    const { data, error } = await this.supabase
+      .from("roi_investments")
+      .update({
+        cycle_started_at: start.toISOString(),
+        cycle_ends_at: end.toISOString(),
+        accrued_ngn: 0,
+        last_ticker_at: new Date().toISOString()
+      })
+      .eq("id", active.id)
+      .select("*, tier:roi_tiers(*)")
+      .single();
+
+    if (error) throw error;
+    return data as unknown as RoiInvestment & { tier: RoiTier };
+  }
+
+  /**
    * Deterministic ticker computation (no DB writes):\n
    * accrued = weeklyInterest * progress\n
    * where weeklyInterest = principal * weekly_roi\n

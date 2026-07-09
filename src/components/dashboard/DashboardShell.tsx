@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
@@ -9,9 +9,9 @@ import { COMPANY } from "@/lib/company";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/Button";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { FloatingMemberBar } from "@/components/dashboard/FloatingMemberBar";
 import { dashboardNavItems, getDashboardNavLabel, mobileDashboardNavItems } from "@/lib/dashboard/nav";
-import { getInitials } from "@/lib/utils/avatar";
-import { WeeklyCountdown } from "@/components/roi/WeeklyCountdown";
 
 type Props = {
   fullName: string;
@@ -32,25 +32,16 @@ function NavPanel({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const initials = getInitials(fullName);
 
   return (
     <>
       <div className="relative overflow-hidden border-b border-[var(--border)] px-4 py-5">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--emerald)]/10 via-transparent to-transparent" aria-hidden />
         <div className="relative flex items-center gap-3">
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt="" className="h-11 w-11 shrink-0 rounded-xl object-cover ring-2 ring-[var(--emerald)]/20" />
-          ) : (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--emerald-soft)] text-sm font-semibold text-[var(--emerald)] ring-2 ring-[var(--emerald)]/20">
-              {initials}
-            </div>
-          )}
+          <AvatarUpload fullName={fullName} avatarUrl={avatarUrl} size="md" />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[var(--heading)]">{fullName}</p>
             {email ? <p className="truncate text-xs text-[var(--text-muted)]">{email}</p> : null}
-            <p className="truncate text-[10px] text-[var(--emerald)]">{COMPANY.brand} member</p>
           </div>
         </div>
       </div>
@@ -118,8 +109,8 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--header-bg)] backdrop-blur-md">
-          <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-8">
+        <header className="sticky top-0 z-30 px-4 pt-3 lg:px-8">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)]/90 px-4 py-3 shadow-sm backdrop-blur-xl">
             <div className="flex min-w-0 items-center gap-2.5">
               <Button
                 type="button"
@@ -134,9 +125,9 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
               <div className="min-w-0 lg:hidden">
                 <BrandLogo variant="icon" href="/dashboard" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 hidden lg:block">
                 <p className="truncate text-sm font-semibold text-[var(--heading)]">{isOverview ? "Overview" : pageLabel}</p>
-                <p className="truncate text-xs text-[var(--text-muted)]">{COMPANY.brand} · Member portal</p>
+                <p className="truncate text-xs text-[var(--text-muted)]">{COMPANY.brand}</p>
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
@@ -149,10 +140,9 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
               </form>
             </div>
           </div>
-          <div className="px-4 pb-3 lg:px-8">
-            <WeeklyCountdown className="w-full justify-between" />
-          </div>
         </header>
+
+        <FloatingMemberBar fullName={fullName} avatarUrl={avatarUrl} pageLabel={pageLabel} isOverview={isOverview} />
 
         {mobileOpen ? (
           <div className="fixed inset-0 z-50 lg:hidden">
@@ -171,9 +161,9 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
           </div>
         ) : null}
 
-        <main className="dashboard-main mx-auto max-w-6xl space-y-6 !px-4 !py-5 sm:space-y-8 sm:!py-6 lg:!px-8 lg:!py-8">{children}</main>
+        <main className="dashboard-main mx-auto max-w-6xl space-y-6 !px-4 !pb-24 !pt-5 sm:space-y-8 sm:!py-6 lg:!px-8 lg:!py-8 lg:!pb-8">{children}</main>
 
-        <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-[var(--border)] bg-[var(--surface-raised)] px-1 py-1.5 lg:hidden" aria-label="Mobile dashboard">
+        <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-[var(--border)] bg-[var(--surface-raised)]/95 px-1 py-1.5 backdrop-blur-md lg:hidden" aria-label="Mobile dashboard">
           {mobileDashboardNavItems.map((item) => {
             const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;

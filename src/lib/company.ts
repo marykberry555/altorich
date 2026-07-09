@@ -12,7 +12,7 @@ export const COMPANY = {
   addressFull: "Kemp House, 152–160 City Road, London, EC1V 2NX, England",
   domain: "altorich.com",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://altorich.com",
-  supportEmail: "support@altorich.com",
+  supportEmail: "hello@altorich.com",
   phone: "+44 20 0000 0000",
   nigeriaOffice: "Lagos, Nigeria",
   currency: "NGN" as const,

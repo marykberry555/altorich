@@ -11,11 +11,11 @@ import {
   Wallet
 } from "lucide-react";
 import { isSupabaseConfigured } from "@/lib/env";
+import { getPublicEnv } from "@/lib/env";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import { formatNaira } from "@/lib/domain";
 import type { AllocationPoint, ChartPoint } from "@/lib/dashboard/chart-data";
-import { DashboardWelcomeHero } from "@/components/dashboard/DashboardWelcomeHero";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { LedgerTable } from "@/components/dashboard/LedgerTable";
 import { BalanceHistoryChart, AllocationChart, EarningsTrendChart } from "@/components/dashboard/DashboardCharts";
@@ -23,11 +23,16 @@ import { DashboardPanelCard, DashboardSection, MetricStatCard } from "@/componen
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { EarningsTicker } from "@/components/roi/EarningsTicker";
 
 async function DashboardContent() {
   const user = await getSessionUser();
   const services = await getUserServices();
+  const env = getPublicEnv();
+  const roiEnabled = Boolean(env.NEXT_PUBLIC_ROI_MODE_ENABLED);
   const dashboard = user && services ? await services.dashboard.getMemberDashboard(user.id) : null;
+  const roiState =
+    roiEnabled && user && services ? await services.roi.getState(user.id).catch(() => null) : null;
 
   const balance = dashboard?.balance ?? 0;
   const portfolio = dashboard?.portfolio;
@@ -53,12 +58,28 @@ async function DashboardContent() {
         </div>
       ) : null}
 
-      <DashboardWelcomeHero
-        fullName={dashboard?.profile?.full_name ?? user?.email?.split("@")[0] ?? "Member"}
-        email={user?.email ?? undefined}
-        avatarUrl={dashboard?.profile?.avatar_url}
-        announcement={dashboard?.announcement}
-      />
+      {roiEnabled && roiState?.activeInvestment ? (
+        <DashboardSection title="Weekly interest">
+          <Card variant="elevated" className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Active tier</p>
+              <p className="mt-1 text-lg font-semibold text-[var(--heading)]">{roiState.activeInvestment.tier.name}</p>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">
+                Principal{" "}
+                <span className="font-semibold text-[var(--heading)]">
+                  {formatNaira(Number(roiState.activeInvestment.principal_ngn))}
+                </span>
+              </p>
+            </div>
+            <EarningsTicker
+              principalNgn={Number(roiState.activeInvestment.principal_ngn)}
+              weeklyRoiBps={Number(roiState.activeInvestment.tier.weekly_roi_bps)}
+              cycleStartedAt={roiState.activeInvestment.cycle_started_at}
+              cycleEndsAt={roiState.activeInvestment.cycle_ends_at}
+            />
+          </Card>
+        </DashboardSection>
+      ) : null}
 
       <DashboardSection title="Portfolio & balances">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

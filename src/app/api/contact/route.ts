@@ -2,7 +2,11 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { COMPANY } from "@/lib/company";
 import { isValidMathChallenge } from "@/lib/math-challenge";
-import { sendAuthEmail } from "@/services/auth/email.service";
+import {
+  contactAcknowledgementEmailHtml,
+  contactInboxEmailHtml,
+  sendAuthEmail
+} from "@/services/auth/email.service";
 import { logger } from "@/lib/logger";
 
 const bodySchema = z.object({
@@ -28,21 +32,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Incorrect answer." }, { status: 400 });
     }
 
-    const html = `
-      <p><strong>From:</strong> ${name} &lt;${email}&gt;</p>
-      <p><strong>Subject:</strong> ${subject}</p>
-      <p style="white-space:pre-wrap">${message}</p>
-    `;
-
-    const sent = await sendAuthEmail({
+    const inboxSent = await sendAuthEmail({
       to: COMPANY.supportEmail,
       subject: `[Contact] ${subject}`,
-      html
+      html: contactInboxEmailHtml({ name, email, subject, message }),
+      replyTo: email
     });
 
-    if (!sent) {
-      logger.warn("Contact form email failed", { email, subject });
+    if (!inboxSent) {
+      logger.warn("Contact form inbox email failed", { email, subject });
       return NextResponse.json({ error: "Could not send message. Try again later." }, { status: 503 });
+    }
+
+    const ackSent = await sendAuthEmail({
+      to: email,
+      subject: "We received your message — AltoRich",
+      html: contactAcknowledgementEmailHtml({ name, subject })
+    });
+
+    if (!ackSent) {
+      logger.warn("Contact form acknowledgement email failed", { email, subject });
     }
 
     return NextResponse.json({ ok: true });

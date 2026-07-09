@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PinField } from "@/components/ui/PinField";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { OtpModal } from "@/components/auth/OtpModal";
@@ -96,15 +97,9 @@ export function LoginForm() {
 
         <form onSubmit={handleLogin} className="grid gap-3">
           <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())} required autoComplete="username" />
-          <Input
-            label="6-digit pin"
-            type="password"
-            inputMode="numeric"
-            pattern="\d{6}"
-            maxLength={6}
+          <PinField
             value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            required
+            onChange={setPin}
             autoComplete="current-password"
           />
           <div className="flex justify-between text-xs">
