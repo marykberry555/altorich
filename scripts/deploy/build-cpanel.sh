@@ -8,7 +8,9 @@ NODE_VERSION="${NODE_VERSION:-22}"
 VENV="/home/altosujd/nodevenv/repositories/alto-app/${NODE_VERSION}/bin/activate"
 
 # shellcheck disable=SC1090
+set +u
 source "$VENV"
+set -u
 cd "$APP_ROOT"
 
 export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=768}"
