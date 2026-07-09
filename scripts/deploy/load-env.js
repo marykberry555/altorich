@@ -7,7 +7,19 @@ const candidates = [
   "/home/altosujd/repositories/alto-app/.env.production"
 ].filter(Boolean);
 
-function parseEnvFile(filePath) {
+const FILE_PRIORITY_KEYS = new Set([
+  "NODE_ENV",
+  "HOSTNAME",
+  "NEXT_PUBLIC_SITE_URL",
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "RESEND_API_KEY",
+  "NEXT_PUBLIC_ROI_MODE_ENABLED",
+  "ALTORICH_LOG_DIR"
+]);
+
+function parseEnvFile(filePath, fileWins = false) {
   if (!fs.existsSync(filePath)) return false;
   const content = fs.readFileSync(filePath, "utf8");
   for (const line of content.split("\n")) {
@@ -23,7 +35,9 @@ function parseEnvFile(filePath) {
     ) {
       value = value.slice(1, -1);
     }
-    if (!process.env[key]?.trim()) {
+    if (fileWins && FILE_PRIORITY_KEYS.has(key)) {
+      process.env[key] = value;
+    } else if (!process.env[key]?.trim()) {
       process.env[key] = value;
     }
   }
@@ -32,9 +46,18 @@ function parseEnvFile(filePath) {
 
 for (const file of candidates) {
   try {
-    parseEnvFile(file);
+    parseEnvFile(file, false);
   } catch {
     // Non-fatal: cPanel UI env vars may already be set.
+  }
+}
+
+// .env.production on disk wins for server secrets (cPanel UI may be stale).
+for (const file of candidates) {
+  try {
+    parseEnvFile(file, true);
+  } catch {
+    // Non-fatal
   }
 }
 

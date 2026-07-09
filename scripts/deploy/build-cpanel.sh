@@ -21,8 +21,8 @@ echo "Copying node_modules for build (CloudLinux symlink workaround)..."
 rm -f node_modules
 cp -a "/home/altosujd/nodevenv/repositories/alto-app/${NODE_VERSION}/lib/node_modules" ./node_modules
 
-echo "Building..."
-npx next build
+echo "Building (webpack — required on CloudLinux)..."
+npm run build
 
 echo "Removing local node_modules copy..."
 rm -rf node_modules
@@ -31,6 +31,13 @@ echo "Restoring CloudLinux node_modules symlink..."
 npm install --include=dev
 
 mkdir -p tmp
-touch tmp/restart.txt
+date -u +%Y-%m-%dT%H:%M:%SZ > tmp/restart.txt
 
-echo "Done. RESTART the Node.js app in cPanel if the site does not refresh automatically."
+echo "Restarting Passenger app..."
+if cloudlinux-selector restart --json --interpreter nodejs --user altosujd --app-root repositories/alto-app 2>/dev/null; then
+  echo "Passenger restart requested via cloudlinux-selector."
+else
+  echo "cloudlinux-selector restart unavailable — touch tmp/restart.txt and restart in cPanel if needed."
+fi
+
+echo "Done."
