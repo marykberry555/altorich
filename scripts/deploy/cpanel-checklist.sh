@@ -88,7 +88,16 @@ STEP 5 — Local push
 
 STEP 6 — Verify
 ---------------
+  bash scripts/deploy/verify-deploy.sh
+  # or quick health only:
   node scripts/test-deploy.js https://altorich.com/api/health
+
+Manual Node refresh (no rebuild):
+  bash scripts/deploy/refresh-node-app.sh
+
+GitHub auto-deploy (optional):
+  Add repository secret CPANEL_DEPLOY_KEY (cPanel SSH private key).
+  Pushes to main trigger .github/workflows/deploy-production.yml.
 
 ================================================================================
 EOF

@@ -84,6 +84,30 @@ phase_cpanel() {
 
   git push "$PRODUCTION_REMOTE" "$BRANCH"
   log "Pushed to $PRODUCTION_REMOTE/$BRANCH (cPanel post-deploy runs via .cpanel.yml)."
+
+  log "Waiting for production build + Node restart..."
+  local url="${DEPLOY_PUBLIC_URL:-https://altorich.com}/api/health"
+  local attempts="${DEPLOY_WAIT_ATTEMPTS:-24}"
+  local delay="${DEPLOY_WAIT_DELAY_SECS:-15}"
+  local i=1
+
+  sleep 30
+  while (( i <= attempts )); do
+    if curl -fsS --max-time 15 "$url" 2>/dev/null | grep -q '"status"[[:space:]]*:[[:space:]]*"ok"'; then
+      log "Production health check passed."
+      if node "$ROOT/scripts/test-deploy.js" "$url"; then
+        log "Deploy verification complete."
+        return 0
+      fi
+    fi
+    log "Attempt $i/$attempts — production not ready, retrying in ${delay}s..."
+    sleep "$delay"
+    i=$((i + 1))
+  done
+
+  echo "Production health check timed out after push." >&2
+  echo "SSH in and run: bash scripts/deploy/verify-deploy.sh" >&2
+  exit 1
 }
 
 main() {

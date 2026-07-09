@@ -1,0 +1,68 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to cPanel Node
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure SSH
+        env:
+          CPANEL_DEPLOY_KEY: ${{ secrets.CPANEL_DEPLOY_KEY }}
+        run: |
+          if [ -z "$CPANEL_DEPLOY_KEY" ]; then
+            echo "CPANEL_DEPLOY_KEY secret is not configured — skipping remote deploy."
+            echo "Add the cPanel SSH private key as repository secret CPANEL_DEPLOY_KEY to enable auto-deploy."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$CPANEL_DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p 21098 162.254.39.13 >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Push to cPanel production Git
+        env:
+          CPANEL_DEPLOY_KEY: ${{ secrets.CPANEL_DEPLOY_KEY }}
+        run: |
+          if [ ! -f ~/.ssh/deploy_key ]; then
+            echo "No deploy key — nothing to push."
+            exit 0
+          fi
+          git remote add production "ssh://altosujd@162.254.39.13:21098/home/altosujd/repositories/alto-app" 2>/dev/null || \
+            git remote set-url production "ssh://altosujd@162.254.39.13:21098/home/altosujd/repositories/alto-app"
+          GIT_SSH_COMMAND='ssh -i ~/.ssh/deploy_key -p 21098 -o StrictHostKeyChecking=accept-new' \
+            git push production main
+
+      - name: Wait for production health
+        env:
+          CPANEL_DEPLOY_KEY: ${{ secrets.CPANEL_DEPLOY_KEY }}
+        run: |
+          if [ ! -f ~/.ssh/deploy_key ]; then
+            exit 0
+          fi
+          echo "Waiting for cPanel post-deploy (build + Node restart)..."
+          sleep 45
+          for i in $(seq 1 20); do
+            if curl -fsS --max-time 15 https://altorich.com/api/health | grep -q '"status"[[:space:]]*:[[:space:]]*"ok"'; then
+              echo "Production health OK"
+              curl -fsS -H 'Cache-Control: no-cache' https://altorich.com/auth/login | grep -q 'app/auth/login/page-' && echo "Login page chunk reference OK"
+              exit 0
+            fi
+            echo "Attempt $i/20 — not ready yet, retrying in 15s..."
+            sleep 15
+          done
+          echo "Production health check timed out"
+          exit 1
