@@ -14,6 +14,7 @@ cd "$APP_ROOT"
 export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=768}"
 
 echo "Installing dependencies into virtualenv..."
+rm -rf node_modules 2>/dev/null || true
 npm install --include=dev
 
 echo "Copying node_modules for build (CloudLinux symlink workaround)..."
