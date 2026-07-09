@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment (never commit secrets)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Test / coverage
+coverage/
+
+# Vercel
+.vercel
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+
+# Deploy secrets
+.env.deploy

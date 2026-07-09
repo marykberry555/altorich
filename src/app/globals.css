@@ -1,0 +1,393 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+
+  /* Brand palette */
+  --emerald: #064e3b;
+  --emerald-mid: #047857;
+  --emerald-light: #10b981;
+  --emerald-soft: #ecfdf5;
+  --gold: #b8860b;
+  --gold-light: #d4a853;
+  --gold-soft: #fef9ee;
+  --navy: #0f1b2d;
+  --navy-mid: #1e3a5f;
+  --navy-soft: #f0f4f8;
+
+  /* Neutrals — warm light greys, no pure white */
+  --white: #fdfcfb;
+  --gray-50: #f8f7f5;
+  --gray-100: #f0eeea;
+  --gray-200: #e4e1db;
+  --gray-400: #9c968c;
+  --gray-600: #5c574f;
+  --gray-900: #1c1b19;
+  --black: #0a0a09;
+
+  /* Semantic */
+  --text: var(--gray-900);
+  --text-muted: var(--gray-600);
+  --text-subtle: var(--gray-400);
+  --surface: #f6f4f1;
+  --surface-raised: #fdfcfb;
+  --border: rgba(28, 27, 25, 0.08);
+  --border-strong: rgba(28, 27, 25, 0.14);
+  --header-bg: rgba(253, 252, 251, 0.92);
+  --footer-bg: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+  --heading: var(--navy);
+  --dashboard-bg: var(--gray-50);
+  --sidebar-bg: var(--navy);
+  --sidebar-text: rgba(255, 255, 255, 0.85);
+  --sidebar-muted: rgba(255, 255, 255, 0.55);
+  --sidebar-active: rgba(255, 255, 255, 0.1);
+  --sidebar-hover: rgba(255, 255, 255, 0.05);
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px rgba(15, 27, 45, 0.04);
+  --shadow-sm: 0 2px 8px rgba(15, 27, 45, 0.06);
+  --shadow-md: 0 8px 30px rgba(15, 27, 45, 0.08);
+  --shadow-lg: 0 20px 50px rgba(15, 27, 45, 0.12);
+  --shadow-glow: 0 0 0 1px rgba(6, 78, 59, 0.08), 0 8px 24px rgba(6, 78, 59, 0.12);
+
+  /* Layout */
+  --header-h: 72px;
+  --sidebar-w: 260px;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 24px;
+  --max-w: 1200px;
+  --section-py: clamp(64px, 8vw, 96px);
+
+  --theme-transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Improve accent contrast on dark surfaces */
+  --emerald: #10b981;
+  --emerald-mid: #34d399;
+
+  --emerald-soft: rgba(16, 185, 129, 0.12);
+  --gold-soft: rgba(212, 168, 83, 0.1);
+  --navy-soft: #1a2332;
+
+  --gray-50: #141b24;
+  --gray-100: #1a2332;
+  --gray-200: #243044;
+  --gray-400: #8b95a5;
+  --gray-600: #b4bcc8;
+  --gray-900: #eef1f5;
+
+  --text: #eef1f5;
+  --text-muted: #b4bcc8;
+  --text-subtle: #8b95a5;
+  --surface: #0f1419;
+  --surface-raised: #161d27;
+  --border: rgba(238, 241, 245, 0.08);
+  --border-strong: rgba(238, 241, 245, 0.14);
+  --header-bg: rgba(22, 29, 39, 0.92);
+  --footer-bg: linear-gradient(160deg, #0a0f16 0%, #121a26 45%, #1a2332 100%);
+  --dashboard-bg: #0f1419;
+  --heading: #f3f5f8;
+  --sidebar-bg: #0a0f16;
+  --sidebar-text: rgba(238, 241, 245, 0.9);
+  --sidebar-muted: rgba(238, 241, 245, 0.5);
+  --sidebar-active: rgba(16, 185, 129, 0.15);
+  --sidebar-hover: rgba(238, 241, 245, 0.06);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.45);
+  --shadow-glow: 0 0 0 1px rgba(16, 185, 129, 0.12), 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--surface);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: -0.011em;
+  background: var(--surface);
+  transition: var(--theme-transition);
+}
+
+.theme-ready body,
+.theme-ready .dashboard-shell,
+.theme-ready header,
+.theme-ready footer,
+.theme-ready .card-surface {
+  transition: var(--theme-transition);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Utilities */
+.container-ar {
+  width: min(100% - 32px, var(--max-w));
+  margin-inline: auto;
+}
+
+.section-pad {
+  padding-block: var(--section-py);
+}
+
+.gradient-hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 70% -10%, rgba(16, 185, 129, 0.12), transparent),
+    radial-gradient(ellipse 50% 40% at 0% 50%, rgba(184, 134, 11, 0.06), transparent),
+    linear-gradient(180deg, var(--surface-raised) 0%, var(--surface) 100%);
+}
+
+[data-theme="dark"] .gradient-hero {
+  background:
+    radial-gradient(ellipse 70% 50% at 80% -20%, rgba(16, 185, 129, 0.08), transparent),
+    radial-gradient(ellipse 40% 35% at 10% 60%, rgba(212, 168, 83, 0.05), transparent),
+    linear-gradient(180deg, #121a26 0%, var(--surface) 100%);
+}
+
+.gradient-navy {
+  background: var(--footer-bg);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--emerald) 0%, var(--emerald-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animations */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Focus */
+:focus-visible {
+  outline: 2px solid var(--emerald-mid);
+  outline-offset: 2px;
+}
+
+/* Prose for legal/content pages */
+.prose-ar {
+  max-width: 68ch;
+  color: var(--text-muted);
+  line-height: 1.75;
+}
+
+.prose-ar h2 {
+  color: var(--text);
+  font-size: 1.35rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose-ar p {
+  margin-bottom: 1rem;
+}
+
+.prose-ar ul {
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.prose-ar li {
+  margin-bottom: 0.5rem;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 14px;
+  transition: var(--theme-transition);
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--emerald-mid);
+  box-shadow: 0 0 0 3px var(--emerald-soft);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 0 16px;
+  background: var(--emerald);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.button:hover {
+  background: var(--emerald-mid);
+}
+
+.button.warn {
+  background: #dc2626;
+}
+
+/* Dashboard shell */
+.dashboard-shell {
+  min-height: 100vh;
+  background: var(--dashboard-bg);
+}
+
+.dashboard-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  padding: 20px 14px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+
+.dashboard-main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  padding: 24px 28px 48px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-sidebar {
+    display: none;
+  }
+  .dashboard-main {
+    margin-left: 0;
+    padding: 16px 16px 88px;
+  }
+}
+
+.bg-section {
+  background: var(--surface-raised);
+}
+
+.brand-logo-light {
+  display: block;
+}
+
+.brand-logo-dark {
+  display: none;
+}
+
+[data-theme="dark"] .brand-logo-light {
+  display: none;
+}
+
+[data-theme="dark"] .brand-logo-dark {
+  display: block;
+}
+
+/* Theme-aware logo plate (for classic fintech header/auth surfaces) */
+.brand-plate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #e7e5e2; /* warm grey */
+}
+
+[data-theme="dark"] .brand-plate {
+  background: #000; /* pure black */
+}
+
+/* Premium testimonials marquee */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.ar-testimonials-scroll {
+  cursor: grab;
+}
+.ar-testimonials-scroll:active {
+  cursor: grabbing;
+}
+
+.ar-testimonials-track {
+  display: flex;
+  gap: 16px;
+  padding: 4px 0;
+  width: max-content;
+  will-change: transform;
+  animation: ar-marquee 24s linear infinite;
+}
+
+.ar-testimonials-track.is-paused {
+  animation-play-state: paused;
+}
+
+.ar-testimonials-card {
+  width: min(420px, 84vw);
+}
+
+@keyframes ar-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ar-testimonials-track {
+    animation: none;
+  }
+}

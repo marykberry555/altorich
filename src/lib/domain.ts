@@ -1,0 +1,49 @@
+export const contributionTiers = [
+  3_000, 6_000, 12_000, 25_000, 50_000, 100_000, 200_000, 500_000, 1_000_000
+] as const;
+
+export function formatNaira(amount: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0
+  }).format(amount);
+}
+
+export function makeReference(phone: string, prefix = "AR") {
+  const digits = phone.replace(/\D/g, "").slice(-6) || "MEMBER";
+  return `${prefix}-${digits}-${Date.now().toString().slice(-5)}`;
+}
+
+export function isWithdrawalWindow(date = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    hour: "numeric",
+    hour12: false,
+    timeZone: "Africa/Lagos"
+  });
+  const parts = formatter.formatToParts(date);
+  const weekday = parts.find((part) => part.type === "weekday")?.value;
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? 0);
+
+  return (weekday === "Monday" || weekday === "Thursday") && hour >= 8;
+}
+
+export function nextWithdrawalLabel(date = new Date()) {
+  if (isWithdrawalWindow(date)) return "Open now";
+
+  const watDay = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    timeZone: "Africa/Lagos"
+  }).format(date);
+
+  if (watDay === "Monday" || watDay === "Tuesday" || watDay === "Wednesday") {
+    return "Next window: Thursday, 8:00 AM WAT";
+  }
+
+  return "Next window: Monday, 8:00 AM WAT";
+}
+
+export function planTotalReturn(projectedDaily: number, cycleDays: number) {
+  return projectedDaily * cycleDays;
+}

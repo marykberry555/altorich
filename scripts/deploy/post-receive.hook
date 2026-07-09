@@ -1,0 +1,22 @@
+#!/bin/bash
+# Optional bare-repo hook — install on server at:
+#   /home/altosujd/repositories/alto-app/hooks/post-receive
+# chmod +x hooks/post-receive
+#
+# Only needed if NOT using cPanel ".cpanel.yml" auto-deploy.
+
+set -euo pipefail
+
+APP_ROOT="/home/altosujd/alto-app"
+GIT_DIR="/home/altosujd/repositories/alto-app"
+
+while read -r oldrev newrev refname; do
+  if [ "$refname" != "refs/heads/main" ]; then
+  echo "Skipping deploy for $refname (only main is deployed)"
+  continue
+  fi
+
+  echo "Deploying $newrev to $APP_ROOT ..."
+  git --work-tree="$APP_ROOT" --git-dir="$GIT_DIR" checkout -f main
+  APP_ROOT="$APP_ROOT" LOG_DIR="/home/altosujd/logs" bash "$APP_ROOT/scripts/deploy/post-deploy.sh"
+done

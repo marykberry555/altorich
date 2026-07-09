@@ -1,0 +1,8 @@
+---
+# cPanel Git deployment — runs after each push to the tracked branch.
+# Set "Deployment path" in cPanel Git to: /home/altosujd/alto-app
+deployment:
+  tasks:
+    - export APP_ROOT=/home/altosujd/alto-app
+    - export LOG_DIR=/home/altosujd/logs
+    - /bin/bash $APP_ROOT/scripts/deploy/post-deploy.sh

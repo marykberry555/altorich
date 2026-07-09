@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<!-- saved from url=(0436)https://cdncashierv2.ipays.world/?transId=2RdUryBFmHg&detail=YW1vdW50PTEwMDAwMC4wMCZpc3ZDb2RlPUZJTlRBVkFQQVkmYWNjb3VudE5hbWU9RklOVklTVEErU09MVVRJT05TK0xJTUlURUQmYmFua05hbWU9TG9tYStCYW5rJmFjY291bnROdW1iZXI9MDA2NTAyNzU4OCZwYXltZW50VHJhbnNObz0yMDUyNzI0MDQ2NTcxNDk1NDI3JmNhc2hpZXJJbmZvPQ==&paymentMethod=W3siY29kZSI6IlRSQU5TRkVSIiwibmFtZSI6IlRSQU5TRkVSIiwic3RhdHVzIjoiT1BFTiIsIm9yZGVyTW9kZSI6Ik9SREVSX0FORF9QQVkiLCJpc0RlZmF1bHQiOnRydWV9XQ== -->
+<html lang="en" data-qb-installed="true"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="preconnect" href="https://transapi.shpays.com/">
+    <link rel="dns-prefetch" href="https://transapi.shpays.com/">
+    <link rel="preload" href="./account top up page_files/style-v3.css" as="style">
+    <link rel="stylesheet" href="./account top up page_files/style-v3.css">
+  </head>
+
+  <body>
+    <div class="loading" style="display: none;">
+      <div class="loader">
+        <div id="ld4">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+    </div>
+    <div class="invalid" style="display: none">
+      <div class="invalid-main" style="display: none">
+        <div class="invalid-message">
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <!-- <section id="logo" class="header">
+        <div class="logo"></div>
+      </section> -->
+      <section id="cala-logo" class="header black" style="display: none">
+        <div class="shpay-logo"></div>
+        <span>&amp;</span>
+        <div class="cala-logo"></div>
+      </section>
+      <section class="main" id="processing">
+        <div class="m-header">
+          <img style="height: 200px;" src="./account top up page_files/banner.webp" alt="">
+          <div class="method">
+            <span class="title">Choose a method to pay</span>
+            <p class="amount">₦100000.00</p>
+            
+          </div>
+        </div>
+        <div class="content" id="content">
+          <div class="tabs" id="tabs">
+            <!-- <a id="cards">Cards</a> -->
+            <a id="transfer" class="active">Bank transfer</a>
+            <!-- <a id="ussd">USSD</a> -->
+          </div>
+          <div class="mod card">
+            <h2 class="title">Pay with card</h2>
+            <div class="caption">
+              Enter your card information to complete this transaction
+            </div>
+            <div class="paymethod card">
+              <div class="item">
+                <div class="label">Card Number</div>
+                <div class="input">
+                  <input type="tel" maxlength="30" id="cn" name="cardNumber" value="" style="font-size: 1.2rem" oninput="checkCard()" onkeypress="keyPass()">
+                  <div class="icons">
+                    <i class="icon icon-master"></i>
+                    <i class="icon icon-visa"></i>
+                    <i class="icon icon-verve"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="item">
+                <div class="label">Expiry Date</div>
+                <div class="input">
+                  <input type="tel" maxlength="2" name="expiryMonth" value="" placeholder="MM" style="font-size: 1.2rem" oninput="focusNextInput(this)">
+                  <div class="divider">/</div>
+                  <input type="tel" maxlength="2" name="expiryYear" value="" placeholder="YY" style="font-size: 1.2rem" oninput="focusNextInput(this)">
+                </div>
+              </div>
+              <div class="item">
+                <div class="label">CVV</div>
+                <div class="input">
+                  <input type="number" maxlength="3" name="cvv" value="" style="font-size: 1.2rem">
+                  <div class="icons">
+                    <i class="icon icon-card"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="bottom">
+              <button class="btn" id="cardSubmit" disabled="">Continue</button>
+            </div>
+            <div class="contact us" style="margin-top: 19px;">
+              <p class="note">If you have any questions，connect us by email.</p>
+              <p class="email"> Email address：ipayservice88@gmail.com </p>
+            </div>
+          </div>
+          <div class="mod active transfer">
+            <h2 class="title">Bank Transfer</h2>
+            <div class="caption">
+              Make a transfer of <b class="amount">₦100000.00</b> to the account
+            </div>
+            <div id="countdown-wrap" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0 4px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 12px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span style="font-size:0.78rem;color:#9a3412;font-weight:500;">Complete payment within</span>
+              <span id="countdown-timer" style="font-size:1rem;font-weight:700;color:#dc2626;letter-spacing:1px;font-variant-numeric:tabular-nums;">00:09:28</span>
+            </div>
+            <div class="paymethod bank">
+              <div class="item">
+                <div class="label">Account Number</div>
+                <div class="input">
+                  <span name="accountNumber" style="font-size: 1rem">0065027588</span>
+                  <div class="icons copy">
+                    <i class="icon icon-list"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="item">
+                <div class="label">Bank Name</div>
+                <div class="input">
+                  <span name="bankName" style="font-size: 1rem">Loma Bank</span>
+                  <div class="icons copy">
+                    <i class="icon icon-list"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="item">
+                <div class="label">Account Name</div>
+                <div class="input">
+                  <span name="accountName" style="font-size: 1rem">FINVISTA SOLUTIONS LIMITED</span>
+                  <div class="icons copy">
+                    <i class="icon icon-list"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="btn-tip">
+              This account is valid for one time<br>
+              Please do not transfer multiple times
+            </div>
+            <div class="confirm-tip">
+              Before transferring, please verify the account number and bank name in your payment app match the details shown above
+            </div>
+            <div class="bottom">
+              <!-- <button class="btn" id="bankSubmit" disabled>
+                I have made the payment
+              </button> -->
+              <div class="bottom_tips">
+                Copy the account information use your own online banking to transfer the amount. We will confirm immediately when we received
+              </div>
+              <!-- 有商户不想要shpay的标识，且这个收银台未使用，所以去掉标识给特定商户使用 -->
+              <!-- <div class="contact us"style="margin-top: 19px;">
+                <p class="note">If you have any questions，connect us by email.</p>
+                <div class="item">
+                  Email address：
+                  <span>ipayservice88@gmail.com</span>
+                  <div class="icons copy">
+                    <i class="icon icon-list" style="margin-left: 0.5rem"></i>
+                  </div>
+                </div>
+                <p class="by">Secured by ipay </p>
+              </div> -->
+            </div>
+          </div>
+          <div class="mod paymentUssd">
+            <div class="paymethod ussd"></div>
+            <div class="bottom">
+              <div class="tips">This payment method will be avaliable soon</div>
+            </div>
+            <div class="contact us" style="margin-top: 59px;">
+              <p class="note">If you have any questions，connect us by email.</p>
+              <p class="email"> Email address：ipayservice88@gmail.com </p>
+              <p class="by">Secured by ipay </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="main" style="display: none" id="success">
+        <div class="result">
+          <div class="img"><img src="./account top up page_files/icon-fail.webp" alt=""></div>
+          <h2 class="title">Duplicate transaction</h2>
+          <p class="caption">
+            This transaction could not be initiated as it has already been
+            completed.
+          </p>
+        </div>
+        <div class="bottom">
+          <button class="btn close">OK</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="tip">copied</div>
+    <!-- <script src="static/js/app.js"></script> -->
+    <script>
+      function keyPass() {
+        var myEvent = event || window.event;
+        var keyCode = myEvent.keyCode;
+        if (keyCode >= 48 && keyCode <= 57) { event.returnValue = true; }
+        else { event.returnValue = false; }
+      }
+      function checkCard() {
+        var cardCode = document.getElementById("cn").value.replace(/\s{1,}/g, "");
+        var cardNumber = "";
+        for (let i = 0; i < cardCode.length; i++) {
+          if (i % 4 === 0 && i > 0) cardNumber += " " + cardCode.charAt(i);
+          else cardNumber += cardCode.charAt(i);
+        }
+        document.getElementById("cn").value = cardNumber;
+      }
+      function focusNextInput(thisinput) {
+        if (thisinput.value.length == 2) {
+          var inputs = document.getElementsByTagName("input");
+          for (var i = 0; i < inputs.length; i++) {
+            if (i == inputs.length - 1) { inputs[0].focus(); break; }
+            else if (thisinput == inputs[i]) { inputs[i + 1].focus(); break; }
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+
+        // ── 倒计时 ──
+        (function startCountdown() {
+          var DURATION = 10 * 60;
+          var KEY = "countdownStart_" + (new URLSearchParams(location.search).get("transId") || location.pathname);
+          var el = document.getElementById("countdown-timer");
+          if (!localStorage.getItem(KEY)) localStorage.setItem(KEY, Date.now());
+          function render() {
+            var elapsed = Math.floor((Date.now() - parseInt(localStorage.getItem(KEY))) / 1000);
+            var remaining = Math.max(0, DURATION - elapsed);
+            var m = Math.floor(remaining / 60), s = remaining % 60;
+            el.textContent = "00:" + (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+            return remaining;
+          }
+          if (render() > 0) {
+            var iv = setInterval(function () { if (render() <= 0) clearInterval(iv); }, 1000);
+          }
+        })();
+
+        // ── URL 参数解析 ──
+        const params = new URLSearchParams(window.location.search);
+        let transId = params.get("transId");
+        const detail = params.get("detail");
+
+        if (detail) {
+          try {
+            const decoded = atob(detail.replace(/-/g, "+").replace(/_/g, "/"))
+              .replace(/\+/g, " ").replace(/\%2F/g, "/");
+            if (decoded) {
+              const regex = /(?:^|&)(\w+)=([^&]+)/g;
+              let m, ep = {};
+              while ((m = regex.exec(decoded)) !== null) ep[m[1]] = decodeURIComponent(m[2]);
+              document.querySelector("span[name=bankName]").textContent = ep.bankName;
+              document.querySelector("span[name=accountNumber]").textContent = ep.accountNumber;
+              document.querySelector("span[name=accountName]").textContent = ep.accountName;
+              document.querySelectorAll(".amount").forEach(el => el.textContent = `₦${ep.amount}`);
+              document.querySelector(".loading").style.display = "none";
+              if (!transId) transId = ep.transId;
+            }
+          } catch (err) { console.log(err); }
+        }
+
+        if (!transId) transId = location.pathname.split("/").slice(-1)[0];
+        if (!transId) { alert("Parameter missing"); return; }
+        localStorage.setItem("transId", transId);
+
+        // ── API ──
+        const getOrder = () =>
+          fetch("https://transapi.shpays.com/v1/cashier/orderDetail?transId=" + encodeURIComponent(transId))
+            .then(r => r.json());
+
+        const getTransfer = () =>
+          fetch("https://transapi.shpays.com/v1/cashier/payInOrder", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ transId, paymentType: "TRANSFER" }),
+          }).then(r => r.json());
+
+        var retryTransfer = 0;
+        function doTransfer() {
+          getTransfer().then(function (res) {
+            if (res.success) {
+              if (!res.result || !res.result.accountNumber) {
+                if (retryTransfer > 2) return;
+                retryTransfer++;
+                setTimeout(doTransfer, 3000);
+              } else {
+                document.querySelector(".loading").style.display = "none";
+                document.querySelector("span[name=bankName]").textContent = res.result.bankName;
+                document.querySelector("span[name=accountNumber]").textContent = res.result.accountNumber;
+                document.querySelector("span[name=accountName]").textContent = res.result.accountName;
+              }
+              if (res.result.status === "PROCESSING") {
+                document.querySelectorAll(".amount").forEach(el => el.textContent = `₦${res.result.transAmt.toFixed(2)}`);
+              }
+              if (res.result.status === "SUCCESS") {
+                document.getElementById("processing").style.display = "none";
+                document.getElementById("success").style.display = "";
+              }
+            } else {
+              document.querySelector(".invalid").style.display = "";
+              document.querySelector(".invalid-main").style.display = "";
+              document.querySelector(".invalid-message").textContent = res.message;
+            }
+          });
+        }
+        doTransfer();
+
+        // ── 卡片输入 ──
+        let card = { cardNumber: "", expiryMonth: "", expiryYear: "", cvv: "" };
+        document.querySelectorAll(".card input").forEach(function (el) {
+          el.addEventListener("input", function () {
+            card[this.name] = this.value;
+            document.getElementById("cardSubmit").disabled = (
+              card.cardNumber.length < 12 || card.expiryMonth.length !== 2 ||
+              card.expiryYear.length !== 2 || card.cvv.length !== 3
+            );
+          });
+        });
+
+        document.getElementById("cardSubmit").addEventListener("click", function () {
+          let payment = { ...card, paymentType: "CARD", transId };
+          payment.cardNumber = payment.cardNumber.replaceAll(" ", "");
+          localStorage.setItem("payment", JSON.stringify(payment));
+          location.href = location.origin + "/payment/pin/";
+        });
+
+        // ── 银行转账确认 ──
+        var count = 0;
+        var bankSubmit = document.getElementById("bankSubmit");
+        if (bankSubmit) {
+          bankSubmit.addEventListener("click", function () {
+            const _this = this;
+            _this.disabled = false;
+            _this.textContent = "Wait while we confirm payment...";
+            const loading = document.querySelector(".loading");
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            loading.style.cssText = `display:block;background:rgba(170,170,170,0.5);position:absolute;top:${scrollTop}px;z-index:999;`;
+            document.body.style.overflow = "hidden";
+            document.body.style.height = "100%";
+            var timer = setInterval(function () {
+              getOrder().then(function (res) {
+                count++;
+                if (res.success) {
+                  if (res.result.transStatus === "PROCESSING" && count === 12) {
+                    loading.style.display = "none";
+                    _this.disabled = false; _this.textContent = "Reconfirm Payment";
+                    clearInterval(timer); document.body.removeAttribute("style");
+                  }
+                  if (res.result.transStatus === "SUCCESS") window.open("payment/success", "_blank");
+                  if (res.result.transStatus === "FAIL") window.open("payment/fail", "_blank");
+                } else {
+                  loading.style.display = "none";
+                  _this.disabled = false; _this.textContent = "Reconfirm Payment";
+                  clearInterval(timer); document.body.removeAttribute("style");
+                }
+              });
+            }, 5000);
+          });
+        }
+
+        // ── 复制 ──
+        const tip = document.getElementById("tip");
+        let timeout;
+        function showTip() {
+          clearTimeout(timeout);
+          tip.classList.add("show");
+          timeout = setTimeout(() => tip.classList.remove("show"), 3000);
+        }
+        document.querySelectorAll(".copy").forEach(function (el) {
+          el.addEventListener("click", function (event) {
+            var input = document.createElement("input");
+            input.value = this.previousElementSibling.innerText;
+            document.body.appendChild(input);
+            input.select();
+            if (document.execCommand("copy")) {
+              tip.style.cssText = `left:${event.pageX - event.offsetX - 20}px;top:${event.pageY - event.offsetY - 26}px;`;
+              showTip();
+            }
+            input.remove();
+          });
+        });
+
+        // ── input 长度限制 ──
+        document.querySelectorAll("input").forEach(function (el) {
+          el.addEventListener("input", function () {
+            var max = parseInt(this.getAttribute("maxlength"));
+            if (this.value.length > max) this.value = this.value.slice(0, max);
+          });
+        });
+
+        document.querySelectorAll(".back").forEach(el => el.addEventListener("click", () => window.history.back()));
+        document.querySelectorAll(".close").forEach(el => el.addEventListener("click", () => window.close()));
+      });
+    </script>
+  
+
+</body></html>
