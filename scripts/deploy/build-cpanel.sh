@@ -27,7 +27,10 @@ npx next build
 echo "Removing local node_modules copy..."
 rm -rf node_modules
 
+echo "Restoring CloudLinux node_modules symlink..."
+npm install --include=dev
+
 mkdir -p tmp
 touch tmp/restart.txt
 
-echo "Done. In cPanel: Run NPM Install (restores symlink), then RESTART the app."
+echo "Done. RESTART the Node.js app in cPanel if the site does not refresh automatically."
