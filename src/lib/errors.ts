@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 import { logger } from "@/lib/logger";
 
 export class AppError extends Error {
@@ -18,6 +19,11 @@ export function isAppError(error: unknown): error is AppError {
 }
 
 export function apiErrorResponse(error: unknown, fallback = "Something went wrong. Please try again.") {
+  if (error instanceof ZodError) {
+    const message = error.issues[0]?.message ?? "Invalid request data.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
   if (isAppError(error)) {
     logger.warn(error.message, { status: error.status, code: error.code });
     return NextResponse.json(
@@ -28,6 +34,14 @@ export function apiErrorResponse(error: unknown, fallback = "Something went wron
 
   const message = error instanceof Error ? error.message : String(error);
   logger.error("Unhandled API error", { message });
+
+  if (message.includes("not configured") || message.includes("User not allowed")) {
+    return NextResponse.json(
+      { error: "The platform is not fully configured. Please contact support." },
+      { status: 503 }
+    );
+  }
+
   return NextResponse.json({ error: fallback }, { status: 500 });
 }
 

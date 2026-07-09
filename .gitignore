@@ -38,3 +38,4 @@ supabase/.branches/
 
 # Deploy secrets
 .env.deploy
+deploy/.env.production.upload

@@ -4,7 +4,7 @@ const path = require("path");
 const candidates = [
   process.env.ALTORICH_ENV_FILE,
   path.join(__dirname, "../../.env.production"),
-  "/home/altosujd/alto-app/.env.production"
+  "/home/altosujd/repositories/alto-app/.env.production"
 ].filter(Boolean);
 
 function parseEnvFile(filePath) {
@@ -23,7 +23,7 @@ function parseEnvFile(filePath) {
     ) {
       value = value.slice(1, -1);
     }
-    if (!(key in process.env)) {
+    if (!process.env[key]?.trim()) {
       process.env[key] = value;
     }
   }

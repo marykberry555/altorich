@@ -47,24 +47,24 @@ export const IMAGES = {
 /** Package imagery — one distinct visual per Alto tier */
 export const PACKAGE_IMAGES = {
   all: {
-    src: "/images/investment-planning.webp",
-    alt: "Financial planning documents and calculator — structured cooperative packages overview"
+    src: "/images/growth.webp",
+    alt: "AltoRich investment packages — structured cooperative wealth across four tiers"
   },
   starter: {
-    src: "/images/savings-nigeria.webp",
-    alt: "Coins with a growing plant — disciplined savings and lock-plan wealth preservation"
+    src: "/images/starter.webp",
+    alt: "Alto Starter — disciplined savings and high-yield lock plans"
   },
   growth: {
-    src: "/images/agriculture-nigeria.webp",
-    alt: "Young crop rows in golden sunlight — agricultural crowdfunding and harvest cycles"
+    src: "/images/growth.webp",
+    alt: "Alto Growth — agricultural crowdfunding and seasonal harvest cycles"
   },
   premium: {
-    src: "/images/property-lagos.webp",
-    alt: "Model home and keys on a desk — land banking and rental property cooperatives"
+    src: "/images/premium.webp",
+    alt: "Alto Premium — land banking and rental property cooperatives"
   },
   elite: {
-    src: "/images/elite-happy-money.webp",
-    alt: "Happy man holding a fan of foreign banknotes — hard-currency and FX preservation programmes"
+    src: "/images/elite.webp",
+    alt: "Alto Elite — hard-currency and FX preservation programmes"
   }
 } as const satisfies Record<string, ImageAsset>;
 

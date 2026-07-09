@@ -11,6 +11,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Shared hosting (CloudLinux/cPanel) hits EAGAIN if Next spawns many workers.
+  experimental: {
+    workerThreads: false,
+    cpus: 1
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

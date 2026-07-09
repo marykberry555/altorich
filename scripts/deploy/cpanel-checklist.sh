@@ -30,30 +30,46 @@ STEP 2 — Git Version Control (cPanel UI)
 
     Deployment:
       ☑ Enable deployment
-      Deployment path: /home/altosujd/alto-app
+      Deployment path: /home/altosujd/repositories/alto-app
 
 STEP 3 — Setup Node.js App (cPanel UI)
 --------------------------------------
   cPanel → Software → Setup Node.js App → Create Application
 
-    Node.js version:     20.x (or latest LTS available)
+    Node.js version:     22.x
     Application mode:    Production
-    Application root:    /home/altosujd/alto-app
+    Application root:    repositories/alto-app
     Application URL:     altorich.com (or your domain root)
     Application startup: server.js
 
-    Environment variables (set in UI — do NOT commit secrets):
+    Environment variables — set ALL of these in the Node.js UI (required for auth):
       NODE_ENV=production
+      HOSTNAME=0.0.0.0
       NEXT_PUBLIC_SITE_URL=https://altorich.com
-      NEXT_PUBLIC_SUPABASE_URL=...
-      NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-      SUPABASE_SERVICE_ROLE_KEY=...
-      NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=...   (optional)
-      PAYSTACK_SECRET_KEY=...             (optional)
-      RESEND_API_KEY=...                  (optional)
-      NEXT_PUBLIC_ROI_MODE_ENABLED=true   (optional)
+      NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...   (anon JWT)
+      SUPABASE_SERVICE_ROLE_KEY=eyJ...       (service_role JWT — NOT anon)
+      RESEND_API_KEY=re_...                  (email OTP)
+      NEXT_PUBLIC_ROI_MODE_ENABLED=true
+      ALTORICH_LOG_DIR=/home/altosujd/logs
 
-    Alternative: create /home/altosujd/alto-app/.env.production on server only.
+    Also keep /home/altosujd/repositories/alto-app/.env.production as backup.
+
+    CloudLinux: node_modules must be a symlink. Never leave a real node_modules folder.
+    After npm in terminal: rm -rf node_modules → Run NPM Install in cPanel.
+
+STEP 3b — Production build on CloudLinux
+----------------------------------------
+  source /home/altosujd/nodevenv/repositories/alto-app/22/bin/activate
+  cd /home/altosujd/repositories/alto-app
+  npm install --include=dev
+  rm -f node_modules && cp -a .../22/lib/node_modules ./node_modules
+  export NODE_OPTIONS="--max-old-space-size=768"
+  npx next build
+  rm -rf node_modules
+  # cPanel → Run NPM Install → RESTART
+
+  Verify env: node scripts/deploy/verify-production-env.mjs
 
 STEP 4 — Logs directory
 -----------------------

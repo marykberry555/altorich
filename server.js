@@ -2,11 +2,11 @@
  * cPanel / Phusion Passenger entry point for Next.js.
  * Configure "Application startup file" to: server.js
  */
+require("./scripts/deploy/load-env");
+
 const { createServer } = require("http");
 const { parse } = require("url");
 const next = require("next");
-
-require("./scripts/deploy/load-env");
 
 const { logError, logInfo } = require("./scripts/deploy/logger");
 
