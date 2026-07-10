@@ -21,12 +21,15 @@ export class ProfileService {
 
   async updateProfile(
     userId: string,
-    input: { fullName?: string; phone?: string; avatarUrl?: string }
+    input: { fullName?: string; phone?: string; avatarUrl?: string; preferredPackageSlug?: string }
   ) {
     const updates: Database["public"]["Tables"]["profiles"]["Update"] = {};
     if (input.fullName !== undefined) updates.full_name = input.fullName;
     if (input.phone !== undefined) updates.phone = input.phone;
     if (input.avatarUrl !== undefined) updates.avatar_url = input.avatarUrl;
+    if (input.preferredPackageSlug !== undefined) {
+      updates.preferred_package_slug = input.preferredPackageSlug;
+    }
 
     const { data, error } = await this.supabase
       .from("profiles")

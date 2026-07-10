@@ -7,6 +7,7 @@ import { apiErrorResponse, Errors } from "@/lib/errors";
 const profileSchema = z.object({
   fullName: z.string().min(2).optional(),
   phone: z.string().min(10).optional(),
+  preferredPackageSlug: z.enum(["starter", "growth", "premium", "elite"]).optional(),
   notificationPreferences: z
     .object({
       in_app: z.boolean().optional(),
@@ -43,7 +44,8 @@ export async function PATCH(request: NextRequest) {
 
     let profile = await services.profile.updateProfile(user.id, {
       fullName: parsed.data.fullName,
-      phone: parsed.data.phone
+      phone: parsed.data.phone,
+      preferredPackageSlug: parsed.data.preferredPackageSlug
     });
 
     if (parsed.data.notificationPreferences) {

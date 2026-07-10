@@ -2,11 +2,11 @@ import { COMPANY, REGULATORY_PLACEHOLDER } from "@/lib/company";
 import { PACKAGE_IMAGES } from "@/lib/images";
 
 export const hero = {
-  eyebrow: "Premium wealth · built for clarity",
-  title: "Invest with us today and earn 12% to 40% every week!",
+  eyebrow: "Built for Nigeria · WAT-aligned payouts",
+  title: "Grow your naira with clarity — earn 12% to 40% weekly.",
   subtitle:
-    "A fintech platform for individuals and businesses — verified contributions, clear rules, and an auditable wallet ledger.",
-  ctaPrimary: "Get Started",
+    "For salary earners, entrepreneurs, and diaspora investors. Verified bank deposits, transparent ledgers, and payouts every Monday at 09:00 WAT.",
+  ctaPrimary: "Open your account",
   ctaSecondary: "See how it works"
 };
 
@@ -77,10 +77,10 @@ export const investmentCategories = [
 ];
 
 export const howItWorks = [
-  { step: "01", title: "Create your account", description: "Register with email or Google. Complete your profile and verify your phone number." },
-  { step: "02", title: "Fund your wallet", description: "Transfer to our published bank account and submit your reference for admin verification." },
-  { step: "03", title: "Choose a product", description: "Select an investment plan or savings product that matches your goal and timeline." },
-  { step: "04", title: "Track everything", description: "Monitor your portfolio, settlements, and withdrawals from one transparent dashboard." }
+  { step: "01", title: "Create your account", description: "Register with your email, Nigerian phone number, and preferred investment package." },
+  { step: "02", title: "Verify & fund", description: "Complete KYC, transfer from any Nigerian bank, and see funds in your wallet ledger." },
+  { step: "03", title: "Activate your plan", description: "Choose Alto Starter, Growth, Premium, or Elite — track everything in your dashboard." },
+  { step: "04", title: "Earn on schedule", description: "Weekly settlements every Monday. Withdraw to your bank on published windows." }
 ];
 
 export const trustIndicators = [

@@ -30,11 +30,13 @@ export default async function SettingsPage() {
       <PageHero eyebrow="Settings" title="Account & security" description="Manage your profile, payout details, and preferences." />
 
       <Card variant="elevated" className="mt-8">
-        <h2 className="font-semibold text-[var(--heading)]">Profile</h2>
+        <h2 className="font-semibold text-[var(--heading)]">Profile & package</h2>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">Update your details or change your preferred investment package.</p>
         <div className="mt-4">
           <ProfileSettingsForm
             initialName={profile?.full_name ?? ""}
             initialPhone={profile?.phone ?? ""}
+            initialPreferredPackage={(profile?.preferred_package_slug as "starter" | "growth" | "premium" | "elite" | undefined) ?? ""}
             prefs={prefs}
           />
         </div>

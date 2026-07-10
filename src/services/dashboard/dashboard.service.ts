@@ -11,6 +11,7 @@ export type MemberDashboardData = {
   profile: Database["public"]["Tables"]["profiles"]["Row"] | null;
   balance: number;
   pendingDeposits: number;
+  pendingWithdrawals: number;
   activeInvestments: number;
   portfolio: Awaited<ReturnType<InvestmentService["getPortfolioSummary"]>>;
   referralCount: number;
@@ -71,15 +72,20 @@ export class DashboardService {
 
     const recentDeposits = await this.deposits.listForUser(userId, 5);
 
-    const referralResult = await this.supabase
-      .from("referrals")
-      .select("*", { count: "exact", head: true })
-      .eq("referrer_id", userId);
+    const [referralResult, pendingWithdrawalsResult] = await Promise.all([
+      this.supabase.from("referrals").select("*", { count: "exact", head: true }).eq("referrer_id", userId),
+      this.supabase
+        .from("withdrawals")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("status", "pending")
+    ]);
 
     return {
       profile,
       balance,
       pendingDeposits: depositStats.pending,
+      pendingWithdrawals: pendingWithdrawalsResult.count ?? 0,
       activeInvestments: portfolio.activeCount,
       portfolio,
       referralCount: referralResult.count ?? 0,

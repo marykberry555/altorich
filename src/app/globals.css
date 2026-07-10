@@ -200,6 +200,11 @@ img {
   50% { opacity: 0.6; }
 }
 
+@keyframes countdown-pop {
+  0% { opacity: 0; transform: translateY(8px) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* Focus */
 :focus-visible {
   outline: 2px solid var(--emerald-mid);

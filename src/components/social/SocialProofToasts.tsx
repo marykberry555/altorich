@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const SIGNUP_MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -45,7 +46,27 @@ function timeAgo(ms: number, now: number) {
   return "Recently";
 }
 
+const MEMBER_ROUTE_PREFIXES = [
+  "/dashboard",
+  "/wallet",
+  "/portfolio",
+  "/deposits",
+  "/withdrawals",
+  "/notifications",
+  "/settings",
+  "/profile",
+  "/team",
+  "/activities",
+  "/vip",
+  "/hard"
+];
+
+function isMemberRoute(pathname: string) {
+  return MEMBER_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 export function SocialProofToasts({ className }: { className?: string }) {
+  const pathname = usePathname();
   const [mountedAt] = useState(() => Date.now());
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(false);
@@ -81,6 +102,7 @@ export function SocialProofToasts({ className }: { className?: string }) {
     };
   }, [events.length]);
 
+  if (isMemberRoute(pathname)) return null;
   if (!current) return null;
 
   return (

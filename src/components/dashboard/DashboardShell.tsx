@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
@@ -9,8 +9,9 @@ import { COMPANY } from "@/lib/company";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/Button";
-import { AvatarUpload } from "@/components/profile/AvatarUpload";
-import { FloatingMemberBar } from "@/components/dashboard/FloatingMemberBar";
+import { MemberAvatar } from "@/components/profile/MemberAvatar";
+import { MemberIdentity } from "@/components/dashboard/MemberIdentity";
+import { PremiumPayoutCountdown } from "@/components/roi/PremiumPayoutCountdown";
 import { dashboardNavItems, getDashboardNavLabel, mobileDashboardNavItems } from "@/lib/dashboard/nav";
 
 type Props = {
@@ -35,10 +36,9 @@ function NavPanel({
 
   return (
     <>
-      <div className="relative overflow-hidden border-b border-[var(--border)] px-4 py-5">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--emerald)]/10 via-transparent to-transparent" aria-hidden />
-        <div className="relative flex items-center gap-3">
-          <AvatarUpload fullName={fullName} avatarUrl={avatarUrl} size="md" />
+      <div className="border-b border-[var(--border)] px-4 py-5">
+        <div className="flex items-center gap-3">
+          <MemberAvatar fullName={fullName} avatarUrl={avatarUrl} size="md" />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[var(--heading)]">{fullName}</p>
             {email ? <p className="truncate text-xs text-[var(--text-muted)]">{email}</p> : null}
@@ -109,40 +109,62 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-30 px-4 pt-3 lg:px-8">
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)]/90 px-4 py-3 shadow-sm backdrop-blur-xl">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-10 w-10 shrink-0 p-0 lg:hidden"
-                onClick={() => setMobileOpen(true)}
-                aria-label="Open navigation menu"
-              >
-                <Menu size={18} />
-              </Button>
-              <div className="min-w-0 lg:hidden">
-                <BrandLogo variant="icon" href="/dashboard" />
+        <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--dashboard-bg)]/95 backdrop-blur-md">
+          <div className="mx-auto max-w-6xl px-4 py-3 lg:px-8">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-10 w-10 shrink-0 p-0 lg:hidden"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label="Open navigation menu"
+                >
+                  <Menu size={18} />
+                </Button>
+                <div className="min-w-0 lg:hidden">
+                  <BrandLogo variant="icon" href="/dashboard" />
+                </div>
+                <div className="min-w-0 hidden lg:block">
+                  <p className="truncate text-base font-semibold tracking-tight text-[var(--heading)]">
+                    {isOverview ? "Overview" : pageLabel}
+                  </p>
+                  <p className="truncate text-xs text-[var(--text-muted)]">{COMPANY.brand} member portal</p>
+                </div>
               </div>
-              <div className="min-w-0 hidden lg:block">
-                <p className="truncate text-sm font-semibold text-[var(--heading)]">{isOverview ? "Overview" : pageLabel}</p>
-                <p className="truncate text-xs text-[var(--text-muted)]">{COMPANY.brand}</p>
+
+              <div className="hidden items-center gap-3 sm:flex">
+                {isOverview ? <PremiumPayoutCountdown variant="compact" className="hidden md:inline-flex" /> : null}
+                <MemberIdentity fullName={fullName} avatarUrl={avatarUrl} className="hidden lg:flex" />
+                <MemberAvatar fullName={fullName} avatarUrl={avatarUrl} size="sm" className="lg:hidden" />
+                <div className="flex items-center gap-2">
+                  <ThemeToggle compact />
+                  <form action="/api/auth/logout" method="post">
+                    <Button type="submit" variant="outline" size="sm" className="gap-2">
+                      <LogOut size={16} aria-hidden />
+                      <span className="hidden sm:inline">Sign out</span>
+                    </Button>
+                  </form>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 sm:hidden">
+                <ThemeToggle compact />
+                <form action="/api/auth/logout" method="post">
+                  <Button type="submit" variant="outline" size="sm" className="h-10 w-10 p-0" aria-label="Sign out">
+                    <LogOut size={16} />
+                  </Button>
+                </form>
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <ThemeToggle compact />
-              <form action="/api/auth/logout" method="post">
-                <Button type="submit" variant="outline" size="sm" className="gap-2">
-                  <LogOut size={16} aria-hidden />
-                  <span className="hidden sm:inline">Sign out</span>
-                </Button>
-              </form>
+
+            <div className="mt-3 flex flex-col gap-2 border-t border-[var(--border)] pt-3 lg:hidden">
+              <MemberIdentity fullName={fullName} avatarUrl={avatarUrl} pageLabel={pageLabel} showPageLabel={!isOverview} />
+              {isOverview ? <PremiumPayoutCountdown variant="compact" className="w-fit" /> : null}
             </div>
           </div>
         </header>
-
-        <FloatingMemberBar fullName={fullName} avatarUrl={avatarUrl} pageLabel={pageLabel} isOverview={isOverview} />
 
         {mobileOpen ? (
           <div className="fixed inset-0 z-50 lg:hidden">
@@ -161,9 +183,14 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
           </div>
         ) : null}
 
-        <main className="dashboard-main mx-auto max-w-6xl space-y-6 !px-4 !pb-24 !pt-5 sm:space-y-8 sm:!py-6 lg:!px-8 lg:!py-8 lg:!pb-8">{children}</main>
+        <main className="dashboard-main mx-auto max-w-6xl space-y-6 !px-4 !pb-20 !pt-5 sm:space-y-8 sm:!py-6 lg:!px-8 lg:!py-8 lg:!pb-8">
+          {children}
+        </main>
 
-        <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-[var(--border)] bg-[var(--surface-raised)]/95 px-1 py-1.5 backdrop-blur-md lg:hidden" aria-label="Mobile dashboard">
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-[var(--border)] bg-[var(--surface-raised)]/95 px-1 py-1.5 backdrop-blur-md lg:hidden"
+          aria-label="Mobile dashboard"
+        >
           {mobileDashboardNavItems.map((item) => {
             const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;

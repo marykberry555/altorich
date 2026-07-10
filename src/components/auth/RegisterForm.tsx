@@ -12,6 +12,8 @@ import { PinField } from "@/components/ui/PinField";
 import { MathChallenge, useMathChallenge } from "@/components/ui/MathChallenge";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
+import type { PackageSlug } from "@/content/packages";
+import { PackageSelectionField } from "@/components/auth/PackageSelectionField";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export function RegisterForm() {
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [referralCode, setReferralCode] = useState("");
+  const [preferredPackage, setPreferredPackage] = useState<PackageSlug | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [otpOpen, setOtpOpen] = useState(false);
@@ -35,6 +38,10 @@ export function RegisterForm() {
   async function handleRegister(event: React.FormEvent) {
     event.preventDefault();
     if (!math.solved) return;
+    if (!preferredPackage) {
+      setError("Select your preferred investment package.");
+      return;
+    }
     if (!isSupabaseConfigured()) {
       setError("Supabase is not configured.");
       return;
@@ -47,7 +54,15 @@ export function RegisterForm() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, username, email, phone, pin, referralCode: referralCode || undefined })
+        body: JSON.stringify({
+          fullName,
+          username,
+          email,
+          phone,
+          pin,
+          referralCode: referralCode || undefined,
+          preferredPackage
+        })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -81,7 +96,7 @@ export function RegisterForm() {
       <Card variant="elevated" padding="lg" className="w-full">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">Create your account</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Secure onboarding with email verification and a personal 6-digit pin.</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Join in minutes — verify your email, set a 6-digit pin, and pick your investment plan.</p>
         </div>
 
         <form onSubmit={handleRegister} className="grid gap-3">
@@ -94,7 +109,8 @@ export function RegisterForm() {
             hint="3–24 characters: letters, numbers, underscore"
           />
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Input label="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="080..." />
+          <Input label="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="08012345678" />
+          <PackageSelectionField value={preferredPackage} onChange={setPreferredPackage} disabled={loading} />
           <PinField value={pin} onChange={setPin} autoComplete="new-password" />
           <Input label="Referral code (optional)" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} />
           <MathChallenge challenge={math.challenge} answer={math.answer} onAnswerChange={math.setAnswer} />

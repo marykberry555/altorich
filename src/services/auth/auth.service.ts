@@ -64,6 +64,7 @@ export class AuthService {
     phone: string;
     pin: string;
     referralCode?: string;
+    preferredPackage: "starter" | "growth" | "premium" | "elite";
   }) {
     const username = input.username.trim().toLowerCase();
     if (!/^[a-z0-9_]{3,24}$/.test(username)) {
@@ -97,6 +98,7 @@ export class AuthService {
         username,
         pin_hash: pinHash,
         referral_code: input.referralCode ?? null,
+        preferred_package_slug: input.preferredPackage,
         must_change_pin: false
       }
     });
@@ -108,7 +110,16 @@ export class AuthService {
     }
     if (!created.user) throw Errors.internal();
 
-    await this.supabase.from("profiles").update({ username, pin_hash: pinHash, phone, full_name: input.fullName.trim() }).eq("id", created.user.id);
+    await this.supabase
+      .from("profiles")
+      .update({
+        username,
+        pin_hash: pinHash,
+        phone,
+        full_name: input.fullName.trim(),
+        preferred_package_slug: input.preferredPackage
+      })
+      .eq("id", created.user.id);
 
     const otp = await this.createOtp(email, "register", created.user.id);
 

@@ -32,6 +32,7 @@ export type Database = {
           email_verified_at: string | null;
           must_change_pin: boolean;
           must_change_password: boolean;
+          preferred_package_slug: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -50,6 +51,7 @@ export type Database = {
           email_verified_at?: string | null;
           must_change_pin?: boolean;
           must_change_password?: boolean;
+          preferred_package_slug?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]> & {
           notification_preferences?: Json;
@@ -62,6 +64,7 @@ export type Database = {
           email_verified_at?: string | null;
           must_change_pin?: boolean;
           must_change_password?: boolean;
+          preferred_package_slug?: string | null;
         };
         Relationships: TableRelationships;
       };

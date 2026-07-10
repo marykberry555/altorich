@@ -73,7 +73,9 @@ export function AvatarUpload({ fullName, avatarUrl, size = "md", className }: Pr
         ref={inputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp"
-        className="sr-only"
+        className="hidden"
+        tabIndex={-1}
+        aria-hidden
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) void handleFile(file);

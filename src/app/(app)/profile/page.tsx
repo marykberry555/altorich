@@ -5,6 +5,7 @@ import { KycSection } from "@/components/profile/KycSection";
 import { StatusBadge } from "@/components/design-system";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { formatNaira } from "@/lib/domain";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
@@ -41,13 +42,20 @@ export default async function ProfilePage() {
       <PageHero eyebrow="Profile" title="Member account" description="Manage your identity, balances, and account shortcuts." />
 
       <Card variant="elevated" className="mt-8">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-[var(--text-subtle)]">Signed in as</p>
-            <h2 className="text-xl font-bold text-[var(--heading)]">{profile?.full_name || user?.email || "Member"}</h2>
-            <p className="text-sm text-[var(--text-muted)]">{profile?.phone || user?.email || "Add phone in settings"}</p>
-            <div className="mt-2">
-              <StatusBadge status={kycStatus} />
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-4">
+            <AvatarUpload
+              fullName={profile?.full_name || user?.email || "Member"}
+              avatarUrl={profile?.avatar_url}
+              size="lg"
+            />
+            <div>
+              <p className="text-sm text-[var(--text-subtle)]">Signed in as</p>
+              <h2 className="text-xl font-bold text-[var(--heading)]">{profile?.full_name || user?.email || "Member"}</h2>
+              <p className="text-sm text-[var(--text-muted)]">{profile?.phone || user?.email || "Add phone in settings"}</p>
+              <div className="mt-2">
+                <StatusBadge status={kycStatus} />
+              </div>
             </div>
           </div>
           <Badge variant="gold">VIP {profile?.vip_level ?? 0}</Badge>
