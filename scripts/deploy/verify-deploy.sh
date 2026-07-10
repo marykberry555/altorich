@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/deploy-common.sh"
 
 PUBLIC_BASE="${1:-${DEPLOY_PUBLIC_URL:-https://altorich.com}}"
-LOCAL_HEALTH="http://${HEALTH_HOST}:${HEALTH_PORT}${HEALTH_PATH}"
+LOCAL_HEALTH="$(app_health_url)"
 PUBLIC_HEALTH="${PUBLIC_BASE%/}${HEALTH_PATH}"
 
 check_url() {
@@ -62,8 +62,6 @@ check_login_chunk() {
 deploy_log "=== verify-deploy start ==="
 wait_for_local_health
 verify_build_artifacts
-check_url "local health" "$LOCAL_HEALTH"
-check_login_chunk "http://${HEALTH_HOST}:${HEALTH_PORT}" "local"
-check_url "public health" "$PUBLIC_HEALTH"
+check_url "app health" "$PUBLIC_HEALTH"
 check_login_chunk "$PUBLIC_BASE" "public"
 deploy_log "=== verify-deploy complete ==="

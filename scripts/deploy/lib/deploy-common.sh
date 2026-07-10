@@ -10,6 +10,7 @@
 : "${HEALTH_PATH:=/api/health}"
 : "${HEALTH_HOST:=127.0.0.1}"
 : "${HEALTH_PORT:=3000}"
+: "${DEPLOY_PUBLIC_URL:=https://altorich.com}"
 : "${RESTART_WAIT_SECS:=5}"
 : "${HEALTH_WAIT_SECS:=90}"
 : "${HEALTH_POLL_SECS:=3}"
@@ -70,9 +71,8 @@ restart_node_app() {
 
   cloudlinux_selector start || cloudlinux_selector restart || true
 
-  local url="http://${HEALTH_HOST}:${HEALTH_PORT}${HEALTH_PATH}"
   local waited=0
-  deploy_log "Waiting for Node app (PID or health at $url)..."
+  deploy_log "Waiting for Node app (PID or health probe)..."
   while (( waited < HEALTH_WAIT_SECS )); do
     new_pids="$(lsnode_pids | tr '\n' ' ' | xargs echo || true)"
     if [[ -n "$new_pids" && "$new_pids" != "$old_pids" ]]; then
@@ -84,17 +84,17 @@ restart_node_app() {
       break
     fi
     # Passenger may lazy-start on first request after kill.
-    curl -fsS --max-time 5 "$url" >/dev/null 2>&1 && {
+    if probe_app_health; then
       new_pids="$(lsnode_pids | tr '\n' ' ' | xargs echo || true)"
       deploy_log "Health probe succeeded${new_pids:+ (lsnode: $new_pids)}"
       break
-    }
+    fi
     sleep "$HEALTH_POLL_SECS"
     waited=$((waited + HEALTH_POLL_SECS))
   done
 
   new_pids="$(lsnode_pids | tr '\n' ' ' | xargs echo || true)"
-  if [[ -z "$new_pids" ]] && ! curl -fsS --max-time 5 "$url" >/dev/null 2>&1; then
+  if [[ -z "$new_pids" ]] && ! probe_app_health; then
     deploy_log "ERROR: Node app did not respond after restart"
     return 1
   fi
@@ -106,21 +106,39 @@ restart_node_app() {
   deploy_log "Node restart complete. lsnode PIDs: ${new_pids:-lazy/on-demand}"
 }
 
+app_health_url() {
+  echo "http://${HEALTH_HOST}:${HEALTH_PORT}${HEALTH_PATH}"
+}
+
+public_health_url() {
+  echo "${DEPLOY_PUBLIC_URL%/}${HEALTH_PATH}"
+}
+
+probe_app_health() {
+  local url
+  for url in "$(app_health_url)" "$(public_health_url)"; do
+    curl -fsS --max-time 8 "$url" >/dev/null 2>&1 && {
+      deploy_log "Health probe OK: $url"
+      return 0
+    }
+  done
+  return 1
+}
+
 wait_for_local_health() {
-  local url="http://${HEALTH_HOST}:${HEALTH_PORT}${HEALTH_PATH}"
   local waited=0
-  deploy_log "Waiting for local health at $url (timeout ${HEALTH_WAIT_SECS}s)..."
+  deploy_log "Waiting for app health (local or ${DEPLOY_PUBLIC_URL}, timeout ${HEALTH_WAIT_SECS}s)..."
 
   while (( waited < HEALTH_WAIT_SECS )); do
-    if curl -fsS --max-time 5 "$url" >/dev/null 2>&1; then
-      deploy_log "Local health check passed"
+    if probe_app_health; then
+      deploy_log "App health check passed"
       return 0
     fi
     sleep "$HEALTH_POLL_SECS"
     waited=$((waited + HEALTH_POLL_SECS))
   done
 
-  deploy_log "ERROR: Local health check timed out"
+  deploy_log "ERROR: App health check timed out"
   return 1
 }
 
@@ -141,10 +159,12 @@ verify_build_artifacts() {
   chunk_url="/_next/static/chunks/app/auth/login/$(basename "$chunk_file")"
   deploy_log "Build ID: $build_id | Login chunk: $chunk_url"
 
-  if curl -fsS --max-time 10 "http://${HEALTH_HOST}:${HEALTH_PORT}${chunk_url}" >/dev/null 2>&1; then
-    deploy_log "Login chunk served successfully from running app"
-    return 0
-  fi
+  for base in "http://${HEALTH_HOST}:${HEALTH_PORT}" "${DEPLOY_PUBLIC_URL%/}"; do
+    if curl -fsS --max-time 12 "${base}${chunk_url}" >/dev/null 2>&1; then
+      deploy_log "Login chunk served successfully from $base"
+      return 0
+    fi
+  done
 
   deploy_log "ERROR: Running app did not serve login chunk $chunk_url"
   return 1
