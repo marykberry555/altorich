@@ -70,7 +70,9 @@ restart_node_app() {
 
   cloudlinux_selector start || cloudlinux_selector restart || true
 
+  local url="http://${HEALTH_HOST}:${HEALTH_PORT}${HEALTH_PATH}"
   local waited=0
+  deploy_log "Waiting for Node app (PID or health at $url)..."
   while (( waited < HEALTH_WAIT_SECS )); do
     new_pids="$(lsnode_pids | tr '\n' ' ' | xargs echo || true)"
     if [[ -n "$new_pids" && "$new_pids" != "$old_pids" ]]; then
@@ -81,21 +83,27 @@ restart_node_app() {
       deploy_log "lsnode process started: $new_pids"
       break
     fi
+    # Passenger may lazy-start on first request after kill.
+    curl -fsS --max-time 5 "$url" >/dev/null 2>&1 && {
+      new_pids="$(lsnode_pids | tr '\n' ' ' | xargs echo || true)"
+      deploy_log "Health probe succeeded${new_pids:+ (lsnode: $new_pids)}"
+      break
+    }
     sleep "$HEALTH_POLL_SECS"
     waited=$((waited + HEALTH_POLL_SECS))
   done
 
   new_pids="$(lsnode_pids | tr '\n' ' ' | xargs echo || true)"
-  if [[ -z "$new_pids" ]]; then
-    deploy_log "ERROR: No lsnode process found after restart"
+  if [[ -z "$new_pids" ]] && ! curl -fsS --max-time 5 "$url" >/dev/null 2>&1; then
+    deploy_log "ERROR: Node app did not respond after restart"
     return 1
   fi
 
-  if [[ -n "$old_pids" && "$old_pids" == "$new_pids" ]]; then
-    deploy_log "WARNING: lsnode PID unchanged after restart ($new_pids)"
+  if [[ -n "$old_pids" && -n "$new_pids" && "$old_pids" == "$new_pids" ]]; then
+    deploy_log "WARNING: lsnode PID unchanged ($new_pids) but app may still be healthy"
   fi
 
-  deploy_log "Node restart complete. lsnode PIDs: $new_pids"
+  deploy_log "Node restart complete. lsnode PIDs: ${new_pids:-lazy/on-demand}"
 }
 
 wait_for_local_health() {
