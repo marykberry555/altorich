@@ -17,6 +17,7 @@
     "type-check": "tsc --noEmit",
     "brand:optimize": "node scripts/optimize-brand-assets.mjs",
     "pwa:icons": "npm run brand:optimize",
+    "admin-app:icons": "node scripts/generate-admin-app-icons.mjs",
     "android:build": "bash scripts/android/build-twa.sh",
     "images:optimize": "node scripts/optimize-marketing-images.mjs",
     "verify:db": "node scripts/verify-database.mjs",

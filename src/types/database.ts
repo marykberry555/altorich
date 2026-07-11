@@ -365,6 +365,79 @@ export type Database = {
         Update: never;
         Relationships: TableRelationships;
       };
+      login_activity: {
+        Row: {
+          id: string;
+          user_id: string;
+          ip_address: string | null;
+          user_agent: string | null;
+          device_type: string | null;
+          browser: string | null;
+          operating_system: string | null;
+          city: string | null;
+          country: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          device_type?: string | null;
+          browser?: string | null;
+          operating_system?: string | null;
+          city?: string | null;
+          country?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["login_activity"]["Insert"]>;
+        Relationships: TableRelationships;
+      };
+      admin_notifications: {
+        Row: {
+          id: string;
+          event_type: string;
+          title: string;
+          body: string;
+          entity_type: string | null;
+          entity_id: string | null;
+          metadata: Json;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_type: string;
+          title: string;
+          body: string;
+          entity_type?: string | null;
+          entity_id?: string | null;
+          metadata?: Json;
+          read_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["admin_notifications"]["Insert"]>;
+        Relationships: TableRelationships;
+      };
+      admin_push_subscriptions: {
+        Row: {
+          id: string;
+          admin_user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["admin_push_subscriptions"]["Insert"]>;
+        Relationships: TableRelationships;
+      };
       activity_logs: TableStub;
       admin_roles: TableStub;
       investment_settlements: {

@@ -6,6 +6,7 @@ import { applySessionToCookies } from "@/lib/auth/apply-session";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
 import { getServiceClientOrThrow } from "@/lib/auth/session";
 import { userIsAdmin } from "@/lib/auth/admin-role";
+import { captureLoginActivity } from "@/lib/auth/capture-login-activity";
 
 const schema = z.object({
   username: z.string().min(3),
@@ -35,6 +36,8 @@ export async function POST(req: Request) {
     }
 
     await applySessionToCookies(result.session);
+
+    await captureLoginActivity(req, result.userId);
 
     const supabase = await getServiceClientOrThrow();
     const isAdmin = await userIsAdmin(supabase, result.userId);

@@ -8,7 +8,21 @@ import { Card } from "@/components/ui/Card";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
 
-export function AdminLoginForm() {
+type Props = {
+  intent?: "ops" | "admin-app";
+  successRedirect?: string;
+  title?: string;
+  subtitle?: string;
+  submitLabel?: string;
+};
+
+export function AdminLoginForm({
+  intent = "ops",
+  successRedirect = "/hard",
+  title = "Operations sign in",
+  subtitle = "Admin and finance operators only.",
+  submitLabel = "Sign in to ops centre"
+}: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,7 +43,7 @@ export function AdminLoginForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, intent })
       });
       const data = await res.json();
 
@@ -39,7 +53,7 @@ export function AdminLoginForm() {
         return;
       }
 
-      window.location.assign(data.redirect ?? "/hard");
+      window.location.assign(data.redirect ?? successRedirect);
     } catch {
       setError("Network error. Please try again.");
       setLoading(false);
@@ -50,8 +64,8 @@ export function AdminLoginForm() {
     <AuthShell>
       <Card variant="elevated" padding="lg" className="w-full">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">Operations sign in</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Admin and finance operators only.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">{title}</h1>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="grid gap-3">
@@ -66,7 +80,7 @@ export function AdminLoginForm() {
           />
           {error ? <p className="text-xs text-red-600">{error}</p> : null}
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Signing in..." : "Sign in to ops centre"}
+            {loading ? "Signing in..." : submitLabel}
           </Button>
         </form>
 

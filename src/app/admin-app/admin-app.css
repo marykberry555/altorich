@@ -1,0 +1,35 @@
+.admin-app-root {
+  --dashboard-bg: #09090b;
+  --surface-raised: #18181b;
+  --heading: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-subtle: #71717a;
+  --border: rgba(255, 255, 255, 0.08);
+  --emerald: #34d399;
+  --emerald-soft: rgba(52, 211, 153, 0.12);
+  --gray-100: rgba(255, 255, 255, 0.06);
+  color-scheme: dark;
+}
+
+.admin-app-root .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #f4f4f5;
+  transition: background 0.15s ease;
+}
+
+.admin-app-root .button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-app-root .button.warn {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fecaca;
+}

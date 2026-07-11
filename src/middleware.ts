@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { HARD_OPS_HOME } from "@/lib/hard-ops";
+import { ADMIN_APP_HOME } from "@/lib/admin-app/constants";
 import { buildPublicUrl } from "@/lib/request-url";
 import { applyDocumentNoStoreHeaders } from "@/lib/cache/response-headers";
 import { botBlockedResponse, isBlockedBot, X_ROBOTS_TAG } from "@/lib/security/bot-block";
@@ -29,6 +30,7 @@ const authRoutes = [
   "/auth/change-password",
   "/auth/verify",
   "/hard/auth",
+  "/admin-app/login",
   "/login",
   "/signup",
   "/auth/callback",
@@ -39,6 +41,48 @@ const authRoutes = [
 
 function isHardOpsRoute(pathname: string) {
   return pathname === HARD_OPS_HOME || (pathname.startsWith(`${HARD_OPS_HOME}/`) && !pathname.startsWith("/hard/auth"));
+}
+
+function isAdminAppRoute(pathname: string) {
+  if (pathname === `${ADMIN_APP_HOME}/manifest.webmanifest`) return false;
+  if (pathname === `${ADMIN_APP_HOME}/sw.js`) return false;
+  return pathname === ADMIN_APP_HOME || (pathname.startsWith(`${ADMIN_APP_HOME}/`) && !pathname.startsWith("/admin-app/login"));
+}
+
+async function enforceAdminRoute(
+  request: NextRequest,
+  supabase: NonNullable<Awaited<ReturnType<typeof updateSession>>["supabase"]>,
+  user: NonNullable<Awaited<ReturnType<typeof updateSession>>["user"]>
+) {
+  let isAdminRole = false;
+  try {
+    const { data } = await supabase.rpc("has_admin_role");
+    isAdminRole = Boolean(data);
+  } catch {
+    isAdminRole = false;
+  }
+
+  if (!isAdminRole) {
+    return withNoStore(NextResponse.redirect(buildPublicUrl("/dashboard", request)));
+  }
+
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("must_change_password")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile?.must_change_password && !request.nextUrl.pathname.startsWith("/auth/change-password")) {
+      const changeUrl = buildPublicUrl("/auth/change-password", request);
+      changeUrl.searchParams.set("admin", "1");
+      return withNoStore(NextResponse.redirect(changeUrl));
+    }
+  } catch {
+    // Allow request through; layout will re-check access.
+  }
+
+  return null;
 }
 
 function withNoStore(response: NextResponse) {
@@ -79,8 +123,9 @@ export async function middleware(request: NextRequest) {
 
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
   const isHardOps = isHardOpsRoute(pathname);
+  const isAdminApp = isAdminAppRoute(pathname);
 
-  if (!isProtected && !isHardOps) {
+  if (!isProtected && !isHardOps && !isAdminApp) {
     return withNoStore(response);
   }
 
@@ -89,7 +134,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!user) {
-    const loginUrl = buildPublicUrl("/auth/login", request);
+    const loginUrl = buildPublicUrl(isAdminApp ? "/admin-app/login" : "/auth/login", request);
     loginUrl.searchParams.set("redirect", pathname);
     return withNoStore(NextResponse.redirect(loginUrl));
   }
@@ -107,33 +152,13 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isHardOps && supabase) {
-    let isAdminRole = false;
-    try {
-      const { data } = await supabase.rpc("has_admin_role");
-      isAdminRole = Boolean(data);
-    } catch {
-      isAdminRole = false;
-    }
+    const denied = await enforceAdminRoute(request, supabase, user);
+    if (denied) return denied;
+  }
 
-    if (!isAdminRole) {
-      return withNoStore(NextResponse.redirect(buildPublicUrl("/dashboard", request)));
-    }
-
-    try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("must_change_password")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (profile?.must_change_password && !pathname.startsWith("/auth/change-password")) {
-        const changeUrl = buildPublicUrl("/auth/change-password", request);
-        changeUrl.searchParams.set("admin", "1");
-        return withNoStore(NextResponse.redirect(changeUrl));
-      }
-    } catch {
-      // Allow request through; hard ops layout will re-check access.
-    }
+  if (isAdminApp && supabase) {
+    const denied = await enforceAdminRoute(request, supabase, user);
+    if (denied) return denied;
   }
 
   return withNoStore(response);
