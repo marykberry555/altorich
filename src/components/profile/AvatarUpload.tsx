@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { getInitials } from "@/lib/utils/avatar";
+
+export const AVATAR_UPDATED_EVENT = "altorich:avatar-updated";
 
 type Props = {
   fullName: string;
@@ -14,11 +14,14 @@ type Props = {
 };
 
 export function AvatarUpload({ fullName, avatarUrl, size = "md", className }: Props) {
-  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const initials = getInitials(fullName);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(avatarUrl ?? null);
+
+  useEffect(() => {
+    setPreviewUrl(avatarUrl ?? null);
+  }, [avatarUrl]);
   const dim = size === "lg" ? "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]" : "h-11 w-11";
 
   async function handleFile(file: File) {
@@ -33,7 +36,11 @@ export function AvatarUpload({ fullName, avatarUrl, size = "md", className }: Pr
         setError(data.error ?? "Upload failed.");
         return;
       }
-      router.refresh();
+      const url = (data.url as string) ?? null;
+      if (url) {
+        setPreviewUrl(url);
+        window.dispatchEvent(new CustomEvent(AVATAR_UPDATED_EVENT, { detail: { url } }));
+      }
     } catch {
       setError("Could not upload photo.");
     } finally {
@@ -53,12 +60,12 @@ export function AvatarUpload({ fullName, avatarUrl, size = "md", className }: Pr
         )}
         aria-label="Update profile photo"
       >
-        {avatarUrl ? (
+        {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+          <img src={previewUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="flex h-full w-full items-center justify-center bg-[var(--emerald-soft)] text-base font-semibold text-[var(--emerald)]">
-            {initials}
+          <span className="flex h-full w-full items-center justify-center bg-[var(--emerald-soft)] text-[var(--emerald)]">
+            <Camera size={size === "lg" ? 24 : 18} aria-hidden />
           </span>
         )}
         <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">

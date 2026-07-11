@@ -6,6 +6,7 @@ import type { ReferralDashboard } from "@/lib/referral/types";
 import { formatNaira } from "@/lib/domain";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Card } from "@/components/ui/Card";
 import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
 import { capAccountNumberInput } from "@/lib/validation/identity";
@@ -66,7 +67,7 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
     setError("");
     setMessage("");
 
-    const parsed = Number(amount);
+    const parsed = parseCurrencyInput(amount);
     const response = await fetch("/api/referrals/payouts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -109,14 +110,11 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
       ) : null}
 
       <form onSubmit={submit} className="mt-5 space-y-4">
-        <Input
+        <CurrencyInput
           label="Requested amount"
-          type="number"
-          min={dashboard.minPayoutThreshold}
-          max={dashboard.referralWalletBalance}
-          step={100}
+          prefix="₦"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={setAmount}
           required
           disabled={!dashboard.canRequestPayout}
         />

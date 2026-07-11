@@ -15,20 +15,20 @@ import { MARKETING_HOME } from "@/lib/pwa/config";
 
 type Props = {
   fullName: string;
-  email?: string;
+  username?: string | null;
   avatarUrl?: string | null;
   children: React.ReactNode;
 };
 
 function NavPanel({
   fullName,
-  email,
+  username,
   avatarUrl,
   onNavigate,
   variant = "surface"
 }: {
   fullName: string;
-  email?: string;
+  username?: string | null;
   avatarUrl?: string | null;
   onNavigate?: () => void;
   variant?: "sidebar" | "surface";
@@ -55,9 +55,9 @@ function NavPanel({
             >
               {fullName}
             </p>
-            {email ? (
+            {username ? (
               <p className={cn("truncate text-xs", isSidebar ? "text-[var(--sidebar-muted)]" : "text-[var(--text-muted)]")}>
-                {email}
+                @{username}
               </p>
             ) : null}
           </div>
@@ -95,11 +95,11 @@ function NavPanel({
   );
 }
 
-export function DashboardShell({ fullName, email, avatarUrl, children }: Props) {
+export function DashboardShell({ fullName, username, avatarUrl, children }: Props) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const pageLabel = getDashboardNavLabel(pathname);
-  const isOverview = pathname === "/dashboard";
+  const isDashboard = pathname === "/dashboard";
 
   useEffect(() => {
     setMobileOpen(false);
@@ -125,7 +125,7 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
         <div className="mb-4 px-2">
           <BrandLogo variant="full" href={MARKETING_HOME} priority />
         </div>
-        <NavPanel fullName={fullName} email={email} avatarUrl={avatarUrl} variant="sidebar" />
+        <NavPanel fullName={fullName} username={username} avatarUrl={avatarUrl} variant="sidebar" />
         <div className="mt-auto flex flex-col gap-2 border-t border-white/10 p-3">
           <ThemeToggle compact />
           <DownloadAppBadge size="sm" tone="surface" className="w-full justify-center" />
@@ -153,18 +153,20 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
                 >
                   <Menu size={18} />
                 </Button>
-                <div className="min-w-0 lg:hidden">
-                  <BrandLogo variant="icon" href={MARKETING_HOME} />
-                </div>
                 <div className="min-w-0 hidden lg:block">
                   <p className="truncate text-base font-semibold tracking-tight text-[var(--heading)]">
-                    {isOverview ? "Overview" : pageLabel}
+                    {isDashboard ? "Dashboard" : pageLabel}
+                  </p>
+                </div>
+                <div className="min-w-0 lg:hidden">
+                  <p className="truncate text-base font-semibold tracking-tight text-[var(--heading)]">
+                    {isDashboard ? "Dashboard" : pageLabel}
                   </p>
                 </div>
               </div>
 
               <div className="hidden items-center gap-2 sm:flex">
-                {!isOverview ? <MemberAvatar fullName={fullName} avatarUrl={avatarUrl} size="sm" /> : null}
+                {!isDashboard ? <MemberAvatar fullName={fullName} avatarUrl={avatarUrl} size="sm" /> : null}
                 <ThemeToggle compact />
                 <form action="/api/auth/logout" method="post">
                   <Button type="submit" variant="outline" size="sm" className="gap-2">
@@ -199,7 +201,7 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
               <div className="flex max-h-[calc(100dvh-56px)] flex-col overflow-y-auto">
                 <NavPanel
                   fullName={fullName}
-                  email={email}
+                  username={username}
                   avatarUrl={avatarUrl}
                   onNavigate={() => setMobileOpen(false)}
                   variant="surface"

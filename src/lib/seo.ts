@@ -1,9 +1,31 @@
 import type { Metadata } from "next";
 import { COMPANY } from "@/lib/company";
-import { BRAND } from "@/lib/brand";
+import { BRAND, ICONS } from "@/lib/brand";
 
 const siteUrl = COMPANY.siteUrl;
-const ogImage = `${siteUrl}${BRAND.og.default}`;
+
+/** Wide logo for Facebook, LinkedIn, X (summary_large_image). */
+const ogWideImage = `${siteUrl}${BRAND.og.default}`;
+/** Square icon for WhatsApp, Telegram, Messenger, Slack, Discord, Signal. */
+const ogSquareImage = `${siteUrl}${ICONS.android512}`;
+
+export const OG_IMAGES = {
+  wide: {
+    url: ogWideImage,
+    width: 1200,
+    height: 630,
+    alt: `${COMPANY.brand} logo`
+  },
+  square: {
+    url: ogSquareImage,
+    width: 512,
+    height: 512,
+    alt: `${COMPANY.brand} icon`
+  }
+} as const;
+
+/** Provide both assets so platforms pick the best fit automatically. */
+export const defaultOpenGraphImages = [OG_IMAGES.wide, OG_IMAGES.square];
 
 export type PageSeo = {
   title: string;
@@ -16,7 +38,7 @@ export type PageSeo = {
 
 export function buildMetadata(page: PageSeo): Metadata {
   const url = `${siteUrl}${page.path}`;
-  const image = page.image ?? ogImage;
+  const image = page.image ?? ogWideImage;
 
   return {
     title: page.title,
@@ -30,7 +52,9 @@ export function buildMetadata(page: PageSeo): Metadata {
       siteName: COMPANY.brand,
       locale: "en_NG",
       type: page.type ?? "website",
-      images: [{ url: image, width: 1200, height: 630, alt: `${COMPANY.brand} — ${page.title}` }]
+      images: page.image
+        ? [{ url: image, width: 1200, height: 630, alt: `${COMPANY.brand} — ${page.title}` }]
+        : defaultOpenGraphImages
     },
     twitter: {
       card: "summary_large_image",

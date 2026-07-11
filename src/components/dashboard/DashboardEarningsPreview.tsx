@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import type { PackageSlug } from "@/content/packages";
+import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
 import { formatNaira } from "@/lib/domain";
-import { defaultSimulatorPackage, weeklyEarningEstimate } from "@/lib/dashboard/conversion";
+import { weeklyEarningEstimate } from "@/lib/dashboard/conversion";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 
 type Props = {
   preferredPackageSlug?: PackageSlug | null;
@@ -14,43 +15,68 @@ type Props = {
 };
 
 export function DashboardEarningsPreview({ preferredPackageSlug, className }: Props) {
-  const pkg = defaultSimulatorPackage(preferredPackageSlug ?? null);
-  const [amount, setAmount] = useState(Math.max(pkg.minNgn, 100_000));
+  const packages = PACKAGE_CONFIG;
+  const defaultSlug = preferredPackageSlug ?? packages[0]?.slug ?? "starter";
+  const [packageSlug, setPackageSlug] = useState<PackageSlug>(defaultSlug);
+  const [amountRaw, setAmountRaw] = useState("100000");
 
-  const weeklyEstimate = useMemo(() => weeklyEarningEstimate(amount, pkg.weeklyRoiBps), [amount, pkg.weeklyRoiBps]);
+  const selected = packages.find((p) => p.slug === packageSlug) ?? packages[0];
+  const amount = parseCurrencyInput(amountRaw) || selected.minNgn;
+
+  const weekly = useMemo(
+    () => weeklyEarningEstimate(amount, selected.weeklyRoiBps),
+    [amount, selected.weeklyRoiBps]
+  );
+  const monthly = weekly * 4;
 
   return (
     <Card variant="elevated" padding="md" className={className}>
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Earnings preview</p>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
-        If you invest {formatNaira(amount)} in {pkg.title} today, live earnings will begin appearing here after activation.
-      </p>
-      <p className="mt-3 text-2xl font-bold tabular-nums text-[var(--emerald)]">
-        ~{formatNaira(weeklyEstimate)}
-        <span className="ml-2 text-sm font-medium text-[var(--text-muted)]">/ week illustration</span>
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Estimated earnings</p>
+      <p className="mt-2 text-sm text-[var(--text-muted)]">
+        Select a package and enter an amount to see an illustration of your projected returns.
       </p>
 
-      <label className="mt-4 block text-sm font-medium text-[var(--heading)]">
-        Try a different amount
-        <input
-          type="range"
-          min={pkg.minNgn}
-          max={Math.min(pkg.maxNgn, 2_000_000)}
-          step={1000}
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
-          className="mt-2 w-full accent-[var(--emerald)]"
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <label className="grid gap-1.5 text-sm">
+          <span className="font-medium text-[var(--text-muted)]">Package</span>
+          <select
+            value={packageSlug}
+            onChange={(e) => setPackageSlug(e.target.value as PackageSlug)}
+            className="h-11 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text)]"
+          >
+            {packages.map((pkg) => (
+              <option key={pkg.slug} value={pkg.slug}>
+                {pkg.title}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <CurrencyInput
+          label="Investment amount"
+          prefix="₦"
+          value={amountRaw}
+          onChange={setAmountRaw}
+          placeholder={formatNaira(selected.minNgn).replace("₦", "")}
         />
-        <span className="mt-1 block text-xs tabular-nums text-[var(--text-muted)]">{formatNaira(amount)}</span>
-      </label>
+      </div>
 
-      <p className="mt-3 text-[11px] text-[var(--text-subtle)]">Illustration only. Actual returns depend on your package and settlement schedule.</p>
+      <dl className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--gray-50)]/50 px-4 py-3 dark:bg-[var(--surface)]/40">
+          <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Estimated weekly return</dt>
+          <dd className="mt-1 text-xl font-bold tabular-nums text-[var(--emerald)]">{formatNaira(weekly)}</dd>
+        </div>
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--gray-50)]/50 px-4 py-3 dark:bg-[var(--surface)]/40">
+          <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Estimated monthly return</dt>
+          <dd className="mt-1 text-xl font-bold tabular-nums text-[var(--heading)]">{formatNaira(monthly)}</dd>
+        </div>
+      </dl>
 
-      <Link href="/investments" className="mt-4 inline-block">
-        <Button variant="gold" size="sm">
-          Explore packages
-        </Button>
-      </Link>
+      <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => setAmountRaw(String(amount))}>
+        Update illustration
+      </Button>
+
+      <p className="mt-3 text-[11px] text-[var(--text-subtle)]">*Illustration only.</p>
     </Card>
   );
 }

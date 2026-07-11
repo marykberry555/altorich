@@ -9,18 +9,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const services = await getUserServices();
 
   let fullName = "Member";
-  let email: string | undefined;
+  let username: string | null = null;
   let avatarUrl: string | null = null;
 
   if (user) {
-    email = user.email ?? undefined;
     fullName = user.email?.split("@")[0] ?? "Member";
   }
 
   if (user && services) {
     const { data: profile, error: profileError } = await services.supabase
       .from("profiles")
-      .select("full_name, avatar_url")
+      .select("full_name, avatar_url, username")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -33,12 +32,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }
 
     if (profile?.full_name) fullName = profile.full_name;
+    username = profile?.username ?? null;
     avatarUrl = profile?.avatar_url ?? null;
   }
 
   return (
     <LiveNowProvider>
-      <DashboardShell fullName={fullName} email={email} avatarUrl={avatarUrl}>
+      <DashboardShell fullName={fullName} username={username} avatarUrl={avatarUrl}>
         <SessionInactivityGuard />
         {children}
       </DashboardShell>

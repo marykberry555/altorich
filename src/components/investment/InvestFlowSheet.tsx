@@ -9,7 +9,7 @@ import { formatNaira } from "@/lib/domain";
 import { refreshSmartsuppIdentity, trackSmartsuppEvent } from "@/lib/chat/smartsupp";
 import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
@@ -94,7 +94,7 @@ export function InvestFlowSheet({
     }
   }, [open, minAmount]);
 
-  const parsedAmount = Number(amount);
+  const parsedAmount = parseCurrencyInput(amount);
   const validAmount = parsedAmount >= minAmount && parsedAmount <= maxAmount;
   const sufficientBalance = walletBalance >= parsedAmount;
 
@@ -195,14 +195,11 @@ export function InvestFlowSheet({
               </p>
             </div>
 
-            <Input
+            <CurrencyInput
               label={`Amount (${formatNaira(minAmount)} – ${formatNaira(maxAmount)})`}
-              type="number"
-              min={minAmount}
-              max={maxAmount}
-              step={1000}
+              prefix="₦"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={setAmount}
               required
             />
 

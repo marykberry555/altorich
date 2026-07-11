@@ -7,6 +7,7 @@ import { trackSmartsuppEvent } from "@/lib/chat/smartsupp";
 import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Card } from "@/components/ui/Card";
 
 type SavedBank = {
@@ -43,7 +44,7 @@ export function PayoutRequestForm({ availableBalance }: Props) {
     setMessage("");
     setSuccess(false);
 
-    const parsedAmount = Number(amount);
+    const parsedAmount = parseCurrencyInput(amount);
     if (!parsedAmount || parsedAmount <= 0) {
       setMessage("Enter a valid payout amount.");
       setIsSubmitting(false);
@@ -102,13 +103,11 @@ export function PayoutRequestForm({ availableBalance }: Props) {
             </p>
           </div>
 
-          <Input
+          <CurrencyInput
             label={`Payout amount (${NAIRA_SYMBOL})`}
-            type="number"
-            min={1}
-            max={availableBalance || undefined}
+            prefix="₦"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={setAmount}
             required
           />
 

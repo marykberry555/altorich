@@ -108,7 +108,6 @@ export function RegisterForm() {
       <Card variant="elevated" padding="lg" className="w-full">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">Create your account</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Join in minutes — verify your email, set a 6-digit pin, and pick your investment plan.</p>
         </div>
 
         <form onSubmit={handleRegister} className="grid gap-3">

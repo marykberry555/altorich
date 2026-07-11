@@ -17,7 +17,7 @@ export const COMPANY = {
   nigeriaOffice: "Lagos, Nigeria",
   currency: "NGN" as const,
   founded: "2024",
-  tagline: "Wealth built with clarity. Growth designed for Nigeria."
+  tagline: "Invest smarter. Track your portfolio. Grow your wealth with confidence."
 } as const;
 
 export const REGULATORY_DISCLOSURE =

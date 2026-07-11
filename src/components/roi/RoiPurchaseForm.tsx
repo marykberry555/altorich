@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatNaira } from "@/lib/domain";
+import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 
 type Props = {
   tierId: string;
@@ -16,7 +17,7 @@ type Props = {
 
 export function RoiPurchaseForm({ tierId, tierName, minNgn, maxNgn, weeklyRoiBps }: Props) {
   const router = useRouter();
-  const [principalNgn, setPrincipalNgn] = useState(minNgn);
+  const [principalRaw, setPrincipalRaw] = useState(String(minNgn));
   const [currency, setCurrency] = useState<"ngn" | "usdt">("ngn");
   const [payoutMethod, setPayoutMethod] = useState<"bank" | "crypto">("bank");
   const [destination, setDestination] = useState("");
@@ -29,13 +30,14 @@ export function RoiPurchaseForm({ tierId, tierName, minNgn, maxNgn, weeklyRoiBps
     e.preventDefault();
     setLoading(true);
     setError("");
+    const principalNgn = parseCurrencyInput(principalRaw);
     try {
       const response = await fetch("/api/roi/investments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tierId,
-          principalNgn: Number(principalNgn),
+          principalNgn,
           currency,
           payoutMethod,
           payoutDestination:
@@ -63,17 +65,14 @@ export function RoiPurchaseForm({ tierId, tierName, minNgn, maxNgn, weeklyRoiBps
   return (
     <form onSubmit={submit} className="grid gap-3">
       <p className="text-sm text-[var(--text-muted)]">
-        Invest in <strong>{tierName}</strong>. Weekly ROI: <strong>{weeklyPct}%</strong>. Earnings tick live until Monday 10:00.
+        Invest in <strong>{tierName}</strong>. Weekly ROI: <strong>{weeklyPct}%</strong>.
       </p>
 
-      <Input
+      <CurrencyInput
         label={`Amount (${formatNaira(minNgn)} – ${formatNaira(maxNgn)})`}
-        type="number"
-        min={minNgn}
-        max={maxNgn}
-        step={1000}
-        value={principalNgn}
-        onChange={(e) => setPrincipalNgn(Number(e.target.value))}
+        prefix="₦"
+        value={principalRaw}
+        onChange={setPrincipalRaw}
         required
       />
 
@@ -118,4 +117,3 @@ export function RoiPurchaseForm({ tierId, tierName, minNgn, maxNgn, weeklyRoiBps
     </form>
   );
 }
-

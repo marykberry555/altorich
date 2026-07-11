@@ -130,6 +130,10 @@ export function getPackageConfig(slug: string): PackageConfig | undefined {
   return PACKAGE_CONFIG_BY_SLUG[slug as PackageSlug];
 }
 
+export function getPackageTitle(slug: PackageSlug) {
+  return getPackageConfig(slug)?.title ?? slug;
+}
+
 /** @deprecated Use getPackageConfig */
 export const getTierConfig = getPackageConfig;
 

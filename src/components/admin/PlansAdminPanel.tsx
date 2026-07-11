@@ -6,6 +6,7 @@ import type { PackageSlug } from "@/content/packages";
 import { formatNaira } from "@/lib/domain";
 import { PACKAGE_TIER_CONFIG, getTierConfig } from "@/lib/packages/tier-config";
 import { DataTable, SectionHeading, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/design-system";
+import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import type { InvestmentPlan } from "@/types/database";
@@ -61,8 +62,8 @@ export function PlansAdminPanel({ initialPlans }: Props) {
         body: JSON.stringify({
           name: form.name.trim() || undefined,
           tier: form.tier,
-          min_investment: Number(form.minInvestment),
-          max_investment: Number(form.maxInvestment)
+          min_investment: parseCurrencyInput(form.minInvestment),
+          max_investment: parseCurrencyInput(form.maxInvestment)
         })
       });
       const data = await res.json();
@@ -138,28 +139,20 @@ export function PlansAdminPanel({ initialPlans }: Props) {
                   ))}
                 </select>
               </label>
-              <label className="grid gap-1 text-sm">
-                Min investment (₦)
-                <input
-                  className="field"
-                  type="number"
-                  min="1"
-                  value={form.minInvestment}
-                  onChange={(e) => setForm((f) => ({ ...f, minInvestment: e.target.value }))}
-                  required
-                />
-              </label>
-              <label className="grid gap-1 text-sm">
-                Max investment (₦)
-                <input
-                  className="field"
-                  type="number"
-                  min="1"
-                  value={form.maxInvestment}
-                  onChange={(e) => setForm((f) => ({ ...f, maxInvestment: e.target.value }))}
-                  required
-                />
-              </label>
+              <CurrencyInput
+                label="Min investment (₦)"
+                prefix="₦"
+                value={form.minInvestment}
+                onChange={(v) => setForm((f) => ({ ...f, minInvestment: v }))}
+                required
+              />
+              <CurrencyInput
+                label="Max investment (₦)"
+                prefix="₦"
+                value={form.maxInvestment}
+                onChange={(v) => setForm((f) => ({ ...f, maxInvestment: v }))}
+                required
+              />
             </div>
 
             {tierPreview ? (

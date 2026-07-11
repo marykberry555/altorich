@@ -7,12 +7,10 @@ import { formatNaira } from "@/lib/domain";
 import type { AllocationPoint, ChartPoint } from "@/lib/dashboard/chart-data";
 import { COMPANY } from "@/lib/company";
 import { DEFAULT_REFERRAL_PROGRAM } from "@/lib/referral/config";
-import { resolveNextAction } from "@/lib/dashboard/conversion";
 import { buildActionHints, toConversionState } from "@/lib/dashboard/conversion-hints";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { DashboardCyclePanel } from "@/components/dashboard/DashboardCyclePanel";
 import { DashboardWealthHero, DashboardWealthHeroStatic } from "@/components/dashboard/DashboardWealthHero";
-import { DashboardNextStepCard } from "@/components/dashboard/DashboardNextStepCard";
 import { DashboardProgressJourney } from "@/components/dashboard/DashboardProgressJourney";
 import { DashboardEarningsPreview } from "@/components/dashboard/DashboardEarningsPreview";
 import { DashboardQuickActions } from "@/components/dashboard/DashboardQuickActions";
@@ -57,8 +55,6 @@ async function DashboardContent() {
     totalEarned: portfolio?.totalEarned ?? 0,
     preferredPackageSlug: preferredPackage
   });
-
-  const nextAction = resolveNextAction(conversionState);
 
   let balanceHistory: ChartPoint[] = [];
   let earningsTrend: ChartPoint[] = [];
@@ -149,7 +145,6 @@ async function DashboardContent() {
           />
         )}
 
-        <DashboardNextStepCard action={nextAction} />
         <DashboardProgressJourney state={conversionState} />
       </DashboardSection>
 

@@ -50,6 +50,10 @@ export function FundingAccountCard({ account, className }: Props) {
           <CopyButton value={account.accountNumber} />
         </div>
       </dl>
+
+      <p className="mt-4 text-xs text-[var(--text-subtle)]">
+        Use your Alto Rich username as your transfer narration for faster payment verification.
+      </p>
     </Card>
   );
 }

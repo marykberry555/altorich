@@ -16,7 +16,7 @@ export function BankTransferPanel({
   bankName,
   accountName,
   accountNumber,
-  transferNarration,
+  transferNarration: _transferNarration,
   paymentInstruction
 }: Props) {
   return (
@@ -46,11 +46,10 @@ export function BankTransferPanel({
             <CopyButton value={accountNumber} />
           </dd>
         </div>
-        <div className="rounded-xl border border-dashed border-[var(--emerald)]/30 bg-[var(--emerald-soft)]/20 p-4">
-          <dt className="text-xs font-medium uppercase tracking-wide text-[var(--emerald)]">Reference instructions</dt>
-          <dd className="mt-1 text-sm text-[var(--text-muted)]">{transferNarration}</dd>
-        </div>
       </dl>
+      <p className="mt-4 text-xs text-[var(--text-subtle)]">
+        Use your Alto Rich username as your transfer narration for faster payment verification.
+      </p>
     </Card>
   );
 }

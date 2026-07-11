@@ -1,10 +1,7 @@
 import Link from "next/link";
-import { PageHero } from "@/components/marketing/PageHero";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { AvatarUpload } from "@/components/profile/AvatarUpload";
-import { formatNaira } from "@/lib/domain";
+import { ProfileIdentityCard } from "@/components/profile/ProfileIdentityCard";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 
@@ -13,57 +10,41 @@ export default async function ProfilePage() {
   const services = await getUserServices();
 
   let profile = null;
-  let balance = 0;
 
   if (user && services) {
     const { data } = await services.supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
     profile = data;
-    const wallet = await services.wallet.getWalletByUserId(user.id).catch(() => null);
-    if (wallet) balance = await services.wallet.getBalance(wallet.id).catch(() => 0);
   }
+
+  const fullName = profile?.full_name || user?.email || "Member";
 
   const links = [
     { href: "/wallet", label: "Wallet" },
     { href: "/portfolio", label: "Portfolio" },
-    { href: "/deposits", label: "Wallet funding" },
+    { href: "/deposits", label: "Fund wallet" },
     { href: "/investments", label: "Invest" },
     { href: "/withdrawals", label: "Payouts" },
     { href: "/settings", label: "Settings" }
   ];
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <PageHero eyebrow="Profile" title="Your account" description="Balances, shortcuts, and account management." />
+    <div className="mx-auto max-w-3xl space-y-8 pb-8">
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Profile</h1>
+      </header>
 
-      <Card variant="elevated" className="mt-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-4">
-            <AvatarUpload
-              fullName={profile?.full_name || user?.email || "Member"}
-              avatarUrl={profile?.avatar_url}
-              size="lg"
-            />
-            <div>
-              <p className="text-sm text-[var(--text-subtle)]">Signed in as</p>
-              <h2 className="text-xl font-bold text-[var(--heading)]">{profile?.full_name || user?.email || "Member"}</h2>
-              <p className="text-sm text-[var(--text-muted)]">{profile?.phone || user?.email || "Add phone in settings"}</p>
-            </div>
-          </div>
-          <Badge variant="gold">VIP {profile?.vip_level ?? 0}</Badge>
-        </div>
-        <div className="mt-6 grid grid-cols-2 gap-4 border-t border-[var(--border)] pt-6">
-          <div>
-            <p className="text-xs uppercase text-[var(--text-subtle)]">Wallet balance</p>
-            <p className="text-2xl font-bold tabular-nums">{formatNaira(balance)}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase text-[var(--text-subtle)]">Invite code</p>
-            <p className="text-lg font-bold tracking-widest">{profile?.invite_code ?? "—"}</p>
-          </div>
-        </div>
-      </Card>
+      <ProfileIdentityCard
+        fullName={fullName}
+        username={profile?.username ?? null}
+        avatarUrl={profile?.avatar_url ?? null}
+        packageSlug={profile?.preferred_package_slug ?? null}
+        memberSince={profile?.created_at ?? null}
+        emailVerifiedAt={profile?.email_verified_at ?? null}
+        kycStatus={profile?.kyc_status ?? null}
+        inviteCode={profile?.invite_code ?? null}
+      />
 
-      <div className="mt-6 grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         {links.map((item) => (
           <Link key={item.href} href={item.href}>
             <Card variant="outline" className="transition hover:border-[var(--emerald)] hover:shadow-[var(--shadow-sm)]">
@@ -73,8 +54,8 @@ export default async function ProfilePage() {
         ))}
       </div>
 
-      <Link href="/team" className="mt-6 block">
-        <Button className="w-full">Open referrals & VIP</Button>
+      <Link href="/team" className="block">
+        <Button className="w-full">Referrals & VIP</Button>
       </Link>
     </div>
   );

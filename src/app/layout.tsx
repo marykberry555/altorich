@@ -10,9 +10,8 @@ import { SmartsuppProvider } from "@/components/chat/SmartsuppProvider";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
 import { AppBootstrapLoader } from "@/components/brand/AppBootstrapLoader";
 import { ServiceWorkerCleanup } from "@/components/pwa/ServiceWorkerCleanup";
-import { PwaUpdateToast } from "@/components/pwa/PwaUpdateToast";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
-import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
+import { organizationJsonLd, websiteJsonLd, defaultOpenGraphImages } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SocialProofToasts } from "@/components/social/SocialProofToasts";
 
@@ -61,7 +60,7 @@ export const metadata: Metadata = {
     siteName: COMPANY.brand,
     locale: "en_NG",
     type: "website",
-    images: [{ url: ogImage, width: 1200, height: 630, alt: `${COMPANY.brand} logo` }]
+    images: defaultOpenGraphImages
   },
   twitter: {
     card: "summary_large_image",
@@ -106,7 +105,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <SocialProofToasts />
             <SmartsuppProvider />
             <OfflineIndicator />
-            <PwaUpdateToast />
           </ThemeProvider>
         </PwaProvider>
       </body>

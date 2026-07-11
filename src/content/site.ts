@@ -3,9 +3,9 @@ import { PACKAGE_ROI_RANGE } from "@/lib/packages/package-config";
 
 export const hero = {
   eyebrow: "Built for Nigeria · WAT-aligned payouts",
-  title: `Grow your naira with clarity — earn ${PACKAGE_ROI_RANGE.headline}.`,
+  title: "Build long-term wealth with Alto Rich — Nigeria's modern digital investment platform.",
   subtitle:
-    "For salary earners, entrepreneurs, and diaspora investors. Verified bank deposits, transparent ledgers, guaranteed weekly returns, and payouts every Monday at 09:00 WAT.",
+    "For salary earners, entrepreneurs, and diaspora investors. Verified bank deposits, transparent ledgers, and payouts every Monday at 09:00 WAT.",
   guarantee: "Returns are guaranteed.",
   ctaPrimary: "Get started",
   ctaSecondary: "See how it works"

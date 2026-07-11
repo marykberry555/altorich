@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { formatNaira } from "@/lib/domain";
+import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 
 type Props = {
   planId: string;
@@ -16,7 +16,7 @@ type Props = {
 
 export function InvestmentPurchaseForm({ planId, planName, minAmount, maxAmount, defaultAmount }: Props) {
   const router = useRouter();
-  const [amount, setAmount] = useState(defaultAmount);
+  const [amountRaw, setAmountRaw] = useState(String(defaultAmount));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -25,11 +25,13 @@ export function InvestmentPurchaseForm({ planId, planName, minAmount, maxAmount,
     setLoading(true);
     setError("");
 
+    const amount = parseCurrencyInput(amountRaw);
+
     try {
       const response = await fetch("/api/investments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, amount: Number(amount) })
+        body: JSON.stringify({ planId, amount })
       });
 
       const data = await response.json();
@@ -50,16 +52,13 @@ export function InvestmentPurchaseForm({ planId, planName, minAmount, maxAmount,
   return (
     <form onSubmit={handlePurchase} className="grid gap-3">
       <p className="text-sm text-[var(--text-muted)]">
-        Invest in <strong>{planName}</strong>. Funds are deducted from your wallet ledger.
+        Invest in <strong>{planName}</strong>.
       </p>
-      <Input
+      <CurrencyInput
         label={`Amount (${formatNaira(minAmount)} – ${formatNaira(maxAmount)})`}
-        type="number"
-        min={minAmount}
-        max={maxAmount}
-        step={1000}
-        value={amount}
-        onChange={(e) => setAmount(Number(e.target.value))}
+        prefix="₦"
+        value={amountRaw}
+        onChange={setAmountRaw}
         required
       />
       {error ? <p className="text-xs text-red-600">{error}</p> : null}

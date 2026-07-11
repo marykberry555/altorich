@@ -21,7 +21,7 @@ export type DashboardNavItem = {
 };
 
 export const dashboardNavItems: DashboardNavItem[] = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/wallet", label: "Wallet", icon: Wallet },
   { href: "/portfolio", label: "Portfolio", icon: TrendingUp },
   { href: "/investments", label: "Invest", icon: Layers },
@@ -35,11 +35,18 @@ export const dashboardNavItems: DashboardNavItem[] = [
   { href: "/settings", label: "Settings", icon: Settings }
 ];
 
-export const mobileDashboardNavItems = dashboardNavItems.slice(0, 5);
+/** Bottom bar: Dashboard, Wallet, Invest, Portfolio, Profile */
+export const mobileDashboardNavItems: DashboardNavItem[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/wallet", label: "Wallet", icon: Wallet },
+  { href: "/investments", label: "Invest", icon: Layers },
+  { href: "/portfolio", label: "Portfolio", icon: TrendingUp },
+  { href: "/profile", label: "Profile", icon: User }
+];
 
 export function getDashboardNavLabel(pathname: string): string {
   const match = dashboardNavItems.find((item) =>
     item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
   );
-  return match?.label ?? "Overview";
+  return match?.label ?? "Dashboard";
 }
