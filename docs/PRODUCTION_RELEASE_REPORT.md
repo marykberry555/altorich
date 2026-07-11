@@ -113,9 +113,31 @@ Next.js 16 (webpack), 89 routes, middleware active.
 
 ### Deployment action
 
-Release commit pushed to GitHub `main`; cPanel Git deploy triggered via existing pipeline (`.cpanel.yml` → `post-deploy.sh` → `build-cpanel.sh`).
+| Step | Status |
+|------|--------|
+| GitHub `main` push | **Complete** (`c9e00cf`) |
+| Git tag `v0.2.0-rc1` | **Pushed** |
+| Supabase migrations | **Applied** (remote in sync) |
+| cPanel production deploy | **Pending — requires manual step** |
 
-**Post-deploy:** Re-verify `/investments` returns auth redirect (307 to login) or invest page — **not** portfolio redirect.
+GitHub Actions workflow ran but **skipped cPanel push** — `CPANEL_DEPLOY_KEY` secret is not configured in the repository.
+
+**To deploy to production now:**
+
+```bash
+# From project root, with SSH access to cPanel configured:
+./deploy.sh cpanel
+```
+
+Or push to the production Git remote manually:
+
+```bash
+git push production main
+```
+
+Then wait for `.cpanel.yml` → `scripts/deploy/post-deploy.sh` → `build-cpanel.sh` to complete (~3–5 min).
+
+**Post-deploy:** Re-verify `/investments` returns auth redirect (307 to login) or invest page — **not** portfolio redirect (308).
 
 ---
 
