@@ -90,7 +90,7 @@ export function HomePage() {
       {/* Trust */}
       <section className="gradient-navy section-pad text-white">
         <div className="container-ar grid gap-10 lg:grid-cols-2">
-          <PageHero dark eyebrow="Security & governance" title="Built on verification, not promises." description="Every deposit is reconciled against real bank credits. Every withdrawal follows published windows. Every projection is labelled as an estimate — never a guarantee." />
+          <PageHero dark eyebrow="Security & governance" title="Built on verification, not promises." description="Every funding request is reconciled against real bank transfers. Every payout follows published windows. Every projection is labelled as an estimate — never a guarantee." />
           <div className="grid gap-4 sm:grid-cols-2">
             {trustIndicators.map((item) => (
               <div key={item.label} className="rounded-[var(--radius)] border border-white/10 bg-white/5 p-5">

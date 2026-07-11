@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 
 const activities = [
   { title: "Fixed-term welfare", description: "Cooperative welfare pools with matured payout schedules.", href: "/packages/starter", cta: "View Starter" },
-  { title: "VIP welfare", description: "Exclusive products for Bronze tier and above.", href: "/vip", cta: "VIP centre" },
+  { title: "Referrals & VIP", description: "Grow your network and unlock referral rewards.", href: "/team", cta: "Referral dashboard" },
   { title: "Daily check-in", description: "Build your streak for cooperative rewards.", href: "/profile", cta: "Check in" },
   { title: "Learning centre", description: "Guides on investing responsibly with clear risk language.", href: "/learn", cta: "Start learning" }
 ];

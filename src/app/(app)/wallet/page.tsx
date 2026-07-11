@@ -44,12 +44,12 @@ export default async function WalletPage() {
         <div className="mt-6 flex flex-wrap gap-2">
           <Link href="/deposits">
             <Button variant="gold" size="sm">
-              Add funds
+              Fund wallet
             </Button>
           </Link>
           <Link href="/withdrawals">
             <Button variant="outline" size="sm" className="border-white/30 bg-transparent text-white hover:bg-white/10">
-              Withdraw
+              Request payout
             </Button>
           </Link>
         </div>
@@ -63,7 +63,7 @@ export default async function WalletPage() {
             description="Fund your wallet to get started."
             action={
               <Link href="/deposits">
-                <Button size="sm">Make a deposit</Button>
+                <Button size="sm">Fund wallet</Button>
               </Link>
             }
           />

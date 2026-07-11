@@ -17,13 +17,13 @@ const platformGuides = [
   {
     href: "/learn/how-it-works",
     title: "How it works",
-    description: "From registration and KYC to wallet funding, package activation, and payout cycles.",
+    description: "From registration to wallet funding, package selection, and payout cycles.",
     icon: ListChecks
   },
   {
     href: "/learn/faq",
     title: "FAQs",
-    description: "Answers on verification, wallet deposits, withdrawal windows, and account security.",
+    description: "Answers on verification, wallet funding, payout windows, and account security.",
     icon: BookOpen
   },
   {
@@ -44,7 +44,7 @@ export default function LearnPage() {
           <PageHero
             eyebrow="Learn"
             title="Clear guides for verified members and prospective investors"
-            description="Understand how AltoRich handles contributions, cycles, and ledger records before you activate a package."
+            description="Understand how AltoRich handles investment funding, cycles, and ledger records before you activate a package."
           />
         </div>
       </section>

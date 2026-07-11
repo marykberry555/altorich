@@ -35,6 +35,11 @@ export class KycService {
   }
 
   async isWithdrawalAllowed(userId: string): Promise<{ allowed: boolean; reason?: string }> {
+    const { data: flagRow } = await this.supabase.from("settings").select("value").eq("key", "feature_flags").maybeSingle();
+    const kycRequired = Boolean((flagRow?.value as { kyc_required?: boolean } | null)?.kyc_required);
+
+    if (!kycRequired) return { allowed: true };
+
     const { data: profile } = await this.supabase
       .from("profiles")
       .select("kyc_status")
@@ -48,10 +53,10 @@ export class KycService {
       allowed: false,
       reason:
         status === "rejected"
-          ? "KYC was rejected. Please resubmit documents from your profile."
+          ? "Identity verification was rejected. Contact support for assistance."
           : status === "requires_update"
-            ? "Additional KYC documents are required before withdrawals."
-            : "Complete KYC verification before requesting withdrawals."
+            ? "Additional verification is required before payouts."
+            : "Identity verification is required before requesting payouts."
     };
   }
 

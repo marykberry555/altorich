@@ -1,7 +1,7 @@
 import type { PaymentProvider } from "./providers/types";
-import { BankTransferProvider, FlutterwaveProvider, MonnifyProvider, PaystackProvider } from "./providers";
+import { BankTransferProvider } from "./providers";
 
-export type PaymentProviderName = "bank_transfer" | "paystack" | "flutterwave" | "monnify";
+export type PaymentProviderName = "bank_transfer";
 
 export class PaymentService {
   private readonly providers: Map<PaymentProviderName, PaymentProvider>;
@@ -27,10 +27,6 @@ export class PaymentService {
         })
       );
     }
-
-    this.providers.set("paystack", new PaystackProvider());
-    this.providers.set("flutterwave", new FlutterwaveProvider());
-    this.providers.set("monnify", new MonnifyProvider());
   }
 
   getProvider(name: PaymentProviderName): PaymentProvider {

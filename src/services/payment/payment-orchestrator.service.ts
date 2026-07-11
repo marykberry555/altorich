@@ -1,14 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/database";
 import { AppError } from "@/lib/errors";
-import { makeReference } from "@/lib/domain";
 import { PaymentService, type PaymentProviderName } from "./payment.service";
 import { DepositService } from "@/services/deposit/deposit.service";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
 import { AuditService } from "@/services/audit/audit.service";
 import { logger } from "@/lib/logger";
-import type { WebhookVerifyResult } from "./providers/types";
 
 type Client = SupabaseClient<Database>;
 
@@ -33,79 +31,6 @@ export class PaymentOrchestratorService {
     this.wallet = new WalletService(supabase);
     this.notifications = new NotificationService(supabase);
     this.audit = new AuditService(supabase);
-  }
-
-  async initializePaystack(input: {
-    userId: string;
-    email: string;
-    amount: number;
-    memberName: string;
-    phone: string;
-  }) {
-    const reference = makeReference(input.phone, "PSK");
-
-    const { data: paymentTx, error: txError } = await this.supabase
-      .from("payment_transactions")
-      .insert({
-        user_id: input.userId,
-        provider: "paystack",
-        reference,
-        amount: input.amount,
-        currency: "NGN",
-        status: "initialized",
-        metadata: { phone: input.phone } as Json
-      })
-      .select()
-      .single();
-
-    if (txError) throw txError;
-
-    const deposit = await this.deposits.create({
-      memberName: input.memberName,
-      phone: input.phone,
-      amount: input.amount,
-      reference,
-      receiptNote: `Paystack funding · ${reference}`,
-      userId: input.userId
-    });
-
-    await this.supabase
-      .from("deposits")
-      .update({
-        payment_provider: "paystack",
-        payment_transaction_id: paymentTx.id,
-        provider_reference: reference
-      })
-      .eq("id", deposit.id);
-
-    await this.supabase.from("payment_transactions").update({ deposit_id: deposit.id }).eq("id", paymentTx.id);
-
-    const provider = this.payments.getProvider("paystack");
-    const init = await provider.initialize({
-      userId: input.userId,
-      email: input.email,
-      amount: input.amount,
-      currency: "NGN",
-      reference,
-      metadata: { deposit_id: deposit.id }
-    });
-
-    await this.supabase
-      .from("payment_transactions")
-      .update({
-        status: "pending",
-        checkout_url: init.checkoutUrl ?? null,
-        provider_reference: init.accessCode ?? null
-      })
-      .eq("id", paymentTx.id);
-
-    return {
-      depositId: deposit.id,
-      paymentTransactionId: paymentTx.id,
-      reference,
-      checkoutUrl: init.checkoutUrl,
-      accessCode: init.accessCode
-    };
   }
 
   async verifyAndCredit(reference: string, actorId?: string | null) {
@@ -139,73 +64,6 @@ export class PaymentOrchestratorService {
     }
 
     return this.completeSuccessfulPayment(existing, verified.amount, verified.providerReference, actorId);
-  }
-
-  async processPaystackWebhook(rawBody: string, signature: string | null) {
-    const provider = this.payments.getProvider("paystack");
-    if (!provider.verifyWebhook) {
-      throw new AppError("Webhook verification not supported.", 500, "NOT_CONFIGURED");
-    }
-
-    const result: WebhookVerifyResult = provider.verifyWebhook(rawBody, signature);
-
-    const { data: existingEvent } = await this.supabase
-      .from("webhook_events")
-      .select("id, processed")
-      .eq("provider", "paystack")
-      .eq("event_id", result.eventId)
-      .maybeSingle();
-
-    if (existingEvent?.processed) {
-      return { duplicate: true, eventId: result.eventId };
-    }
-
-    const { data: webhookRow, error: webhookError } = await this.supabase
-      .from("webhook_events")
-      .upsert(
-        {
-          provider: "paystack",
-          event_id: result.eventId,
-          event_type: result.eventType,
-          reference: result.reference ?? null,
-          payload: result.payload as Json,
-          signature_valid: result.valid,
-          processed: false
-        },
-        { onConflict: "provider,event_id" }
-      )
-      .select()
-      .single();
-
-    if (webhookError) throw webhookError;
-
-    if (!result.valid) {
-      await this.supabase
-        .from("webhook_events")
-        .update({ error_message: "Invalid signature", processed: true, processed_at: new Date().toISOString() })
-        .eq("id", webhookRow.id);
-      throw new AppError("Invalid webhook signature.", 401, "INVALID_SIGNATURE");
-    }
-
-    if (!result.reference) {
-      await this.supabase
-        .from("webhook_events")
-        .update({ error_message: "Missing reference", processed: true, processed_at: new Date().toISOString() })
-        .eq("id", webhookRow.id);
-      return { ignored: true, reason: "no_reference" };
-    }
-
-    if (result.eventType === "charge.success") {
-      await this.verifyAndCredit(result.reference, null);
-    }
-
-    await this.supabase
-      .from("webhook_events")
-      .update({ processed: true, processed_at: new Date().toISOString() })
-      .eq("id", webhookRow.id);
-
-    logger.info("Paystack webhook processed", { eventId: result.eventId, reference: result.reference });
-    return { processed: true, eventId: result.eventId, reference: result.reference };
   }
 
   private async findPaymentByReference(reference: string) {

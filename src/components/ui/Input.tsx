@@ -23,7 +23,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(
         )}
         {...props}
       />
-      {error ? <span className="text-xs text-red-600">{error}</span> : null}
+      {error ? <span className="text-xs text-red-600 dark:text-red-400">{error}</span> : null}
       {hint && !error ? <span className="text-xs text-[var(--text-subtle)]">{hint}</span> : null}
     </label>
   )

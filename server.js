@@ -1,6 +1,8 @@
 /**
- * cPanel / Phusion Passenger entry point for Next.js.
- * Configure "Application startup file" to: server.js
+ * cPanel / Phusion Passenger entry point for Next.js (Namecheap Node.js hosting).
+ *
+ * Standard production (Vercel, Docker, most hosts): use `npm start` instead.
+ * Configure cPanel "Application startup file" to: server.js
  */
 require("./scripts/deploy/load-env");
 

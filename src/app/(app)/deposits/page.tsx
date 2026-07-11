@@ -1,25 +1,42 @@
 import Link from "next/link";
-import { Suspense } from "react";
-import { ContributionForm } from "@/components/ContributionForm";
-import { PaystackFundButton } from "@/components/deposits/PaystackFundButton";
-import { PaymentVerifyBanner } from "@/components/deposits/PaymentVerifyBanner";
+import { BankTransferPanel } from "@/components/funding/BankTransferPanel";
+import { FundingHistoryTable } from "@/components/funding/FundingHistoryTable";
+import { FundingSummary, InvestmentFundingForm } from "@/components/funding/InvestmentFundingForm";
 import { PageHero } from "@/components/marketing/PageHero";
-import { getPublicServices } from "@/lib/services";
-import { isPaystackConfigured } from "@/lib/env";
 import { Card } from "@/components/ui/Card";
+import { formatNaira } from "@/lib/domain";
+import { getUserServices } from "@/lib/services";
+import { getSessionUser } from "@/lib/auth/session";
+import type { Deposit } from "@/types/database";
 
 export default async function DepositsPage() {
-  const services = await getPublicServices();
+  const user = await getSessionUser();
+  const services = await getUserServices();
+
   const bank = services
     ? await services.settings.getBankSwitchboard()
     : {
         active_bank_name: "Configure in admin",
         active_account_name: "ALTORICH LTD",
         active_account_number: "00000000",
-        payment_instruction: "Connect Supabase to load live bank details.",
-        transfer_narration: "Use your phone as transfer narration.",
+        payment_instruction: "Transfer the exact amount, then submit your reference for verification.",
+        transfer_narration: "Use your registered phone number as transfer narration.",
         contributions_enabled: false
       };
+
+  let balance = 0;
+  let pendingFunding = 0;
+  let fundingHistory: Deposit[] = [];
+
+  if (user && services) {
+    const wallet = await services.wallet.getWalletByUserId(user.id).catch(() => null);
+    if (wallet) {
+      balance = await services.wallet.getBalance(wallet.id);
+      const stats = await services.deposits.getUserStats(user.id);
+      pendingFunding = stats.pending;
+    }
+    fundingHistory = await services.deposits.listForUser(user.id, 10);
+  }
 
   const config = {
     activeBankName: bank.active_bank_name,
@@ -31,61 +48,61 @@ export default async function DepositsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-6xl space-y-8">
       <PageHero
-        eyebrow="Deposits"
-        title="Fund your wallet"
-        description="Pay instantly with Paystack or transfer to our bank account. Funds are credited only after server-side verification."
+        eyebrow="Wallet funding"
+        title="Fund your investment wallet"
+        description="Transfer naira from any Nigerian bank. Once verified, funds are ready to invest across your chosen packages."
       />
 
-      <Suspense fallback={null}>
-        <PaymentVerifyBanner />
-      </Suspense>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <PaystackFundButton enabled={config.contributionsEnabled} configured={isPaystackConfigured()} />
-        <Card variant="elevated" className="h-fit">
-          <h2 className="font-semibold text-[var(--heading)]">Bank transfer</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)]">
-            {config.paymentInstruction || "Transfer to the published account, then submit your reference below."}
-          </p>
-          <dl className="mt-4 space-y-2 text-sm">
-            <div>
-              <dt className="text-[var(--text-subtle)]">Bank</dt>
-              <dd className="font-medium">{config.activeBankName}</dd>
-            </div>
-            <div>
-              <dt className="text-[var(--text-subtle)]">Account</dt>
-              <dd className="font-medium">
-                {config.activeAccountName} · {config.activeAccountNumber}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[var(--text-subtle)]">Narration</dt>
-              <dd>{config.transferNarration}</dd>
-            </div>
-          </dl>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card variant="elevated" padding="md">
+          <p className="text-xs text-[var(--text-subtle)]">Current balance</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">{formatNaira(balance)}</p>
+        </Card>
+        <Card variant="elevated" padding="md">
+          <p className="text-xs text-[var(--text-subtle)]">Available balance</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--emerald)]">{formatNaira(balance)}</p>
+        </Card>
+        <Card variant="elevated" padding="md">
+          <p className="text-xs text-[var(--text-subtle)]">Pending funding</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-amber-600">{formatNaira(pendingFunding)}</p>
         </Card>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <ContributionForm config={config} />
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Bank details</h2>
+        <div className="mt-4">
+          <BankTransferPanel
+            bankName={config.activeBankName}
+            accountName={config.activeAccountName}
+            accountNumber={config.activeAccountNumber}
+            transferNarration={config.transferNarration}
+            paymentInstruction={config.paymentInstruction}
+          />
         </div>
-        <Card variant="elevated" className="h-fit lg:col-span-2">
-          <h2 className="font-semibold text-[var(--heading)]">Deposit instructions</h2>
-          <ol className="mt-4 list-decimal space-y-3 pl-4 text-sm text-[var(--text-muted)]">
-            <li>Select your contribution tier or enter the exact amount shown.</li>
-            <li>Pay with Paystack or make a bank transfer.</li>
-            <li>Use your phone number as the transfer narration for bank deposits.</li>
-            <li>Submit your reference and receipt note for manual bank transfers.</li>
-            <li>Paystack payments credit automatically after verification.</li>
-          </ol>
-          <Link href="/portfolio" className="mt-6 inline-block text-sm font-semibold text-[var(--emerald)]">
-            View portfolio →
-          </Link>
-        </Card>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-5">
+        <div className="lg:col-span-3">
+          <InvestmentFundingForm config={config} />
+        </div>
+        <div className="lg:col-span-2">
+          <FundingSummary balance={balance} pendingFunding={pendingFunding} fundingEnabled={config.contributionsEnabled} />
+        </div>
       </div>
+
+      <FundingHistoryTable rows={fundingHistory} />
+
+      <Card variant="elevated" padding="md" className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="font-semibold text-[var(--heading)]">Ready to invest?</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Choose a package and allocate from your wallet balance.</p>
+        </div>
+        <Link href="/investments" className="text-sm font-semibold text-[var(--emerald)] hover:underline">
+          Explore investment packages →
+        </Link>
+      </Card>
     </div>
   );
 }

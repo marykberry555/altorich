@@ -13,13 +13,13 @@ export default async function NotificationsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHero eyebrow="Notifications" title="Alerts & updates" description="Deposit approvals, withdrawal status, and platform announcements." />
+      <PageHero eyebrow="Notifications" title="Alerts & updates" description="Funding approvals, payout status, and platform announcements." />
 
       {notifications.length === 0 ? (
         <div className="mt-8">
           <EmptyState
             title="No notifications yet"
-            description="When your deposits are verified or withdrawals processed, alerts will appear here."
+            description="When your funding is verified or payouts are processed, alerts will appear here."
           />
         </div>
       ) : (

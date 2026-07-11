@@ -4,6 +4,7 @@ import { AppError, Errors } from "@/lib/errors";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
 import { SettlementService } from "@/services/investment/settlement.service";
+import { ReferralService } from "@/services/referral/referral.service";
 import { addDays, makeInvestmentReference, type SettlementFrequency } from "@/lib/investment";
 
 type Client = SupabaseClient<Database>;
@@ -24,11 +25,13 @@ export class InvestmentService {
   private readonly wallet: WalletService;
   private readonly notifications: NotificationService;
   private readonly settlements: SettlementService;
+  private readonly referrals: ReferralService;
 
   constructor(private readonly supabase: Client) {
     this.wallet = new WalletService(supabase);
     this.notifications = new NotificationService(supabase);
     this.settlements = new SettlementService(supabase);
+    this.referrals = new ReferralService(supabase);
   }
 
   async listActivePlans() {
@@ -167,6 +170,17 @@ export class InvestmentService {
         investment_id: investment.id,
         reference
       });
+
+      try {
+        await this.referrals.processFirstInvestmentActivated(
+          userId,
+          investment.id,
+          amount,
+          String(plan.tier ?? "starter")
+        );
+      } catch (referralErr) {
+        console.error("Referral commission processing failed", referralErr);
+      }
 
       const { data: active } = await this.supabase
         .from("investments")

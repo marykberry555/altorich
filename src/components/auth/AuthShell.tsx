@@ -28,7 +28,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
               Banking-grade discipline for modern wealth builders.
             </h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--text-muted)]">
-              Verified contributions, clear processing windows, and an auditable wallet ledger — built for clarity, not hype.
+              Verified investments, clear processing windows, and an auditable wallet ledger — built for clarity, not hype.
             </p>
           </div>
 
@@ -47,7 +47,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
               <div className="grid gap-2 rounded-[var(--radius)] border border-white/10 bg-black/25 p-4 text-white backdrop-blur">
                 <p className="text-sm font-semibold">Transparent by design</p>
                 <p className="text-xs text-white/80">
-                  Deposits are verified before wallet credit. Withdrawals follow published windows.
+                  Funding is verified before wallet credit. Payouts follow published windows.
                 </p>
               </div>
             </div>

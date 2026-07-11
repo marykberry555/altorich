@@ -1,5 +1,4 @@
 import type { PaymentInitRequest, PaymentInitResponse, PaymentProvider, PaymentVerifyRequest, PaymentVerifyResponse } from "./types";
-import { PaystackProvider } from "./paystack.provider";
 
 export class BankTransferProvider implements PaymentProvider {
   readonly name = "bank_transfer";
@@ -61,5 +60,3 @@ export class MonnifyProvider implements PaymentProvider {
     throw new Error("Monnify provider is not yet configured.");
   }
 }
-
-export { PaystackProvider };

@@ -13,13 +13,15 @@ export function DashboardSection({
   children,
   className
 }: {
-  title: string;
+  title?: string;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
     <section className={className}>
-      <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">{title}</h2>
+      {title ? (
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">{title}</h2>
+      ) : null}
       {children}
     </section>
   );

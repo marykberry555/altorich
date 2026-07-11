@@ -49,6 +49,8 @@ const EXPECTED_TABLES = [
   "bank_accounts",
   "withdrawals",
   "referrals",
+  "referral_rewards",
+  "referral_payouts",
   "notifications",
   "audit_logs",
   "activity_logs",

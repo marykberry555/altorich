@@ -1,62 +1,65 @@
-import { PageHero } from "@/components/marketing/PageHero";
-import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { StatCard } from "@/components/ui/StatCard";
-import { formatNaira } from "@/lib/domain";
-import { getServices } from "@/lib/services";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth/session";
+import { getServiceRoleServices } from "@/lib/services";
 import { COMPANY } from "@/lib/company";
+import { ReferralDashboardClient } from "@/components/referral/ReferralDashboardClient";
+import { DEFAULT_REFERRAL_PROGRAM } from "@/lib/referral/config";
+import type { ReferralDashboard } from "@/lib/referral/types";
+
+export const dynamic = "force-dynamic";
 
 export default async function TeamPage() {
-  const supabase = await createClient();
-  const user = supabase ? (await supabase.auth.getUser()).data.user : null;
-  const services = await getServices();
+  const user = await getSessionUser();
+  const services = await getServiceRoleServices();
 
-  let inviteCode = "—";
-  let vipLevel = 0;
-  let minMembers = 3;
-
-  if (user && services) {
-    const { data: profile } = await services.supabase.from("profiles").select("invite_code, vip_level").eq("id", user.id).single();
-    inviteCode = profile?.invite_code ?? "—";
-    vipLevel = profile?.vip_level ?? 0;
-    const { data: nextVip } = await services.supabase.from("vip_levels").select("min_members").eq("level", vipLevel + 1).single();
-    minMembers = Number((nextVip as { min_members?: number } | null)?.min_members ?? 3);
+  if (!user || !services) {
+    return (
+      <div className="mx-auto max-w-5xl py-12 text-center text-sm text-[var(--text-muted)]">
+        Sign in to access your referral dashboard.
+      </div>
+    );
   }
 
-  const inviteLink = `https://${COMPANY.domain}/auth/register?ref=${inviteCode}`;
+  let dashboard: ReferralDashboard;
+  let vipLevels = await services.referrals.listVipLevels().catch(() => []);
+
+  try {
+    dashboard = await services.referrals.getDashboard(user.id, COMPANY.siteUrl);
+  } catch {
+    const starter = vipLevels[0];
+    dashboard = {
+      inviteCode: "—",
+      inviteLink: `${COMPANY.siteUrl}/auth/register`,
+      totalReferrals: 0,
+      verifiedInvestors: 0,
+      pendingReferrals: 0,
+      totalInvestmentGenerated: 0,
+      currentCommissionRate: starter?.commission_percent ?? DEFAULT_REFERRAL_PROGRAM.commission_by_package.starter,
+      vipLevel: 0,
+      vipLabel: "Starter",
+      nextVipLevel: vipLevels[1] ?? null,
+      verifiedForNextLevel: 0,
+      requiredForNextLevel: vipLevels[1]?.min_members ?? 5,
+      referralWalletBalance: 0,
+      pendingRewards: 0,
+      lifetimeRewards: 0,
+      alreadyPaid: 0,
+      minPayoutThreshold: DEFAULT_REFERRAL_PROGRAM.min_payout_threshold,
+      canRequestPayout: false,
+      payoutGap: DEFAULT_REFERRAL_PROGRAM.min_payout_threshold,
+      recentReferrals: [],
+      recentRewards: [],
+      programEnabled: DEFAULT_REFERRAL_PROGRAM.enabled
+    };
+    const { data: profile } = await services.supabase.from("profiles").select("invite_code, vip_level").eq("id", user.id).single();
+    if (profile?.invite_code) {
+      dashboard.inviteCode = profile.invite_code;
+      dashboard.inviteLink = `${COMPANY.siteUrl.replace(/\/$/, "")}/auth/register?ref=${profile.invite_code}`;
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <PageHero eyebrow="Team" title="Grow your network" description="Invite verified members and unlock VIP cooperative dividends." />
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Today's commission" value={formatNaira(0)} />
-        <StatCard label="Total commission" value={formatNaira(0)} />
-        <StatCard label="Team members" value={0} />
-        <StatCard label="Valid invites" value={0} />
-      </div>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <Card variant="elevated">
-          <h2 className="font-semibold text-[var(--heading)]">Invite tools</h2>
-          <div className="mt-4 grid gap-3">
-            <Input label="Invite code" readOnly value={inviteCode} />
-            <Input label="Invite link" readOnly value={inviteLink} />
-          </div>
-          <p className="mt-4 text-sm text-[var(--text-muted)]">
-            Share after your invitee completes their first verified deposit. Commissions post when admin confirms qualifying activity.
-          </p>
-        </Card>
-        <Card variant="elevated">
-          <h2 className="font-semibold text-[var(--heading)]">VIP progress</h2>
-          <p className="mt-2 text-3xl font-bold text-[var(--emerald)]">VIP {vipLevel}</p>
-          <p className="text-sm text-[var(--text-muted)]">0 / {minMembers} members for next tier</p>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--gray-100)]">
-            <div className="h-full w-0 rounded-full bg-[var(--emerald)]" />
-          </div>
-        </Card>
-      </div>
+    <div className="mx-auto max-w-6xl">
+      <ReferralDashboardClient initialDashboard={dashboard} vipLevels={vipLevels} />
     </div>
   );
 }

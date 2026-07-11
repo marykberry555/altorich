@@ -21,14 +21,11 @@ export function PackageSelectionField({ value, onChange, disabled, error }: Prop
     <fieldset className="space-y-2" disabled={disabled}>
       <legend className="mb-1 flex items-center gap-1.5 text-sm font-medium text-[var(--heading)]">
         <Sparkles size={14} className="text-[var(--emerald)]" aria-hidden />
-        Preferred investment package
+        Select package
         <span className="text-red-500" aria-hidden>
           *
         </span>
       </legend>
-      <p className="mb-2 text-xs text-[var(--text-muted)]">
-        Choose the plan that fits your goals. You can change this later in Settings.
-      </p>
 
       <button
         type="button"

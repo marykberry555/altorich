@@ -19,7 +19,12 @@ export type NotificationEvent =
   | "withdrawal.approved"
   | "withdrawal.rejected"
   | "kyc.approved"
-  | "profile.updated";
+  | "profile.updated"
+  | "referral.verified"
+  | "referral.payout_requested"
+  | "referral.payout_approved"
+  | "referral.payout_rejected"
+  | "vip.level_up";
 
 type Client = SupabaseClient<Database>;
 
@@ -89,12 +94,12 @@ export class NotificationService {
         body: `₦${Number(data.amount ?? 0).toLocaleString("en-NG")} settlement credited to your wallet.`
       },
       "withdrawal.approved": {
-        title: "Withdrawal approved",
-        body: `Your withdrawal of ₦${Number(data.amount ?? 0).toLocaleString("en-NG")} has been approved.`
+        title: "Payout approved",
+        body: `Your payout of ₦${Number(data.amount ?? 0).toLocaleString("en-NG")} has been approved.`
       },
       "withdrawal.rejected": {
-        title: "Withdrawal declined",
-        body: String(data.reason ?? "Your withdrawal request was not approved.")
+        title: "Payout declined",
+        body: String(data.reason ?? "Your payout request was not approved.")
       },
       "kyc.approved": {
         title: "KYC approved",
@@ -103,6 +108,26 @@ export class NotificationService {
       "profile.updated": {
         title: "Profile updated",
         body: "Your profile settings were saved successfully."
+      },
+      "referral.verified": {
+        title: "Referral verified",
+        body: `You earned ₦${Number(data.amount ?? 0).toLocaleString("en-NG")} — your referral activated their first investment.`
+      },
+      "referral.payout_requested": {
+        title: "Referral payout submitted",
+        body: `Your referral reward payout of ₦${Number(data.amount ?? 0).toLocaleString("en-NG")} is pending review.`
+      },
+      "referral.payout_approved": {
+        title: "Referral payout approved",
+        body: `Your referral payout of ₦${Number(data.amount ?? 0).toLocaleString("en-NG")} has been approved.`
+      },
+      "referral.payout_rejected": {
+        title: "Referral payout declined",
+        body: String(data.reason ?? "Your referral payout request was not approved. Funds returned to your referral wallet.")
+      },
+      "vip.level_up": {
+        title: "VIP level unlocked",
+        body: `Congratulations — you reached ${String(data.label ?? "a new VIP level")}! Your referral commission is now ${Number(data.commission_percent ?? 0)}%.`
       }
     };
 

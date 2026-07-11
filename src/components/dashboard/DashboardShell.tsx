@@ -5,13 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { COMPANY } from "@/lib/company";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { MemberAvatar } from "@/components/profile/MemberAvatar";
-import { MemberIdentity } from "@/components/dashboard/MemberIdentity";
-import { PremiumPayoutCountdown } from "@/components/roi/PremiumPayoutCountdown";
 import { dashboardNavItems, getDashboardNavLabel, mobileDashboardNavItems } from "@/lib/dashboard/nav";
 
 type Props = {
@@ -25,23 +22,42 @@ function NavPanel({
   fullName,
   email,
   avatarUrl,
-  onNavigate
+  onNavigate,
+  variant = "surface"
 }: {
   fullName: string;
   email?: string;
   avatarUrl?: string | null;
   onNavigate?: () => void;
+  variant?: "sidebar" | "surface";
 }) {
   const pathname = usePathname();
+  const isSidebar = variant === "sidebar";
 
   return (
     <>
-      <div className="border-b border-[var(--border)] px-4 py-5">
+      <div
+        className={cn(
+          "border-b px-4 py-5",
+          isSidebar ? "sidebar-border border-white/10" : "border-[var(--border)]"
+        )}
+      >
         <div className="flex items-center gap-3">
-          <MemberAvatar fullName={fullName} avatarUrl={avatarUrl} size="md" />
+          <MemberAvatar fullName={fullName} avatarUrl={avatarUrl} size="md" variant={isSidebar ? "sidebar" : "default"} />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[var(--heading)]">{fullName}</p>
-            {email ? <p className="truncate text-xs text-[var(--text-muted)]">{email}</p> : null}
+            <p
+              className={cn(
+                "truncate text-sm font-semibold",
+                isSidebar ? "text-[var(--sidebar-text)]" : "text-[var(--heading)]"
+              )}
+            >
+              {fullName}
+            </p>
+            {email ? (
+              <p className={cn("truncate text-xs", isSidebar ? "text-[var(--sidebar-muted)]" : "text-[var(--text-muted)]")}>
+                {email}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -58,9 +74,13 @@ function NavPanel({
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-sm font-medium transition",
-                active
-                  ? "bg-[var(--sidebar-active)] text-[var(--emerald)]"
-                  : "text-[var(--text-muted)] hover:bg-[var(--gray-100)] hover:text-[var(--heading)]"
+                isSidebar
+                  ? active
+                    ? "bg-[var(--sidebar-active)] text-[var(--emerald-light)]"
+                    : "text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]"
+                  : active
+                    ? "bg-[var(--emerald-soft)] text-[var(--emerald)]"
+                    : "text-[var(--text-muted)] hover:bg-[var(--gray-100)] hover:text-[var(--heading)]"
               )}
             >
               <Icon size={18} strokeWidth={active ? 2.25 : 1.75} />
@@ -90,18 +110,25 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
     };
   }, [mobileOpen]);
 
+  useEffect(() => {
+    document.body.dataset.mobileNav = "true";
+    return () => {
+      delete document.body.dataset.mobileNav;
+    };
+  }, []);
+
   return (
     <div className="min-h-dvh bg-[var(--dashboard-bg)] lg:flex">
-      <aside className="dashboard-sidebar hidden lg:flex">
+      <aside className="dashboard-sidebar sidebar-surface hidden lg:flex">
         <div className="mb-4 px-2">
           <BrandLogo variant="full" href="/dashboard" priority />
         </div>
-        <NavPanel fullName={fullName} email={email} avatarUrl={avatarUrl} />
-        <div className="mt-auto flex items-center gap-2 border-t border-[var(--border)] p-3">
+        <NavPanel fullName={fullName} email={email} avatarUrl={avatarUrl} variant="sidebar" />
+        <div className="mt-auto flex items-center gap-2 border-t border-white/10 p-3">
           <ThemeToggle compact />
           <Link
             href="/"
-            className="flex-1 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-center text-xs text-[var(--sidebar-muted)] transition hover:text-[var(--sidebar-text)]"
+            className="flex-1 rounded-[var(--radius-sm)] border border-white/15 px-3 py-2 text-center text-xs text-[var(--sidebar-muted)] transition hover:border-white/25 hover:text-[var(--sidebar-text)]"
           >
             ← Website
           </Link>
@@ -130,23 +157,18 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
                   <p className="truncate text-base font-semibold tracking-tight text-[var(--heading)]">
                     {isOverview ? "Overview" : pageLabel}
                   </p>
-                  <p className="truncate text-xs text-[var(--text-muted)]">{COMPANY.brand} member portal</p>
                 </div>
               </div>
 
-              <div className="hidden items-center gap-3 sm:flex">
-                {isOverview ? <PremiumPayoutCountdown variant="compact" className="hidden md:inline-flex" /> : null}
-                <MemberIdentity fullName={fullName} avatarUrl={avatarUrl} className="hidden lg:flex" />
-                <MemberAvatar fullName={fullName} avatarUrl={avatarUrl} size="sm" className="lg:hidden" />
-                <div className="flex items-center gap-2">
-                  <ThemeToggle compact />
-                  <form action="/api/auth/logout" method="post">
-                    <Button type="submit" variant="outline" size="sm" className="gap-2">
-                      <LogOut size={16} aria-hidden />
-                      <span className="hidden sm:inline">Sign out</span>
-                    </Button>
-                  </form>
-                </div>
+              <div className="hidden items-center gap-2 sm:flex">
+                {!isOverview ? <MemberAvatar fullName={fullName} avatarUrl={avatarUrl} size="sm" /> : null}
+                <ThemeToggle compact />
+                <form action="/api/auth/logout" method="post">
+                  <Button type="submit" variant="outline" size="sm" className="gap-2">
+                    <LogOut size={16} aria-hidden />
+                    <span className="hidden sm:inline">Sign out</span>
+                  </Button>
+                </form>
               </div>
 
               <div className="flex items-center gap-2 sm:hidden">
@@ -158,11 +180,6 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
                 </form>
               </div>
             </div>
-
-            <div className="mt-3 flex flex-col gap-2 border-t border-[var(--border)] pt-3 lg:hidden">
-              <MemberIdentity fullName={fullName} avatarUrl={avatarUrl} pageLabel={pageLabel} showPageLabel={!isOverview} />
-              {isOverview ? <PremiumPayoutCountdown variant="compact" className="w-fit" /> : null}
-            </div>
           </div>
         </header>
 
@@ -172,12 +189,18 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
             <aside className="absolute left-0 top-0 flex h-full w-[min(100vw-1rem,20rem)] flex-col bg-[var(--surface-raised)] shadow-[var(--shadow-lg)]">
               <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
                 <BrandLogo variant="full" href="/dashboard" />
-                <button type="button" onClick={() => setMobileOpen(false)} aria-label="Close navigation">
+                <button type="button" onClick={() => setMobileOpen(false)} aria-label="Close navigation" className="text-[var(--text-muted)]">
                   <X size={22} />
                 </button>
               </div>
               <div className="flex max-h-[calc(100dvh-56px)] flex-col overflow-y-auto">
-                <NavPanel fullName={fullName} email={email} avatarUrl={avatarUrl} onNavigate={() => setMobileOpen(false)} />
+                <NavPanel
+                  fullName={fullName}
+                  email={email}
+                  avatarUrl={avatarUrl}
+                  onNavigate={() => setMobileOpen(false)}
+                  variant="surface"
+                />
               </div>
             </aside>
           </div>
@@ -200,7 +223,7 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
                 href={item.href}
                 className={cn(
                   "flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] font-semibold transition",
-                  active ? "text-[var(--emerald)]" : "text-[var(--text-subtle)]"
+                  active ? "text-[var(--emerald)]" : "text-[var(--text-muted)]"
                 )}
               >
                 <Icon size={20} />

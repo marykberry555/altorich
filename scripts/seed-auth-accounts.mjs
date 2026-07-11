@@ -63,6 +63,7 @@ async function upsertUser({ email, password, metadata, adminRole }) {
       full_name: metadata.full_name,
       phone: metadata.phone,
       pin_hash: metadata.pin_hash,
+      preferred_package_slug: metadata.preferred_package_slug ?? null,
       must_change_pin: metadata.must_change_pin ?? false,
       must_change_password: metadata.must_change_password ?? false,
       email_verified_at: new Date().toISOString()
@@ -146,6 +147,7 @@ async function main() {
       username: "demouser",
       phone: "08012345678",
       pin_hash: demoPinHash,
+      preferred_package_slug: "growth",
       must_change_pin: false,
       must_change_password: false
     },

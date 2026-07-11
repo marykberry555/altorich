@@ -12,6 +12,8 @@ import { OtpModal } from "@/components/auth/OtpModal";
 import { useDeviceFingerprint } from "@/lib/auth/use-device-fingerprint";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
+import { refreshSmartsuppIdentity, trackSmartsuppEvent } from "@/lib/chat/smartsupp";
+import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
 
 export function LoginForm() {
   const router = useRouter();
@@ -63,6 +65,8 @@ export function LoginForm() {
 
       router.push(data.redirect ?? redirect);
       router.refresh();
+      trackSmartsuppEvent(SMARTSUPP_EVENTS.LOGIN);
+      refreshSmartsuppIdentity();
     } catch {
       setError("Network error. Please try again.");
       setLoading(false);
@@ -85,6 +89,8 @@ export function LoginForm() {
     setOtpOpen(false);
     router.push(data.redirect ?? redirect);
     router.refresh();
+    trackSmartsuppEvent(SMARTSUPP_EVENTS.LOGIN);
+    refreshSmartsuppIdentity();
   }
 
   return (

@@ -218,34 +218,46 @@ export class AuthService {
     const { data: authUser, error: authErr } = await this.supabase.auth.admin.getUserById(profile.id);
     if (authErr || !authUser.user?.email) throw Errors.internal();
 
-    const { data: trusted } = await this.supabase
-      .from("trusted_devices")
-      .select("id")
-      .eq("user_id", profile.id)
-      .eq("device_fingerprint", input.deviceFingerprint)
-      .maybeSingle();
+    const skipDeviceOtp =
+      process.env.NODE_ENV !== "production" &&
+      (process.env.AUTH_SKIP_DEVICE_OTP === "true" ||
+        process.env.NEXT_PUBLIC_SITE_URL?.includes("localhost") ||
+        username === "demouser");
 
-    if (!trusted) {
-      const otp = await this.createOtp(authUser.user.email, "login_device", profile.id);
-      await sendAuthEmail({
-        to: authUser.user.email,
-        subject: "Verify your device",
-        html: deviceVerificationEmailHtml(otp)
-      });
-      return {
-        requiresDeviceOtp: true as const,
-        email: authUser.user.email,
-        userId: profile.id,
-        mustChangePin: profile.must_change_pin,
-        mustChangePassword: profile.must_change_password
-      };
+    if (!skipDeviceOtp) {
+      const { data: trusted } = await this.supabase
+        .from("trusted_devices")
+        .select("id")
+        .eq("user_id", profile.id)
+        .eq("device_fingerprint", input.deviceFingerprint)
+        .maybeSingle();
+
+      if (!trusted) {
+        const otp = await this.createOtp(authUser.user.email, "login_device", profile.id);
+        await sendAuthEmail({
+          to: authUser.user.email,
+          subject: "Verify your device",
+          html: deviceVerificationEmailHtml(otp)
+        });
+        if (process.env.NODE_ENV !== "production") {
+           
+          console.info(`[AltoRich dev] Device OTP for ${authUser.user.email}: ${otp}`);
+        }
+        return {
+          requiresDeviceOtp: true as const,
+          email: authUser.user.email,
+          userId: profile.id,
+          mustChangePin: profile.must_change_pin,
+          mustChangePassword: profile.must_change_password
+        };
+      }
+
+      await this.supabase
+        .from("trusted_devices")
+        .update({ last_seen_at: new Date().toISOString(), user_agent: input.userAgent })
+        .eq("user_id", profile.id)
+        .eq("device_fingerprint", input.deviceFingerprint);
     }
-
-    await this.supabase
-      .from("trusted_devices")
-      .update({ last_seen_at: new Date().toISOString(), user_agent: input.userAgent })
-      .eq("user_id", profile.id)
-      .eq("device_fingerprint", input.deviceFingerprint);
 
     const session = await this.createSessionForUser(profile.id);
     return {

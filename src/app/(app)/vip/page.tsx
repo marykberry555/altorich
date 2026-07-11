@@ -1,48 +1,74 @@
 import Link from "next/link";
-import { PageHero } from "@/components/marketing/PageHero";
+import { Crown } from "lucide-react";
+import { getSessionUser } from "@/lib/auth/session";
+import { getServiceRoleServices } from "@/lib/services";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { formatNaira } from "@/lib/domain";
-import { getServices } from "@/lib/services";
-import { createClient } from "@/lib/supabase/server";
+import { VipLevelCardGrid } from "@/components/referral/VipLevelCardGrid";
+import { VipProgressPanel } from "@/components/referral/VipProgressPanel";
+import { getVipDisplayTitle } from "@/lib/referral/vip-display";
+
+export const dynamic = "force-dynamic";
 
 export default async function VipPage() {
-  const services = await getServices();
-  const supabase = await createClient();
-  const user = supabase ? (await supabase.auth.getUser()).data.user : null;
+  const user = await getSessionUser();
+  const services = await getServiceRoleServices();
 
-  type VipRow = { level: number; label: string; min_members: number; weekly_dividend: number };
-  const tiers = (services
-    ? (await services.supabase.from("vip_levels").select("*").order("level", { ascending: true })).data
-    : []) as VipRow[] | null;
-
+  const vipLevels = services ? await services.referrals.listVipLevels() : [];
   let currentLevel = 0;
+  let verifiedCount = 0;
+
   if (user && services) {
     const { data: profile } = await services.supabase.from("profiles").select("vip_level").eq("id", user.id).single();
     currentLevel = profile?.vip_level ?? 0;
+    verifiedCount = await services.referrals.countVerifiedReferrals(user.id);
   }
 
+  const current = vipLevels.find((v) => v.level === currentLevel) ?? vipLevels[0];
+  const next = vipLevels.find((v) => v.level === currentLevel + 1) ?? null;
+  const currentDisplayLabel = current ? getVipDisplayTitle(current.level, current.label) : "Member (Starter)";
+
   return (
-    <div className="mx-auto max-w-5xl">
-      <PageHero eyebrow="VIP" title="Member tier programme" description="Cooperative dividends based on verified team growth — not pyramid marketing." />
+    <div className="mx-auto max-w-6xl space-y-8">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">VIP programme</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Community growth tiers</h1>
+        <p className="mt-2 max-w-2xl text-sm text-[var(--text-muted)]">
+          Share Alto Rich. Earn referral rewards as your network grows.
+        </p>
+      </header>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {(tiers ?? []).map((tier) => (
-          <Card key={tier.level} variant={tier.level === currentLevel ? "elevated" : "outline"}>
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-[var(--heading)]">VIP {tier.level}</span>
-              <Badge variant={tier.level === currentLevel ? "emerald" : "outline"}>{tier.label}</Badge>
-            </div>
-            <p className="mt-3 text-2xl font-bold tabular-nums">{formatNaira(Number(tier.weekly_dividend))}</p>
-            <p className="mt-1 text-xs text-[var(--text-subtle)]">Weekly · {tier.min_members} members required</p>
-          </Card>
-        ))}
+      <Card variant="elevated" className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-br from-[var(--navy-soft)] to-[var(--surface-raised)]">
+        <div className="flex items-center gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--gold-soft)] text-[var(--gold)]">
+            <Crown size={28} />
+          </div>
+          <div>
+            <p className="text-sm text-[var(--text-muted)]">Your level</p>
+            <p className="text-2xl font-bold text-[var(--heading)]">{currentDisplayLabel}</p>
+            <p className="text-sm text-[var(--text-muted)]">{verifiedCount} verified investors</p>
+          </div>
+        </div>
+        <Link href="/team">
+          <Button>Open referral dashboard</Button>
+        </Link>
+      </Card>
+
+      <VipProgressPanel
+        currentLevel={currentLevel}
+        currentLabel={currentDisplayLabel}
+        currentCommission={current?.commission_percent ?? 0}
+        verifiedCount={verifiedCount}
+        nextTier={next}
+      />
+
+      <div>
+        <h2 className="text-lg font-bold text-[var(--heading)]">All VIP levels</h2>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          Commission rates and milestones reflect your live platform configuration.
+        </p>
+        <VipLevelCardGrid tiers={vipLevels} currentLevel={currentLevel} className="mt-5" />
       </div>
-
-      <Link href="/team" className="mt-8 inline-block">
-        <Button>Grow your team</Button>
-      </Link>
     </div>
   );
 }

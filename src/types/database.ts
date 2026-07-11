@@ -249,6 +249,8 @@ export type Database = {
       };
       vip_levels: TableStub;
       referrals: TableStub;
+      referral_rewards: TableStub;
+      referral_payouts: TableStub;
       bank_accounts: {
         Row: {
           id: string;

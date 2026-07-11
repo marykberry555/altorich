@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   try {
     if (!isWithdrawalWindow()) {
       return NextResponse.json(
-        { error: "Withdrawal requests open on Mondays and Thursdays from 8:00 AM WAT." },
+        { error: "Payout requests open on Mondays and Thursdays from 8:00 AM WAT." },
         { status: 403 }
       );
     }
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = withdrawalSchema.safeParse({ ...body, amount: Number(body.amount) });
     if (!parsed.success) {
-      throw Errors.badRequest("Complete withdrawal bank details are required.");
+      throw Errors.badRequest("Complete payout destination details are required.");
     }
 
     const user = await requireSessionUser();

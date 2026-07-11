@@ -18,20 +18,20 @@ function write(level: LogLevel, message: string, context?: LogContext) {
   switch (level) {
     case "debug":
       if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
+         
         console.debug(line);
       }
       break;
     case "info":
-      // eslint-disable-next-line no-console
+       
       console.info(line);
       break;
     case "warn":
-      // eslint-disable-next-line no-console
+       
       console.warn(line);
       break;
     case "error":
-      // eslint-disable-next-line no-console
+       
       console.error(line);
       break;
   }

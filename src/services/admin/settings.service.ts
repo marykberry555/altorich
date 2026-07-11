@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import { mergeFeatureFlags, type FeatureFlags } from "@/lib/feature-flags";
 
 type Client = SupabaseClient<Database>;
 
@@ -40,6 +41,36 @@ export class SettingsService {
   async getWithdrawalWindows() {
     const data = await this.get<{ description: string }>("withdrawal_windows");
     return data?.description ?? "Mondays and Thursdays from 8:00 AM WAT";
+  }
+
+  async getCryptoWallets() {
+    return (
+      (await this.get<{
+        usdt: { network: string; address: string };
+        usdc: { network: string; address: string };
+        btc: { address: string };
+      }>("crypto_wallets")) ?? {
+        usdt: { network: "", address: "" },
+        usdc: { network: "", address: "" },
+        btc: { address: "" }
+      }
+    );
+  }
+
+  async getFeatureFlags(): Promise<FeatureFlags> {
+    const data = await this.get<Partial<FeatureFlags>>("feature_flags");
+    return mergeFeatureFlags(data);
+  }
+
+  async updateFeatureFlags(updates: Partial<FeatureFlags>, updatedBy?: string) {
+    const current = await this.getFeatureFlags();
+    const { error } = await this.supabase.from("settings").upsert({
+      key: "feature_flags",
+      value: { ...current, ...updates },
+      updated_by: updatedBy ?? null,
+      updated_at: new Date().toISOString()
+    } as Database["public"]["Tables"]["settings"]["Insert"]);
+    if (error) throw error;
   }
 
   async updateBankSwitchboard(updates: Record<string, unknown>, updatedBy?: string) {

@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/recharge", destination: "/deposits", permanent: true },
-      { source: "/investments", destination: "/portfolio", permanent: true },
+      { source: "/invest", destination: "/investments", permanent: true },
       { source: "/withdraw", destination: "/withdrawals", permanent: true },
       { source: "/products", destination: "/packages/starter", permanent: true },
       { source: "/products/:slug", destination: "/packages/:slug", permanent: true },

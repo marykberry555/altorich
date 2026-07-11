@@ -45,8 +45,8 @@ export function EarningsTicker(props: Props) {
   return (
     <div className={cn("grid gap-4", props.className)}>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Weekly interest (live)</p>
-        <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--emerald)]">{formatNaira(computed.accrued)}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Weekly earnings (live)</p>
+        <p className="currency-ngn mt-1 text-2xl font-bold tabular-nums text-[var(--emerald)]">{formatNaira(computed.accrued)}</p>
         <p className="mt-1 text-xs text-[var(--text-muted)]">
           {formatNaira(computed.perSecond)}/sec · Target {formatNaira(computed.weeklyInterest)} this week
         </p>

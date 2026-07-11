@@ -68,7 +68,7 @@ export class WithdrawalService {
     const balance = await this.wallet.getBalance(wallet.id);
 
     if (balance < input.amount) {
-      throw new AppError("Insufficient wallet balance for withdrawal.", 400, "INSUFFICIENT_BALANCE");
+      throw new AppError("Insufficient wallet balance for payout.", 400, "INSUFFICIENT_BALANCE");
     }
 
     const { data, error } = await this.supabase
@@ -88,8 +88,8 @@ export class WithdrawalService {
 
     await this.notifications.dispatch({
       userId: input.userId,
-      title: "Withdrawal submitted",
-      body: `Your withdrawal request of ₦${input.amount.toLocaleString("en-NG")} is pending review.`,
+      title: "Payout submitted",
+      body: `Your payout request of ₦${input.amount.toLocaleString("en-NG")} is pending review.`,
       channel: "in_app",
       metadata: { withdrawal_id: data.id }
     });

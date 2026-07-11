@@ -6,6 +6,7 @@ import { COMPANY } from "@/lib/company";
 import { BRAND, ICONS } from "@/lib/brand";
 import { themeInitScript } from "@/lib/theme";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { SmartsuppProvider } from "@/components/chat/SmartsuppProvider";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SocialProofToasts } from "@/components/social/SocialProofToasts";
@@ -90,6 +91,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ThemeProvider>
           {children}
           <SocialProofToasts />
+          <SmartsuppProvider />
         </ThemeProvider>
       </body>
     </html>

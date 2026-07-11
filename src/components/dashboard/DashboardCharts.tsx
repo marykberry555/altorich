@@ -14,11 +14,11 @@ import {
   XAxis,
   YAxis
 } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { ChartEmptyPlaceholder } from "@/components/dashboard/ChartEmptyPlaceholder";
 import { Card } from "@/components/ui/Card";
 import { accentBar, type StatAccent } from "@/components/design-system/accent";
 import { cn } from "@/lib/utils";
-import { formatNaira } from "@/lib/domain";
+import { formatNaira, NAIRA_SYMBOL } from "@/lib/domain";
 import type { AllocationPoint, ChartPoint } from "@/lib/dashboard/chart-data";
 
 const PIE_COLORS = ["#047857", "#1e3a5f", "#b8860b", "#0ea5e9"];
@@ -47,14 +47,7 @@ function ChartShell({
         <h3 className="text-base font-semibold text-[var(--heading)]">{title}</h3>
       </div>
       <div className="h-56 px-2 pb-4">
-        {!hasData ? (
-          <div className="flex h-full flex-col items-center justify-center px-4 text-center">
-            <p className="text-sm font-medium text-[var(--heading)]">{emptyTitle}</p>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">Charts update as you use your account.</p>
-          </div>
-        ) : (
-          children
-        )}
+        {!hasData ? <ChartEmptyPlaceholder /> : children}
       </div>
       {href ? (
         <div className="border-t border-[var(--border)] bg-[var(--gray-50)]/60 px-5 py-2.5 text-xs font-medium text-[var(--emerald)]">
@@ -80,7 +73,7 @@ export function BalanceHistoryChart({ data, href }: { data: ChartPoint[]; href?:
             </linearGradient>
           </defs>
           <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--text-subtle)" />
-          <YAxis tick={{ fontSize: 11 }} stroke="var(--text-subtle)" tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`} />
+          <YAxis tick={{ fontSize: 11 }} stroke="var(--text-subtle)" tickFormatter={(v) => `${NAIRA_SYMBOL}${(v / 1000).toFixed(0)}k`} />
           <Tooltip formatter={(v) => formatNaira(Number(v ?? 0))} />
           <Area type="monotone" dataKey="value" stroke="#047857" fill="url(#balanceFill)" strokeWidth={2} />
         </AreaChart>
@@ -104,9 +97,9 @@ export function EarningsTrendChart({ data, href }: { data: ChartPoint[]; href?: 
   );
 }
 
-export function AllocationChart({ data, href }: { data: AllocationPoint[]; href?: string }) {
+export function AllocationChart({ data, href, title = "Allocation" }: { data: AllocationPoint[]; href?: string; title?: string }) {
   return (
-    <ChartShell title="Allocation" emptyTitle="No allocation data" hasData={data.length > 0} href={href} viewLabel="View portfolio" accent="navy">
+    <ChartShell title={title} emptyTitle="No allocation data" hasData={data.length > 0} href={href} viewLabel="View portfolio" accent="navy">
       {data.length > 0 ? (
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -119,9 +112,7 @@ export function AllocationChart({ data, href }: { data: AllocationPoint[]; href?
           </PieChart>
         </ResponsiveContainer>
       ) : (
-        <div className="flex h-full items-center justify-center text-[var(--text-subtle)]">
-          <TrendingUp className="h-8 w-8 opacity-40" />
-        </div>
+        <ChartEmptyPlaceholder />
       )}
     </ChartShell>
   );

@@ -21,12 +21,12 @@ export const accentStyles: Record<
   },
   sky: {
     bar: "from-sky-500/70 via-sky-400/35 to-transparent",
-    icon: "bg-sky-500/10 text-sky-600 ring-sky-500/15",
+    icon: "bg-sky-500/10 text-sky-600 ring-sky-500/15 dark:text-sky-400",
     hover: "hover:border-sky-500/25"
   },
   amber: {
     bar: "from-amber-500/70 via-amber-400/35 to-transparent",
-    icon: "bg-amber-500/10 text-amber-600 ring-amber-500/15",
+    icon: "bg-amber-500/10 text-amber-600 ring-amber-500/15 dark:text-amber-400",
     hover: "hover:border-amber-500/25"
   },
   slate: {

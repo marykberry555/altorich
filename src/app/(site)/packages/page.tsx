@@ -20,7 +20,7 @@ export default function PackagesIndexPage() {
           <PageHero
             eyebrow="Packages"
             title="Structured pools for every stage of wealth building"
-            description="AltoRich packages map to real sectors — savings, agriculture, property, and hard currency. Each pool follows published rules, verified contributions, and auditable ledger records."
+            description="AltoRich packages map to real sectors — savings, agriculture, property, and hard currency. Each plan follows published rules, verified wallet funding, and auditable ledger records."
           />
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] shadow-[var(--shadow-lg)]">
             <Image

@@ -5,6 +5,7 @@ const protectedRoutes = [
   "/dashboard",
   "/wallet",
   "/portfolio",
+  "/investments",
   "/deposits",
   "/withdrawals",
   "/profile",

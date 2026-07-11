@@ -45,7 +45,7 @@ export default async function SettingsPage() {
       <Card variant="elevated" className="mt-4">
         <h2 className="font-semibold text-[var(--heading)]">Bank accounts</h2>
         {bankAccounts.length === 0 ? (
-          <p className="mt-2 text-sm text-[var(--text-muted)]">No saved accounts. Add one when requesting a withdrawal.</p>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">No saved accounts. Add one when requesting a payout.</p>
         ) : (
           <ul className="mt-3 space-y-2 text-sm">
             {bankAccounts.map((a) => (
@@ -59,7 +59,7 @@ export default async function SettingsPage() {
           </ul>
         )}
         <Link href="/withdrawals" className="mt-4 inline-block">
-          <Button size="sm">Manage withdrawals</Button>
+          <Button size="sm">Manage payouts</Button>
         </Link>
       </Card>
 

@@ -10,8 +10,8 @@ const variants = {
   default: "bg-[var(--gray-100)] text-[var(--text-muted)]",
   emerald: "bg-[var(--emerald-soft)] text-[var(--emerald)]",
   gold: "bg-[var(--gold-soft)] text-[var(--gold)]",
-  navy: "bg-[var(--navy-soft)] text-[var(--navy)]",
-  outline: "border border-[var(--border)] text-[var(--text-muted)]"
+  navy: "bg-[var(--navy-soft)] text-[var(--heading)]",
+  outline: "border border-[var(--border-strong)] bg-transparent text-[var(--text-muted)]"
 };
 
 export function Badge({ children, variant = "default", className }: Props) {

@@ -1,13 +1,19 @@
+/** @deprecated UI-only legacy tiers — funding accepts any amount ≥ MIN_FUNDING_AMOUNT_NGN from @/lib/payments */
 export const contributionTiers = [
   3_000, 6_000, 12_000, 25_000, 50_000, 100_000, 200_000, 500_000, 1_000_000
 ] as const;
 
+/** Official Nigerian Naira sign (U+20A6) — two horizontal strokes in supported fonts. */
+export const NAIRA_SYMBOL = "\u20A6";
+
 export function formatNaira(amount: number) {
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
+  const abs = Math.abs(amount);
+  const formatted = new Intl.NumberFormat("en-NG", {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(amount);
+  }).format(abs);
+  const sign = amount < 0 ? "−" : "";
+  return `${sign}${NAIRA_SYMBOL}${formatted}`;
 }
 
 export function makeReference(phone: string, prefix = "AR") {

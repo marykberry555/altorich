@@ -5,6 +5,9 @@ import { AppError } from "@/lib/errors";
 type Client = SupabaseClient<Database>;
 type WalletReason = Database["public"]["Tables"]["wallet_transactions"]["Insert"]["reason"];
 
+/** Separate referral rewards ledger — never mixed with NGN investment wallet */
+export const REFERRAL_WALLET_CURRENCY = "REF";
+
 export type LedgerEntry = {
   walletId: string;
   type: "credit" | "debit";
@@ -129,6 +132,47 @@ export class WalletService {
       reason: "investment_settlement",
       metadata: { investment_id: investmentId, settlement_id: settlementId }
     });
+  }
+
+  async creditReferralCommission(
+    walletId: string,
+    amount: number,
+    referralRef: string,
+    metadata?: Record<string, unknown>
+  ) {
+    return this.postTransaction({
+      walletId,
+      type: "credit",
+      amount,
+      reference: `REF-CR-${referralRef}-${Date.now()}`,
+      reason: "referral_commission",
+      metadata: { ...metadata, wallet_purpose: "referral" }
+    });
+  }
+
+  async debitReferralPayout(walletId: string, amount: number, payoutId: string) {
+    const balance = await this.getBalance(walletId);
+    if (balance < amount) {
+      throw new AppError("Insufficient referral wallet balance.", 400, "INSUFFICIENT_BALANCE");
+    }
+
+    return this.postTransaction({
+      walletId,
+      type: "debit",
+      amount,
+      reference: `REF-PAYOUT-${payoutId}`,
+      reason: "withdrawal",
+      status: "pending",
+      metadata: { referral_payout_id: payoutId, wallet_purpose: "referral" }
+    });
+  }
+
+  async completeReferralPayoutDebit(transactionId: string) {
+    const { error } = await this.supabase
+      .from("wallet_transactions")
+      .update({ status: "completed" })
+      .eq("id", transactionId);
+    if (error) throw error;
   }
 
   async adjust(walletId: string, amount: number, reference: string, metadata?: Record<string, unknown>) {

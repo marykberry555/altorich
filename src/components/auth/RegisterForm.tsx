@@ -12,6 +12,8 @@ import { PinField } from "@/components/ui/PinField";
 import { MathChallenge, useMathChallenge } from "@/components/ui/MathChallenge";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
+import { refreshSmartsuppIdentity, trackSmartsuppEvent } from "@/lib/chat/smartsupp";
+import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
 import type { PackageSlug } from "@/content/packages";
 import { PackageSelectionField } from "@/components/auth/PackageSelectionField";
 
@@ -39,7 +41,7 @@ export function RegisterForm() {
     event.preventDefault();
     if (!math.solved) return;
     if (!preferredPackage) {
-      setError("Select your preferred investment package.");
+      setError("Select a package.");
       return;
     }
     if (!isSupabaseConfigured()) {
@@ -89,6 +91,8 @@ export function RegisterForm() {
     setOtpOpen(false);
     router.push(data.redirect ?? "/dashboard");
     router.refresh();
+    trackSmartsuppEvent(SMARTSUPP_EVENTS.ACCOUNT_CREATED);
+    refreshSmartsuppIdentity();
   }
 
   return (
@@ -106,7 +110,6 @@ export function RegisterForm() {
             value={username}
             onChange={(e) => setUsername(e.target.value.toLowerCase())}
             required
-            hint="3–24 characters: letters, numbers, underscore"
           />
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <Input label="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="08012345678" />

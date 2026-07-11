@@ -17,6 +17,7 @@ import { PaymentOrchestratorService } from "@/services/payment/payment-orchestra
 import { KycService } from "@/services/kyc/kyc.service";
 import { AnalyticsService } from "@/services/admin/analytics.service";
 import { RoiService } from "@/services/roi/roi.service";
+import { ReferralService } from "@/services/referral/referral.service";
 import { requireAdmin } from "@/lib/auth/session";
 
 export type ServiceBundle = {
@@ -36,6 +37,7 @@ export type ServiceBundle = {
   kyc: KycService;
   analytics: AnalyticsService;
   roi: RoiService;
+  referrals: ReferralService;
 };
 
 async function getBankConfig(settings: SettingsService) {
@@ -71,7 +73,8 @@ function buildBundle(supabase: SupabaseClient<Database>, bankConfig?: {
     payments: new PaymentOrchestratorService(supabase, bankConfig),
     kyc: new KycService(supabase),
     analytics: new AnalyticsService(supabase),
-    roi: new RoiService(supabase)
+    roi: new RoiService(supabase),
+    referrals: new ReferralService(supabase)
   };
 }
 

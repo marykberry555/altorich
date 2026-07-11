@@ -12,14 +12,14 @@ export const hero = {
 
 export const valueProps = [
   {
-    title: "Verified contributions",
+    title: "Verified bank funding",
     description:
-      "Every deposit is matched against real bank credits before it touches your wallet. No mystery balances."
+      "Every transfer is matched against real bank credits before it reaches your wallet. No mystery balances."
   },
   {
     title: "Clear settlement windows",
     description:
-      "Withdrawals follow published schedules. You always know when payouts are reviewed and processed."
+      "Payouts follow published schedules. You always know when requests are reviewed and processed."
   },
   {
     title: "Honest projections",
@@ -78,9 +78,9 @@ export const investmentCategories = [
 
 export const howItWorks = [
   { step: "01", title: "Create your account", description: "Register with your email, Nigerian phone number, and preferred investment package." },
-  { step: "02", title: "Verify & fund", description: "Complete KYC, transfer from any Nigerian bank, and see funds in your wallet ledger." },
+  { step: "02", title: "Verify & fund", description: "Transfer from any Nigerian bank and see funds in your wallet after verification." },
   { step: "03", title: "Activate your plan", description: "Choose Alto Starter, Growth, Premium, or Elite — track everything in your dashboard." },
-  { step: "04", title: "Earn on schedule", description: "Weekly settlements every Monday. Withdraw to your bank on published windows." }
+  { step: "04", title: "Earn on schedule", description: "Weekly settlements every Monday. Request payout to your bank on published windows." }
 ];
 
 export const trustIndicators = [
@@ -109,7 +109,7 @@ export const sampleTestimonials = [
     name: "Fatima B.",
     role: "Diaspora · supporting family in Kano",
     quote:
-      "I fund from abroad and my sister manages withdrawals locally. The process is structured and documented — exactly what our family needed.",
+      "I fund from abroad and my sister manages payouts locally. The process is structured and documented — exactly what our family needed.",
     sample: true
   }
 ];
@@ -129,7 +129,7 @@ export const faqs = [
   },
   {
     q: "When can I withdraw?",
-    a: "Withdrawal requests are accepted during published windows — typically Mondays and Thursdays from 8:00 AM West Africa Time. Payouts are processed after bank verification."
+    a: "Payout requests are accepted during published windows — typically Mondays and Thursdays from 8:00 AM West Africa Time. Payouts are processed after verification."
   },
   {
     q: "Who can invest?",

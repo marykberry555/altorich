@@ -12,7 +12,7 @@ export default function FaqPage() {
           <PageHero
             eyebrow="FAQs"
             title="Common questions from Nigerian members"
-            description="Straight answers on registration, deposits, returns, and withdrawals — no marketing spin."
+            description="Straight answers on registration, wallet funding, returns, and payouts — no marketing spin."
           />
         </div>
       </section>

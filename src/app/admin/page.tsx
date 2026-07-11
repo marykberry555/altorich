@@ -1,4 +1,5 @@
 import { Check, X } from "lucide-react";
+import type { ComponentProps } from "react";
 import { formatNaira } from "@/lib/domain";
 import { getServiceRoleServices } from "@/lib/services";
 import { COMPANY } from "@/lib/company";
@@ -18,7 +19,11 @@ import {
 } from "@/components/design-system";
 import { Card } from "@/components/ui/Card";
 import { RoiAdminControls } from "@/components/admin/RoiAdminControls";
+import { AdminFeatureFlags } from "@/components/admin/AdminFeatureFlags";
+import { AdminReferralManagement } from "@/components/admin/AdminReferralManagement";
 import { getPublicEnv } from "@/lib/env";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const services = await getServiceRoleServices();
@@ -37,6 +42,21 @@ export default async function AdminPage() {
   const roiPayoutDest = services
     ? await services.settings.get<{ bank_enabled?: boolean; crypto_enabled?: boolean; crypto_address?: string }>("roi_payout_destinations")
     : null;
+  const featureFlags = services ? await services.settings.getFeatureFlags() : null;
+
+  let referralAdmin = null;
+  if (services) {
+    try {
+      referralAdmin = {
+        config: await services.referrals.getProgramConfig(),
+        vipLevels: await services.referrals.listVipLevels(),
+        analytics: await services.referrals.getAdminAnalytics(),
+        pendingPayouts: await services.referrals.listPendingPayouts()
+      };
+    } catch {
+      referralAdmin = null;
+    }
+  }
 
   let withdrawals: Withdrawal[] = [];
   let activeInvestments: { id: string; reference: string | null; amount: number; status: string; ends_at: string }[] = [];
@@ -64,22 +84,22 @@ export default async function AdminPage() {
       <DashboardSection title="Platform metrics">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricStatCard title="Approved deposits" value={formatNaira(stats.approved)} accent="emerald" />
-          <MetricStatCard title="Pending deposits" value={formatNaira(stats.pending)} accent="amber" />
+          <MetricStatCard title="Pending funding" value={formatNaira(stats.pending)} accent="amber" />
           <MetricStatCard title="Members" value={String(metrics?.members ?? stats.members)} accent="navy" />
           <MetricStatCard title="Wallet liquidity" value={formatNaira(metrics?.totalWalletBalance ?? 0)} accent="sky" />
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricStatCard title="Deposits (month)" value={formatNaira(metrics?.depositsThisMonth ?? 0)} accent="emerald" />
-          <MetricStatCard title="Withdrawals (month)" value={formatNaira(metrics?.withdrawalsThisMonth ?? 0)} accent="amber" />
-          <MetricStatCard title="Pending withdrawals" value={String(metrics?.pendingWithdrawals ?? pendingWithdrawals.length)} accent="gold" />
+          <MetricStatCard title="Payouts (month)" value={formatNaira(metrics?.withdrawalsThisMonth ?? 0)} accent="amber" />
+          <MetricStatCard title="Pending payouts" value={String(metrics?.pendingWithdrawals ?? pendingWithdrawals.length)} accent="gold" />
           <MetricStatCard title="Revenue (earnings)" value={formatNaira(metrics?.revenueEstimate ?? 0)} accent="navy" />
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <a href="/api/admin/export?type=deposits" className="button text-xs">
-            Export deposits CSV
+            Export funding CSV
           </a>
           <a href="/api/admin/export?type=withdrawals" className="button text-xs">
-            Export withdrawals CSV
+            Export payouts CSV
           </a>
           <a href="/api/admin/export?type=members" className="button text-xs">
             Export members CSV
@@ -108,6 +128,17 @@ export default async function AdminPage() {
         />
       ) : null}
 
+      {featureFlags ? <AdminFeatureFlags initial={featureFlags} /> : null}
+
+      {referralAdmin ? (
+        <AdminReferralManagement
+          initialConfig={referralAdmin.config}
+          initialVipLevels={referralAdmin.vipLevels}
+          analytics={referralAdmin.analytics}
+          pendingPayouts={referralAdmin.pendingPayouts as unknown as ComponentProps<typeof AdminReferralManagement>["pendingPayouts"]}
+        />
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card variant="elevated" padding="md" id="settings">
           <SectionHeading title="Bank switchboard & announcements" />
@@ -129,7 +160,7 @@ export default async function AdminPage() {
               <textarea name="globalAnnouncement" rows={2} className="field" defaultValue={announcement} />
             </label>
             <label className="grid gap-1 text-sm">
-              Withdrawal windows
+              Payout windows
               <input name="withdrawalWindows" className="field" defaultValue={withdrawalWindows} />
             </label>
             <button type="submit" className="button">
@@ -139,10 +170,10 @@ export default async function AdminPage() {
         </Card>
 
         <Card variant="elevated" padding="md" id="deposits">
-          <SectionHeading title={`Pending deposits (${pending.length})`} />
+          <SectionHeading title={`Pending funding (${pending.length})`} />
           <div className="max-h-96 space-y-3 overflow-y-auto">
             {pending.length === 0 ? (
-              <p className="text-sm text-[var(--text-subtle)]">No pending deposits</p>
+              <p className="text-sm text-[var(--text-subtle)]">No pending funding requests</p>
             ) : (
               pending.map((deposit) => (
                 <div key={deposit.id} className="rounded-[var(--radius-sm)] border border-[var(--border)] p-3">
@@ -178,7 +209,7 @@ export default async function AdminPage() {
 
       {pendingWithdrawals.length > 0 ? (
         <Card variant="elevated" padding="md" id="withdrawals">
-          <SectionHeading title={`Pending withdrawals (${pendingWithdrawals.length})`} />
+          <SectionHeading title={`Pending payouts (${pendingWithdrawals.length})`} />
           <div className="space-y-3">
             {pendingWithdrawals.map((w) => (
               <div key={w.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] pb-3">

@@ -70,8 +70,8 @@ export const packages: Record<PackageSlug, PackageContent> = {
     accessSteps: [
       {
         step: "01",
-        title: "Complete KYC verification",
-        description: "Upload identity documents and verify your phone number so AltoRich can activate wallet and payout features."
+        title: "Fund your Alto Wallet",
+        description: "Transfer from any Nigerian bank. Deposits are verified before funds appear in your wallet."
       },
       {
         step: "02",
@@ -140,8 +140,8 @@ export const packages: Record<PackageSlug, PackageContent> = {
     accessSteps: [
       {
         step: "01",
-        title: "Complete KYC verification",
-        description: "Identity and address checks unlock agricultural pool participation and regulated payout channels."
+        title: "Fund your Alto Wallet",
+        description: "Transfer from any Nigerian bank. Verified credits unlock agricultural pool participation."
       },
       {
         step: "02",
@@ -210,18 +210,18 @@ export const packages: Record<PackageSlug, PackageContent> = {
     accessSteps: [
       {
         step: "01",
-        title: "Complete KYC verification",
-        description: "Enhanced identity checks apply to property pools to satisfy cooperative and regulatory standards."
-      },
-      {
-        step: "02",
         title: "Fund your Alto Wallet",
         description: "Transfer verified naira into your wallet before selecting a Premium pool allocation."
       },
       {
+        step: "02",
+        title: "Choose a Premium pool",
+        description: "Review land banking or rental programmes in your dashboard."
+      },
+      {
         step: "03",
-        title: "Activate a Premium pool",
-        description: "Review land banking or rental programmes in your dashboard and commit to your chosen duration pool."
+        title: "Activate your allocation",
+        description: "Commit capital from your wallet balance to your selected Premium pool."
       }
     ]
   },
@@ -280,8 +280,8 @@ export const packages: Record<PackageSlug, PackageContent> = {
     accessSteps: [
       {
         step: "01",
-        title: "Complete KYC verification",
-        description: "Full identity verification and enhanced due diligence unlock Elite FX and crypto-linked programmes."
+        title: "Fund your Alto Wallet",
+        description: "Transfer from any Nigerian bank. Full verification unlocks Elite allocation limits when available."
       },
       {
         step: "02",

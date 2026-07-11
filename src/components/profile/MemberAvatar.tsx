@@ -8,6 +8,7 @@ type Props = {
   size?: "sm" | "md" | "lg";
   href?: string;
   className?: string;
+  variant?: "default" | "sidebar";
 };
 
 const sizes = {
@@ -16,14 +17,16 @@ const sizes = {
   lg: "h-16 w-16 text-base"
 };
 
-export function MemberAvatar({ fullName, avatarUrl, size = "md", href = "/profile", className }: Props) {
+export function MemberAvatar({ fullName, avatarUrl, size = "md", href = "/profile", className, variant = "default" }: Props) {
   const initials = getInitials(fullName);
   const dim = sizes[size];
+  const onSidebar = variant === "sidebar";
 
   const avatar = (
     <span
       className={cn(
-        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--gray-100)] ring-1 ring-[var(--border)]",
+        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-1",
+        onSidebar ? "bg-white/10 ring-white/20" : "bg-[var(--gray-100)] ring-[var(--border)]",
         dim,
         className
       )}
@@ -32,7 +35,9 @@ export function MemberAvatar({ fullName, avatarUrl, size = "md", href = "/profil
         // eslint-disable-next-line @next/next/no-img-element
         <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
       ) : (
-        <span className="font-semibold tracking-tight text-[var(--emerald)]">{initials}</span>
+        <span className={cn("font-semibold tracking-tight", onSidebar ? "text-[var(--emerald-light)]" : "text-[var(--emerald)]")}>
+          {initials}
+        </span>
       )}
     </span>
   );

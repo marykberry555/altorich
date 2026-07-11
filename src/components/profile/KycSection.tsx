@@ -50,7 +50,7 @@ export function KycSection({ status, rejectionReason }: Props) {
       </div>
 
       <p className="mt-2 text-sm text-[var(--text-muted)]">
-        Complete KYC to unlock withdrawals. BVN/NIN verification will be wired when provider credentials are available.
+        Complete KYC to unlock payouts. BVN/NIN verification will be wired when provider credentials are available.
       </p>
 
       {rejectionReason ? (

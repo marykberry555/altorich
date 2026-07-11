@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { contributionTiers, makeReference } from "@/lib/domain";
+import { makeReference } from "@/lib/domain";
+import { MIN_FUNDING_AMOUNT_NGN } from "@/lib/payments";
 import { getPublicServices, getServiceRoleServices } from "@/lib/services";
 import { getSessionUser, hasAdminRole } from "@/lib/auth/session";
 import { apiErrorResponse, Errors } from "@/lib/errors";
@@ -53,14 +54,14 @@ export async function POST(request: NextRequest) {
 
     const { memberName, phone, amount, receiptNote, reference, proofUrl } = parsed.data;
 
-    if (!contributionTiers.includes(amount as (typeof contributionTiers)[number])) {
-      throw Errors.badRequest("Unsupported contribution tier.");
+    if (amount < MIN_FUNDING_AMOUNT_NGN) {
+      throw Errors.badRequest(`Minimum funding amount is ₦${MIN_FUNDING_AMOUNT_NGN.toLocaleString("en-NG")}.`);
     }
 
     const bank = await services.settings.getBankSwitchboard();
     if (!bank.contributions_enabled) {
       return NextResponse.json(
-        { error: "Contributions are temporarily disabled." },
+        { error: "Wallet funding is temporarily disabled." },
         { status: 403 }
       );
     }

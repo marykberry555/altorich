@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, LogOut, Menu, Wallet, X, TrendingUp, ArrowDownLeft, ArrowUpRight, Settings } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, Wallet, X, TrendingUp, ArrowDownLeft, ArrowUpRight, Settings, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COMPANY } from "@/lib/company";
 import { BrandLogoStatic } from "@/components/brand/BrandLogoStatic";
@@ -19,14 +19,18 @@ const navSections = [
     label: "Operations",
     items: [
       { href: "/admin#deposits", label: "Deposits", icon: ArrowDownLeft },
-      { href: "/admin#withdrawals", label: "Withdrawals", icon: ArrowUpRight },
+      { href: "/admin#withdrawals", label: "Payouts", icon: ArrowUpRight },
       { href: "/admin#investments", label: "Investments", icon: TrendingUp },
       { href: "/admin#plans", label: "Plans", icon: Wallet }
     ]
   },
   {
     label: "System",
-    items: [{ href: "/admin#settings", label: "Settings", icon: Settings }]
+    items: [
+      { href: "/admin#referrals", label: "Referrals", icon: Users },
+      { href: "/admin#feature-flags", label: "Feature flags", icon: Settings },
+      { href: "/admin#settings", label: "Bank & announcements", icon: Settings }
+    ]
   }
 ];
 
