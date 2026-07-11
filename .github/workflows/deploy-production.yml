@@ -24,9 +24,10 @@ jobs:
           CPANEL_DEPLOY_KEY: ${{ secrets.CPANEL_DEPLOY_KEY }}
         run: |
           if [ -z "$CPANEL_DEPLOY_KEY" ]; then
-            echo "CPANEL_DEPLOY_KEY secret is not configured — skipping remote deploy."
-            echo "Add the cPanel SSH private key as repository secret CPANEL_DEPLOY_KEY to enable auto-deploy."
-            exit 0
+            echo "::error::CPANEL_DEPLOY_KEY secret is not configured — production was NOT updated."
+            echo "Add the cPanel SSH private key as repository secret CPANEL_DEPLOY_KEY, then re-run this workflow."
+            echo "Until then, deploy manually: cPanel Git → Pull/Deploy, or run ./deploy.sh cpanel from a machine with SSH access."
+            exit 1
           fi
           mkdir -p ~/.ssh
           printf '%s\n' "$CPANEL_DEPLOY_KEY" > ~/.ssh/deploy_key
