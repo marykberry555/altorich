@@ -71,21 +71,32 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAdmin && supabase) {
-    const { data: isAdminRole } = await supabase.rpc("has_admin_role");
+    let isAdminRole = false;
+    try {
+      const { data } = await supabase.rpc("has_admin_role");
+      isAdminRole = Boolean(data);
+    } catch {
+      isAdminRole = false;
+    }
+
     if (!isAdminRole) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("must_change_password")
-      .eq("id", user.id)
-      .maybeSingle();
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("must_change_password")
+        .eq("id", user.id)
+        .maybeSingle();
 
-    if (profile?.must_change_password && !pathname.startsWith("/auth/change-password")) {
-      const changeUrl = new URL("/auth/change-password", request.url);
-      changeUrl.searchParams.set("admin", "1");
-      return NextResponse.redirect(changeUrl);
+      if (profile?.must_change_password && !pathname.startsWith("/auth/change-password")) {
+        const changeUrl = new URL("/auth/change-password", request.url);
+        changeUrl.searchParams.set("admin", "1");
+        return NextResponse.redirect(changeUrl);
+      }
+    } catch {
+      // Allow request through; admin layout will re-check access.
     }
   }
 

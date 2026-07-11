@@ -299,16 +299,25 @@ export class AuthService {
   }
 
   async adminLogin(input: { email: string; password: string }) {
-    const { data, error } = await this.supabase.auth.signInWithPassword({
+    const { createClient } = await import("@/lib/supabase/server");
+    const anon = await createClient();
+    if (!anon) throw Errors.notConfigured();
+
+    const { data, error } = await anon.auth.signInWithPassword({
       email: input.email.toLowerCase(),
       password: input.password
     });
     if (error) throw new AppError(error.message, 401, "INVALID_CREDENTIALS");
-    if (!data.user) throw Errors.unauthorized();
+    if (!data.user || !data.session) throw Errors.unauthorized();
 
-    const { data: isAdmin } = await this.supabase.rpc("has_admin_role");
-    if (!isAdmin) {
-      await this.supabase.auth.signOut();
+    const { data: adminRole, error: adminError } = await this.supabase
+      .from("admin_roles")
+      .select("role")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+    if (adminError) throw adminError;
+    if (!adminRole) {
+      await anon.auth.signOut();
       throw Errors.forbidden();
     }
 
