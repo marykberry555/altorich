@@ -13,7 +13,7 @@ export function SessionInactivityGuard() {
     function resetTimer() {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(async () => {
-        await fetch("/api/auth/logout", { method: "POST" });
+        await fetch("/api/auth/logout", { method: "POST", redirect: "manual" });
         router.push("/auth/login?reason=timeout");
         router.refresh();
       }, INACTIVITY_MS);

@@ -59,7 +59,7 @@ export function LoginForm() {
   async function handleUsernameLogin(event: React.FormEvent) {
     event.preventDefault();
     if (!isSupabaseConfigured()) {
-      setError("Supabase is not configured.");
+      setError("Sign-in is temporarily unavailable. Please try again shortly.");
       return;
     }
 

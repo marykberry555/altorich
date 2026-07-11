@@ -30,8 +30,9 @@ deploy_log "Copying node_modules for build (CloudLinux symlink workaround)..."
 rm -rf node_modules
 cp -a "/home/altosujd/nodevenv/repositories/alto-app/${NODE_VERSION}/lib/node_modules" ./node_modules
 
-deploy_log "Building (webpack — required on CloudLinux)..."
-npm run build
+  deploy_log "Building (webpack — required on CloudLinux)..."
+  npm run gate:production
+  npm run build
 
 deploy_log "Removing local node_modules copy..."
 rm -rf node_modules

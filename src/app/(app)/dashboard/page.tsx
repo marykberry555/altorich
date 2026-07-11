@@ -115,7 +115,7 @@ async function DashboardContent() {
 
   return (
     <div className="space-y-8 pb-4">
-      {!isSupabaseConfigured() ? (
+      {!isSupabaseConfigured() && process.env.NODE_ENV !== "production" ? (
         <div className="rounded-[var(--radius)] border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
           Connect Supabase in <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-500/20">.env.local</code> to load live data.
         </div>

@@ -22,6 +22,7 @@
     "verify:rls": "node scripts/verify-rls.mjs",
     "verify:ledger": "node scripts/verify-ledger-integrity.mjs",
     "smoke:production": "node scripts/production-smoke-test.mjs",
+    "gate:production": "node scripts/production-readiness-gate.mjs",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "seed:auth": "node scripts/seed-auth-accounts.mjs",
     "deploy:checklist": "bash scripts/deploy/cpanel-checklist.sh",

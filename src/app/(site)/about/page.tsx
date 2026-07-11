@@ -60,7 +60,7 @@ export default function AboutPage() {
           <PageHero eyebrow="Governance" title="Corporate responsibility" />
           <Card variant="outline" className="mt-6 border-amber-200 bg-amber-50">
             <p className="text-sm text-amber-900">
-              <strong>Regulatory disclosure placeholder:</strong> {REGULATORY_PLACEHOLDER}
+              <strong>Regulatory disclosure:</strong> {REGULATORY_PLACEHOLDER}
             </p>
           </Card>
           <div className="mt-8 grid gap-6 md:grid-cols-2">

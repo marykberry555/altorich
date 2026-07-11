@@ -47,6 +47,9 @@ phase_supabase() {
 phase_github() {
   log "Phase 2: GitHub synchronization"
   require_cmd git
+  require_cmd npm
+
+  npm run gate:production
 
   if ! git rev-parse --git-dir >/dev/null 2>&1; then
     git init -b "$BRANCH"

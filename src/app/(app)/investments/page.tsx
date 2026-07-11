@@ -24,7 +24,7 @@ export default async function InvestmentsPage() {
       plansError = error instanceof Error ? error.message : "Unable to load investment packages.";
     }
   } else {
-    plansError = "Investment services are not configured. Connect Supabase to continue.";
+    plansError = "Investment services are temporarily unavailable. Please try again shortly.";
   }
 
   const preferredSlug =

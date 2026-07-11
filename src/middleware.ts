@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { HARD_OPS_HOME } from "@/lib/hard-ops";
+import { buildPublicUrl } from "@/lib/request-url";
 
 const protectedRoutes = [
   "/dashboard",
@@ -43,7 +44,7 @@ export async function middleware(request: NextRequest) {
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     const target = pathname.replace(/^\/admin/, HARD_OPS_HOME) || HARD_OPS_HOME;
-    return NextResponse.redirect(new URL(target, request.url), 308);
+    return NextResponse.redirect(buildPublicUrl(target, request), 308);
   }
 
   const { response, user, supabase } = await updateSession(request);
@@ -59,7 +60,7 @@ export async function middleware(request: NextRequest) {
           isAdminRole = false;
         }
       }
-      return NextResponse.redirect(new URL(isAdminRole ? HARD_OPS_HOME : "/dashboard", request.url));
+      return NextResponse.redirect(buildPublicUrl(isAdminRole ? HARD_OPS_HOME : "/dashboard", request));
     }
     return response;
   }
@@ -76,7 +77,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!user) {
-    const loginUrl = new URL("/auth/login", request.url);
+    const loginUrl = buildPublicUrl("/auth/login", request);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -89,7 +90,7 @@ export async function middleware(request: NextRequest) {
       .maybeSingle();
 
     if (profile?.must_change_pin && !pathname.startsWith("/auth/change-pin")) {
-      return NextResponse.redirect(new URL("/auth/change-pin", request.url));
+      return NextResponse.redirect(buildPublicUrl("/auth/change-pin", request));
     }
   }
 
@@ -103,7 +104,7 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!isAdminRole) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(buildPublicUrl("/dashboard", request));
     }
 
     try {
@@ -114,7 +115,7 @@ export async function middleware(request: NextRequest) {
         .maybeSingle();
 
       if (profile?.must_change_password && !pathname.startsWith("/auth/change-password")) {
-        const changeUrl = new URL("/auth/change-password", request.url);
+        const changeUrl = buildPublicUrl("/auth/change-password", request);
         changeUrl.searchParams.set("admin", "1");
         return NextResponse.redirect(changeUrl);
       }

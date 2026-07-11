@@ -17,7 +17,7 @@ export function AdminLoginForm() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!isSupabaseConfigured()) {
-      setError("Supabase is not configured.");
+      setError("Admin sign-in is temporarily unavailable. Please try again shortly.");
       return;
     }
 

@@ -47,7 +47,7 @@ export function RegisterForm() {
       return;
     }
     if (!isSupabaseConfigured()) {
-      setError("Supabase is not configured.");
+      setError("Registration is temporarily unavailable. Please try again shortly.");
       return;
     }
 

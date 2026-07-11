@@ -20,5 +20,8 @@ export const COMPANY = {
   tagline: "Wealth built with clarity. Growth designed for Nigeria."
 } as const;
 
-export const REGULATORY_PLACEHOLDER =
-  "Regulatory and licensing details for Nigerian operations will be published here once verified and approved for public disclosure.";
+export const REGULATORY_DISCLOSURE =
+  "Regulatory and licensing details for Nigerian operations will be published once verified and approved for public disclosure.";
+
+/** @deprecated Use REGULATORY_DISCLOSURE */
+export const REGULATORY_PLACEHOLDER = REGULATORY_DISCLOSURE;

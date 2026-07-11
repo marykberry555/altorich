@@ -20,7 +20,7 @@ export default function ResetPasswordPage() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!isSupabaseConfigured()) {
-      setError("Supabase is not configured.");
+      setError("Password reset is temporarily unavailable. Please try again shortly.");
       return;
     }
 
