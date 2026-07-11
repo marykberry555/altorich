@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { COMPANY } from "@/lib/company";
 import { BrandLogoStatic } from "@/components/brand/BrandLogoStatic";
-import { FooterDownloadCta } from "@/components/pwa/FooterDownloadCta";
 import { footerLinks } from "@/content/navigation";
 
 export function SiteFooter() {
@@ -12,7 +11,6 @@ export function SiteFooter() {
           <div>
             <BrandLogoStatic variant="full" href="/" />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">{COMPANY.tagline}</p>
-            <FooterDownloadCta />
             <p className="mt-4 text-xs text-white/50">
               {COMPANY.legalName} · Co. {COMPANY.companyNumber}
               <br />

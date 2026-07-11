@@ -1,27 +1,56 @@
 import Link from "next/link";
 import { Crown } from "lucide-react";
 import { getSessionUser } from "@/lib/auth/session";
-import { getServiceRoleServices } from "@/lib/services";
+import { getUserServices } from "@/lib/services";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { VipLevelCardGrid } from "@/components/referral/VipLevelCardGrid";
 import { VipProgressPanel } from "@/components/referral/VipProgressPanel";
-import { getVipDisplayTitle } from "@/lib/referral/vip-display";
+import { DEFAULT_REFERRAL_PROGRAM } from "@/lib/referral/config";
+import { getVipDisplayTitle, normalizeReferralVipLevels } from "@/lib/referral/vip-display";
+import type { VipLevelConfig } from "@/lib/referral/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function VipPage() {
   const user = await getSessionUser();
-  const services = await getServiceRoleServices();
+  const services = await getUserServices();
 
-  const vipLevels = services ? await services.referrals.listVipLevels() : [];
+  if (!user || !services) {
+    return (
+      <div className="mx-auto max-w-5xl py-12 text-center text-sm text-[var(--text-muted)]">
+        Sign in to view VIP tiers and your referral progress.
+      </div>
+    );
+  }
+
+  let vipLevels: VipLevelConfig[] = [];
   let currentLevel = 0;
   let verifiedCount = 0;
+  let dataError: string | null = null;
 
-  if (user && services) {
-    const { data: profile } = await services.supabase.from("profiles").select("vip_level").eq("id", user.id).single();
+  try {
+    vipLevels = await services.referrals.listVipLevels();
+  } catch (error) {
+    dataError = error instanceof Error ? error.message : "Unable to load VIP tier configuration.";
+    vipLevels = normalizeReferralVipLevels([], DEFAULT_REFERRAL_PROGRAM);
+  }
+
+  try {
+    const { data: profile, error: profileError } = await services.supabase
+      .from("profiles")
+      .select("vip_level")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) throw profileError;
+
     currentLevel = profile?.vip_level ?? 0;
     verifiedCount = await services.referrals.countVerifiedReferrals(user.id);
+  } catch (error) {
+    if (!dataError) {
+      dataError = error instanceof Error ? error.message : "Unable to load your VIP progress.";
+    }
   }
 
   const current = vipLevels.find((v) => v.level === currentLevel) ?? vipLevels[0];
@@ -37,6 +66,13 @@ export default async function VipPage() {
           Share Alto Rich. Earn referral rewards as your network grows.
         </p>
       </header>
+
+      {dataError ? (
+        <div className="rounded-[var(--radius)] border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+          <p className="font-semibold">Some VIP data could not be loaded</p>
+          <p className="mt-1 text-xs opacity-90">{dataError}</p>
+        </div>
+      ) : null}
 
       <Card variant="elevated" className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-br from-[var(--navy-soft)] to-[var(--surface-raised)]">
         <div className="flex items-center gap-3">

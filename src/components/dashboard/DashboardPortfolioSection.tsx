@@ -87,9 +87,9 @@ export function DashboardPortfolioSection({
             <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--emerald-soft)]/80 to-[var(--gray-100)] ring-1 ring-[var(--border)]">
               <CalendarClock className="h-7 w-7 text-[var(--emerald)]" strokeWidth={1.5} aria-hidden />
             </div>
-            <h3 className="text-xl font-semibold text-[var(--heading)]">No active investments yet.</h3>
+            <h3 className="text-xl font-semibold text-[var(--heading)]">Your investment journey starts here</h3>
             <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--text-muted)]">
-              Begin your investment journey by funding your wallet and selecting a package.
+              Your first investment will appear here once you choose a package.
             </p>
             <Link href="/investments" className="mt-6">
               <Button variant="gold" size="md" className="gap-2">

@@ -63,7 +63,7 @@ function ChartShell({
 
 export function BalanceHistoryChart({ data, href }: { data: ChartPoint[]; href?: string }) {
   return (
-    <ChartShell title="Balance activity" emptyTitle="No balance history yet" hasData={data.length > 0} href={href} viewLabel="Open wallet" accent="emerald">
+    <ChartShell title="Balance activity" emptyTitle="Your balance history will appear after your first funding." hasData={data.length > 0} href={href} viewLabel="Open wallet" accent="emerald">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           <defs>
@@ -84,7 +84,7 @@ export function BalanceHistoryChart({ data, href }: { data: ChartPoint[]; href?:
 
 export function EarningsTrendChart({ data, href }: { data: ChartPoint[]; href?: string }) {
   return (
-    <ChartShell title="Settlement earnings" emptyTitle="No settlements yet" hasData={data.length > 0} href={href} viewLabel="View portfolio" accent="gold">
+    <ChartShell title="Settlement earnings" emptyTitle="Your earnings history will grow here once you begin investing." hasData={data.length > 0} href={href} viewLabel="View portfolio" accent="gold">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--text-subtle)" />
@@ -99,7 +99,7 @@ export function EarningsTrendChart({ data, href }: { data: ChartPoint[]; href?: 
 
 export function AllocationChart({ data, href, title = "Allocation" }: { data: AllocationPoint[]; href?: string; title?: string }) {
   return (
-    <ChartShell title={title} emptyTitle="No allocation data" hasData={data.length > 0} href={href} viewLabel="View portfolio" accent="navy">
+    <ChartShell title={title} emptyTitle="Your allocation chart appears once you have active investments." hasData={data.length > 0} href={href} viewLabel="View portfolio" accent="navy">
       {data.length > 0 ? (
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>

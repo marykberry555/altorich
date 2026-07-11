@@ -93,45 +93,57 @@ export function DashboardWealthHero({
           </div>
         </div>
 
-        {/* Live accrued earnings — focal point */}
-        <div
-          className={cn(
-            "relative mt-6 rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm sm:mt-7 sm:p-6",
-            isLive && aggregate.isAccruing && "animate-[pulse-soft_3s_ease-in-out_infinite]"
-          )}
-        >
-          <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-400/10 via-transparent to-transparent" aria-hidden />
-          <div className="relative">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">Live accrued earnings</p>
-            <p className="mt-3 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl lg:text-[3.25rem]">
-              <AnimatedEarningsCounter
-                value={liveAccruedEarnings}
-                liveRate={isLive ? earningsTick : undefined}
-                decimals={2}
-                className="text-white"
-              />
-            </p>
+        {/* Primary focal — live earnings or onboarding */}
+        {isLive ? (
+          <div
+            className={cn(
+              "relative mt-6 rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm sm:mt-7 sm:p-6",
+              aggregate.isAccruing && "animate-[pulse-soft_3s_ease-in-out_infinite]"
+            )}
+          >
+            <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-400/10 via-transparent to-transparent" aria-hidden />
+            <div className="relative">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">Live accrued earnings</p>
+              <p className="mt-3 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl lg:text-[3.25rem]">
+                <AnimatedEarningsCounter
+                  value={liveAccruedEarnings}
+                  liveRate={earningsTick}
+                  decimals={2}
+                  className="text-white"
+                />
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="relative mt-6 rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm sm:mt-7 sm:p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">Ready to start earning?</p>
+            <p className="mt-3 text-xl font-bold tracking-tight sm:text-2xl">Your investment journey starts here</p>
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/80">
+              {walletBalance > 0
+                ? "Your wallet is ready. Choose an investment package and begin earning after activation."
+                : "Fund your wallet, choose a package, and begin earning immediately after activation."}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href="/deposits">
+                <Button variant="gold" size="sm">
+                  Fund wallet
+                </Button>
+              </Link>
+              <Link href="/investments">
+                <Button variant="outline" size="sm" className="border-white/30 bg-white/10 text-white hover:bg-white/20">
+                  Explore packages
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Payout countdown */}
         <div className="mt-4">
           <DashboardPayoutCountdown active={hasActiveInvestment} />
         </div>
 
-        {/* Empty state CTA */}
-        {!hasActiveInvestment ? (
-          <div className="mt-5 rounded-2xl border border-white/10 bg-black/10 px-4 py-4 sm:px-5">
-            <p className="text-sm text-white/80">Start your first investment to begin earning.</p>
-            <Link href="/investments" className="mt-3 inline-block">
-              <Button variant="gold" size="sm">
-                Invest Now
-              </Button>
-            </Link>
-          </div>
-        ) : null}
-
-        {/* Secondary metrics — investor priority order */}
+        {/* Secondary metrics */}
         <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
             <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Wallet balance</dt>
@@ -143,7 +155,7 @@ export function DashboardWealthHero({
               {isLive ? (
                 <AnimatedEarningsCounter value={todayGrowth} liveRate={todayTick} decimals={2} />
               ) : (
-                formatNaira(0)
+                <span className="text-white/50">After activation</span>
               )}
             </dd>
           </div>
@@ -189,25 +201,38 @@ export function DashboardWealthHeroStatic({
           </div>
         </div>
 
-        <div className="relative mt-6 rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm sm:mt-7 sm:p-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">Live accrued earnings</p>
-          <p className="mt-3 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl">{formatNaira(totalEarned)}</p>
-        </div>
+        {hasActiveInvestment ? (
+          <div className="relative mt-6 rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm sm:mt-7 sm:p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">Live accrued earnings</p>
+            <p className="mt-3 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl">{formatNaira(totalEarned)}</p>
+          </div>
+        ) : (
+          <div className="relative mt-6 rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm sm:mt-7 sm:p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">Ready to start earning?</p>
+            <p className="mt-3 text-xl font-bold tracking-tight sm:text-2xl">Your investment journey starts here</p>
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/80">
+              {walletBalance > 0
+                ? "Your wallet is ready. Choose an investment package and begin earning after activation."
+                : "Fund your wallet, choose a package, and begin earning immediately after activation."}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href="/deposits">
+                <Button variant="gold" size="sm">
+                  Fund wallet
+                </Button>
+              </Link>
+              <Link href="/investments">
+                <Button variant="outline" size="sm" className="border-white/30 bg-white/10 text-white hover:bg-white/20">
+                  Explore packages
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="mt-4">
           <DashboardPayoutCountdown active={hasActiveInvestment} />
         </div>
-
-        {!hasActiveInvestment ? (
-          <div className="mt-5 rounded-2xl border border-white/10 bg-black/10 px-4 py-4 sm:px-5">
-            <p className="text-sm text-white/80">Start your first investment to begin earning.</p>
-            <Link href="/investments" className="mt-3 inline-block">
-              <Button variant="gold" size="sm">
-                Invest Now
-              </Button>
-            </Link>
-          </div>
-        ) : null}
 
         <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
@@ -216,7 +241,9 @@ export function DashboardWealthHeroStatic({
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
             <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Today&apos;s earnings</dt>
-            <dd className="mt-1 text-lg font-bold tabular-nums text-emerald-200 sm:text-xl">{formatNaira(0)}</dd>
+            <dd className="mt-1 text-lg font-bold tabular-nums text-emerald-200 sm:text-xl">
+              {hasActiveInvestment ? formatNaira(0) : <span className="text-white/50">After activation</span>}
+            </dd>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
             <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Total invested</dt>

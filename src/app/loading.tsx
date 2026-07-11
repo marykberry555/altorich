@@ -1,10 +1,9 @@
-import { BrandLogoStatic } from "@/components/brand/BrandLogoStatic";
+import { AppLoader } from "@/components/brand/AppLoader";
 
 export default function Loading() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--surface)]">
-      <BrandLogoStatic variant="icon" priority />
-      <p className="text-sm text-[var(--text-muted)]">AltoRich... Hold On</p>
+    <div className="min-h-screen bg-[var(--surface)]">
+      <AppLoader />
     </div>
   );
 }

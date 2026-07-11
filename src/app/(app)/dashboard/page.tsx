@@ -7,16 +7,23 @@ import { formatNaira } from "@/lib/domain";
 import type { AllocationPoint, ChartPoint } from "@/lib/dashboard/chart-data";
 import { COMPANY } from "@/lib/company";
 import { DEFAULT_REFERRAL_PROGRAM } from "@/lib/referral/config";
+import { resolveNextAction } from "@/lib/dashboard/conversion";
+import { buildActionHints, toConversionState } from "@/lib/dashboard/conversion-hints";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { DashboardCyclePanel } from "@/components/dashboard/DashboardCyclePanel";
 import { DashboardWealthHero, DashboardWealthHeroStatic } from "@/components/dashboard/DashboardWealthHero";
+import { DashboardNextStepCard } from "@/components/dashboard/DashboardNextStepCard";
+import { DashboardProgressJourney } from "@/components/dashboard/DashboardProgressJourney";
+import { DashboardEarningsPreview } from "@/components/dashboard/DashboardEarningsPreview";
 import { DashboardQuickActions } from "@/components/dashboard/DashboardQuickActions";
 import { DashboardPortfolioSection } from "@/components/dashboard/DashboardPortfolioSection";
 import { DashboardReferralStrip } from "@/components/dashboard/DashboardReferralStrip";
-import { DashboardNotificationsPreview } from "@/components/dashboard/DashboardNotificationsPreview";
+import { DashboardNotificationsPreview, filterActionableNotifications } from "@/components/dashboard/DashboardNotificationsPreview";
 import { LedgerTable } from "@/components/dashboard/LedgerTable";
 import { BalanceHistoryChart, AllocationChart } from "@/components/dashboard/DashboardCharts";
 import { DashboardPanelCard, DashboardSection } from "@/components/design-system";
+import type { PackageSlug } from "@/content/packages";
+
 import { fetchInvestmentContext } from "@/lib/investment/mappers";
 
 async function DashboardContent() {
@@ -38,6 +45,17 @@ async function DashboardContent() {
   const hasActiveInvestment = (dashboard?.activeInvestments ?? 0) > 0 || Boolean(roiState?.activeInvestment);
   const fullName = dashboard?.profile?.full_name ?? user?.email ?? "Member";
   const avatarUrl = dashboard?.profile?.avatar_url;
+
+  const conversionState = toConversionState({
+    balance,
+    pendingDeposits: dashboard?.pendingDeposits ?? 0,
+    pendingWithdrawals: dashboard?.pendingWithdrawals ?? 0,
+    hasActiveInvestment,
+    totalEarned: portfolio?.totalEarned ?? 0,
+    preferredPackageSlug: preferredPackage
+  });
+
+  const nextAction = resolveNextAction(conversionState);
 
   let balanceHistory: ChartPoint[] = [];
   let earningsTrend: ChartPoint[] = [];
@@ -78,18 +96,32 @@ async function DashboardContent() {
     }
   }
 
-  const notifications =
-    user && services ? await services.notifications.listForUser(user.id, 3).catch(() => []) : [];
+  const dbNotifications =
+    user && services ? await services.notifications.listForUser(user.id, 8).catch(() => []) : [];
+
+  const mappedNotifications = dbNotifications.map((n) => ({
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    created_at: n.created_at,
+    read_at: n.read_at
+  }));
+
+  const actionableNotifications = filterActionableNotifications(mappedNotifications);
+  const notificationRows =
+    actionableNotifications.length > 0 ? actionableNotifications : buildActionHints(conversionState);
+
+  const showCharts = balanceHistory.length > 0 || allocation.length > 0 || hasActiveInvestment;
 
   return (
-    <div className="space-y-10 pb-4">
+    <div className="space-y-8 pb-4">
       {!isSupabaseConfigured() ? (
         <div className="rounded-[var(--radius)] border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
           Connect Supabase in <code className="rounded bg-amber-100/80 px-1 dark:bg-amber-500/20">.env.local</code> to load live data.
         </div>
       ) : null}
 
-      <DashboardSection className="space-y-6">
+      <DashboardSection className="space-y-5">
         {showPlanInvestmentUi && investCtx ? (
           <DashboardWealthHero
             fullName={fullName}
@@ -113,7 +145,16 @@ async function DashboardContent() {
             totalEarned={portfolio?.totalEarned ?? 0}
           />
         )}
+
+        <DashboardNextStepCard action={nextAction} />
+        <DashboardProgressJourney state={conversionState} />
       </DashboardSection>
+
+      {!hasActiveInvestment ? (
+        <DashboardSection>
+          <DashboardEarningsPreview preferredPackageSlug={preferredPackage as PackageSlug | null} />
+        </DashboardSection>
+      ) : null}
 
       {roiEnabled && roiState?.activeInvestment ? (
         <DashboardCyclePanel
@@ -121,17 +162,13 @@ async function DashboardContent() {
           avatarUrl={avatarUrl}
           preferredPackageSlug={preferredPackage}
           hasActiveInvestment={hasActiveInvestment}
-          roi={
-            roiState?.activeInvestment
-              ? {
-                  principalNgn: Number(roiState.activeInvestment.principal_ngn),
-                  weeklyRoiBps: Number(roiState.activeInvestment.tier.weekly_roi_bps),
-                  cycleStartedAt: roiState.activeInvestment.cycle_started_at,
-                  cycleEndsAt: roiState.activeInvestment.cycle_ends_at,
-                  tierName: roiState.activeInvestment.tier.name
-                }
-              : null
-          }
+          roi={{
+            principalNgn: Number(roiState.activeInvestment.principal_ngn),
+            weeklyRoiBps: Number(roiState.activeInvestment.tier.weekly_roi_bps),
+            cycleStartedAt: roiState.activeInvestment.cycle_started_at,
+            cycleEndsAt: roiState.activeInvestment.cycle_ends_at,
+            tierName: roiState.activeInvestment.tier.name
+          }}
         />
       ) : null}
 
@@ -149,19 +186,22 @@ async function DashboardContent() {
         />
       ) : null}
 
-      <DashboardSection title="Performance">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <BalanceHistoryChart data={balanceHistory} href="/wallet" />
-          <AllocationChart data={allocation} href="/portfolio" title="Asset allocation" />
-        </div>
+      <DashboardSection title="Referrals">
+        <DashboardReferralStrip
+          vipLabel={referralStrip.vipLabel}
+          commissionRate={referralStrip.commissionRate}
+          verifiedCount={referralStrip.verifiedCount}
+          referralCount={referralStrip.referralCount}
+          nextTier={referralStrip.nextTier}
+        />
       </DashboardSection>
 
       <DashboardSection title="Recent activity">
         <DashboardPanelCard title="Account activity" href="/wallet" viewLabel="Full wallet history" accent="emerald">
           {(dashboard?.recentTransactions.length ?? 0) === 0 ? (
             <div className="py-8 text-center">
-              <p className="text-sm font-medium text-[var(--heading)]">No transactions yet.</p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">Funding and investment activity will appear here.</p>
+              <p className="text-sm font-medium text-[var(--heading)]">Your account activity will appear here once you begin investing.</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Funding, investments, and payouts will show in this feed.</p>
             </div>
           ) : (
             <LedgerTable
@@ -179,50 +219,45 @@ async function DashboardContent() {
         </DashboardPanelCard>
       </DashboardSection>
 
-      <DashboardSection title="Upcoming settlements">
-        <DashboardPanelCard title="Next maturities" href="/portfolio" viewLabel="Open portfolio" accent="gold">
-          {(dashboard?.upcomingMaturities.length ?? 0) === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-sm font-medium text-[var(--heading)]">No upcoming settlements.</p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">Active investment maturity dates will appear here.</p>
-            </div>
-          ) : (
-            <ul className="space-y-3">
-              {dashboard!.upcomingMaturities.map((m) => (
-                <li key={m.id} className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--gray-50)]/40 px-4 py-3 text-sm">
-                  <div>
-                    <p className="font-semibold text-[var(--heading)]">{m.reference ?? m.id.slice(0, 8)}</p>
-                    <p className="text-xs text-[var(--text-muted)]">{formatNaira(m.amount)} invested</p>
-                  </div>
-                  <span className="font-medium tabular-nums text-[var(--text-muted)]">
-                    {new Date(m.ends_at).toLocaleDateString("en-NG", { dateStyle: "medium" })}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </DashboardPanelCard>
-      </DashboardSection>
+      {showCharts ? (
+        <DashboardSection title="Performance">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <BalanceHistoryChart data={balanceHistory} href="/wallet" />
+            <AllocationChart data={allocation} href="/portfolio" title="Asset allocation" />
+          </div>
+        </DashboardSection>
+      ) : null}
 
-      <DashboardSection title="Referrals">
-        <DashboardReferralStrip
-          vipLabel={referralStrip.vipLabel}
-          commissionRate={referralStrip.commissionRate}
-          verifiedCount={referralStrip.verifiedCount}
-          referralCount={referralStrip.referralCount}
-          nextTier={referralStrip.nextTier}
-        />
-      </DashboardSection>
+      {hasActiveInvestment ? (
+        <DashboardSection title="Upcoming settlements">
+          <DashboardPanelCard title="Next maturities" href="/portfolio" viewLabel="Open portfolio" accent="gold">
+            {(dashboard?.upcomingMaturities.length ?? 0) === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-sm font-medium text-[var(--heading)]">Settlement history becomes available after your first payout.</p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">Maturity dates for active investments will appear here.</p>
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {dashboard!.upcomingMaturities.map((m) => (
+                  <li key={m.id} className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--gray-50)]/40 px-4 py-3 text-sm">
+                    <div>
+                      <p className="font-semibold text-[var(--heading)]">{m.reference ?? m.id.slice(0, 8)}</p>
+                      <p className="text-xs text-[var(--text-muted)]">{formatNaira(m.amount)} invested</p>
+                    </div>
+                    <span className="font-medium tabular-nums text-[var(--text-muted)]">
+                      {new Date(m.ends_at).toLocaleDateString("en-NG", { dateStyle: "medium" })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DashboardPanelCard>
+        </DashboardSection>
+      ) : null}
 
       <DashboardSection title="Alerts">
         <DashboardNotificationsPreview
-          notifications={notifications.map((n) => ({
-            id: n.id,
-            title: n.title,
-            body: n.body,
-            created_at: n.created_at,
-            read_at: n.read_at
-          }))}
+          notifications={notificationRows}
           unreadCount={dashboard?.unreadNotifications ?? 0}
         />
       </DashboardSection>

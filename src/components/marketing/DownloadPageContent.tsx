@@ -1,15 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { DownloadAppBadge, InstallInstructions } from "@/components/pwa/DownloadAppBadge";
-import { usePwaOptional } from "@/components/pwa/PwaProvider";
+import { DownloadImageButton } from "@/components/pwa/DownloadImageButton";
 import { BRAND } from "@/lib/brand";
-import { useState } from "react";
 
 export function DownloadPageContent() {
-  const pwa = usePwaOptional();
-  const [showHelp, setShowHelp] = useState(false);
-
   return (
     <section className="section-pad">
       <div className="container-ar mx-auto max-w-lg text-center">
@@ -23,30 +18,14 @@ export function DownloadPageContent() {
         </p>
 
         <div className="mt-8 flex justify-center">
-          {pwa?.isStandalone ? (
-            <DownloadAppBadge size="lg" />
-          ) : (
-            <DownloadAppBadge size="lg" showInstructionsOnFallback />
-          )}
+          <DownloadImageButton />
         </div>
-
-        {!pwa?.canInstall && !pwa?.isStandalone && !showHelp ? (
-          <button
-            type="button"
-            className="mt-4 text-sm font-medium text-[var(--emerald)] underline-offset-2 hover:underline"
-            onClick={() => setShowHelp(true)}
-          >
-            Don&apos;t see the install prompt?
-          </button>
-        ) : null}
-
-        {showHelp && !pwa?.canInstall ? <InstallInstructions /> : null}
 
         <div className="mt-12 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-raised)] p-6 text-left">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--heading)]">How to install</h2>
           <ol className="mt-4 space-y-3 text-sm text-[var(--text-muted)]">
             <li>
-              <span className="font-semibold text-[var(--heading)]">1.</span> Tap Download App.
+              <span className="font-semibold text-[var(--heading)]">1.</span> Tap the download banner above.
             </li>
             <li>
               <span className="font-semibold text-[var(--heading)]">2.</span> Open the downloaded file or install prompt.

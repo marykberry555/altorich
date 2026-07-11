@@ -2,8 +2,8 @@
 
 import { Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useState } from "react";
-import { usePwaOptional } from "@/components/pwa/PwaProvider";
+import { useCallback } from "react";
+import { usePwaInstallFlow } from "@/lib/pwa/use-pwa-install-flow";
 import { isIosDevice } from "@/lib/pwa/runtime";
 import { cn } from "@/lib/utils";
 
@@ -46,8 +46,7 @@ function InstallInstructions() {
 }
 
 export function DownloadAppBadge({ size = "md", className, tone = "dark", showInstructionsOnFallback = false }: Props) {
-  const pwa = usePwaOptional();
-  const [showHelp, setShowHelp] = useState(false);
+  const { pwa, showHelp, handleInstall } = usePwaInstallFlow(showInstructionsOnFallback);
   const spec = sizes[size];
   const shellClass =
     tone === "light"
@@ -55,13 +54,8 @@ export function DownloadAppBadge({ size = "md", className, tone = "dark", showIn
       : "bg-[var(--navy)] text-white shadow-[var(--shadow-md)] hover:brightness-110";
 
   const handleDownload = useCallback(async () => {
-    if (pwa?.canInstall) {
-      const ok = await pwa.promptInstall();
-      if (!ok && showInstructionsOnFallback) setShowHelp(true);
-      return;
-    }
-    if (showInstructionsOnFallback) setShowHelp(true);
-  }, [pwa, showInstructionsOnFallback]);
+    await handleInstall();
+  }, [handleInstall]);
 
   if (pwa?.isStandalone) {
     return (

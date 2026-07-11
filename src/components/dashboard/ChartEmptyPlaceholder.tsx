@@ -6,7 +6,7 @@ type Props = {
   message?: string;
 };
 
-export function ChartEmptyPlaceholder({ className, message = "No activity to display yet." }: Props) {
+export function ChartEmptyPlaceholder({ className, message = "Your earnings history will grow here once you begin investing." }: Props) {
   return (
     <div className={cn("flex h-full flex-col items-center justify-center px-6 text-center", className)}>
       <div
