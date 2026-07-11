@@ -33,10 +33,18 @@ function timeAgo(ms: number, now: number) {
 
 export function SocialProofToasts({ className }: { className?: string }) {
   const pathname = usePathname();
-  const [mountedAt] = useState(() => Date.now());
+  const [mounted, setMounted] = useState(false);
+  const [mountedAt, setMountedAt] = useState(0);
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    const ts = Date.now();
+    setMountedAt(ts);
+    setNow(ts);
+    setMounted(true);
+  }, []);
 
   const events = useMemo(() => {
     return buildSocialProofEvents(mountedAt).filter((ev) => isEligible(ev, now));
@@ -68,7 +76,7 @@ export function SocialProofToasts({ className }: { className?: string }) {
     };
   }, [events.length]);
 
-  if (isAppRoute(pathname)) return null;
+  if (!mounted || isAppRoute(pathname)) return null;
   if (!current) return null;
 
   return (

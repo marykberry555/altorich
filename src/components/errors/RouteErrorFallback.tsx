@@ -12,6 +12,7 @@ type Props = {
   component?: string;
   dashboardHref?: string;
   homeHref?: string;
+  showDebugDetails?: boolean;
 };
 
 export function RouteErrorFallback({
@@ -20,7 +21,8 @@ export function RouteErrorFallback({
   route,
   component = "RouteErrorBoundary",
   dashboardHref = "/dashboard",
-  homeHref = "/"
+  homeHref = "/",
+  showDebugDetails = true
 }: Props) {
   const [reported, setReported] = useState(false);
   const [reportFailed, setReportFailed] = useState(false);
@@ -68,11 +70,16 @@ export function RouteErrorFallback({
   };
 
   return (
-    <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center gap-4 px-4 py-10 text-center">
+    <div className="mx-auto flex min-h-[50vh] max-w-3xl flex-col items-center justify-center gap-4 px-4 py-10 text-center">
       <h1 className="text-xl font-bold text-[var(--heading)]">Something went wrong</h1>
       <p className="text-sm text-[var(--text-muted)]">{errorMessage(error)}</p>
       {error.digest ? (
         <p className="text-xs text-[var(--text-subtle)]">Reference: {error.digest}</p>
+      ) : null}
+      {showDebugDetails && error.stack ? (
+        <pre className="max-h-64 w-full overflow-auto rounded-lg border border-[var(--border)] bg-[var(--gray-50)] p-3 text-left text-[11px] leading-relaxed text-[var(--text-muted)]">
+          {error.stack}
+        </pre>
       ) : null}
       <div className="flex flex-wrap justify-center gap-2">
         <Button type="button" onClick={() => reset()}>

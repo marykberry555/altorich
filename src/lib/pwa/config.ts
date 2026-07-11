@@ -9,7 +9,7 @@ export const PWA = {
   themeColor: "#064e3b",
   backgroundColor: "#f8f7f5",
   version: "1.0.0",
-  cacheVersion: "altorich-v3",
+  cacheVersion: "altorich-disabled",
   installDismissKey: "altorich_pwa_install_dismiss",
   installNeverKey: "altorich_pwa_install_never",
   installVisitKey: "altorich_pwa_visit_count"

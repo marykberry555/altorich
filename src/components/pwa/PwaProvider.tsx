@@ -4,7 +4,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import {
   isStandaloneDisplay,
   recordPwaVisit,
-  registerServiceWorker,
   type BeforeInstallPromptEvent
 } from "@/lib/pwa/runtime";
 
@@ -42,18 +41,8 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
 
-    void registerServiceWorker().then((registration) => {
-      if (!registration) return;
-      registration.addEventListener("updatefound", () => {
-        const worker = registration.installing;
-        if (!worker) return;
-        worker.addEventListener("statechange", () => {
-          if (worker.state === "installed" && navigator.serviceWorker.controller) {
-            setUpdateAvailable(true);
-          }
-        });
-      });
-    });
+    // Service worker disabled during stability incident — stale caches crash hydration.
+    // void registerServiceWorker().then((registration) => { ... });
 
     return () => {
       window.removeEventListener("online", onOnline);

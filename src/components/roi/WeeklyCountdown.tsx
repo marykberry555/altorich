@@ -46,15 +46,60 @@ export function WeeklyCountdown({
   label?: string;
   compact?: boolean;
 }) {
+  const [mounted, setMounted] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
+    setMounted(true);
+    setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
   const remaining = useMemo(() => weeklyCountdownTarget(now).secondsRemaining, [now]);
   const { days, hours, minutes, seconds } = splitSeconds(remaining);
+
+  if (!mounted) {
+    if (compact) {
+      return (
+        <div className={cn("w-full", className)} aria-hidden>
+          <div className="flex items-center gap-1.5">
+            <Clock size={14} className="shrink-0 text-[var(--emerald)]" aria-hidden />
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--emerald)]">{label}</p>
+          </div>
+          <div className="mt-2 flex gap-1">
+            <CountdownBlock value="0" label="D" compact />
+            <CountdownBlock value="00" label="H" compact />
+            <CountdownBlock value="00" label="M" compact />
+            <CountdownBlock value="00" label="S" compact />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={cn(
+          "w-full rounded-2xl border-2 border-[var(--emerald)]/35 bg-gradient-to-br from-[var(--emerald-soft)] via-[var(--surface-raised)] to-[var(--surface-raised)] p-4 shadow-[var(--shadow-glow)] sm:p-5",
+          className
+        )}
+        aria-hidden
+      >
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--emerald)] text-white">
+            <Clock size={18} aria-hidden />
+          </div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--emerald)] sm:text-sm">{label}</p>
+        </div>
+        <div className="mt-3 flex gap-2 sm:gap-3">
+          <CountdownBlock value="0" label="Days" />
+          <CountdownBlock value="00" label="Hours" />
+          <CountdownBlock value="00" label="Mins" />
+          <CountdownBlock value="00" label="Secs" />
+        </div>
+      </div>
+    );
+  }
 
   if (compact) {
     return (

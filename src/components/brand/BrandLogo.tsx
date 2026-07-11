@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { BRAND } from "@/lib/brand";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -23,7 +24,14 @@ const sizes = {
 
 export function BrandLogo({ variant = "full", className, href = "/", priority, showTagline }: Props) {
   const { theme } = useTheme();
-  const isDark = theme === "dark";
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const activeTheme = mounted ? theme : "light";
+  const isDark = activeTheme === "dark";
   const spec = sizes[variant];
   const src = spec.iconOnly
     ? isDark
