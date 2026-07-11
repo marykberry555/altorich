@@ -2,9 +2,11 @@
 
 import { useEffect } from "react";
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { SmartsuppBridge, SmartsuppWelcomeHint } from "@/components/chat/SmartsuppBridge";
 import { buildSmartsuppBootstrap, getSmartsuppKey, smartsuppThemeColor } from "@/lib/chat/smartsupp";
+import { isMarketingRoute } from "@/lib/route-zones";
 
 function SmartsuppThemeSync() {
   const { theme } = useTheme();
@@ -22,7 +24,9 @@ function SmartsuppThemeSync() {
 }
 
 export function SmartsuppProvider() {
+  const pathname = usePathname();
   const key = getSmartsuppKey();
+  const enabled = Boolean(key) && isMarketingRoute(pathname);
 
   useEffect(() => {
     if (!key && process.env.NODE_ENV === "development") {
@@ -31,7 +35,15 @@ export function SmartsuppProvider() {
     }
   }, [key]);
 
-  if (!key) return null;
+  useEffect(() => {
+    if (!key) return;
+    if (enabled) return;
+    if (typeof window !== "undefined" && window.smartsupp) {
+      window.smartsupp("chat:hide");
+    }
+  }, [enabled, key, pathname]);
+
+  if (!enabled || !key) return null;
 
   const bootstrap = buildSmartsuppBootstrap(key);
 

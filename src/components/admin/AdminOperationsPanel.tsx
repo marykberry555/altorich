@@ -1,5 +1,7 @@
 import { Activity, Database, Server, ShieldCheck, Users, Wallet } from "lucide-react";
+import Link from "next/link";
 import { formatNaira } from "@/lib/domain";
+import { HARD_OPS_HOME } from "@/lib/hard-ops";
 import { createServiceClient } from "@/lib/supabase/server";
 import { isServiceRoleConfigured, isSupabaseConfigured } from "@/lib/env";
 import { DashboardSection, MetricStatCard, StatusBadge } from "@/components/design-system";
@@ -74,16 +76,18 @@ export async function AdminOperationsPanel({ metrics, pendingReferralPayouts, re
           {dbError ? <p className="text-xs text-[var(--danger)]">{dbError}</p> : null}
         </Card>
 
-        <Card variant="elevated" padding="md" className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[var(--heading)]">
-            <ShieldCheck size={16} className="text-[var(--emerald)]" aria-hidden />
-            Security posture
-          </div>
-          <StatusBadge status="active" label="RLS enforced" />
-          <p className="text-xs text-[var(--text-muted)]">
-            Admin routes gated · Service role server-only · {recentAuditCount} recent audit entries
-          </p>
-        </Card>
+        <Link href={`${HARD_OPS_HOME}/audit`} className="block rounded-[var(--radius)] transition hover:opacity-95">
+          <Card variant="elevated" padding="md" className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--heading)]">
+              <ShieldCheck size={16} className="text-[var(--emerald)]" aria-hidden />
+              Security posture
+            </div>
+            <StatusBadge status="active" label="RLS enforced" />
+            <p className="text-xs text-[var(--text-muted)]">
+              Admin routes gated · Service role server-only · {recentAuditCount} recent audit entries
+            </p>
+          </Card>
+        </Link>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -92,28 +96,33 @@ export async function AdminOperationsPanel({ metrics, pendingReferralPayouts, re
           value={String(metrics?.members ?? 0)}
           accent="navy"
           icon={<Users size={16} aria-hidden />}
+          href={`${HARD_OPS_HOME}/members`}
         />
         <MetricStatCard
           title="Active investments"
           value={String(metrics?.activeInvestments ?? 0)}
           accent="emerald"
           icon={<Activity size={16} aria-hidden />}
+          href={`${HARD_OPS_HOME}/investments`}
         />
         <MetricStatCard
           title="Wallet liquidity"
           value={formatNaira(metrics?.totalWalletBalance ?? 0)}
           accent="sky"
           icon={<Wallet size={16} aria-hidden />}
+          href={`${HARD_OPS_HOME}/members`}
         />
         <MetricStatCard
           title="Pending funding"
           value={formatNaira(metrics?.pendingDeposits ?? 0)}
           accent="amber"
+          href={`${HARD_OPS_HOME}/deposits`}
         />
         <MetricStatCard
           title="Pending payouts"
           value={String((metrics?.pendingWithdrawals ?? 0) + pendingReferralPayouts)}
           accent="gold"
+          href={`${HARD_OPS_HOME}/payouts`}
         />
       </div>
     </DashboardSection>

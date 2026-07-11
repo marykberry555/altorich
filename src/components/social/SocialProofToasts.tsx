@@ -46,24 +46,7 @@ function timeAgo(ms: number, now: number) {
   return "Recently";
 }
 
-const MEMBER_ROUTE_PREFIXES = [
-  "/dashboard",
-  "/wallet",
-  "/portfolio",
-  "/deposits",
-  "/withdrawals",
-  "/notifications",
-  "/settings",
-  "/profile",
-  "/team",
-  "/activities",
-  "/vip",
-  "/hard"
-];
-
-function isMemberRoute(pathname: string) {
-  return MEMBER_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
+import { isAppRoute } from "@/lib/route-zones";
 
 export function SocialProofToasts({ className }: { className?: string }) {
   const pathname = usePathname();
@@ -102,7 +85,7 @@ export function SocialProofToasts({ className }: { className?: string }) {
     };
   }, [events.length]);
 
-  if (isMemberRoute(pathname)) return null;
+  if (isAppRoute(pathname)) return null;
   if (!current) return null;
 
   return (

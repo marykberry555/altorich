@@ -20,19 +20,21 @@ const navSections = [
   {
     label: "Operations",
     items: [
+      { href: `${HARD_OPS_HOME}/members`, label: "Members", icon: Users },
       { href: `${HARD_OPS_HOME}/funding-accounts`, label: "Funding accounts", icon: Wallet },
-      { href: `${HARD_OPS_HOME}#deposits`, label: "Deposits", icon: ArrowDownLeft },
-      { href: `${HARD_OPS_HOME}#withdrawals`, label: "Payouts", icon: ArrowUpRight },
-      { href: `${HARD_OPS_HOME}#investments`, label: "Investments", icon: TrendingUp },
-      { href: `${HARD_OPS_HOME}#plans`, label: "Plans", icon: Wallet }
+      { href: `${HARD_OPS_HOME}/deposits`, label: "Deposits", icon: ArrowDownLeft },
+      { href: `${HARD_OPS_HOME}/payouts`, label: "Payouts", icon: ArrowUpRight },
+      { href: `${HARD_OPS_HOME}/investments`, label: "Investments", icon: TrendingUp },
+      { href: `${HARD_OPS_HOME}/plans`, label: "Plans", icon: Wallet },
+      { href: `${HARD_OPS_HOME}/settlements`, label: "Settlements", icon: TrendingUp }
     ]
   },
   {
     label: "System",
     items: [
-      { href: `${HARD_OPS_HOME}#referrals`, label: "Referrals", icon: Users },
-      { href: `${HARD_OPS_HOME}#feature-flags`, label: "Feature flags", icon: Settings },
-      { href: `${HARD_OPS_HOME}#settings`, label: "Announcements", icon: Settings }
+      { href: `${HARD_OPS_HOME}/referrals`, label: "Referrals", icon: Users },
+      { href: `${HARD_OPS_HOME}/settings`, label: "Settings", icon: Settings },
+      { href: `${HARD_OPS_HOME}/audit`, label: "Audit log", icon: Settings }
     ]
   }
 ];
@@ -47,7 +49,7 @@ function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
           <p className="mb-2 px-2.5 text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--text-subtle)]">{section.label}</p>
           <div className="space-y-0.5">
             {section.items.map((item) => {
-              const active = "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href.split("#")[0]);
+              const active = "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href);
               const Icon = item.icon;
               return (
                 <Link

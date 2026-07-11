@@ -208,11 +208,14 @@ export class AuthService {
     const username = input.username.trim().toLowerCase();
     const { data: profile, error } = await this.supabase
       .from("profiles")
-      .select("id, pin_hash, must_change_pin, must_change_password")
+      .select("id, pin_hash, must_change_pin, must_change_password, account_status")
       .eq("username", username)
       .maybeSingle();
     if (error) throw error;
     if (!profile?.pin_hash) throw new AppError("Invalid username or pin.", 401, "INVALID_CREDENTIALS");
+    if (profile.account_status !== "active") {
+      throw new AppError("This account is not available. Contact support.", 403, "ACCOUNT_SUSPENDED");
+    }
     if (!verifyPin(input.pin, profile.pin_hash)) throw new AppError("Invalid username or pin.", 401, "INVALID_CREDENTIALS");
 
     const { data: authUser, error: authErr } = await this.supabase.auth.admin.getUserById(profile.id);
@@ -312,9 +315,13 @@ export class AuthService {
 
     const { data: profile } = await this.supabase
       .from("profiles")
-      .select("must_change_password, must_change_pin")
+      .select("must_change_password, must_change_pin, account_status")
       .eq("id", data.user.id)
       .maybeSingle();
+
+    if (profile?.account_status && profile.account_status !== "active") {
+      throw new AppError("This account is not available. Contact support.", 403, "ACCOUNT_SUSPENDED");
+    }
 
     return {
       session: data.session,

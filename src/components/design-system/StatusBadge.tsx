@@ -10,6 +10,9 @@ const statusStyles: Record<string, string> = {
   rejected: "bg-red-500/10 text-red-700 border-red-500/20",
   cancelled: "bg-[var(--gray-100)] text-[var(--text-muted)] border-[var(--border)]",
   matured: "bg-indigo-500/10 text-indigo-700 border-indigo-500/20",
+  paused: "bg-amber-500/10 text-amber-700 border-amber-500/20",
+  disabled: "bg-red-500/10 text-red-700 border-red-500/20",
+  deactivated: "bg-[var(--gray-100)] text-[var(--text-muted)] border-[var(--border)]",
   failed: "bg-red-500/10 text-red-700 border-red-500/20"
 };
 

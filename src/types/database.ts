@@ -33,6 +33,7 @@ export type Database = {
           must_change_pin: boolean;
           must_change_password: boolean;
           preferred_package_slug: string | null;
+          account_status: "active" | "paused" | "disabled" | "deactivated";
           created_at: string;
           updated_at: string;
         };
@@ -52,6 +53,7 @@ export type Database = {
           must_change_pin?: boolean;
           must_change_password?: boolean;
           preferred_package_slug?: string | null;
+          account_status?: "active" | "paused" | "disabled" | "deactivated";
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]> & {
           notification_preferences?: Json;
@@ -622,6 +624,7 @@ export type Database = {
       payout_method: "bank" | "crypto";
       auth_otp_purpose: "register" | "login_device" | "recover_pin" | "recover_username";
       funding_account_status: "active" | "inactive" | "maintenance";
+      member_account_status: "active" | "paused" | "disabled" | "deactivated";
     };
     CompositeTypes: Record<string, never>;
     Functions: {
