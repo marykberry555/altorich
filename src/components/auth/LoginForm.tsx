@@ -14,9 +14,7 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
 import { refreshSmartsuppIdentity, trackSmartsuppEvent } from "@/lib/chat/smartsupp";
 import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
-import { cn } from "@/lib/utils";
 
-type LoginMode = "email" | "username";
 type LoadingPhase = "idle" | "signing-in" | "authenticating" | "redirecting";
 
 const SLOW_LOGIN_MS = 8000;
@@ -30,9 +28,6 @@ export function LoginForm() {
   const redirectParam = searchParams.get("redirect");
   const deviceFingerprint = useDeviceFingerprint();
 
-  const [mode, setMode] = useState<LoginMode>("email");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
   const [phase, setPhase] = useState<LoadingPhase>("idle");
@@ -59,41 +54,6 @@ export function LoginForm() {
       }
     }
     return apiRedirect;
-  }
-
-  async function handleEmailLogin(event: React.FormEvent) {
-    event.preventDefault();
-    if (!isSupabaseConfigured()) {
-      setError("Supabase is not configured.");
-      return;
-    }
-
-    setPhase("signing-in");
-    setError("");
-
-    try {
-      const res = await fetch("/api/auth/sign-in", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error ?? "Sign in failed.");
-        setPhase("idle");
-        return;
-      }
-
-      setPhase("redirecting");
-      trackSmartsuppEvent(SMARTSUPP_EVENTS.LOGIN);
-      refreshSmartsuppIdentity();
-      completeSignIn(resolveRedirect(data.redirect ?? "/dashboard"));
-    } catch {
-      setError("Network error. Please try again.");
-      setPhase("idle");
-    }
   }
 
   async function handleUsernameLogin(event: React.FormEvent) {
@@ -186,99 +146,34 @@ export function LoginForm() {
       <Card variant="elevated" padding="lg" className="w-full">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">Sign in</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
-            {mode === "email"
-              ? "Use your email and password. Operators are routed to admin automatically."
-              : "Use your username and 6-digit pin to access your member account."}
-          </p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Enter your username and 6-digit PIN to access your account.</p>
         </div>
 
-        <div className="mb-5 flex rounded-[var(--radius-sm)] border border-[var(--border)] p-1">
-          <button
-            type="button"
-            onClick={() => {
-              setMode("email");
-              setError("");
-            }}
-            className={cn(
-              "flex-1 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium transition",
-              mode === "email"
-                ? "bg-[var(--emerald-soft)] text-[var(--emerald)]"
-                : "text-[var(--text-muted)] hover:text-[var(--heading)]"
-            )}
-          >
-            Email & password
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode("username");
-              setError("");
-            }}
-            className={cn(
-              "flex-1 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium transition",
-              mode === "username"
-                ? "bg-[var(--emerald-soft)] text-[var(--emerald)]"
-                : "text-[var(--text-muted)] hover:text-[var(--heading)]"
-            )}
-          >
-            Username & pin
-          </button>
-        </div>
-
-        {mode === "email" ? (
-          <form onSubmit={handleEmailLogin} className="grid gap-3">
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="username"
-            />
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
-            {error ? <p className="text-xs text-red-600">{error}</p> : null}
-            {slowMessage && loading ? (
-              <p className="text-xs text-[var(--text-muted)]">Still working — please wait a moment.</p>
-            ) : null}
-            <Button type="submit" disabled={loading} className="w-full">
-              {submitLabel}
-            </Button>
-          </form>
-        ) : (
-          <form onSubmit={handleUsernameLogin} className="grid gap-3">
-            <Input
-              label="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value.toLowerCase())}
-              required
-              autoComplete="username"
-            />
-            <PinField value={pin} onChange={setPin} autoComplete="current-password" />
-            <div className="flex justify-between text-xs">
-              <Link href="/auth/forgot-username" className="font-semibold text-[var(--emerald)]">
-                Forgot username?
-              </Link>
-              <Link href="/auth/forgot-pin" className="font-semibold text-[var(--emerald)]">
-                Forgot pin?
-              </Link>
-            </div>
-            {error ? <p className="text-xs text-red-600">{error}</p> : null}
-            {slowMessage && loading ? (
-              <p className="text-xs text-[var(--text-muted)]">Still working — please wait a moment.</p>
-            ) : null}
-            <Button type="submit" disabled={loading} className="w-full">
-              {submitLabel}
-            </Button>
-          </form>
-        )}
+        <form onSubmit={handleUsernameLogin} className="grid gap-3">
+          <Input
+            label="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+            required
+            autoComplete="username"
+          />
+          <PinField value={pin} onChange={setPin} autoComplete="current-password" />
+          <div className="flex justify-between text-xs">
+            <Link href="/auth/forgot-username" className="font-semibold text-[var(--emerald)]">
+              Forgot username?
+            </Link>
+            <Link href="/auth/forgot-pin" className="font-semibold text-[var(--emerald)]">
+              Forgot pin?
+            </Link>
+          </div>
+          {error ? <p className="text-xs text-red-600">{error}</p> : null}
+          {slowMessage && loading ? (
+            <p className="text-xs text-[var(--text-muted)]">Still working — please wait a moment.</p>
+          ) : null}
+          <Button type="submit" disabled={loading} className="w-full">
+            {submitLabel}
+          </Button>
+        </form>
 
         <p className="mt-5 text-center text-xs text-[var(--text-muted)]">
           No account?{" "}

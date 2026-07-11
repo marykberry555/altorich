@@ -34,16 +34,18 @@ type Props = {
 
 function toAccrualInputs(inputs: LiveInvestmentInput[]): LiveAccrualInput[] {
   return inputs
-    .filter((i) => i.status === "active")
+    .filter((i) => i.status === "active" || i.status === "stopping")
     .map((i) => ({
       status: i.status,
       principalAmount: i.amount,
       creditedTotal: i.totalEarned,
       projectedDaily: i.projectedDaily,
+      weeklyRoiBps: i.weeklyRoiBps,
       settlementFrequency: i.settlementFrequency,
       startedAt: i.startedAt,
       endsAt: i.endsAt,
-      lastSettlementAt: i.lastSettlementAt
+      lastSettlementAt: i.lastSettlementAt,
+      lastWeeklySettlementAt: i.lastWeeklySettlementAt
     }));
 }
 
@@ -119,7 +121,7 @@ export function DashboardWealthHero({
         </div>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricStatCard title="Wallet balance" value={formatNaira(walletBalance)} icon={<Wallet />} href="/wallet" accent="emerald" actionLabel="Open wallet" />
         <MetricStatCard
           title="Portfolio value"
@@ -138,28 +140,12 @@ export function DashboardWealthHero({
           actionLabel="View holdings"
         />
         <MetricStatCard
-          title="Today's earnings"
-          value={formatNaira(todayEarnings)}
-          icon={<TrendingUp />}
-          href="/portfolio"
-          accent="emerald"
-          actionLabel="View earnings"
-        />
-        <MetricStatCard
-          title="Total earnings"
+          title="Live earnings"
           value={formatNaira(liveTotalEarnings)}
           icon={<ArrowDownLeft />}
           href="/portfolio"
           accent="gold"
           actionLabel="View earnings"
-        />
-        <MetricStatCard
-          title="Pending payouts"
-          value={String(pendingPayouts)}
-          icon={<Clock />}
-          href="/withdrawals"
-          accent="amber"
-          actionLabel="Payout status"
         />
       </div>
     </>

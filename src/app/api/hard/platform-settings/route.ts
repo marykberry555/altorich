@@ -28,15 +28,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const trustedDeviceDays = Number(formData.get("trustedDeviceDays") ?? 0);
+    if (trustedDeviceDays >= 7 && trustedDeviceDays <= 365) {
+      await services.settings.updateAuthSettings({ trusted_device_days: trustedDeviceDays }, reviewer.id);
+    }
+
     await services.audit.log({
       actorId: reviewer.id,
       action: "platform_settings.updated",
       entityType: "settings",
-      metadata: { keys: ["announcements", "withdrawal_windows"] }
+      metadata: { keys: ["announcements", "withdrawal_windows", "auth_settings"] }
     });
   } catch (error) {
     return apiErrorResponse(error);
   }
 
-  redirect(HARD_OPS_HOME);
+  redirect(`${HARD_OPS_HOME}/settings`);
 }

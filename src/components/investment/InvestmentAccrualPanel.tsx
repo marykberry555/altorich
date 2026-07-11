@@ -25,10 +25,12 @@ export function InvestmentAccrualPanel({ row }: Props) {
       principalAmount: row.amount,
       creditedTotal: row.totalEarned,
       projectedDaily: row.projectedDaily,
+      weeklyRoiBps: row.weeklyRoiBps,
       settlementFrequency: row.settlementFrequency,
       startedAt: row.startedAt,
       endsAt: row.endsAt,
-      lastSettlementAt: row.lastSettlementAt
+      lastSettlementAt: row.lastSettlementAt,
+      lastWeeklySettlementAt: row.lastWeeklySettlementAt
     }),
     [row]
   );
@@ -37,48 +39,53 @@ export function InvestmentAccrualPanel({ row }: Props) {
 
   return (
     <Card variant="elevated" className="overflow-hidden">
-      <div className="bg-gradient-to-r from-[var(--emerald)]/10 to-transparent px-5 py-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--emerald)]">Live performance</p>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">{row.planName}</p>
-      </div>
-      <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
-        <div>
-          <p className="text-xs text-[var(--text-subtle)]">Current value</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--heading)]">
-            <AnimatedEarningsCounter value={row.amount + state.liveTotal} />
+      <div className="bg-gradient-to-br from-[var(--navy)] via-[var(--navy-mid)] to-[var(--emerald)] px-5 py-6 text-white sm:px-8 sm:py-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">Live interest accrual</p>
+        <p className="mt-3 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl">
+          <AnimatedEarningsCounter value={state.liveTotal} className="text-emerald-200" />
+        </p>
+        <p className="mt-2 text-sm text-white/75">{row.planName}</p>
+
+        <div className="mt-8 border-t border-white/15 pt-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">Settlement countdown</p>
+          <p className="mt-2 font-mono text-3xl font-bold tabular-nums tracking-tight sm:text-4xl">
+            {state.isAccruing ? formatCountdownHms(state.nextAccrualInMs) : "—"}
           </p>
+          {state.nextSettlementAt ? (
+            <p className="mt-2 text-xs text-white/65">
+              Next settlement · {state.nextSettlementAt.toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
+            </p>
+          ) : null}
         </div>
+      </div>
+
+      <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="text-xs text-[var(--text-subtle)]">Live earnings</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--emerald)]">
+          <p className="text-xs text-[var(--text-subtle)]">Current accrued earnings</p>
+          <p className="mt-1 text-xl font-bold tabular-nums text-[var(--emerald)]">
             <AnimatedEarningsCounter value={state.liveTotal} />
           </p>
         </div>
         <div>
-          <p className="text-xs text-[var(--text-subtle)]">Today&apos;s accrual</p>
-          <p className="mt-1 text-xl font-semibold tabular-nums text-[var(--emerald)]">
-            {formatNaira(state.todayAccrual)}
+          <p className="text-xs text-[var(--text-subtle)]">Current investment value</p>
+          <p className="mt-1 text-xl font-bold tabular-nums text-[var(--heading)]">
+            <AnimatedEarningsCounter value={state.currentValue} />
           </p>
+        </div>
+        <div>
+          <p className="text-xs text-[var(--text-subtle)]">Estimated next settlement</p>
+          <p className="mt-1 text-xl font-bold tabular-nums">{formatNaira(state.estimatedNextSettlement)}</p>
         </div>
         <div>
           <p className="text-xs text-[var(--text-subtle)]">Credited to date</p>
-          <p className="mt-1 font-semibold tabular-nums">{formatNaira(state.creditedTotal)}</p>
-        </div>
-        <div>
-          <p className="text-xs text-[var(--text-subtle)]">Next settlement</p>
-          <p className="mt-1 font-mono text-sm font-semibold tabular-nums">
-            {state.isAccruing ? formatCountdownHms(state.nextAccrualInMs) : "—"}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-[var(--text-subtle)]">Period target</p>
-          <p className="mt-1 font-semibold tabular-nums">{formatNaira(state.periodEarnings)}</p>
+          <p className="mt-1 text-xl font-bold tabular-nums">{formatNaira(state.creditedTotal)}</p>
         </div>
       </div>
+
       {state.isAccruing ? (
         <div className="border-t border-[var(--border)] px-5 py-4">
           <div className="flex justify-between text-xs text-[var(--text-muted)]">
-            <span>Current period progress</span>
+            <span>Accrual progress this period</span>
             <span>{state.dayProgressPercent}%</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--gray-100)]">

@@ -1,14 +1,17 @@
 import type { SettlementFrequency } from "@/lib/investment";
+import { proRataInterest, resolveAccrualPeriod } from "@/lib/investment/accrual-math";
 
 export type LiveAccrualInput = {
   status: string;
   principalAmount: number;
   creditedTotal: number;
   projectedDaily: number;
+  weeklyRoiBps?: number;
   settlementFrequency: SettlementFrequency;
   startedAt: string | Date | null;
   endsAt: string | Date | null;
   lastSettlementAt?: string | Date | null;
+  lastWeeklySettlementAt?: string | Date | null;
 };
 
 export type LiveAccrualState = {
@@ -20,6 +23,8 @@ export type LiveAccrualState = {
   nextAccrualInMs: number;
   isAccruing: boolean;
   nextSettlementAt: Date | null;
+  estimatedNextSettlement: number;
+  currentValue: number;
 };
 
 function toDate(v: string | Date | null | undefined): Date | null {
@@ -28,62 +33,69 @@ function toDate(v: string | Date | null | undefined): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function periodDays(frequency: SettlementFrequency): number {
-  if (frequency === "weekly") return 7;
-  if (frequency === "monthly") return 30;
-  if (frequency === "maturity") return 1;
-  return 1;
-}
-
-function periodAmount(projectedDaily: number, frequency: SettlementFrequency): number {
-  const step = periodDays(frequency);
-  return projectedDaily * step;
-}
-
 export function calculateLiveAccrualState(input: LiveAccrualInput, now: Date = new Date()): LiveAccrualState {
   const principal = input.principalAmount;
   const creditedTotal = input.creditedTotal;
   const startedAt = toDate(input.startedAt);
   const endsAt = toDate(input.endsAt);
-  const lastSettlementAt = toDate(input.lastSettlementAt);
-  const frequency = input.settlementFrequency ?? "daily";
-  const earnings = periodAmount(input.projectedDaily, frequency);
-  const stepMs = periodDays(frequency) * 86400000;
+  const frequency = input.settlementFrequency ?? "weekly";
+  const weeklyRoiBps = input.weeklyRoiBps ?? 0;
 
   const inactive =
-    input.status !== "active" || !startedAt || (endsAt && now >= endsAt) || principal <= 0;
+    input.status !== "active" && input.status !== "stopping"
+      ? true
+      : !startedAt || (endsAt && now >= endsAt) || principal <= 0;
 
-  if (inactive) {
+  if (inactive || !startedAt) {
     return {
       creditedTotal,
       liveTotal: creditedTotal,
       todayAccrual: 0,
-      periodEarnings: earnings,
+      periodEarnings: 0,
       dayProgressPercent: 0,
       nextAccrualInMs: 0,
       isAccruing: false,
-      nextSettlementAt: null
+      nextSettlementAt: null,
+      estimatedNextSettlement: 0,
+      currentValue: principal + creditedTotal
     };
   }
 
-  const periodStart = lastSettlementAt ?? startedAt;
-  const periodEnd = new Date(periodStart.getTime() + stepMs);
-  const cappedEnd = endsAt && periodEnd > endsAt ? endsAt : periodEnd;
-  const periodMs = Math.max(1, cappedEnd.getTime() - periodStart.getTime());
-  const elapsedMs = Math.min(Math.max(0, now.getTime() - periodStart.getTime()), periodMs);
-  const progress = elapsedMs / periodMs;
-  const todayAccrual = earnings * progress;
-  const liveTotal = creditedTotal + todayAccrual;
+  const { periodStart, periodEnd } = resolveAccrualPeriod(
+    {
+      startedAt,
+      lastSettlementAt: toDate(input.lastSettlementAt),
+      lastWeeklySettlementAt: toDate(input.lastWeeklySettlementAt),
+      endsAt,
+      asOf: now
+    },
+    frequency
+  );
+
+  const { accrued, periodTarget, progress } = proRataInterest({
+    principal,
+    weeklyRoiBps,
+    projectedDaily: input.projectedDaily,
+    frequency,
+    periodStart,
+    periodEnd,
+    asOf: now
+  });
+
+  const liveTotal = creditedTotal + accrued;
+  const nextAccrualInMs = Math.max(0, periodEnd.getTime() - now.getTime());
 
   return {
     creditedTotal,
     liveTotal,
-    todayAccrual,
-    periodEarnings: earnings,
+    todayAccrual: accrued,
+    periodEarnings: periodTarget,
     dayProgressPercent: Math.round(progress * 100),
-    nextAccrualInMs: Math.max(0, cappedEnd.getTime() - now.getTime()),
+    nextAccrualInMs,
     isAccruing: progress < 1 && (!endsAt || now < endsAt),
-    nextSettlementAt: cappedEnd
+    nextSettlementAt: periodEnd,
+    estimatedNextSettlement: periodTarget,
+    currentValue: principal + liveTotal
   };
 }
 
@@ -115,7 +127,7 @@ export function aggregateLiveAccrual(investments: LiveAccrualInput[], now: Date 
     totalCredited += state.creditedTotal;
     totalLive += state.liveTotal;
     totalTodayAccrual += state.todayAccrual;
-    if (inv.status === "active") {
+    if (inv.status === "active" || inv.status === "stopping") {
       activeCount += 1;
       totalPeriodTarget += state.periodEarnings;
       if (state.isAccruing) {

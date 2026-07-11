@@ -1,6 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/database";
 import { logger } from "@/lib/logger";
+import { sendEmail } from "@/lib/email/send";
+import {
+  investmentActivatedEmailHtml,
+  newDeviceLoginEmailHtml,
+  payoutApprovedEmailHtml,
+  payoutSubmittedEmailHtml,
+  profileUpdatedEmailHtml,
+  walletFundedEmailHtml
+} from "@/lib/email/activity-templates";
+import { formatNaira } from "@/lib/domain";
 
 export type NotificationPayload = {
   userId: string;
@@ -16,10 +26,13 @@ export type NotificationEvent =
   | "deposit.rejected"
   | "investment.purchased"
   | "settlement.completed"
+  | "withdrawal.submitted"
   | "withdrawal.approved"
   | "withdrawal.rejected"
+  | "withdrawal.paid"
   | "kyc.approved"
   | "profile.updated"
+  | "security.device_login"
   | "referral.verified"
   | "referral.payout_requested"
   | "referral.payout_approved"
@@ -28,8 +41,71 @@ export type NotificationEvent =
 
 type Client = SupabaseClient<Database>;
 
+type NotificationPreferences = {
+  in_app: boolean;
+  email: boolean;
+  sms: boolean;
+};
+
 export class NotificationService {
   constructor(private readonly supabase: Client) {}
+
+  private async getUserEmail(userId: string): Promise<string | null> {
+    const { data, error } = await this.supabase.auth.admin.getUserById(userId);
+    if (error || !data.user?.email) return null;
+    return data.user.email;
+  }
+
+  private async getEmailPreferences(userId: string): Promise<boolean> {
+    const { data } = await this.supabase
+      .from("profiles")
+      .select("notification_preferences")
+      .eq("id", userId)
+      .maybeSingle();
+    const prefs = (data?.notification_preferences ?? {}) as NotificationPreferences;
+    return prefs.email !== false;
+  }
+
+  private emailHtmlForEvent(event: NotificationEvent, data: Record<string, unknown>): string | null {
+    const amount = Number(data.amount ?? 0);
+    switch (event) {
+      case "deposit.approved":
+      case "payment.received":
+        return walletFundedEmailHtml(amount);
+      case "withdrawal.submitted":
+        return payoutSubmittedEmailHtml(amount);
+      case "withdrawal.approved":
+      case "withdrawal.paid":
+        return payoutApprovedEmailHtml(amount);
+      case "investment.purchased":
+        return investmentActivatedEmailHtml(amount, String(data.reference ?? ""));
+      case "profile.updated":
+        return profileUpdatedEmailHtml();
+      case "security.device_login":
+        return newDeviceLoginEmailHtml();
+      default:
+        return null;
+    }
+  }
+
+  private async sendEmailForEvent(
+    event: NotificationEvent,
+    userId: string,
+    title: string,
+    body: string,
+    data: Record<string, unknown>
+  ) {
+    if (!process.env.RESEND_API_KEY) return;
+    if (!(await this.getEmailPreferences(userId))) return;
+
+    const email = await this.getUserEmail(userId);
+    if (!email) return;
+
+    const html = this.emailHtmlForEvent(event, data);
+    if (!html) return;
+
+    await sendEmail({ to: email, subject: `${title} · AltoRich`, html });
+  }
 
   async dispatch(payload: NotificationPayload): Promise<void> {
     const channel = payload.channel ?? "in_app";
@@ -61,9 +137,12 @@ export class NotificationService {
         });
         return;
       }
-      logger.info("Email notification queued (provider ready when template wired)", {
-        userId: payload.userId,
-        title: payload.title
+      const email = await this.getUserEmail(payload.userId);
+      if (!email) return;
+      await sendEmail({
+        to: email,
+        subject: `${payload.title} · AltoRich`,
+        html: payload.body
       });
       return;
     }
@@ -75,11 +154,11 @@ export class NotificationService {
     const templates: Record<NotificationEvent, { title: string; body: string }> = {
       "payment.received": {
         title: "Payment received",
-        body: `₦${Number(data.amount ?? 0).toLocaleString("en-NG")} credited to your wallet.`
+        body: `${formatNaira(Number(data.amount ?? 0))} credited to your wallet.`
       },
       "deposit.approved": {
         title: "Deposit approved",
-        body: `₦${Number(data.amount ?? 0).toLocaleString("en-NG")} has been added to your wallet.`
+        body: `${formatNaira(Number(data.amount ?? 0))} has been added to your wallet.`
       },
       "deposit.rejected": {
         title: "Deposit declined",
@@ -87,15 +166,23 @@ export class NotificationService {
       },
       "investment.purchased": {
         title: "Investment confirmed",
-        body: `Your investment of ₦${Number(data.amount ?? 0).toLocaleString("en-NG")} is now active.`
+        body: `Your investment of ${formatNaira(Number(data.amount ?? 0))} is now active.`
       },
       "settlement.completed": {
         title: "Settlement posted",
-        body: `₦${Number(data.amount ?? 0).toLocaleString("en-NG")} settlement credited to your wallet.`
+        body: `${formatNaira(Number(data.amount ?? 0))} settlement credited to your wallet.`
+      },
+      "withdrawal.submitted": {
+        title: "Payout submitted",
+        body: `Your payout request of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
       },
       "withdrawal.approved": {
         title: "Payout approved",
-        body: `Your payout of ₦${Number(data.amount ?? 0).toLocaleString("en-NG")} has been approved.`
+        body: `Your payout of ${formatNaira(Number(data.amount ?? 0))} has been approved.`
+      },
+      "withdrawal.paid": {
+        title: "Payout completed",
+        body: `Your payout of ${formatNaira(Number(data.amount ?? 0))} has been processed.`
       },
       "withdrawal.rejected": {
         title: "Payout declined",
@@ -109,17 +196,21 @@ export class NotificationService {
         title: "Profile updated",
         body: "Your profile settings were saved successfully."
       },
+      "security.device_login": {
+        title: "New device sign-in",
+        body: "Your account was accessed from a new browser or device."
+      },
       "referral.verified": {
         title: "Referral verified",
-        body: `You earned ₦${Number(data.amount ?? 0).toLocaleString("en-NG")} — your referral activated their first investment.`
+        body: `You earned ${formatNaira(Number(data.amount ?? 0))} — your referral activated their first investment.`
       },
       "referral.payout_requested": {
         title: "Referral payout submitted",
-        body: `Your referral reward payout of ₦${Number(data.amount ?? 0).toLocaleString("en-NG")} is pending review.`
+        body: `Your referral reward payout of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
       },
       "referral.payout_approved": {
         title: "Referral payout approved",
-        body: `Your referral payout of ₦${Number(data.amount ?? 0).toLocaleString("en-NG")} has been approved.`
+        body: `Your referral payout of ${formatNaira(Number(data.amount ?? 0))} has been approved.`
       },
       "referral.payout_rejected": {
         title: "Referral payout declined",
@@ -139,6 +230,8 @@ export class NotificationService {
       channel: "in_app",
       metadata: { event, ...data }
     });
+
+    await this.sendEmailForEvent(event, userId, template.title, template.body, data);
   }
 
   async listForUser(userId: string, limit = 20) {

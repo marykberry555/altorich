@@ -17,10 +17,12 @@ export type LiveInvestmentInput = {
   amount: number;
   totalEarned: number;
   projectedDaily: number;
+  weeklyRoiBps?: number;
   settlementFrequency: SettlementFrequency;
   startedAt: string;
   endsAt: string;
   lastSettlementAt?: string | null;
+  lastWeeklySettlementAt?: string | null;
 };
 
 type Props = {
@@ -33,16 +35,18 @@ export function LivePortfolioPanel({ walletBalance, investments }: Props) {
 
   const aggregate = useMemo(() => {
     const inputs: LiveAccrualInput[] = investments
-      .filter((i) => i.status === "active")
+      .filter((i) => i.status === "active" || i.status === "stopping")
       .map((i) => ({
         status: i.status,
         principalAmount: i.amount,
         creditedTotal: i.totalEarned,
         projectedDaily: i.projectedDaily,
+        weeklyRoiBps: i.weeklyRoiBps,
         settlementFrequency: i.settlementFrequency,
         startedAt: i.startedAt,
         endsAt: i.endsAt,
-        lastSettlementAt: i.lastSettlementAt
+        lastSettlementAt: i.lastSettlementAt,
+        lastWeeklySettlementAt: i.lastWeeklySettlementAt
       }));
     return aggregateLiveAccrual(inputs, now);
   }, [investments, now]);

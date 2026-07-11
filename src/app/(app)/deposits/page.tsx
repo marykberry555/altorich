@@ -33,15 +33,6 @@ export default async function DepositsPage() {
     fundingHistory = await services.deposits.listForUser(user.id, 10);
   }
 
-  const config = {
-    activeBankName: preferred?.active_bank_name ?? "Configure in admin",
-    activeAccountName: preferred?.active_account_name ?? "ALTORICH LTD",
-    activeAccountNumber: preferred?.active_account_number ?? "00000000",
-    paymentInstruction: preferred?.payment_instruction ?? "Transfer the exact amount, then submit your reference for verification.",
-    transferNarration: preferred?.transfer_narration ?? "Use your registered phone number as transfer narration.",
-    contributionsEnabled: preferred?.contributions_enabled ?? false
-  };
-
   const accountViews = fundingAccounts.map((account) => ({
     id: account.id,
     bankName: account.bank_name,
@@ -52,6 +43,18 @@ export default async function DepositsPage() {
     isPreferred: account.is_preferred
   }));
 
+  const config = {
+    activeBankName: preferred?.active_bank_name ?? (accountViews[0]?.bankName ?? "Funding details pending"),
+    activeAccountName: preferred?.active_account_name ?? accountViews[0]?.accountName ?? "ALTORICH LTD",
+    activeAccountNumber: preferred?.active_account_number ?? accountViews[0]?.accountNumber ?? "—",
+    paymentInstruction:
+      preferred?.payment_instruction ??
+      accountViews[0]?.fundingInstructions ??
+      "Transfer the exact amount, then submit your reference for verification.",
+    transferNarration: preferred?.transfer_narration ?? "Use your registered phone number as transfer narration.",
+    contributionsEnabled: preferred?.contributions_enabled ?? fundingAccounts.length > 0
+  };
+
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <PageHero
@@ -60,14 +63,10 @@ export default async function DepositsPage() {
         description="Transfer naira from any Nigerian bank below. Once verified, funds are ready to invest."
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Card variant="elevated" padding="md">
-          <p className="text-xs text-[var(--text-subtle)]">Current balance</p>
+          <p className="text-xs text-[var(--text-subtle)]">Wallet balance</p>
           <p className="mt-1 text-2xl font-bold tabular-nums">{formatNaira(balance)}</p>
-        </Card>
-        <Card variant="elevated" padding="md">
-          <p className="text-xs text-[var(--text-subtle)]">Available balance</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--emerald)]">{formatNaira(balance)}</p>
         </Card>
         <Card variant="elevated" padding="md">
           <p className="text-xs text-[var(--text-subtle)]">Pending funding</p>

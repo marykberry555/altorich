@@ -20,7 +20,7 @@ export class PaymentService {
       this.providers.set(
         "bank_transfer",
         new BankTransferProvider({
-          bankName: "Configure in admin",
+          bankName: "Funding details pending",
           accountName: "ALTORICH LTD",
           accountNumber: "00000000",
           narration: "Use your registered phone as narration"

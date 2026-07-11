@@ -96,12 +96,9 @@ export class WithdrawalService {
 
     if (error) throw error;
 
-    await this.notifications.dispatch({
-      userId: input.userId,
-      title: "Payout submitted",
-      body: `Your payout request of ₦${input.amount.toLocaleString("en-NG")} is pending review.`,
-      channel: "in_app",
-      metadata: { withdrawal_id: data.id }
+    await this.notifications.notifyEvent("withdrawal.submitted", input.userId, {
+      amount: input.amount,
+      withdrawal_id: data.id
     });
 
     return data;
@@ -137,7 +134,7 @@ export class WithdrawalService {
 
     if (error) throw error;
 
-    await this.notifications.notifyEvent("withdrawal.approved", withdrawal.user_id, {
+    await this.notifications.notifyEvent("withdrawal.paid", withdrawal.user_id, {
       amount: Number(withdrawal.amount),
       withdrawal_id: withdrawalId
     });

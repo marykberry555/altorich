@@ -49,14 +49,33 @@ export class SettingsService {
         transfer_narration: string;
         contributions_enabled: boolean;
       }>("bank_switchboard")) ?? {
-        active_bank_name: "Configure in admin",
+        active_bank_name: "Funding details pending",
         active_account_name: "ALTORICH LTD",
-        active_account_number: "00000000",
-        payment_instruction: "Send the exact amount, then submit your transfer reference.",
+        active_account_number: "—",
+        payment_instruction: "Funding details will appear here once configured.",
         transfer_narration: "Use your registered phone number as narration.",
         contributions_enabled: true
       }
     );
+  }
+
+  async getAuthSettings() {
+    return (
+      (await this.get<{ trusted_device_days?: number }>("auth_settings")) ?? {
+        trusted_device_days: 90
+      }
+    );
+  }
+
+  async updateAuthSettings(updates: { trusted_device_days?: number }, updatedBy?: string) {
+    const current = await this.getAuthSettings();
+    const { error } = await this.supabase.from("settings").upsert({
+      key: "auth_settings",
+      value: { ...current, ...updates },
+      updated_by: updatedBy ?? null,
+      updated_at: new Date().toISOString()
+    } as Database["public"]["Tables"]["settings"]["Insert"]);
+    if (error) throw error;
   }
 
   async getAnnouncement() {

@@ -26,8 +26,10 @@ export type ActiveInvestmentRow = {
   startedAt: string;
   endsAt: string;
   projectedDaily: number;
+  weeklyRoiBps?: number;
   settlementFrequency: SettlementFrequency;
   lastSettlementAt?: string | null;
+  lastWeeklySettlementAt?: string | null;
 };
 
 function toAccrualInput(row: ActiveInvestmentRow): LiveAccrualInput {
@@ -36,10 +38,12 @@ function toAccrualInput(row: ActiveInvestmentRow): LiveAccrualInput {
     principalAmount: row.amount,
     creditedTotal: row.totalEarned,
     projectedDaily: row.projectedDaily,
+    weeklyRoiBps: row.weeklyRoiBps,
     settlementFrequency: row.settlementFrequency,
     startedAt: row.startedAt,
     endsAt: row.endsAt,
-    lastSettlementAt: row.lastSettlementAt
+    lastSettlementAt: row.lastSettlementAt,
+    lastWeeklySettlementAt: row.lastWeeklySettlementAt
   };
 }
 

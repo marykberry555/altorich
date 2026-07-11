@@ -169,7 +169,8 @@ export class InvestmentService {
         },
         amount,
         startedAt,
-        endsAt
+        endsAt,
+        weeklyRoiBps
       );
 
       await this.notifications.notifyEvent("investment.purchased", userId, {

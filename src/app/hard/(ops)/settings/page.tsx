@@ -12,6 +12,8 @@ export default async function SettingsPage() {
   const withdrawalWindows = services ? await services.settings.getWithdrawalWindows() : "";
   const featureFlags = services ? await services.settings.getFeatureFlags() : null;
 
+  const authSettings = services ? await services.settings.getAuthSettings() : { trusted_device_days: 90 };
+
   return (
     <div className="space-y-8">
       <header>
@@ -40,8 +42,19 @@ export default async function SettingsPage() {
             Payout windows
             <input name="withdrawalWindows" className="field" defaultValue={withdrawalWindows} />
           </label>
+          <label className="grid gap-1 text-sm">
+            Trusted device duration (days)
+            <input
+              name="trustedDeviceDays"
+              type="number"
+              min={7}
+              max={365}
+              className="field"
+              defaultValue={authSettings.trusted_device_days ?? 90}
+            />
+          </label>
           <button type="submit" className="button">
-            Save announcements
+            Save settings
           </button>
         </form>
       </Card>

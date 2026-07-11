@@ -3,7 +3,7 @@ import type { Database } from "@/types/database";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
 import { settlementDates, type SettlementFrequency } from "@/lib/investment";
-import { weeklyInterestForAmount } from "@/lib/packages/tier-config";
+import { settlementInterestForInvestment } from "@/lib/investment/accrual-math";
 
 type Client = SupabaseClient<Database>;
 
@@ -25,10 +25,18 @@ export class SettlementService {
     },
     amount: number,
     startedAt: Date,
-    endsAt: Date
+    endsAt: Date,
+    weeklyRoiBps?: number
   ) {
     const frequency = plan.settlement_frequency ?? "weekly";
-    const schedule = settlementDates(startedAt, endsAt, frequency, Number(plan.projected_daily), amount);
+    const schedule = settlementDates(
+      startedAt,
+      endsAt,
+      frequency,
+      Number(plan.projected_daily),
+      amount,
+      weeklyRoiBps
+    );
 
     if (schedule.length === 0) return [];
 
@@ -64,7 +72,16 @@ export class SettlementService {
         (investment as { weekly_roi_bps?: number }).weekly_roi_bps ?? plan?.weekly_roi_bps ?? 1000
       );
       const amount = Number(investment.amount);
-      const interest = weeklyInterestForAmount(amount, bps);
+      const interest = settlementInterestForInvestment({
+        principal: amount,
+        weeklyRoiBps: bps,
+        startedAt: new Date(investment.started_at),
+        lastWeeklySettlementAt: (investment as { last_weekly_settlement_at?: string | null }).last_weekly_settlement_at
+          ? new Date((investment as { last_weekly_settlement_at?: string | null }).last_weekly_settlement_at!)
+          : null,
+        endsAt: new Date(investment.ends_at),
+        asOf
+      });
       if (interest <= 0) continue;
 
       const stopRequested = Boolean((investment as { stop_requested_at?: string | null }).stop_requested_at);

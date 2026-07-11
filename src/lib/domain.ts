@@ -9,8 +9,8 @@ export const NAIRA_SYMBOL = "\u20A6";
 export function formatNaira(amount: number) {
   const abs = Math.abs(amount);
   const formatted = new Intl.NumberFormat("en-NG", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(abs);
   const sign = amount < 0 ? "−" : "";
   return `${sign}${NAIRA_SYMBOL}${formatted}`;

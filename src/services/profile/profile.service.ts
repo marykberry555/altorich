@@ -94,13 +94,17 @@ export class ProfileService {
   }
 
   async deleteBankAccount(userId: string, accountId: string) {
-    const { error } = await this.supabase
+    const { data, error } = await this.supabase
       .from("bank_accounts")
       .delete()
       .eq("id", accountId)
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .select("id");
 
     if (error) throw error;
+    if (!data?.length) {
+      throw new AppError("Bank account not found.", 404, "NOT_FOUND");
+    }
   }
 
   async listMembers(page = 1, limit = 20, search?: string) {

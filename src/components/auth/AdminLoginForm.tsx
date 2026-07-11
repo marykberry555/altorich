@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { AuthShell } from "@/components/auth/AuthShell";
@@ -26,17 +25,20 @@ export function AdminLoginForm() {
     setError("");
 
     try {
-      const res = await fetch("/api/hard/auth/login", {
+      const res = await fetch("/api/auth/sign-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
+
       if (!res.ok) {
         setError(data.error ?? "Sign in failed.");
         setLoading(false);
         return;
       }
+
       window.location.assign(data.redirect ?? "/hard");
     } catch {
       setError("Network error. Please try again.");
@@ -48,9 +50,8 @@ export function AdminLoginForm() {
     <AuthShell>
       <Card variant="elevated" padding="lg" className="w-full">
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Operations access</p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--heading)]">Admin sign in</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Restricted access for authorised {COMPANY.brand} operators only.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">Operations sign in</h1>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Admin and finance operators only.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="grid gap-3">
@@ -65,15 +66,12 @@ export function AdminLoginForm() {
           />
           {error ? <p className="text-xs text-red-600">{error}</p> : null}
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Signing in…" : "Sign in to admin"}
+            {loading ? "Signing in..." : "Sign in to ops centre"}
           </Button>
         </form>
 
-        <p className="mt-5 text-center text-xs text-[var(--text-muted)]">
-          Member account?{" "}
-          <Link href="/auth/login" className="font-semibold text-[var(--emerald)]">
-            User sign in
-          </Link>
+        <p className="mt-4 text-center text-[10px] text-[var(--text-subtle)]">
+          {COMPANY.legalName} · Co. {COMPANY.companyNumber}
         </p>
       </Card>
     </AuthShell>

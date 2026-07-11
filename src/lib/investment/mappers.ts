@@ -1,3 +1,4 @@
+import { projectedDailyForPrincipal } from "@/lib/packages/tier-config";
 import type { SettlementFrequency } from "@/lib/investment";
 import type { ActiveInvestmentRow } from "@/components/investment/ActiveInvestmentCard";
 import type { LiveInvestmentInput } from "@/components/investment/LivePortfolioPanel";
@@ -11,10 +12,13 @@ type InvestmentWithPlan = {
   started_at: string;
   ends_at: string;
   settlement_frequency: SettlementFrequency | null;
+  weekly_roi_bps?: number | null;
+  last_weekly_settlement_at?: string | null;
   investment_plans?: {
     name?: string;
     projected_daily?: number;
     settlement_frequency?: SettlementFrequency | null;
+    weekly_roi_bps?: number | null;
   } | null;
 };
 
@@ -37,19 +41,28 @@ export function mapInvestmentRows(
 
   return investments.map((inv) => {
     const plan = inv.investment_plans;
-    const frequency = (inv.settlement_frequency ?? plan?.settlement_frequency ?? "daily") as SettlementFrequency;
+    const frequency = (inv.settlement_frequency ?? plan?.settlement_frequency ?? "weekly") as SettlementFrequency;
+    const weeklyRoiBps = Number(inv.weekly_roi_bps ?? plan?.weekly_roi_bps ?? 1000);
+    const amount = Number(inv.amount);
+    const projectedDaily =
+      Number(plan?.projected_daily ?? 0) > 0
+        ? Number(plan?.projected_daily)
+        : projectedDailyForPrincipal(amount, weeklyRoiBps);
+
     return {
       id: inv.id,
       reference: inv.reference,
       planName: plan?.name ?? "Investment",
-      amount: Number(inv.amount),
+      amount,
       totalEarned: Number(inv.total_earned ?? 0),
       status: inv.status,
       startedAt: inv.started_at,
       endsAt: inv.ends_at,
-      projectedDaily: Number(plan?.projected_daily ?? 0),
+      projectedDaily,
+      weeklyRoiBps,
       settlementFrequency: frequency,
-      lastSettlementAt: lastPaid.get(inv.id) ?? null
+      lastSettlementAt: lastPaid.get(inv.id) ?? inv.last_weekly_settlement_at ?? null,
+      lastWeeklySettlementAt: inv.last_weekly_settlement_at ?? lastPaid.get(inv.id) ?? null
     };
   });
 }
@@ -61,10 +74,12 @@ export function mapLiveInputs(rows: ActiveInvestmentRow[]): LiveInvestmentInput[
     amount: r.amount,
     totalEarned: r.totalEarned,
     projectedDaily: r.projectedDaily,
+    weeklyRoiBps: r.weeklyRoiBps,
     settlementFrequency: r.settlementFrequency,
     startedAt: r.startedAt,
     endsAt: r.endsAt,
-    lastSettlementAt: r.lastSettlementAt
+    lastSettlementAt: r.lastSettlementAt,
+    lastWeeklySettlementAt: r.lastWeeklySettlementAt
   }));
 }
 

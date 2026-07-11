@@ -13,6 +13,7 @@ import {
   usernameRecoveryEmailHtml,
   welcomeEmailHtml
 } from "@/services/auth/email.service";
+import { newDeviceLoginEmailHtml } from "@/lib/email/activity-templates";
 import { getPublicEnv } from "@/lib/env";
 
 type Client = SupabaseClient<Database>;
@@ -228,14 +229,25 @@ export class AuthService {
         username === "demouser");
 
     if (!skipDeviceOtp) {
+      const ttlDays = await this.getTrustedDeviceTtlDays();
+      const ttlMs = ttlDays * 86400000;
+
       const { data: trusted } = await this.supabase
         .from("trusted_devices")
-        .select("id")
+        .select("id, last_seen_at")
         .eq("user_id", profile.id)
         .eq("device_fingerprint", input.deviceFingerprint)
         .maybeSingle();
 
-      if (!trusted) {
+      const trustedValid =
+        trusted &&
+        Date.now() - new Date(trusted.last_seen_at ?? 0).getTime() <= ttlMs;
+
+      if (!trustedValid) {
+        if (trusted?.id) {
+          await this.supabase.from("trusted_devices").delete().eq("id", trusted.id);
+        }
+
         const otp = await this.createOtp(authUser.user.email, "login_device", profile.id);
         await sendAuthEmail({
           to: authUser.user.email,
@@ -258,8 +270,7 @@ export class AuthService {
       await this.supabase
         .from("trusted_devices")
         .update({ last_seen_at: new Date().toISOString(), user_agent: input.userAgent })
-        .eq("user_id", profile.id)
-        .eq("device_fingerprint", input.deviceFingerprint);
+        .eq("id", trusted.id);
     }
 
     const session = await this.createSessionForUser(profile.id);
@@ -294,11 +305,28 @@ export class AuthService {
       .maybeSingle();
 
     const session = await this.createSessionForUser(otp.user_id);
+
+    await this.supabase.auth.admin.getUserById(otp.user_id).then(async ({ data: authUser }) => {
+      if (authUser.user?.email) {
+        await sendAuthEmail({
+          to: authUser.user.email,
+          subject: "New device sign-in · AltoRich",
+          html: newDeviceLoginEmailHtml()
+        });
+      }
+    }).catch(() => null);
+
     return {
       ...session,
       mustChangePin: profile?.must_change_pin ?? false,
       mustChangePassword: profile?.must_change_password ?? false
     };
+  }
+
+  private async getTrustedDeviceTtlDays(): Promise<number> {
+    const { data } = await this.supabase.from("settings").select("value").eq("key", "auth_settings").maybeSingle();
+    const days = Number((data?.value as { trusted_device_days?: number } | null)?.trusted_device_days ?? 90);
+    return Number.isFinite(days) && days >= 7 ? days : 90;
   }
 
   async emailPasswordLogin(input: { email: string; password: string }) {

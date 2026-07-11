@@ -55,12 +55,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    await services.notifications.dispatch({
-      userId: user.id,
-      title: "Profile updated",
-      body: "Your account details have been saved.",
-      channel: "in_app"
-    });
+    await services.notifications.notifyEvent("profile.updated", user.id, {});
 
     return NextResponse.json(profile);
   } catch (error) {

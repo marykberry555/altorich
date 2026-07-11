@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { AdminLoginForm } from "@/components/auth/AdminLoginForm";
 
-export default function HardAuthRedirectPage() {
-  redirect("/auth/login");
+export default function HardAuthPage() {
+  return <AdminLoginForm />;
 }
