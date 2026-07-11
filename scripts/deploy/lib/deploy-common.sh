@@ -32,6 +32,7 @@ clear_app_caches() {
   mkdir -p "${APP_ROOT}/tmp"
   date -u +%Y-%m-%dT%H:%M:%SZ >"${APP_ROOT}/tmp/restart.txt"
   deploy_log "Cleared .next/cache and updated tmp/restart.txt"
+  touch "${APP_ROOT}/server.js" 2>/dev/null || true
 }
 
 cloudlinux_selector() {

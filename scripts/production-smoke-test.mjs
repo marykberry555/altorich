@@ -94,6 +94,20 @@ async function main() {
     return { ok: status === 200, note: `HTTP ${status}` };
   });
 
+  await check("Download page returns 200", async () => {
+    const { status } = await fetchStatus(`${BASE}/download`);
+    return { ok: status === 200, note: `HTTP ${status}` };
+  });
+
+  await check("Login page chunk serves 200", async () => {
+    const res = await fetch(`${BASE}/auth/login`, { headers: { "Cache-Control": "no-cache" } });
+    const html = await res.text();
+    const match = html.match(/app\/auth\/login\/page-[a-f0-9]+\.js/);
+    if (!match) return { ok: false, note: "chunk ref missing" };
+    const chunkStatus = (await fetchStatus(`${BASE}/_next/static/chunks/${match[0]}`)).status;
+    return { ok: chunkStatus === 200, note: `${match[0]} → HTTP ${chunkStatus}` };
+  });
+
   await check("Packages page returns 200", async () => {
     const { status } = await fetchStatus(`${BASE}/packages`);
     return { ok: status === 200, note: `HTTP ${status}` };

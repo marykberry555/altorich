@@ -17,11 +17,12 @@ export function DownloadImageButton({ className }: Props) {
     return (
       <Link href="/app" className={cn("inline-block w-full max-w-lg", className)} aria-label="Open Alto Rich app">
         <Image
-          src="/images/download.png"
+          src="/images/download.webp"
           alt="Open Alto Rich"
-          width={960}
-          height={240}
+          width={936}
+          height={263}
           priority
+          unoptimized
           className="h-auto w-full transition duration-300 hover:scale-[1.02] hover:brightness-105 active:scale-[0.98]"
         />
       </Link>
@@ -37,11 +38,12 @@ export function DownloadImageButton({ className }: Props) {
         aria-label="Download Alto Rich app"
       >
         <Image
-          src="/images/download.png"
+          src="/images/download.webp"
           alt="Download Alto Rich — Invest Smarter. Earn More."
-          width={960}
-          height={240}
+          width={936}
+          height={263}
           priority
+          unoptimized
           className="h-auto w-full select-none"
         />
       </button>

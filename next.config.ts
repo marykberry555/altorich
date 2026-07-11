@@ -26,6 +26,7 @@ const nextConfig: NextConfig = {
       { source: "/(.*)", headers: securityHeaders },
       { source: "/sw.js", headers: pwaHeaders },
       { source: "/site.webmanifest", headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }] },
+      { source: "/download", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }] },
       { source: "/.well-known/assetlinks.json", headers: [{ key: "Content-Type", value: "application/json" }] }
     ];
   },

@@ -59,9 +59,27 @@ check_login_chunk() {
   return 0
 }
 
+check_route() {
+  local base="$1"
+  local label="$2"
+  local path="$3"
+  local status
+
+  status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 -H 'Cache-Control: no-cache' "${base%/}${path}")"
+  if [[ "$status" != "200" ]]; then
+    deploy_log "FAIL: $label ${path} returned HTTP $status"
+    return 1
+  fi
+
+  deploy_log "PASS: $label ${path} (HTTP 200)"
+  return 0
+}
+
 deploy_log "=== verify-deploy start ==="
 wait_for_local_health
 verify_build_artifacts
 check_url "app health" "$PUBLIC_HEALTH"
 check_login_chunk "$PUBLIC_BASE" "public"
+check_route "$PUBLIC_BASE" "public" "/download"
+check_route "$PUBLIC_BASE" "public" "/"
 deploy_log "=== verify-deploy complete ==="
