@@ -1,14 +1,10 @@
 import { HomePage } from "@/components/marketing/HomePage";
-import { buildMetadata } from "@/lib/seo";
-import { BRAND } from "@/lib/brand";
-import { COMPANY } from "@/lib/company";
+import { buildMetadata, SOCIAL_SHARE_TITLE } from "@/lib/seo";
 
 export const metadata = buildMetadata({
-  title: `${COMPANY.brand} — Premium wealth platform`,
-  description:
-    "Transparent cooperative wealth, structured investment plans, and verified member records. Trust, security, and long-term financial clarity.",
-  path: "/",
-  image: `${COMPANY.siteUrl}${BRAND.og.default}`
+  title: SOCIAL_SHARE_TITLE,
+  description: "",
+  path: "/"
 });
 
 export default function Page() {

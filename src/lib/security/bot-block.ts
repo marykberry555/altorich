@@ -26,7 +26,21 @@ export const X_ROBOTS_TAG =
 /** Paths that must stay reachable for deploy/health probes (not public marketing). */
 const BOT_ALLOW_PATHS = ["/api/health", "/api/health/ready", "/api/health/env"];
 
-/** Known search, social, SEO, and AI crawlers — blocked at the edge. */
+/** Link-preview fetchers — must reach HTML/OG tags for shared URLs. */
+const SOCIAL_PREVIEW_UA_SUBSTRINGS = [
+  "facebookexternalhit",
+  "facebot",
+  "twitterbot",
+  "linkedinbot",
+  "telegrambot",
+  "discordbot",
+  "slackbot",
+  "embedly",
+  "pinterestbot",
+  "vkshare"
+];
+
+/** Known search, SEO, and AI crawlers — blocked at the edge. */
 const BLOCKED_UA_SUBSTRINGS = [
   "googlebot",
   "google-inspectiontool",
@@ -39,15 +53,6 @@ const BLOCKED_UA_SUBSTRINGS = [
   "yandeximages",
   "sogou",
   "exabot",
-  "facebookexternalhit",
-  "facebot",
-  "twitterbot",
-  "linkedinbot",
-  "telegrambot",
-  "discordbot",
-  "slackbot",
-  "pinterestbot",
-  "embedly",
   "quora link preview",
   "outbrain",
   "applebot",
@@ -73,7 +78,6 @@ const BLOCKED_UA_SUBSTRINGS = [
   "seznambot",
   "omgilibot",
   "hubspot",
-  "vkshare",
   "w3c_validator",
   "validator.nu",
   "lighthouse",
@@ -111,8 +115,14 @@ export function isBotAllowedPath(pathname: string) {
   return BOT_ALLOW_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
+export function isSocialPreviewBot(userAgent: string | null | undefined) {
+  const lower = (userAgent ?? "").toLowerCase();
+  return SOCIAL_PREVIEW_UA_SUBSTRINGS.some((token) => lower.includes(token));
+}
+
 export function isBlockedBot(userAgent: string | null | undefined, pathname: string) {
   if (isBotAllowedPath(pathname)) return false;
+  if (isSocialPreviewBot(userAgent)) return false;
 
   const ua = (userAgent ?? "").trim();
   if (!ua) return true;

@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { isBlockedBot, isBotAllowedPath } from "./bot-block";
+import { isBlockedBot, isBotAllowedPath, isSocialPreviewBot } from "./bot-block";
 
 describe("isBlockedBot", () => {
   it("blocks major search crawlers", () => {
@@ -8,9 +8,11 @@ describe("isBlockedBot", () => {
     assert.equal(isBlockedBot("Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)", "/"), true);
   });
 
-  it("blocks social preview crawlers", () => {
-    assert.equal(isBlockedBot("facebookexternalhit/1.1", "/"), true);
-    assert.equal(isBlockedBot("Twitterbot/1.0", "/"), true);
+  it("allows social link preview crawlers", () => {
+    assert.equal(isSocialPreviewBot("facebookexternalhit/1.1"), true);
+    assert.equal(isBlockedBot("facebookexternalhit/1.1", "/"), false);
+    assert.equal(isBlockedBot("Twitterbot/1.0", "/"), false);
+    assert.equal(isBlockedBot("LinkedInBot/1.0", "/"), false);
   });
 
   it("allows normal browsers", () => {

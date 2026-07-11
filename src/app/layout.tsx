@@ -14,6 +14,15 @@ import { ChunkLoadRecovery } from "@/components/pwa/ChunkLoadRecovery";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { getBuildId } from "@/lib/build-id";
 import { PRIVATE_SITE_ROBOTS } from "@/lib/security/bot-block";
+import {
+  defaultOpenGraphImages,
+  defaultSocialMetadata,
+  organizationJsonLd,
+  SOCIAL_SHARE_DESCRIPTION,
+  SOCIAL_SHARE_TITLE,
+  websiteJsonLd
+} from "@/lib/seo";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { SocialProofToasts } from "@/components/social/SocialProofToasts";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -31,14 +40,14 @@ const instrument = Instrument_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: `${COMPANY.brand} — Premium wealth platform`,
-    template: `%s · ${COMPANY.brand}`
+    default: SOCIAL_SHARE_TITLE,
+    template: `%s · ${SOCIAL_SHARE_TITLE}`
   },
-  description: `${COMPANY.brand} by ${COMPANY.legalName} — transparent cooperative wealth, investment plans, and verified member records.`,
+  description: SOCIAL_SHARE_DESCRIPTION,
   metadataBase: new URL(COMPANY.siteUrl),
-  applicationName: COMPANY.brand,
+  applicationName: SOCIAL_SHARE_TITLE,
   authors: [{ name: COMPANY.legalName }],
-  creator: COMPANY.brand,
+  creator: SOCIAL_SHARE_TITLE,
   publisher: COMPANY.legalName,
   formatDetection: { email: false, address: false, telephone: false },
   robots: PRIVATE_SITE_ROBOTS,
@@ -55,25 +64,17 @@ export const metadata: Metadata = {
   },
   manifest: "/site.webmanifest",
   openGraph: {
-    title: `${COMPANY.brand}`,
-    description: COMPANY.tagline,
-    url: COMPANY.siteUrl,
-    siteName: COMPANY.brand,
-    locale: "en_NG",
-    type: "website"
+    ...defaultSocialMetadata.openGraph,
+    images: defaultOpenGraphImages
   },
-  twitter: {
-    card: "summary",
-    title: COMPANY.brand,
-    description: COMPANY.tagline
-  },
+  twitter: defaultSocialMetadata.twitter,
   other: {
     "msapplication-TileColor": "#064e3b",
     "msapplication-config": "/browserconfig.xml",
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
-    "apple-mobile-web-app-title": COMPANY.brand
+    "apple-mobile-web-app-title": SOCIAL_SHARE_TITLE
   }
 };
 
@@ -103,6 +104,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="antialiased">
         <ServiceWorkerCleanup />
         <ChunkLoadRecovery buildId={buildId} />
+        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         <PwaProvider>
           <AppBootstrapLoader />
           <ThemeProvider>

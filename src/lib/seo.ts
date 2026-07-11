@@ -5,6 +5,10 @@ import { PRIVATE_SITE_ROBOTS } from "@/lib/security/bot-block";
 
 export { PRIVATE_SITE_ROBOTS };
 
+/** Canonical social sharing copy — used across OG, Twitter, and JSON-LD. */
+export const SOCIAL_SHARE_TITLE = "Alto Rich";
+export const SOCIAL_SHARE_DESCRIPTION = "Grow your naira with clarity — earn 15% to 30% weekly.";
+
 const siteUrl = COMPANY.siteUrl;
 
 /** Wide logo for Facebook, LinkedIn, X (summary_large_image). */
@@ -17,18 +21,38 @@ export const OG_IMAGES = {
     url: ogWideImage,
     width: 1200,
     height: 630,
-    alt: `${COMPANY.brand} logo`
+    alt: SOCIAL_SHARE_TITLE
   },
   square: {
     url: ogSquareImage,
     width: 512,
     height: 512,
-    alt: `${COMPANY.brand} icon`
+    alt: SOCIAL_SHARE_TITLE
   }
 } as const;
 
 /** Provide both assets so platforms pick the best fit automatically. */
 export const defaultOpenGraphImages = [OG_IMAGES.wide, OG_IMAGES.square];
+
+export const defaultSocialMetadata = {
+  title: SOCIAL_SHARE_TITLE,
+  description: SOCIAL_SHARE_DESCRIPTION,
+  openGraph: {
+    title: SOCIAL_SHARE_TITLE,
+    description: SOCIAL_SHARE_DESCRIPTION,
+    url: siteUrl,
+    siteName: SOCIAL_SHARE_TITLE,
+    locale: "en_NG",
+    type: "website" as const,
+    images: defaultOpenGraphImages
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    title: SOCIAL_SHARE_TITLE,
+    description: SOCIAL_SHARE_DESCRIPTION,
+    images: [ogWideImage, ogSquareImage]
+  }
+};
 
 export type PageSeo = {
   title: string;
@@ -41,29 +65,19 @@ export type PageSeo = {
 
 export function buildMetadata(page: PageSeo): Metadata {
   const url = `${siteUrl}${page.path}`;
-  const image = page.image ?? ogWideImage;
 
   return {
     title: page.title,
-    description: page.description,
+    description: SOCIAL_SHARE_DESCRIPTION,
     alternates: { canonical: url },
     robots: PRIVATE_SITE_ROBOTS,
     openGraph: {
-      title: page.title,
-      description: page.description,
+      ...defaultSocialMetadata.openGraph,
       url,
-      siteName: COMPANY.brand,
-      locale: "en_NG",
-      type: page.type ?? "website",
-      images: page.image
-        ? [{ url: image, width: 1200, height: 630, alt: `${COMPANY.brand} — ${page.title}` }]
-        : defaultOpenGraphImages
+      type: page.type ?? "website"
     },
     twitter: {
-      card: "summary_large_image",
-      title: page.title,
-      description: page.description,
-      images: [image]
+      ...defaultSocialMetadata.twitter
     }
   };
 }
@@ -72,10 +86,11 @@ export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: COMPANY.brand,
+    name: SOCIAL_SHARE_TITLE,
     legalName: COMPANY.legalName,
     url: siteUrl,
     logo: `${siteUrl}${BRAND.logo.light}`,
+    description: SOCIAL_SHARE_DESCRIPTION,
     email: COMPANY.supportEmail,
     address: {
       "@type": "PostalAddress",
@@ -92,9 +107,9 @@ export function websiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: COMPANY.brand,
+    name: SOCIAL_SHARE_TITLE,
     url: siteUrl,
-    description: COMPANY.tagline,
+    description: SOCIAL_SHARE_DESCRIPTION,
     publisher: { "@type": "Organization", name: COMPANY.legalName }
   };
 }
@@ -117,13 +132,13 @@ export function articleJsonLd(input: { title: string; description: string; path:
     "@context": "https://schema.org",
     "@type": "Article",
     headline: input.title,
-    description: input.description,
+    description: SOCIAL_SHARE_DESCRIPTION,
     url: `${siteUrl}${input.path}`,
     datePublished: input.datePublished ?? COMPANY.founded,
-    author: { "@type": "Organization", name: COMPANY.brand },
+    author: { "@type": "Organization", name: SOCIAL_SHARE_TITLE },
     publisher: {
       "@type": "Organization",
-      name: COMPANY.brand,
+      name: SOCIAL_SHARE_TITLE,
       logo: { "@type": "ImageObject", url: `${siteUrl}${BRAND.logo.light}` }
     }
   };
