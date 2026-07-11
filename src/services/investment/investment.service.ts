@@ -118,7 +118,12 @@ export class InvestmentService {
 
     const startedAt = new Date();
     const endsAt = addDays(startedAt, plan.cycle_days);
-    const frequency = (plan.settlement_frequency ?? "daily") as SettlementFrequency;
+    const frequency = (plan.settlement_frequency ?? "weekly") as SettlementFrequency;
+    const weeklyRoiBps = Number((plan as InvestmentPlan & { weekly_roi_bps?: number }).weekly_roi_bps ?? 1000);
+    const projectedDaily =
+      Number(plan.projected_daily) > 0
+        ? Number(plan.projected_daily)
+        : Math.round(((amount * weeklyRoiBps) / 10_000 / 7) * 100) / 100;
 
     const { data: investment, error: invError } = await this.supabase
       .from("investments")
@@ -130,7 +135,9 @@ export class InvestmentService {
         reference,
         settlement_frequency: frequency,
         started_at: startedAt.toISOString(),
-        ends_at: endsAt.toISOString()
+        ends_at: endsAt.toISOString(),
+        auto_reinvest: true,
+        weekly_roi_bps: weeklyRoiBps
       } as Database["public"]["Tables"]["investments"]["Insert"])
       .select()
       .single();
@@ -156,7 +163,7 @@ export class InvestmentService {
       await this.settlements.createScheduleForInvestment(
         investment.id,
         {
-          projected_daily: Number(plan.projected_daily),
+          projected_daily: projectedDaily,
           cycle_days: plan.cycle_days,
           settlement_frequency: frequency
         },
@@ -202,7 +209,7 @@ export class InvestmentService {
     const investments = await this.listUserInvestments(userId);
     const now = new Date();
 
-    const active = investments.filter((i) => i.status === "active");
+    const active = investments.filter((i) => ["active", "stopping"].includes(i.status));
     const completed = investments.filter((i) => i.status === "completed" || i.status === "closed");
     const matured = investments.filter((i) => i.status === "matured");
 
@@ -232,6 +239,45 @@ export class InvestmentService {
       currentValue: totalInvested + totalEarned,
       upcomingMaturities
     };
+  }
+
+  async requestStop(investmentId: string, userId: string) {
+    const { data: inv, error } = await this.supabase
+      .from("investments")
+      .select("*")
+      .eq("id", investmentId)
+      .eq("user_id", userId)
+      .single();
+
+    if (error || !inv) throw Errors.notFound("Investment");
+    if (!["active", "stopping"].includes(inv.status)) {
+      throw new AppError("Only active investments can be stopped.", 409, "INVALID_STATUS");
+    }
+    if ((inv as { stop_requested_at?: string | null }).stop_requested_at) {
+      throw new AppError("Stop already requested. Earnings pay out on Monday 09:00 WAT.", 409, "ALREADY_STOPPING");
+    }
+
+    const { data, error: updateError } = await this.supabase
+      .from("investments")
+      .update({
+        status: "stopping",
+        stop_requested_at: new Date().toISOString()
+      } as Database["public"]["Tables"]["investments"]["Update"])
+      .eq("id", investmentId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    await this.notifications.dispatch({
+      userId,
+      title: "Stop investment scheduled",
+      body: "Your earnings will be paid to your wallet on Monday at 09:00 WAT. You can then withdraw from your wallet.",
+      channel: "in_app",
+      metadata: { investment_id: investmentId }
+    });
+
+    return data;
   }
 
   async cancelInvestment(investmentId: string, userId: string, reason: string) {

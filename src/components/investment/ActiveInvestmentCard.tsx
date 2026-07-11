@@ -126,7 +126,7 @@ type ListProps = {
 };
 
 export function ActiveInvestmentsList({ investments, title = "Active investments" }: ListProps) {
-  const active = investments.filter((i) => i.status === "active");
+  const active = investments.filter((i) => ["active", "stopping"].includes(i.status));
 
   if (active.length === 0) {
     return (

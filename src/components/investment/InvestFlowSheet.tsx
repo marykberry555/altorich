@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, X } from "lucide-react";
 import type { SettlementFrequency } from "@/lib/investment";
-import { formatExpectedReturnSummary, formatSettlementLabel } from "@/lib/packages/investment-catalog";
 import { formatNaira } from "@/lib/domain";
 import { refreshSmartsuppIdentity, trackSmartsuppEvent } from "@/lib/chat/smartsupp";
 import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
@@ -23,6 +22,8 @@ type Props = {
   packageTitle: string;
   minAmount: number;
   maxAmount: number;
+  weeklyRoiPercent: number;
+  payoutTiming: string;
   cycleDays: number;
   settlementFrequency: SettlementFrequency;
   projectedDaily: number;
@@ -71,6 +72,8 @@ export function InvestFlowSheet({
   packageTitle,
   minAmount,
   maxAmount,
+  weeklyRoiPercent,
+  payoutTiming,
   cycleDays,
   settlementFrequency,
   projectedDaily,
@@ -94,11 +97,6 @@ export function InvestFlowSheet({
   const parsedAmount = Number(amount);
   const validAmount = parsedAmount >= minAmount && parsedAmount <= maxAmount;
   const sufficientBalance = walletBalance >= parsedAmount;
-
-  const returnSummary = useMemo(
-    () => formatExpectedReturnSummary({ projectedDaily, cycleDays, settlementFrequency }),
-    [projectedDaily, cycleDays, settlementFrequency]
-  );
 
   async function confirmInvest() {
     if (loading) return;
@@ -246,16 +244,22 @@ export function InvestFlowSheet({
                 <dd className="currency-ngn font-bold tabular-nums text-[var(--heading)]">{formatNaira(parsedAmount)}</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">Duration</dt>
-                <dd className="font-semibold">{cycleDays} days</dd>
+                <dt className="text-[var(--text-muted)]">Weekly ROI</dt>
+                <dd className="font-semibold text-[var(--emerald)]">{weeklyRoiPercent}%</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">Settlement</dt>
-                <dd className="font-semibold">{formatSettlementLabel(settlementFrequency)}</dd>
+                <dt className="text-[var(--text-muted)]">Payout</dt>
+                <dd className="max-w-[55%] text-right text-xs font-semibold">{payoutTiming}</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">Expected return</dt>
-                <dd className="max-w-[55%] text-right text-xs font-medium leading-snug">{returnSummary}</dd>
+                <dt className="text-[var(--text-muted)]">Auto-reinvest</dt>
+                <dd className="text-right text-xs font-medium">Until you stop · guaranteed</dd>
+              </div>
+              <div className="flex justify-between gap-4 px-4 py-3">
+                <dt className="text-[var(--text-muted)]">This week at your amount</dt>
+                <dd className="currency-ngn font-bold tabular-nums text-[var(--emerald)]">
+                  {formatNaira(Math.round((parsedAmount * weeklyRoiPercent) / 100))}
+                </dd>
               </div>
             </dl>
 

@@ -29,7 +29,11 @@ export function InvestmentPackageCard({ card, walletBalance, featured }: Props) 
 
   const returnSummary = useMemo(() => {
     if (!card.available) return null;
-    return formatExpectedReturnSummary(card);
+    return formatExpectedReturnSummary({
+      weeklyRoiPercent: card.weeklyRoiPercent,
+      minInvestment: card.minInvestment,
+      payoutTiming: card.payoutTiming
+    });
   }, [card]);
 
   return (
@@ -49,28 +53,36 @@ export function InvestmentPackageCard({ card, walletBalance, featured }: Props) 
             <div className="flex items-center justify-between gap-3">
               <dt className="flex items-center gap-2 text-[var(--text-muted)]">
                 <Wallet size={15} aria-hidden />
-                Minimum
+                Range
               </dt>
-              <dd className="currency-ngn font-semibold tabular-nums text-[var(--heading)]">
-                {card.available ? formatNaira(card.minInvestment) : "—"}
+              <dd className="currency-ngn text-right text-xs font-semibold tabular-nums text-[var(--heading)]">
+                {card.available
+                  ? `${formatNaira(card.minInvestment)} – ${formatNaira(card.maxInvestment)}`
+                  : "—"}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="flex items-center gap-2 text-[var(--text-muted)]">
+                <TrendingUp size={15} aria-hidden />
+                Weekly ROI
+              </dt>
+              <dd className="font-semibold text-[var(--emerald)]">
+                {card.available ? `${card.weeklyRoiPercent}%` : "—"}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3">
               <dt className="flex items-center gap-2 text-[var(--text-muted)]">
                 <Calendar size={15} aria-hidden />
-                Duration
+                Payout
               </dt>
-              <dd className="font-semibold text-[var(--heading)]">
-                {card.available ? `${card.cycleDays} days` : "—"}
+              <dd className="max-w-[58%] text-right text-xs font-semibold leading-snug text-[var(--heading)]">
+                {card.available ? card.payoutTiming : "—"}
               </dd>
             </div>
             <div className="flex items-start justify-between gap-3 border-t border-[var(--border)] pt-3">
-              <dt className="flex items-center gap-2 text-[var(--text-muted)]">
-                <TrendingUp size={15} aria-hidden />
-                Expected return
-              </dt>
-              <dd className="max-w-[58%] text-right text-xs font-medium leading-snug text-[var(--heading)]">
-                {returnSummary ?? "Unavailable"}
+              <dt className="text-[var(--text-muted)]">Returns</dt>
+              <dd className="max-w-[58%] text-right text-xs font-medium leading-snug text-[var(--emerald)]">
+                {returnSummary ?? "Guaranteed"}
               </dd>
             </div>
           </dl>
@@ -95,6 +107,8 @@ export function InvestmentPackageCard({ card, walletBalance, featured }: Props) 
           packageTitle={card.title}
           minAmount={card.minInvestment}
           maxAmount={card.maxInvestment}
+          weeklyRoiPercent={card.weeklyRoiPercent}
+          payoutTiming={card.payoutTiming}
           cycleDays={card.cycleDays}
           settlementFrequency={card.settlementFrequency}
           projectedDaily={card.projectedDaily}

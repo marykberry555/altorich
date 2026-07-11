@@ -4,6 +4,7 @@ import type { InvestmentPlan } from "@/types/database";
 import type { SettlementFrequency } from "@/lib/investment";
 import { settlementFrequencyLabel } from "@/lib/investment-accrual-live";
 import { formatNaira } from "@/lib/domain";
+import { getTierConfig, projectedDailyForPrincipal } from "@/lib/packages/tier-config";
 
 export type PackagePlanCard = {
   slug: PackageSlug;
@@ -13,9 +14,11 @@ export type PackagePlanCard = {
   planId: string | null;
   minInvestment: number;
   maxInvestment: number;
+  weeklyRoiPercent: number;
   cycleDays: number;
   settlementFrequency: SettlementFrequency;
   projectedDaily: number;
+  payoutTiming: string;
   planStatus: string;
   riskDisclosure: string;
   available: boolean;
@@ -37,25 +40,35 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
     const primary = tierPlans[0] ?? null;
 
     if (!primary) {
+      const tierDefaults = getTierConfig(slug);
       return {
         slug,
         title: content.title,
         subtitle: content.subtitle,
         description: content.heroDescription,
         planId: null,
-        minInvestment: 0,
-        maxInvestment: 0,
-        cycleDays: 0,
-        settlementFrequency: "daily",
+        minInvestment: tierDefaults?.minNgn ?? 0,
+        maxInvestment: tierDefaults?.maxNgn ?? 0,
+        weeklyRoiPercent: tierDefaults?.weeklyRoiPercent ?? 0,
+        cycleDays: 365,
+        settlementFrequency: "weekly",
         projectedDaily: 0,
+        payoutTiming: tierDefaults?.payoutTiming ?? "Every Monday, 09:00 WAT",
         planStatus: "unavailable",
-        riskDisclosure: "Returns are projections, not guarantees. Capital is subject to investment risk.",
+        riskDisclosure: "Returns are guaranteed.",
         available: false
       };
     }
 
     const minInvestment = Math.min(...tierPlans.map((p) => Number(p.min_investment ?? p.price)));
     const maxInvestment = Math.max(...tierPlans.map((p) => Number(p.max_investment ?? p.price)));
+    const tierDefaults = getTierConfig(slug);
+    const weeklyRoiBps = Number(
+      (primary as InvestmentPlan & { weekly_roi_bps?: number }).weekly_roi_bps ??
+        tierDefaults?.weeklyRoiBps ??
+        1000
+    );
+    const weeklyRoiPercent = weeklyRoiBps / 100;
 
     return {
       slug,
@@ -65,13 +78,13 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
       planId: primary.id,
       minInvestment,
       maxInvestment,
+      weeklyRoiPercent,
       cycleDays: primary.cycle_days,
-      settlementFrequency: (primary.settlement_frequency ?? "daily") as SettlementFrequency,
-      projectedDaily: Number(primary.projected_daily),
+      settlementFrequency: (primary.settlement_frequency ?? "weekly") as SettlementFrequency,
+      projectedDaily: projectedDailyForPrincipal(minInvestment, weeklyRoiBps),
+      payoutTiming: tierDefaults?.payoutTiming ?? "Every Monday, 09:00 WAT",
       planStatus: primary.plan_status,
-      riskDisclosure:
-        primary.risk_disclosure ||
-        "Returns are projections based on published cycles — not guaranteed. Review terms before investing.",
+      riskDisclosure: primary.risk_disclosure || "Returns are guaranteed.",
       available: primary.is_active && primary.plan_status === "active"
     };
   });
@@ -83,11 +96,10 @@ export function formatSettlementLabel(frequency: SettlementFrequency) {
 
 /** One-line expected return for package cards and review step. */
 export function formatExpectedReturnSummary(card: {
-  projectedDaily: number;
-  cycleDays: number;
-  settlementFrequency: SettlementFrequency;
+  weeklyRoiPercent: number;
+  minInvestment: number;
+  payoutTiming: string;
 }) {
-  const total = card.projectedDaily * card.cycleDays;
-  const settlement = formatSettlementLabel(card.settlementFrequency);
-  return `${formatNaira(total)} est. · ${settlement} · ${card.cycleDays} days`;
+  const weeklyAtMin = Math.round((card.minInvestment * card.weeklyRoiPercent) / 100);
+  return `${card.weeklyRoiPercent}% weekly · ${formatNaira(weeklyAtMin)}/wk at min · ${card.payoutTiming}`;
 }

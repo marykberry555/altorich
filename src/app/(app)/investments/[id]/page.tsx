@@ -7,6 +7,8 @@ import { mapInvestmentRows } from "@/lib/investment/mappers";
 import { formatSettlementLabel } from "@/lib/packages/investment-catalog";
 import { formatNaira } from "@/lib/domain";
 import { InvestmentAccrualPanel } from "@/components/investment/InvestmentAccrualPanel";
+import { InvestmentStopPanel } from "@/components/investment/InvestmentStopPanel";
+import { getTierConfig } from "@/lib/packages/tier-config";
 import { StatusBadge } from "@/components/design-system";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -40,7 +42,12 @@ export default async function InvestmentDetailPage({ params }: Props) {
 
   const rows = mapInvestmentRows([investment as Parameters<typeof mapInvestmentRows>[0][0]], settlements);
   const row = rows[0];
-  const plan = (investment as { investment_plans?: { name?: string; tier?: string } | null }).investment_plans;
+  const plan = (investment as { investment_plans?: { name?: string; tier?: string; weekly_roi_bps?: number } | null })
+    .investment_plans;
+  const tierConfig = getTierConfig(String(plan?.tier ?? "starter"));
+  const weeklyRoiPercent =
+    Number((investment as { weekly_roi_bps?: number }).weekly_roi_bps ?? plan?.weekly_roi_bps ?? tierConfig?.weeklyRoiBps ?? 1000) /
+    100;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -60,6 +67,15 @@ export default async function InvestmentDetailPage({ params }: Props) {
       </header>
 
       <InvestmentAccrualPanel row={row} />
+
+      <InvestmentStopPanel
+        investmentId={investment.id}
+        status={investment.status}
+        stopRequestedAt={(investment as { stop_requested_at?: string | null }).stop_requested_at ?? null}
+        amount={Number(investment.amount)}
+        totalEarned={Number(investment.total_earned ?? 0)}
+        weeklyRoiPercent={weeklyRoiPercent}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card variant="elevated" padding="md">

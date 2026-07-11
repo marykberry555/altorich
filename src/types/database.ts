@@ -127,6 +127,7 @@ export type Database = {
           settlement_frequency: "daily" | "weekly" | "monthly" | "maturity";
           plan_status: "draft" | "active" | "paused" | "archived";
           risk_disclosure: string;
+          weekly_roi_bps: number | null;
           visibility: "public" | "members" | "hidden";
           is_active: boolean;
           sort_order: number;
@@ -143,10 +144,14 @@ export type Database = {
           user_id: string;
           plan_id: string;
           amount: number;
-          status: "pending" | "active" | "completed" | "cancelled" | "matured" | "closed";
+          status: "pending" | "active" | "stopping" | "stopped" | "completed" | "cancelled" | "matured" | "closed";
           reference: string | null;
           settlement_frequency: "daily" | "weekly" | "monthly" | "maturity" | null;
           total_earned: number;
+          auto_reinvest: boolean;
+          stop_requested_at: string | null;
+          weekly_roi_bps: number | null;
+          last_weekly_settlement_at: string | null;
           started_at: string;
           ends_at: string;
           matured_at: string | null;
@@ -575,7 +580,7 @@ export type Database = {
       transaction_status: "pending" | "completed" | "failed" | "reversed";
       deposit_status: "pending" | "approved" | "rejected" | "completed";
       withdrawal_status: "pending" | "approved" | "paid" | "rejected" | "cancelled";
-      investment_status: "pending" | "active" | "completed" | "cancelled" | "matured" | "closed";
+      investment_status: "pending" | "active" | "stopping" | "stopped" | "completed" | "cancelled" | "matured" | "closed";
       settlement_frequency: "daily" | "weekly" | "monthly" | "maturity";
       notification_channel: "in_app" | "email" | "sms" | "whatsapp" | "push";
       kyc_status: "pending" | "approved" | "rejected" | "requires_update";

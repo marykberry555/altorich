@@ -9,6 +9,7 @@ export async function POST() {
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 
+    const weeklyResults = await services.settlements.processWeeklyMondaySettlements();
     const results = await services.settlements.processDueSettlements();
     await services.settlements.matureInvestments();
 
@@ -16,7 +17,7 @@ export async function POST() {
       actorId: reviewer.id,
       action: "settlement.triggered",
       entityType: "settlement_batch",
-      metadata: { processed: results.length }
+      metadata: { processed: results.length, weekly: weeklyResults.length }
     });
 
     redirect("/admin");

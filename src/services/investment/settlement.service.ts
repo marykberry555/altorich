@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
-import { AppError } from "@/lib/errors";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
 import { settlementDates, type SettlementFrequency } from "@/lib/investment";
+import { weeklyInterestForAmount } from "@/lib/packages/tier-config";
 
 type Client = SupabaseClient<Database>;
 
@@ -27,7 +27,7 @@ export class SettlementService {
     startedAt: Date,
     endsAt: Date
   ) {
-    const frequency = plan.settlement_frequency ?? "daily";
+    const frequency = plan.settlement_frequency ?? "weekly";
     const schedule = settlementDates(startedAt, endsAt, frequency, Number(plan.projected_daily), amount);
 
     if (schedule.length === 0) return [];
@@ -42,6 +42,78 @@ export class SettlementService {
     const { data, error } = await this.supabase.from("investment_settlements").insert(rows).select();
     if (error) throw error;
     return data ?? [];
+  }
+
+  /**
+   * Weekly Monday settlement: auto-reinvest earnings or pay to wallet when stop requested.
+   */
+  async processWeeklyMondaySettlements(asOf = new Date()) {
+    const { data: active, error } = await this.supabase
+      .from("investments")
+      .select("*, investment_plans(weekly_roi_bps, tier)")
+      .in("status", ["active", "stopping"]);
+
+    if (error) throw error;
+
+    const results: { investmentId: string; amount: number; action: "reinvest" | "payout" }[] = [];
+
+    for (const investment of active ?? []) {
+      const plan = (investment as { investment_plans?: { weekly_roi_bps?: number; tier?: string } | null })
+        .investment_plans;
+      const bps = Number(
+        (investment as { weekly_roi_bps?: number }).weekly_roi_bps ?? plan?.weekly_roi_bps ?? 1000
+      );
+      const amount = Number(investment.amount);
+      const interest = weeklyInterestForAmount(amount, bps);
+      if (interest <= 0) continue;
+
+      const stopRequested = Boolean((investment as { stop_requested_at?: string | null }).stop_requested_at);
+      const userId = investment.user_id;
+
+      if (stopRequested) {
+        const wallet = await this.wallet.getWalletByUserId(userId);
+        await this.wallet.creditInvestmentSettlement(wallet.id, interest, investment.id, `stop-${asOf.toISOString().slice(0, 10)}`);
+
+        await this.supabase
+          .from("investments")
+          .update({
+            status: "stopped",
+            total_earned: Number(investment.total_earned ?? 0) + interest,
+            stop_requested_at: null,
+            auto_reinvest: false,
+            last_weekly_settlement_at: asOf.toISOString()
+          } as Database["public"]["Tables"]["investments"]["Update"])
+          .eq("id", investment.id);
+
+        await this.notifications.notifyEvent("settlement.completed", userId, {
+          amount: interest,
+          investment_id: investment.id,
+          action: "payout"
+        });
+
+        results.push({ investmentId: investment.id, amount: interest, action: "payout" });
+      } else {
+        const newPrincipal = amount + interest;
+        await this.supabase
+          .from("investments")
+          .update({
+            amount: newPrincipal,
+            total_earned: Number(investment.total_earned ?? 0) + interest,
+            last_weekly_settlement_at: asOf.toISOString()
+          } as Database["public"]["Tables"]["investments"]["Update"])
+          .eq("id", investment.id);
+
+        await this.notifications.notifyEvent("settlement.completed", userId, {
+          amount: interest,
+          investment_id: investment.id,
+          action: "reinvest"
+        });
+
+        results.push({ investmentId: investment.id, amount: interest, action: "reinvest" });
+      }
+    }
+
+    return results;
   }
 
   async processDueSettlements(asOf = new Date()) {
@@ -63,38 +135,72 @@ export class SettlementService {
         .eq("id", settlement.investment_id)
         .single();
 
-      if (invError || !investment || investment.status !== "active") continue;
+      if (invError || !investment || !["active", "stopping"].includes(investment.status)) continue;
 
-      const wallet = await this.wallet.getWalletByUserId(investment.user_id);
-      const tx = await this.wallet.creditInvestmentSettlement(
-        wallet.id,
-        Number(settlement.amount),
-        investment.id,
-        settlement.id
-      );
+      const stopRequested = Boolean((investment as { stop_requested_at?: string | null }).stop_requested_at);
+      const autoReinvest = (investment as { auto_reinvest?: boolean }).auto_reinvest !== false;
+      const interest = Number(settlement.amount);
 
-      await this.supabase
-        .from("investment_settlements")
-        .update({
-          status: "paid",
-          wallet_transaction_id: tx.id,
-          settled_at: new Date().toISOString()
-        })
-        .eq("id", settlement.id);
+      if (stopRequested || !autoReinvest) {
+        const wallet = await this.wallet.getWalletByUserId(investment.user_id);
+        const tx = await this.wallet.creditInvestmentSettlement(
+          wallet.id,
+          interest,
+          investment.id,
+          settlement.id
+        );
 
-      const newEarned = Number(investment.total_earned ?? 0) + Number(settlement.amount);
+        await this.supabase
+          .from("investment_settlements")
+          .update({
+            status: "paid",
+            wallet_transaction_id: tx.id,
+            settled_at: new Date().toISOString()
+          })
+          .eq("id", settlement.id);
+
+        if (stopRequested) {
+          await this.supabase
+            .from("investments")
+            .update({
+              status: "stopped",
+              stop_requested_at: null,
+              auto_reinvest: false
+            } as Database["public"]["Tables"]["investments"]["Update"])
+            .eq("id", investment.id);
+        }
+      } else {
+        const newPrincipal = Number(investment.amount) + interest;
+        await this.supabase
+          .from("investments")
+          .update({
+            amount: newPrincipal,
+            total_earned: Number(investment.total_earned ?? 0) + interest
+          } as Database["public"]["Tables"]["investments"]["Update"])
+          .eq("id", investment.id);
+
+        await this.supabase
+          .from("investment_settlements")
+          .update({
+            status: "paid",
+            settled_at: new Date().toISOString()
+          })
+          .eq("id", settlement.id);
+      }
+
+      const newEarned = Number(investment.total_earned ?? 0) + interest;
       await this.supabase
         .from("investments")
         .update({ total_earned: newEarned } as Database["public"]["Tables"]["investments"]["Update"])
         .eq("id", investment.id);
 
       await this.notifications.notifyEvent("settlement.completed", investment.user_id, {
-        amount: Number(settlement.amount),
+        amount: interest,
         investment_id: investment.id,
         settlement_id: settlement.id
       });
 
-      results.push({ settlementId: settlement.id, amount: settlement.amount });
+      results.push({ settlementId: settlement.id, amount: interest });
     }
 
     return results;

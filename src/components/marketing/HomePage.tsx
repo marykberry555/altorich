@@ -26,6 +26,9 @@ export function HomePage() {
             <p className="mt-4 max-w-xl text-base font-medium leading-relaxed text-[var(--heading)]/80 sm:text-lg">
               {hero.subtitle}
             </p>
+            {"guarantee" in hero && hero.guarantee ? (
+              <p className="mt-2 text-sm font-semibold text-[var(--emerald)]">{hero.guarantee}</p>
+            ) : null}
             <div className="mt-6">
               <WeeklyCountdown />
             </div>

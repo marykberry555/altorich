@@ -57,7 +57,7 @@ export default async function InvestmentsPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Invest</p>
         <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Select package</h1>
         <p className="max-w-xl text-sm text-[var(--text-muted)]">
-          Fund your wallet, choose a package, and confirm in seconds.
+          Fund your wallet, choose a package, and confirm in seconds. Earnings auto-reinvest weekly until you stop.
         </p>
       </header>
 

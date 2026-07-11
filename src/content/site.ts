@@ -3,9 +3,10 @@ import { PACKAGE_IMAGES } from "@/lib/images";
 
 export const hero = {
   eyebrow: "Built for Nigeria · WAT-aligned payouts",
-  title: "Grow your naira with clarity — earn 12% to 40% weekly.",
+  title: "Grow your naira with clarity — earn 10% to 25% weekly.",
   subtitle:
-    "For salary earners, entrepreneurs, and diaspora investors. Verified bank deposits, transparent ledgers, and payouts every Monday at 09:00 WAT.",
+    "For salary earners, entrepreneurs, and diaspora investors. Verified bank deposits, transparent ledgers, guaranteed weekly returns, and payouts every Monday at 09:00 WAT.",
+  guarantee: "Returns are guaranteed.",
   ctaPrimary: "Open your account",
   ctaSecondary: "See how it works"
 };
@@ -22,9 +23,9 @@ export const valueProps = [
       "Payouts follow published schedules. You always know when requests are reviewed and processed."
   },
   {
-    title: "Honest projections",
+    title: "Guaranteed weekly returns",
     description:
-      "We document cooperative performance — we never promise guaranteed daily returns or casino-style yields."
+      "Published weekly ROI tiers from 10% to 25%. Earnings auto-reinvest every Monday until you choose to stop and withdraw."
   },
   {
     title: "Local-first operations",
@@ -121,7 +122,7 @@ export const faqs = [
   },
   {
     q: "Do you guarantee returns?",
-    a: "No. Projected figures on investment plans are cooperative estimates based on documented pool performance. Actual distributions depend on verified earnings and admin-approved settlements."
+    a: "Yes. Alto Rich packages publish guaranteed weekly returns from 10% to 25%, paid every Monday at 09:00 WAT. Earnings auto-reinvest until you stop your investment and withdraw."
   },
   {
     q: "How do I deposit money?",
@@ -151,7 +152,7 @@ export const values = [
   { title: "Transparency", description: "Every balance is ledger-derived. Every rule is published." },
   { title: "Discipline", description: "Cooperative structures, not speculation." },
   { title: "Accessibility", description: "Entry from ₦3,000. Mobile-first. WAT support hours." },
-  { title: "Integrity", description: "We say no to guaranteed-return marketing." }
+  { title: "Integrity", description: "Guaranteed weekly returns with transparent ledgers and published Monday payout windows." }
 ];
 
 export const leadership = [
