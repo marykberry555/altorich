@@ -15,13 +15,19 @@ async function collectConsoleErrors(page: import("@playwright/test").Page) {
   return errors;
 }
 
+function assertNoChunkErrors(errors: string[]) {
+  expect(errors.join("\n")).not.toMatch(/Loading chunk .* failed|ChunkLoadError/i);
+}
+
+const PUBLIC_ROUTES = ["/", "/auth/login", "/download", "/packages", "/contact"];
+
 test.describe("Production smoke — public routes", () => {
   test("homepage loads without chunk failures", async ({ page }) => {
     const errors = await collectConsoleErrors(page);
     await page.goto("/", { waitUntil: "networkidle" });
     await assertNoChunkFailure(page);
     await expect(page.locator("h1").first()).toBeVisible();
-    expect(errors.join("\n")).not.toMatch(/Loading chunk .* failed|ChunkLoadError/i);
+    assertNoChunkErrors(errors);
   });
 
   test("login page loads and serves referenced chunks", async ({ page, request }) => {
@@ -35,7 +41,7 @@ test.describe("Production smoke — public routes", () => {
     expect(chunk, "login page chunk reference").toBeTruthy();
     const response = await request.get(`/_next/static/chunks/${chunk}`);
     expect(response.status()).toBe(200);
-    expect(errors.join("\n")).not.toMatch(/Loading chunk .* failed|ChunkLoadError/i);
+    assertNoChunkErrors(errors);
   });
 
   test("build id endpoint matches page meta", async ({ page, request }) => {
@@ -58,6 +64,22 @@ test.describe("Production smoke — public routes", () => {
   });
 });
 
+test.describe("Production stress — hard reload", () => {
+  for (const route of PUBLIC_ROUTES) {
+    test(`five consecutive hard reloads on ${route}`, async ({ page }) => {
+      const errors = await collectConsoleErrors(page);
+
+      for (let i = 0; i < 5; i += 1) {
+        await page.goto(route, { waitUntil: "networkidle" });
+        await page.reload({ waitUntil: "networkidle" });
+        await assertNoChunkFailure(page);
+      }
+
+      assertNoChunkErrors(errors);
+    });
+  }
+});
+
 test.describe("Production smoke — authenticated routes", () => {
   const email = process.env.PLAYWRIGHT_MEMBER_EMAIL;
   const pin = process.env.PLAYWRIGHT_MEMBER_PIN;
@@ -77,7 +99,7 @@ test.describe("Production smoke — authenticated routes", () => {
     await page.waitForURL(/\/dashboard/, { timeout: 30_000 });
     await assertNoChunkFailure(page);
 
-    for (const path of ["/wallet", "/investments", "/portfolio"]) {
+    for (const path of ["/wallet", "/investments", "/portfolio", "/deposits", "/vip"]) {
       await page.goto(path, { waitUntil: "networkidle" });
       await assertNoChunkFailure(page);
     }
@@ -85,6 +107,6 @@ test.describe("Production smoke — authenticated routes", () => {
     await page.getByRole("button", { name: /sign out|log out/i }).click();
     await page.waitForURL(/\/auth\/login|\//, { timeout: 20_000 });
 
-    expect(errors.join("\n")).not.toMatch(/Loading chunk .* failed|ChunkLoadError/i);
+    assertNoChunkErrors(errors);
   });
 });

@@ -79,6 +79,12 @@ phase_cpanel() {
   log "Phase 3: cPanel production Git deployment"
   require_cmd git
 
+  if [[ -f "$ROOT/DEPLOY_LOCK" && "${DEPLOY_ENABLED:-0}" != "1" ]]; then
+    echo "DEPLOY_LOCK is present — production auto-deploy is disabled." >&2
+    echo "Manual deploy: DEPLOY_ENABLED=1 bash scripts/deploy/deploy-production.sh" >&2
+    exit 1
+  fi
+
   if git remote get-url "$PRODUCTION_REMOTE" >/dev/null 2>&1; then
     git remote set-url "$PRODUCTION_REMOTE" "$PRODUCTION_URL"
   else
@@ -90,7 +96,7 @@ phase_cpanel() {
   fi
 
   git push "$PRODUCTION_REMOTE" "$BRANCH"
-  log "Pushed to $PRODUCTION_REMOTE/$BRANCH (cPanel post-deploy runs via .cpanel.yml)."
+  log "Pushed to $PRODUCTION_REMOTE/$BRANCH (cPanel runs deploy only when DEPLOY_ENABLED=1)."
 
   log "Waiting for production build + Node restart..."
   local url="${DEPLOY_PUBLIC_URL:-https://altorich.com}/api/health"

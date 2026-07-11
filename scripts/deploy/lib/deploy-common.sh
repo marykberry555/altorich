@@ -26,8 +26,22 @@ lsnode_pids() {
   pgrep -f "lsnode:${APP_ROOT}/" 2>/dev/null || true
 }
 
+purge_build_artifacts() {
+  deploy_log "Purging previous build artifacts (never merge builds)..."
+  rm -rf "${APP_ROOT}/.next"
+  rm -rf "${APP_ROOT}/public/_next"
+  rm -rf "${APP_ROOT}/node_modules/.cache"
+  mkdir -p "${APP_ROOT}/.next"
+}
+
+verify_local_build() {
+  deploy_log "Verifying local build integrity before restart..."
+  APP_ROOT="$APP_ROOT" node "${APP_ROOT}/scripts/deploy/verify-local-build.mjs"
+  bash "${APP_ROOT}/scripts/deploy/inject-sw-build-id.sh"
+}
+
 clear_app_caches() {
-  deploy_log "Clearing application caches..."
+  deploy_log "Clearing runtime application caches..."
   rm -rf "${APP_ROOT}/.next/cache"
   mkdir -p "${APP_ROOT}/tmp"
   date -u +%Y-%m-%dT%H:%M:%SZ >"${APP_ROOT}/tmp/restart.txt"

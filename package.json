@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
+    "postbuild": "bash scripts/deploy/inject-sw-build-id.sh",
     "start": "next start",
     "start:cpanel": "node server.js",
     "lint": "npm run type-check && npm run lint:eslint",

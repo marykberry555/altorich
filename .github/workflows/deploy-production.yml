@@ -1,9 +1,12 @@
 name: Deploy production
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type DEPLOY to run production deploy (auto push deploy disabled during SEV-1)"
+        required: true
+        default: ""
 
 concurrency:
   group: production-deploy
@@ -12,6 +15,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy to cPanel Node
+    if: github.event.inputs.confirm == 'DEPLOY'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -59,6 +63,7 @@ jobs:
           git remote add production "ssh://altosujd@162.254.39.13:21098/home/altosujd/repositories/alto-app" 2>/dev/null || \
             git remote set-url production "ssh://altosujd@162.254.39.13:21098/home/altosujd/repositories/alto-app"
           GIT_SSH_COMMAND='ssh -i ~/.ssh/deploy_key -p 21098 -o StrictHostKeyChecking=accept-new' \
+            env DEPLOY_ENABLED=1 \
             git push production main
 
       - name: Wait for production health
