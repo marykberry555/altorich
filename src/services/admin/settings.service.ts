@@ -14,26 +14,30 @@ export class SettingsService {
   }
 
   async getBankSwitchboard() {
-    const preferred = await this.supabase
-      .from("funding_accounts")
-      .select("*")
-      .eq("status", "active")
-      .order("is_preferred", { ascending: false })
-      .order("display_order", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    try {
+      const preferred = await this.supabase
+        .from("funding_accounts")
+        .select("*")
+        .eq("status", "active")
+        .order("is_preferred", { ascending: false })
+        .order("display_order", { ascending: true })
+        .limit(1)
+        .maybeSingle();
 
-    if (preferred.data) {
-      return {
-        active_bank_name: preferred.data.bank_name,
-        active_account_name: preferred.data.account_name,
-        active_account_number: preferred.data.account_number,
-        payment_instruction:
-          preferred.data.funding_instructions ??
-          "Send the exact amount, then submit your transfer reference for verification.",
-        transfer_narration: "Use your registered phone number as transfer narration.",
-        contributions_enabled: true
-      };
+      if (!preferred.error && preferred.data) {
+        return {
+          active_bank_name: preferred.data.bank_name,
+          active_account_name: preferred.data.account_name,
+          active_account_number: preferred.data.account_number,
+          payment_instruction:
+            preferred.data.funding_instructions ??
+            "Send the exact amount, then submit your transfer reference for verification.",
+          transfer_narration: "Use your registered phone number as transfer narration.",
+          contributions_enabled: true
+        };
+      }
+    } catch {
+      // funding_accounts may not exist before migration is applied
     }
 
     return (

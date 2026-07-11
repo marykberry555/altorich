@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { AuthShell } from "@/components/auth/AuthShell";
@@ -11,7 +10,6 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
 
 export function AdminLoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,8 +37,7 @@ export function AdminLoginForm() {
         setLoading(false);
         return;
       }
-      router.push(data.redirect ?? "/admin");
-      router.refresh();
+      window.location.assign(data.redirect ?? "/hard");
     } catch {
       setError("Network error. Please try again.");
       setLoading(false);

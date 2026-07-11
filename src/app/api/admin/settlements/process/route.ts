@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServiceRoleServices } from "@/lib/services";
 import { requireAdmin } from "@/lib/auth/session";
 import { apiErrorResponse, Errors } from "@/lib/errors";
+import { HARD_OPS_HOME } from "@/lib/hard-ops";
 
 export async function POST() {
   try {
@@ -19,9 +20,9 @@ export async function POST() {
       entityType: "settlement_batch",
       metadata: { processed: results.length, weekly: weeklyResults.length }
     });
-
-    redirect("/admin");
   } catch (error) {
     return apiErrorResponse(error);
   }
+
+  redirect(HARD_OPS_HOME);
 }

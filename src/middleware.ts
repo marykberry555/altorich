@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { HARD_OPS_HOME } from "@/lib/hard-ops";
 
 const protectedRoutes = [
   "/dashboard",
@@ -15,7 +16,7 @@ const protectedRoutes = [
   "/settings",
   "/notifications"
 ];
-const adminRoutes = ["/admin"];
+
 const authRoutes = [
   "/auth/login",
   "/auth/register",
@@ -33,9 +34,19 @@ const authRoutes = [
   "/verify-email"
 ];
 
+function isHardOpsRoute(pathname: string) {
+  return pathname === HARD_OPS_HOME || (pathname.startsWith(`${HARD_OPS_HOME}/`) && !pathname.startsWith("/hard/auth"));
+}
+
 export async function middleware(request: NextRequest) {
-  const { response, user, supabase } = await updateSession(request);
   const { pathname } = request.nextUrl;
+
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    const target = pathname.replace(/^\/admin/, HARD_OPS_HOME) || HARD_OPS_HOME;
+    return NextResponse.redirect(new URL(target, request.url), 308);
+  }
+
+  const { response, user, supabase } = await updateSession(request);
 
   if (authRoutes.some((route) => pathname.startsWith(route))) {
     if (user && pathname.startsWith("/auth/login")) {
@@ -48,15 +59,15 @@ export async function middleware(request: NextRequest) {
           isAdminRole = false;
         }
       }
-      return NextResponse.redirect(new URL(isAdminRole ? "/admin" : "/dashboard", request.url));
+      return NextResponse.redirect(new URL(isAdminRole ? HARD_OPS_HOME : "/dashboard", request.url));
     }
     return response;
   }
 
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
-  const isAdmin = adminRoutes.some((route) => pathname.startsWith(route));
+  const isHardOps = isHardOpsRoute(pathname);
 
-  if (!isProtected && !isAdmin) {
+  if (!isProtected && !isHardOps) {
     return response;
   }
 
@@ -82,7 +93,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (isAdmin && supabase) {
+  if (isHardOps && supabase) {
     let isAdminRole = false;
     try {
       const { data } = await supabase.rpc("has_admin_role");
@@ -108,7 +119,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(changeUrl);
       }
     } catch {
-      // Allow request through; admin layout will re-check access.
+      // Allow request through; hard ops layout will re-check access.
     }
   }
 

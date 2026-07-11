@@ -4,6 +4,7 @@ import { getServiceRoleServices } from "@/lib/services";
 import { requireAdmin } from "@/lib/auth/session";
 import { apiErrorResponse, Errors } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { HARD_OPS_HOME } from "@/lib/hard-ops";
 
 type Context = {
   params: Promise<{ id: string }>;
@@ -85,11 +86,12 @@ export async function POST(request: NextRequest, context: Context) {
     }
 
     logger.info("Withdrawal reviewed via form", { withdrawalId: id, status });
-    redirect("/admin");
   } catch (error) {
     logger.error("Withdrawal review failed", {
       message: error instanceof Error ? error.message : String(error)
     });
-    redirect("/admin");
+    return apiErrorResponse(error);
   }
+
+  redirect(HARD_OPS_HOME);
 }

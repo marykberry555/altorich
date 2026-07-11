@@ -4,6 +4,7 @@ import { getServiceRoleServices } from "@/lib/services";
 import { requireAdmin } from "@/lib/auth/session";
 import { apiErrorResponse, Errors } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { HARD_OPS_HOME } from "@/lib/hard-ops";
 
 type Context = {
   params: Promise<{ id: string }>;
@@ -85,11 +86,12 @@ export async function POST(request: NextRequest, context: Context) {
     }
 
     logger.info("Deposit reviewed via form", { depositId: id, status, reviewerId: reviewer.id });
-    redirect("/admin");
   } catch (error) {
     logger.error("Deposit review failed", {
       message: error instanceof Error ? error.message : String(error)
     });
-    redirect("/admin");
+    return apiErrorResponse(error);
   }
+
+  redirect(HARD_OPS_HOME);
 }

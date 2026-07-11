@@ -10,6 +10,6 @@ export function resolvePostLoginRedirect(flags: LoginRedirectFlags): string {
   if (flags.mustChangePassword) {
     return flags.isAdmin ? "/auth/change-password?admin=1" : "/auth/change-password";
   }
-  if (flags.isAdmin) return "/admin";
+  if (flags.isAdmin) return "/hard";
   return flags.fallback ?? "/dashboard";
 }

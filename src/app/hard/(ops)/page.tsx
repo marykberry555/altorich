@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Check, X } from "lucide-react";
 import type { ComponentProps } from "react";
 import { formatNaira } from "@/lib/domain";
@@ -30,7 +31,6 @@ export default async function AdminPage() {
   const services = await getServiceRoleServices();
   const env = getPublicEnv();
   const roiEnabled = Boolean(env.NEXT_PUBLIC_ROI_MODE_ENABLED);
-  const bank = services ? await services.settings.getBankSwitchboard() : null;
   const announcement = services ? await services.settings.getAnnouncement() : "";
   const withdrawalWindows = services ? await services.settings.getWithdrawalWindows() : "";
   const pending = services ? await services.deposits.listPending() : [];
@@ -148,20 +148,15 @@ export default async function AdminPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card variant="elevated" padding="md" id="settings">
-          <SectionHeading title="Bank switchboard & announcements" />
-          <form action="/api/system-config" method="post" className="grid gap-3">
-            <label className="grid gap-1 text-sm">
-              Bank name
-              <input name="activeBankName" className="field" defaultValue={bank?.active_bank_name ?? ""} />
-            </label>
-            <label className="grid gap-1 text-sm">
-              Account name
-              <input name="activeAccountName" className="field" defaultValue={bank?.active_account_name ?? COMPANY.legalName} />
-            </label>
-            <label className="grid gap-1 text-sm">
-              Account number
-              <input name="activeAccountNumber" className="field" defaultValue={bank?.active_account_number ?? ""} />
-            </label>
+          <SectionHeading title="Platform announcements" />
+          <p className="mb-4 text-sm text-[var(--text-muted)]">
+            Bank receiving accounts are managed on{" "}
+            <Link href="/hard/funding-accounts" className="font-semibold text-[var(--emerald)] hover:underline">
+              Funding accounts
+            </Link>
+            .
+          </p>
+          <form action="/api/hard/platform-settings" method="post" className="grid gap-3">
             <label className="grid gap-1 text-sm">
               Announcement
               <textarea name="globalAnnouncement" rows={2} className="field" defaultValue={announcement} />
@@ -171,7 +166,7 @@ export default async function AdminPage() {
               <input name="withdrawalWindows" className="field" defaultValue={withdrawalWindows} />
             </label>
             <button type="submit" className="button">
-              Save configuration
+              Save announcements
             </button>
           </form>
         </Card>

@@ -34,7 +34,7 @@ function ChangePasswordForm() {
       setError(data.error ?? "Could not update password.");
       return;
     }
-    window.location.assign(data.redirect ?? (isAdmin ? "/admin" : "/dashboard"));
+    window.location.assign(data.redirect ?? (isAdmin ? "/hard" : "/dashboard"));
   }
 
   return (

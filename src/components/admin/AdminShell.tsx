@@ -10,27 +10,29 @@ import { BrandLogoStatic } from "@/components/brand/BrandLogoStatic";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 
+import { HARD_OPS_HOME } from "@/lib/hard-ops";
+
 const navSections = [
   {
     label: "Overview",
-    items: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true }]
+    items: [{ href: HARD_OPS_HOME, label: "Dashboard", icon: LayoutDashboard, exact: true }]
   },
   {
     label: "Operations",
     items: [
-      { href: "/admin/funding-accounts", label: "Funding accounts", icon: Wallet },
-      { href: "/admin#deposits", label: "Deposits", icon: ArrowDownLeft },
-      { href: "/admin#withdrawals", label: "Payouts", icon: ArrowUpRight },
-      { href: "/admin#investments", label: "Investments", icon: TrendingUp },
-      { href: "/admin#plans", label: "Plans", icon: Wallet }
+      { href: `${HARD_OPS_HOME}/funding-accounts`, label: "Funding accounts", icon: Wallet },
+      { href: `${HARD_OPS_HOME}#deposits`, label: "Deposits", icon: ArrowDownLeft },
+      { href: `${HARD_OPS_HOME}#withdrawals`, label: "Payouts", icon: ArrowUpRight },
+      { href: `${HARD_OPS_HOME}#investments`, label: "Investments", icon: TrendingUp },
+      { href: `${HARD_OPS_HOME}#plans`, label: "Plans", icon: Wallet }
     ]
   },
   {
     label: "System",
     items: [
-      { href: "/admin#referrals", label: "Referrals", icon: Users },
-      { href: "/admin#feature-flags", label: "Feature flags", icon: Settings },
-      { href: "/admin#settings", label: "Bank & announcements", icon: Settings }
+      { href: `${HARD_OPS_HOME}#referrals`, label: "Referrals", icon: Users },
+      { href: `${HARD_OPS_HOME}#feature-flags`, label: "Feature flags", icon: Settings },
+      { href: `${HARD_OPS_HOME}#settings`, label: "Announcements", icon: Settings }
     ]
   }
 ];
@@ -81,7 +83,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh bg-[var(--dashboard-bg)] lg:flex">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface-raised)] lg:flex">
         <div className="border-b border-[var(--border)] px-4 py-5">
-          <BrandLogoStatic variant="full" href="/admin" />
+          <BrandLogoStatic variant="full" href={HARD_OPS_HOME} />
           <p className="mt-2 text-xs text-[var(--text-muted)]">Operations centre</p>
           <p className="text-[10px] text-[var(--text-subtle)]">{COMPANY.legalName}</p>
         </div>

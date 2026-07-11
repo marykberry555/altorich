@@ -99,10 +99,18 @@ async function main() {
     return { ok: status === 200, note: `HTTP ${status}` };
   });
 
-  await check("Admin requires auth (redirect)", async () => {
+  await check("Hard ops requires auth (redirect)", async () => {
+    const { status, location } = await fetchStatus(`${BASE}/hard`);
+    return {
+      ok: status >= 300 && status < 400 && location.includes("/auth/login"),
+      note: `${status} → ${location}`
+    };
+  });
+
+  await check("Legacy /admin redirects to /hard", async () => {
     const { status, location } = await fetchStatus(`${BASE}/admin`);
     return {
-      ok: status >= 300 && status < 400 && !location.includes("/admin"),
+      ok: status >= 300 && status < 400 && location.includes("/hard"),
       note: `${status} → ${location}`
     };
   });
