@@ -1,0 +1,46 @@
+{
+  "packageId": "com.altorich.app",
+  "host": "altorich.com",
+  "name": "AltoRich — Premium Wealth Platform",
+  "launcherName": "AltoRich",
+  "display": "standalone",
+  "themeColor": "#064E3B",
+  "themeColorDark": "#0F1419",
+  "navigationColor": "#064E3B",
+  "navigationColorDark": "#0F1419",
+  "navigationDividerColor": "#064E3B",
+  "navigationDividerColorDark": "#0F1419",
+  "backgroundColor": "#F8F7F5",
+  "enableNotifications": true,
+  "startUrl": "/app",
+  "iconUrl": "https://altorich.com/icons/android-chrome-512x512-maskable.png",
+  "maskableIconUrl": "https://altorich.com/icons/android-chrome-512x512-maskable.png",
+  "monochromeIconUrl": "https://altorich.com/icons/icon-monochrome.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android/signing-key.jks",
+    "alias": "altorich"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    { "name": "Dashboard", "shortName": "Dashboard", "url": "https://altorich.com/dashboard", "chosenIconUrl": "https://altorich.com/icons/android-chrome-192x192.png" },
+    { "name": "Wallet", "shortName": "Wallet", "url": "https://altorich.com/wallet", "chosenIconUrl": "https://altorich.com/icons/android-chrome-192x192.png" },
+    { "name": "Deposit", "shortName": "Deposit", "url": "https://altorich.com/deposits", "chosenIconUrl": "https://altorich.com/icons/android-chrome-192x192.png" },
+    { "name": "Invest", "shortName": "Invest", "url": "https://altorich.com/investments", "chosenIconUrl": "https://altorich.com/icons/android-chrome-192x192.png" }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://altorich.com/site.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": { "enabled": false },
+    "playBilling": { "enabled": false }
+  },
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://altorich.com/",
+  "minSdkVersion": 21,
+  "orientation": "portrait-primary"
+}

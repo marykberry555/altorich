@@ -6,7 +6,12 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" }
+];
+
+const pwaHeaders = [
+  { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+  { key: "Service-Worker-Allowed", value: "/" }
 ];
 
 const nextConfig: NextConfig = {
@@ -17,7 +22,12 @@ const nextConfig: NextConfig = {
     cpus: 1
   },
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      { source: "/(.*)", headers: securityHeaders },
+      { source: "/sw.js", headers: pwaHeaders },
+      { source: "/site.webmanifest", headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }] },
+      { source: "/.well-known/assetlinks.json", headers: [{ key: "Content-Type", value: "application/json" }] }
+    ];
   },
   async redirects() {
     return [

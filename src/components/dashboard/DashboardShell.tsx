@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { dashboardNavItems, getDashboardNavLabel, mobileDashboardNavItems } from "@/lib/dashboard/nav";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Menu, X } from "lucide-react";
+import { Download, LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { MemberAvatar } from "@/components/profile/MemberAvatar";
-import { dashboardNavItems, getDashboardNavLabel, mobileDashboardNavItems } from "@/lib/dashboard/nav";
+import { MARKETING_HOME } from "@/lib/pwa/config";
 
 type Props = {
   fullName: string;
@@ -121,14 +122,21 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
     <div className="min-h-dvh bg-[var(--dashboard-bg)] lg:flex">
       <aside className="dashboard-sidebar sidebar-surface hidden lg:flex">
         <div className="mb-4 px-2">
-          <BrandLogo variant="full" href="/dashboard" priority />
+          <BrandLogo variant="full" href={MARKETING_HOME} priority />
         </div>
         <NavPanel fullName={fullName} email={email} avatarUrl={avatarUrl} variant="sidebar" />
-        <div className="mt-auto flex items-center gap-2 border-t border-white/10 p-3">
+        <div className="mt-auto flex flex-col gap-2 border-t border-white/10 p-3">
           <ThemeToggle compact />
           <Link
-            href="/"
-            className="flex-1 rounded-[var(--radius-sm)] border border-white/15 px-3 py-2 text-center text-xs text-[var(--sidebar-muted)] transition hover:border-white/25 hover:text-[var(--sidebar-text)]"
+            href="/download"
+            className="flex items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-white/15 px-3 py-2 text-xs text-[var(--sidebar-muted)] transition hover:border-white/25 hover:text-[var(--sidebar-text)]"
+          >
+            <Download size={14} aria-hidden />
+            Get the app
+          </Link>
+          <Link
+            href={MARKETING_HOME}
+            className="rounded-[var(--radius-sm)] border border-white/15 px-3 py-2 text-center text-xs text-[var(--sidebar-muted)] transition hover:border-white/25 hover:text-[var(--sidebar-text)]"
           >
             ← Website
           </Link>
@@ -151,7 +159,7 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
                   <Menu size={18} />
                 </Button>
                 <div className="min-w-0 lg:hidden">
-                  <BrandLogo variant="icon" href="/dashboard" />
+                  <BrandLogo variant="icon" href={MARKETING_HOME} />
                 </div>
                 <div className="min-w-0 hidden lg:block">
                   <p className="truncate text-base font-semibold tracking-tight text-[var(--heading)]">
@@ -188,7 +196,7 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
             <button type="button" className="absolute inset-0 bg-black/50" aria-label="Close menu" onClick={() => setMobileOpen(false)} />
             <aside className="absolute left-0 top-0 flex h-full w-[min(100vw-1rem,20rem)] flex-col bg-[var(--surface-raised)] shadow-[var(--shadow-lg)]">
               <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-                <BrandLogo variant="full" href="/dashboard" />
+                <BrandLogo variant="full" href={MARKETING_HOME} />
                 <button type="button" onClick={() => setMobileOpen(false)} aria-label="Close navigation" className="text-[var(--text-muted)]">
                   <X size={22} />
                 </button>

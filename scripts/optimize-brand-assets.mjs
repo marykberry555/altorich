@@ -82,6 +82,33 @@ async function main() {
   await toPngIcon(sources.iconLight, path.join(paths.icons, "android-chrome-192x192.png"), 192);
   await toPngIcon(sources.iconLight, path.join(paths.icons, "android-chrome-512x512.png"), 512);
   await toPngIcon(sources.iconLight, path.join(paths.icons, "apple-touch-icon.png"), 180);
+
+  // Maskable icon — padded safe zone for adaptive Android launchers
+  await sharp(sources.iconLight)
+    .resize(512, 512, { fit: "contain", background: { r: 6, g: 78, b: 59, alpha: 1 } })
+    .extend({ top: 64, bottom: 64, left: 64, right: 64, background: { r: 6, g: 78, b: 59, alpha: 1 } })
+    .resize(512, 512)
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(paths.icons, "android-chrome-512x512-maskable.png"));
+
+  // Monochrome + notification icons
+  await sharp(sources.iconDark)
+    .resize(512, 512, { fit: "cover", position: "centre" })
+    .grayscale()
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(paths.icons, "icon-monochrome.png"));
+  await toPngIcon(sources.iconLight, path.join(paths.icons, "notification-96x96.png"), 96);
+
+  const pwaImagesDir = path.join(ROOT, "public", "images", "pwa");
+  await fs.mkdir(pwaImagesDir, { recursive: true });
+  await sharp(sources.logoLight)
+    .resize(390, 844, { fit: "cover", position: "centre" })
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(pwaImagesDir, "screenshot-mobile.png"));
+  await sharp(sources.logoLight)
+    .resize(1280, 720, { fit: "contain", background: { r: 248, g: 247, b: 245, alpha: 1 } })
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(pwaImagesDir, "screenshot-desktop.png"));
  
   // Mask icon: generate from dark variant for contrast in pinned tabs
   await toPngIcon(sources.iconDark, path.join(paths.icons, "mask-icon.png"), 512);

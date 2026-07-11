@@ -39,3 +39,17 @@ supabase/.branches/
 # Deploy secrets
 .env.deploy
 deploy/.env.production.upload
+
+# Android TWA build artifacts (keep twa-manifest.json + README)
+android/signing-key.jks
+android/app/
+android/.gradle/
+android/build/
+android/output/
+android/*.apk
+android/*.aab
+android/local.properties
+android/gradle.properties
+android/gradlew
+android/gradlew.bat
+android/gradle/

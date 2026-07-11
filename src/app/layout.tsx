@@ -7,6 +7,10 @@ import { BRAND, ICONS } from "@/lib/brand";
 import { themeInitScript } from "@/lib/theme";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SmartsuppProvider } from "@/components/chat/SmartsuppProvider";
+import { PwaProvider } from "@/components/pwa/PwaProvider";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { PwaUpdateToast } from "@/components/pwa/PwaUpdateToast";
+import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SocialProofToasts } from "@/components/social/SocialProofToasts";
@@ -66,7 +70,11 @@ export const metadata: Metadata = {
   },
   other: {
     "msapplication-TileColor": "#064e3b",
-    "msapplication-config": "/browserconfig.xml"
+    "msapplication-config": "/browserconfig.xml",
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+    "apple-mobile-web-app-title": COMPANY.brand
   }
 };
 
@@ -75,7 +83,8 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: light)", color: "#064e3b" },
     { media: "(prefers-color-scheme: dark)", color: "#0f1419" }
   ],
-  colorScheme: "light dark"
+  colorScheme: "light dark",
+  viewportFit: "cover"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -88,11 +97,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className="antialiased">
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
-        <ThemeProvider>
-          {children}
-          <SocialProofToasts />
-          <SmartsuppProvider />
-        </ThemeProvider>
+        <PwaProvider>
+          <ThemeProvider>
+            {children}
+            <SocialProofToasts />
+            <SmartsuppProvider />
+            <OfflineIndicator />
+            <InstallPrompt />
+            <PwaUpdateToast />
+          </ThemeProvider>
+        </PwaProvider>
       </body>
     </html>
   );

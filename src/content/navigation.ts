@@ -22,6 +22,7 @@ export const headerNav: HeaderNavItem[] = [
 export const footerLinks: Record<string, NavLink[]> = {
   Packages: [{ label: "All packages", href: "/packages" }, ...packageNav],
   Company: [
+    { label: "Download app", href: "/download" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
     { label: "How it works", href: "/learn/how-it-works" },

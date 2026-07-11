@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { DownloadAppButton } from "@/components/pwa/DownloadAppButton";
 import { headerNav } from "@/content/navigation";
 
 export function SiteHeader() {
@@ -73,6 +74,7 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-2 sm:flex">
           <ThemeToggle compact />
+          <DownloadAppButton variant="ghost" size="sm" />
           <Link href="/auth/login">
             <Button variant="ghost" size="sm">
               Sign in

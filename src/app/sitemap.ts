@@ -15,6 +15,7 @@ const staticRoutes = [
   "/packages/growth",
   "/packages/premium",
   "/packages/elite",
+  "/download",
   "/auth/login",
   "/auth/register",
   "/legal/terms",
