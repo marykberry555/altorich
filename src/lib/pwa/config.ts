@@ -1,9 +1,7 @@
-import { COMPANY } from "@/lib/company";
-
 export const PWA = {
-  name: COMPANY.brand,
-  shortName: COMPANY.brand,
-  description: `${COMPANY.brand} — premium cooperative wealth and investment platform for Nigeria.`,
+  name: "Alto Rich",
+  shortName: "Alto Rich",
+  description: "",
   startUrl: "/app",
   scope: "/",
   display: "standalone" as const,
@@ -11,7 +9,7 @@ export const PWA = {
   themeColor: "#064e3b",
   backgroundColor: "#f8f7f5",
   version: "1.0.0",
-  cacheVersion: "altorich-v1",
+  cacheVersion: "altorich-v2",
   installDismissKey: "altorich_pwa_install_dismiss",
   installNeverKey: "altorich_pwa_install_never",
   installVisitKey: "altorich_pwa_visit_count"
