@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { capAccountNumberInput } from "@/lib/validation/identity";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -17,8 +18,6 @@ type FormState = {
   bankName: string;
   accountName: string;
   accountNumber: string;
-  sortCode: string;
-  displayName: string;
   fundingInstructions: string;
   displayOrder: string;
   status: "active" | "inactive" | "maintenance";
@@ -29,8 +28,6 @@ const emptyForm = (): FormState => ({
   bankName: "",
   accountName: "",
   accountNumber: "",
-  sortCode: "",
-  displayName: "",
   fundingInstructions: "",
   displayOrder: "0",
   status: "active",
@@ -73,8 +70,6 @@ export function FundingAccountsAdmin({ initialAccounts }: Props) {
       bankName: account.bank_name,
       accountName: account.account_name,
       accountNumber: account.account_number,
-      sortCode: account.sort_code ?? "",
-      displayName: account.display_name ?? "",
       fundingInstructions: account.funding_instructions ?? "",
       displayOrder: String(account.display_order),
       status: account.status,
@@ -99,8 +94,6 @@ export function FundingAccountsAdmin({ initialAccounts }: Props) {
       bankName: form.bankName,
       accountName: form.accountName,
       accountNumber: form.accountNumber,
-      sortCode: form.sortCode || undefined,
-      displayName: form.displayName || undefined,
       fundingInstructions: form.fundingInstructions || undefined,
       displayOrder: Number(form.displayOrder) || 0,
       status: form.status,
@@ -243,9 +236,7 @@ export function FundingAccountsAdmin({ initialAccounts }: Props) {
             <form onSubmit={handleSubmit} className="mt-4 grid gap-3">
               <Input label="Bank name" value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} required />
               <Input label="Account name" value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} required />
-              <Input label="Account number" value={form.accountNumber} onChange={(e) => setForm({ ...form, accountNumber: e.target.value })} required />
-              <Input label="Sort code (optional)" value={form.sortCode} onChange={(e) => setForm({ ...form, sortCode: e.target.value })} />
-              <Input label="Display name (optional)" value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
+              <Input label="Account number" value={form.accountNumber} onChange={(e) => setForm({ ...form, accountNumber: capAccountNumberInput(e.target.value) })} required maxLength={10} inputMode="numeric" />
               <label className="grid gap-1 text-sm">
                 Funding instructions (optional)
                 <textarea

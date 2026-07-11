@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { TrendingUp } from "lucide-react";
 import { MemberAvatar } from "@/components/profile/MemberAvatar";
 import { AnimatedEarningsCounter } from "@/components/investment/AnimatedEarningsCounter";
 import { DashboardPayoutCountdown } from "@/components/dashboard/DashboardPayoutCountdown";
@@ -109,28 +108,9 @@ export function DashboardWealthHero({
                 value={liveAccruedEarnings}
                 liveRate={isLive ? earningsTick : undefined}
                 decimals={2}
-                showRatePerSecond={isLive && aggregate.isAccruing}
                 className="text-white"
               />
             </p>
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-              <span className="text-white/70">
-                Today&apos;s growth{" "}
-                <span className="font-semibold tabular-nums text-emerald-200">
-                  {isLive ? (
-                    <AnimatedEarningsCounter value={todayGrowth} liveRate={todayTick} decimals={2} />
-                  ) : (
-                    formatNaira(0)
-                  )}
-                </span>
-              </span>
-              {isLive && aggregate.isAccruing ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-100">
-                  <TrendingUp size={12} aria-hidden />
-                  Accruing live
-                </span>
-              ) : null}
-            </div>
           </div>
         </div>
 

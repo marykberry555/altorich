@@ -7,6 +7,8 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
+import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validation/identity";
 
 function ChangePasswordForm() {
   const searchParams = useSearchParams();
@@ -14,12 +16,16 @@ function ChangePasswordForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useFlashError();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (password !== confirm) {
       setError("Passwords do not match.");
+      return;
+    }
+    if (!isStrongPassword(password)) {
+      setError(WEAK_PASSWORD_MESSAGE);
       return;
     }
     setLoading(true);
@@ -31,7 +37,7 @@ function ChangePasswordForm() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? "Could not update password.");
+      setError(data.code === "WEAK_PASSWORD" ? WEAK_PASSWORD_MESSAGE : (data.error ?? "Could not update password."));
       return;
     }
     window.location.assign(data.redirect ?? (isAdmin ? "/hard" : "/dashboard"));
@@ -46,7 +52,7 @@ function ChangePasswordForm() {
         <form onSubmit={handleSubmit} className="mt-6 grid gap-3">
           <Input label="New password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
           <Input label="Confirm password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={8} />
-          {error ? <p className="text-xs text-red-600">{error}</p> : null}
+          {error ? <FormFlashError message={error} /> : null}
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Saving…" : "Save password"}
           </Button>

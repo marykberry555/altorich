@@ -3,10 +3,11 @@ import { z } from "zod";
 import { getServiceRoleServices } from "@/lib/services";
 import { requireSessionUser } from "@/lib/auth/session";
 import { apiErrorResponse, Errors } from "@/lib/errors";
+import { phoneSchema } from "@/lib/validation/schemas";
 
 const profileSchema = z.object({
   fullName: z.string().min(2).optional(),
-  phone: z.string().min(10).optional(),
+  phone: phoneSchema.optional(),
   preferredPackageSlug: z.enum(["starter", "growth", "premium", "elite"]).optional(),
   notificationPreferences: z
     .object({

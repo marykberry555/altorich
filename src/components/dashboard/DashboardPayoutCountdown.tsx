@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { CalendarClock } from "lucide-react";
-import { nextPayoutProcessingAt } from "@/lib/payout/schedule";
+import { nextPayoutProcessingAt, formatNextPayoutDate } from "@/lib/payout/schedule";
 import { useLiveNow } from "@/lib/hooks/use-live-now";
 import { AnimatedCountdownDigit } from "@/components/roi/AnimatedCountdownDigit";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ type Props = {
 export function DashboardPayoutCountdown({ active = true, className }: Props) {
   const now = useLiveNow();
   const target = useMemo(() => nextPayoutProcessingAt(now), [now]);
+  const payoutDate = useMemo(() => formatNextPayoutDate(target), [target]);
   const remaining = useMemo(
     () => Math.max(0, Math.floor((target.getTime() - now.getTime()) / 1000)),
     [now, target]
@@ -66,7 +67,9 @@ export function DashboardPayoutCountdown({ active = true, className }: Props) {
             <CalendarClock size={15} aria-hidden />
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Next payout</p>
           </div>
-          <p className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">Monday</p>
+          <p className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
+            Monday <span className="font-medium text-white/75">· {payoutDate}</span>
+          </p>
           <p className="text-sm font-medium text-emerald-200">9:00 AM WAT</p>
         </div>
 

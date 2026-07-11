@@ -55,3 +55,12 @@ export function formatPayoutScheduleMessage(scheduledAt: Date) {
 export function formatPayoutQueuedMessage() {
   return "Your payout request has been queued. Funds will be processed during the next payout cycle.";
 }
+
+export function formatNextPayoutDate(at: Date) {
+  return at.toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Africa/Lagos"
+  });
+}

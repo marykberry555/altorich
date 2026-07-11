@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Plus, RefreshCw, Trash2, UserPlus } from "lucide-react";
 import { formatNaira } from "@/lib/domain";
+import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE } from "@/lib/validation/identity";
+import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, SectionHeading, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/design-system";
@@ -25,6 +27,7 @@ export function MembersAdminPanel() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [createError, setCreateError] = useFlashError();
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({
     fullName: "",
@@ -100,6 +103,7 @@ export function MembersAdminPanel() {
     e.preventDefault();
     setBusy("create");
     setMessage(null);
+    setCreateError("");
     try {
       const res = await fetch("/api/admin/members", {
         method: "POST",
@@ -107,7 +111,14 @@ export function MembersAdminPanel() {
         body: JSON.stringify(createForm)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Create failed");
+      if (!res.ok) {
+        const msg =
+          data.code === "IDENTITY_TAKEN" || /already exists|already registered|already taken/i.test(data.error ?? "")
+            ? DUPLICATE_IDENTITY_MESSAGE
+            : (data.error ?? "Create failed");
+        setCreateError(msg);
+        return;
+      }
       setMessage(`Created ${createForm.username}.`);
       setShowCreate(false);
       setCreateForm({ fullName: "", username: "", email: "", phone: "", pin: "123456" });
@@ -210,12 +221,24 @@ export function MembersAdminPanel() {
             </label>
             <label className="grid gap-1 text-sm">
               Phone
-              <input className="field" value={createForm.phone} onChange={(e) => setCreateForm((f) => ({ ...f, phone: e.target.value }))} required />
+              <input
+                className="field"
+                value={createForm.phone}
+                maxLength={11}
+                inputMode="numeric"
+                onChange={(e) => setCreateForm((f) => ({ ...f, phone: capPhoneInput(e.target.value) }))}
+                required
+              />
             </label>
             <label className="grid gap-1 text-sm sm:col-span-2">
               PIN (6 digits)
               <input className="field" value={createForm.pin} maxLength={6} onChange={(e) => setCreateForm((f) => ({ ...f, pin: e.target.value }))} required />
             </label>
+            {createError ? (
+              <div className="sm:col-span-2">
+                <FormFlashError message={createError} />
+              </div>
+            ) : null}
             <div className="flex gap-2 sm:col-span-2">
               <Button type="submit" disabled={busy === "create"}>
                 {busy === "create" ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}

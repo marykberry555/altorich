@@ -3,11 +3,12 @@ import { z } from "zod";
 import { getServiceRoleServices } from "@/lib/services";
 import { requireSessionUser } from "@/lib/auth/session";
 import { apiErrorResponse, Errors } from "@/lib/errors";
+import { accountNumberSchema } from "@/lib/validation/schemas";
 
 const bankSchema = z.object({
   bankName: z.string().min(2),
   accountName: z.string().min(2),
-  accountNumber: z.string().min(8)
+  accountNumber: accountNumberSchema
 });
 
 export async function GET() {

@@ -16,6 +16,8 @@ import { refreshSmartsuppIdentity, trackSmartsuppEvent } from "@/lib/chat/smarts
 import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
 import type { PackageSlug } from "@/content/packages";
 import { PackageSelectionField } from "@/components/auth/PackageSelectionField";
+import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
+import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE, WEAK_PASSWORD_MESSAGE } from "@/lib/validation/identity";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -29,7 +31,7 @@ export function RegisterForm() {
   const [referralCode, setReferralCode] = useState("");
   const [preferredPackage, setPreferredPackage] = useState<PackageSlug | "">("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useFlashError();
   const [otpOpen, setOtpOpen] = useState(false);
 
   useEffect(() => {
@@ -68,7 +70,13 @@ export function RegisterForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Registration failed.");
+        const msg =
+          data.code === "IDENTITY_TAKEN" || /already exists|already registered|already taken/i.test(data.error ?? "")
+            ? DUPLICATE_IDENTITY_MESSAGE
+            : data.code === "WEAK_PASSWORD"
+              ? WEAK_PASSWORD_MESSAGE
+              : (data.error ?? "Registration failed.");
+        setError(msg);
         setLoading(false);
         return;
       }
@@ -112,12 +120,12 @@ export function RegisterForm() {
             required
           />
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Input label="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="08012345678" />
+          <Input label="Phone number" value={phone} onChange={(e) => setPhone(capPhoneInput(e.target.value))} required placeholder="08012345678" maxLength={11} inputMode="numeric" />
           <PackageSelectionField value={preferredPackage} onChange={setPreferredPackage} disabled={loading} />
           <PinField value={pin} onChange={setPin} autoComplete="new-password" />
           <Input label="Referral code (optional)" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} />
           <MathChallenge challenge={math.challenge} answer={math.answer} onAnswerChange={math.setAnswer} />
-          {error ? <p className="text-xs text-red-600">{error}</p> : null}
+          {error ? <FormFlashError message={error} /> : null}
           <Button type="submit" disabled={loading || !math.solved} className="w-full">
             {loading ? "Creating account…" : "Continue"}
           </Button>

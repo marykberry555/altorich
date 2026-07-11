@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Withdrawal } from "@/types/database";
 import { AppError } from "@/lib/errors";
+import { assertValidAccountNumber, normalizeAccountNumber } from "@/lib/validation/identity";
 import { formatPayoutScheduleMessage, resolvePayoutQueue } from "@/lib/payout/schedule";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
@@ -64,6 +65,9 @@ export class WithdrawalService {
     requestType?: "manual" | "automatic";
     asOf?: Date;
   }) {
+    const accountNumber = normalizeAccountNumber(input.accountNumber);
+    assertValidAccountNumber(accountNumber);
+
     const kycCheck = await this.kyc.isWithdrawalAllowed(input.userId);
     if (!kycCheck.allowed) {
       throw new AppError(kycCheck.reason ?? "KYC verification required.", 403, "KYC_REQUIRED");
@@ -111,7 +115,7 @@ export class WithdrawalService {
         amount: input.amount,
         bank_name: input.bankName,
         account_name: input.accountName,
-        account_number: input.accountNumber,
+        account_number: accountNumber,
         bank_account_id: input.bankAccountId ?? null,
         note: input.note ?? null,
         request_type: requestType,

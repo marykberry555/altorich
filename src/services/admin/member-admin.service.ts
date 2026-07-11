@@ -4,6 +4,8 @@ import type { Database } from "@/types/database";
 import { AppError, Errors } from "@/lib/errors";
 import { hashPin, isValidPin } from "@/lib/auth/pin";
 import { WalletService } from "@/services/wallet/wallet.service";
+import { assertIdentityAvailable } from "@/lib/validation/check-identity";
+import { assertValidPhone, DUPLICATE_IDENTITY_MESSAGE, normalizePhone } from "@/lib/validation/identity";
 
 type Client = SupabaseClient<Database>;
 export type MemberAccountStatus = Database["public"]["Enums"]["member_account_status"];
@@ -76,10 +78,10 @@ export class MemberAdminService {
     if (!isValidPin(input.pin)) throw new AppError("Pin must be exactly 6 digits.", 400, "INVALID_PIN");
 
     const email = input.email.trim().toLowerCase();
-    const phone = input.phone.replace(/\s+/g, "").trim();
+    const phone = normalizePhone(input.phone);
+    assertValidPhone(phone);
 
-    const { data: existingUsername } = await this.supabase.from("profiles").select("id").eq("username", username).maybeSingle();
-    if (existingUsername) throw new AppError("Username is already taken.", 409, "USERNAME_TAKEN");
+    await assertIdentityAvailable(this.supabase, { username, email, phone });
 
     const pinHash = hashPin(input.pin);
     const password = this.internalPassword();
@@ -95,7 +97,12 @@ export class MemberAdminService {
         pin_hash: pinHash
       }
     });
-    if (error) throw error;
+    if (error) {
+      if (/already been registered|already exists|duplicate/i.test(error.message)) {
+        throw new AppError(DUPLICATE_IDENTITY_MESSAGE, 409, "IDENTITY_TAKEN", DUPLICATE_IDENTITY_MESSAGE);
+      }
+      throw error;
+    }
     if (!created.user) throw Errors.internal();
 
     await this.supabase

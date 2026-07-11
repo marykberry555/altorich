@@ -5,12 +5,13 @@ import { getPublicServices, getServiceRoleServices } from "@/lib/services";
 import { getSessionUser, hasAdminRole, requireSessionUser } from "@/lib/auth/session";
 import { apiErrorResponse, Errors } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { accountNumberSchema } from "@/lib/validation/schemas";
 
 const withdrawalSchema = z.object({
   amount: z.number().positive(),
   bankName: z.string().min(2),
   accountName: z.string().min(2),
-  accountNumber: z.string().min(8),
+  accountNumber: accountNumberSchema,
   note: z.string().max(500).optional()
 });
 

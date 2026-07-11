@@ -3,11 +3,12 @@ import { z } from "zod";
 import { apiErrorResponse } from "@/lib/errors";
 import { requireAdmin } from "@/lib/auth/session";
 import { getServiceRoleServices } from "@/lib/services";
+import { accountNumberSchema } from "@/lib/validation/schemas";
 
 const accountSchema = z.object({
   bankName: z.string().min(2),
   accountName: z.string().min(2),
-  accountNumber: z.string().min(6),
+  accountNumber: accountNumberSchema,
   sortCode: z.string().optional(),
   displayName: z.string().optional(),
   fundingInstructions: z.string().optional(),

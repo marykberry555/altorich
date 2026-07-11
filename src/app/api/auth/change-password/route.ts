@@ -5,9 +5,10 @@ import { requireSessionUser, getServiceClientOrThrow } from "@/lib/auth/session"
 import { getAuthService } from "@/lib/auth/service";
 import { userIsAdmin } from "@/lib/auth/admin-role";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
+import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validation/identity";
 
 const schema = z.object({
-  newPassword: z.string().min(8)
+  newPassword: z.string().min(8).refine(isStrongPassword, WEAK_PASSWORD_MESSAGE)
 });
 
 export async function POST(req: Request) {

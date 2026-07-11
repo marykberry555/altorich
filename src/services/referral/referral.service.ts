@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/database";
 import { AppError, Errors } from "@/lib/errors";
+import { assertValidAccountNumber, normalizeAccountNumber } from "@/lib/validation/identity";
 import { WalletService, REFERRAL_WALLET_CURRENCY } from "@/services/wallet/wallet.service";
 import { SettingsService } from "@/services/admin/settings.service";
 import { NotificationService } from "@/services/notification/notification.service";
@@ -356,6 +357,9 @@ export class ReferralService {
     userId: string,
     input: { amount: number; bankName: string; accountName: string; accountNumber: string; bankAccountId?: string }
   ) {
+    const accountNumber = normalizeAccountNumber(input.accountNumber);
+    assertValidAccountNumber(accountNumber);
+
     const config = await this.getProgramConfig();
     if (!config.enabled) throw Errors.badRequest("Referral programme is currently unavailable.");
 
@@ -386,7 +390,7 @@ export class ReferralService {
         status: "pending",
         bank_name: input.bankName,
         account_name: input.accountName,
-        account_number: input.accountNumber,
+        account_number: accountNumber,
         bank_account_id: input.bankAccountId ?? null
       })
       .select()

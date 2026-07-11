@@ -7,6 +7,8 @@ import { formatNaira } from "@/lib/domain";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
+import { capAccountNumberInput } from "@/lib/validation/identity";
 
 type BankAccount = {
   id: string;
@@ -29,7 +31,7 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useFlashError();
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -139,9 +141,9 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
 
         <Input label="Bank" value={bankName} onChange={(e) => setBankName(e.target.value)} required disabled={!dashboard.canRequestPayout} />
         <Input label="Account name" value={accountName} onChange={(e) => setAccountName(e.target.value)} required disabled={!dashboard.canRequestPayout} />
-        <Input label="Account number" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} required disabled={!dashboard.canRequestPayout} />
+        <Input label="Account number" value={accountNumber} onChange={(e) => setAccountNumber(capAccountNumberInput(e.target.value))} required disabled={!dashboard.canRequestPayout} maxLength={10} inputMode="numeric" />
 
-        {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+        {error ? <FormFlashError message={error} /> : null}
         {message ? <p className="text-sm text-[var(--emerald)]">{message}</p> : null}
 
         <Button type="submit" disabled={loading || !dashboard.canRequestPayout || !dashboard.programEnabled} className="gap-2">

@@ -3,12 +3,13 @@ import { z } from "zod";
 import { getServiceRoleServices } from "@/lib/services";
 import { requireSessionUser } from "@/lib/auth/session";
 import { apiErrorResponse, Errors } from "@/lib/errors";
+import { accountNumberSchema } from "@/lib/validation/schemas";
 
 const payoutSchema = z.object({
   amount: z.number().positive(),
   bankName: z.string().min(2),
   accountName: z.string().min(2),
-  accountNumber: z.string().min(8),
+  accountNumber: accountNumberSchema,
   bankAccountId: z.string().uuid().optional()
 });
 

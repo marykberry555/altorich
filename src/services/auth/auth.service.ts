@@ -15,6 +15,13 @@ import {
 } from "@/services/auth/email.service";
 import { newDeviceLoginEmailHtml } from "@/lib/email/activity-templates";
 import { getPublicEnv } from "@/lib/env";
+import { assertIdentityAvailable, findUserByEmail } from "@/lib/validation/check-identity";
+import {
+  assertStrongPassword,
+  assertValidPhone,
+  DUPLICATE_IDENTITY_MESSAGE,
+  normalizePhone
+} from "@/lib/validation/identity";
 
 type Client = SupabaseClient<Database>;
 type OtpPurpose = Database["public"]["Enums"]["auth_otp_purpose"];
@@ -74,17 +81,10 @@ export class AuthService {
     if (!isValidPin(input.pin)) throw new AppError("Pin must be exactly 6 digits.", 400, "INVALID_PIN");
 
     const email = input.email.trim().toLowerCase();
-    const phone = input.phone.replace(/\s+/g, "").trim();
-    if (phone.length < 10) throw new AppError("Enter a valid phone number.", 400, "INVALID_PHONE");
+    const phone = normalizePhone(input.phone);
+    assertValidPhone(phone);
 
-    const { data: existingUsername } = await this.supabase.from("profiles").select("id").eq("username", username).maybeSingle();
-    if (existingUsername) throw new AppError("Username is already taken.", 409, "USERNAME_TAKEN");
-
-    const existingEmail = await this.findUserByEmail(email);
-    if (existingEmail) throw new AppError("This email is already registered.", 409, "EMAIL_TAKEN");
-
-    const { data: existingPhone } = await this.supabase.from("profiles").select("id").eq("phone", phone).maybeSingle();
-    if (existingPhone) throw new AppError("This phone number is already registered.", 409, "PHONE_TAKEN");
+    await assertIdentityAvailable(this.supabase, { username, email, phone });
 
     const password = this.internalPassword();
     const pinHash = hashPin(input.pin);
@@ -105,7 +105,7 @@ export class AuthService {
     });
     if (error) {
       if (/already been registered|already exists|duplicate/i.test(error.message)) {
-        throw new AppError("This email is already registered.", 409, "EMAIL_TAKEN");
+        throw new AppError(DUPLICATE_IDENTITY_MESSAGE, 409, "IDENTITY_TAKEN", DUPLICATE_IDENTITY_MESSAGE);
       }
       throw error;
     }
@@ -377,15 +377,8 @@ export class AuthService {
     };
   }
 
-  private async findUserByEmail(email: string) {
-    const normalized = email.toLowerCase();
-    const { data, error } = await this.supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (error) throw error;
-    return data.users.find((u) => u.email?.toLowerCase() === normalized) ?? null;
-  }
-
   async requestPinRecovery(email: string) {
-    const user = await this.findUserByEmail(email);
+    const user = await findUserByEmail(this.supabase, email);
     if (!user) return { ok: true };
 
     const otp = await this.createOtp(email, "recover_pin", user.id);
@@ -408,7 +401,7 @@ export class AuthService {
   }
 
   async recoverUsername(email: string) {
-    const user = await this.findUserByEmail(email);
+    const user = await findUserByEmail(this.supabase, email);
     if (!user) return { ok: true };
 
     const { data: profile } = await this.supabase.from("profiles").select("username").eq("id", user.id).maybeSingle();
@@ -445,7 +438,7 @@ export class AuthService {
   }
 
   async changePassword(userId: string, newPassword: string) {
-    if (newPassword.length < 8) throw new AppError("Password must be at least 8 characters.", 400, "WEAK_PASSWORD");
+    assertStrongPassword(newPassword);
     const { error } = await this.supabase.auth.admin.updateUserById(userId, { password: newPassword });
     if (error) throw error;
     await this.supabase.from("profiles").update({ must_change_password: false }).eq("id", userId);

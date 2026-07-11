@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/database";
 import { AppError, Errors } from "@/lib/errors";
+import { assertIdentityAvailable } from "@/lib/validation/check-identity";
+import {
+  assertValidAccountNumber,
+  assertValidPhone,
+  normalizeAccountNumber,
+  normalizePhone
+} from "@/lib/validation/identity";
 
 type Client = SupabaseClient<Database>;
 
@@ -25,7 +32,12 @@ export class ProfileService {
   ) {
     const updates: Database["public"]["Tables"]["profiles"]["Update"] = {};
     if (input.fullName !== undefined) updates.full_name = input.fullName;
-    if (input.phone !== undefined) updates.phone = input.phone;
+    if (input.phone !== undefined) {
+      const phone = normalizePhone(input.phone);
+      assertValidPhone(phone);
+      await assertIdentityAvailable(this.supabase, { phone, excludeUserId: userId });
+      updates.phone = phone;
+    }
     if (input.avatarUrl !== undefined) updates.avatar_url = input.avatarUrl;
     if (input.preferredPackageSlug !== undefined) {
       updates.preferred_package_slug = input.preferredPackageSlug;
@@ -73,6 +85,9 @@ export class ProfileService {
     userId: string,
     input: { bankName: string; accountName: string; accountNumber: string; isDefault?: boolean }
   ) {
+    const accountNumber = normalizeAccountNumber(input.accountNumber);
+    assertValidAccountNumber(accountNumber);
+
     if (input.isDefault) {
       await this.supabase.from("bank_accounts").update({ is_default: false }).eq("user_id", userId);
     }
@@ -83,7 +98,7 @@ export class ProfileService {
         user_id: userId,
         bank_name: input.bankName,
         account_name: input.accountName,
-        account_number: input.accountNumber,
+        account_number: accountNumber,
         is_default: input.isDefault ?? false
       })
       .select()
@@ -97,19 +112,23 @@ export class ProfileService {
     userId: string,
     input: { bankName: string; accountName: string; accountNumber: string }
   ) {
+    const accountNumber = normalizeAccountNumber(input.accountNumber);
+    assertValidAccountNumber(accountNumber);
+    const normalized = { ...input, accountNumber };
+
     const accounts = await this.listBankAccounts(userId);
     const primary = accounts.find((a) => a.is_default) ?? accounts[0];
 
     if (!primary) {
-      return this.addBankAccount(userId, { ...input, isDefault: true });
+      return this.addBankAccount(userId, { ...normalized, isDefault: true });
     }
 
     const { data, error } = await this.supabase
       .from("bank_accounts")
       .update({
-        bank_name: input.bankName,
-        account_name: input.accountName,
-        account_number: input.accountNumber,
+        bank_name: normalized.bankName,
+        account_name: normalized.accountName,
+        account_number: accountNumber,
         is_default: true
       })
       .eq("id", primary.id)

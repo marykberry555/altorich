@@ -5,6 +5,8 @@ import { Building2, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
+import { capAccountNumberInput } from "@/lib/validation/identity";
 
 type BankAccount = {
   id: string;
@@ -26,6 +28,7 @@ export function PayoutBankAccountSection({ onSaved }: Props) {
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useFlashError();
 
   useEffect(() => {
     fetch("/api/bank-accounts")
@@ -49,6 +52,7 @@ export function PayoutBankAccountSection({ onSaved }: Props) {
     event.preventDefault();
     setSaving(true);
     setMessage("");
+    setError("");
 
     const response = await fetch("/api/bank-accounts", {
       method: "POST",
@@ -59,7 +63,7 @@ export function PayoutBankAccountSection({ onSaved }: Props) {
     setSaving(false);
     const body = await response.json();
     if (!response.ok) {
-      setMessage(body.error ?? "Could not save bank account.");
+      setError(body.error ?? "Could not save bank account.");
       return;
     }
 
@@ -110,7 +114,8 @@ export function PayoutBankAccountSection({ onSaved }: Props) {
       <form onSubmit={saveAccount} className="mt-4 space-y-3">
         <Input label="Bank name" value={bankName} onChange={(e) => setBankName(e.target.value)} required />
         <Input label="Account name" value={accountName} onChange={(e) => setAccountName(e.target.value)} required />
-        <Input label="Account number" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} required />
+        <Input label="Account number" value={accountNumber} onChange={(e) => setAccountNumber(capAccountNumberInput(e.target.value))} required maxLength={10} inputMode="numeric" />
+        {error ? <FormFlashError message={error} /> : null}
         <div className="flex flex-wrap gap-2 pt-1">
           <Button type="submit" disabled={saving} className="gap-2">
             {saving ? <Loader2 size={16} className="animate-spin" /> : null}

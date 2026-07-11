@@ -48,7 +48,6 @@ export function InvestmentAccrualPanel({ row }: Props) {
           <AnimatedEarningsCounter
             value={state.liveTotal}
             liveAccrual={earningsTick}
-            showRatePerSecond
             className="text-emerald-200"
           />
         </p>

@@ -5,6 +5,8 @@ import type { PackageSlug } from "@/content/packages";
 import { PackageSelectionField } from "@/components/auth/PackageSelectionField";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
+import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE } from "@/lib/validation/identity";
 
 export function ProfileSettingsForm({
   initialName,
@@ -24,6 +26,7 @@ export function ProfileSettingsForm({
   const [email, setEmail] = useState(prefs.email);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [error, setError] = useFlashError();
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
@@ -34,6 +37,7 @@ export function ProfileSettingsForm({
 
     setLoading(true);
     setMessage("");
+    setError("");
 
     const response = await fetch("/api/profile", {
       method: "PATCH",
@@ -47,13 +51,22 @@ export function ProfileSettingsForm({
     });
 
     setLoading(false);
-    setMessage(response.ok ? "Profile saved." : "Could not save profile.");
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      const msg =
+        data.code === "IDENTITY_TAKEN" || /already exists|already registered|already taken/i.test(data.error ?? "")
+          ? DUPLICATE_IDENTITY_MESSAGE
+          : (data.error ?? "Could not save profile.");
+      setError(msg);
+      return;
+    }
+    setMessage("Profile saved.");
   }
 
   return (
     <form onSubmit={handleSave} className="grid gap-4">
       <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-      <Input label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="08012345678" />
+      <Input label="Phone" value={phone} onChange={(e) => setPhone(capPhoneInput(e.target.value))} required placeholder="08012345678" maxLength={11} inputMode="numeric" />
       <PackageSelectionField value={preferredPackage} onChange={setPreferredPackage} disabled={loading} />
       <div className="rounded-xl border border-[var(--border)] p-4">
         <p className="text-sm font-semibold text-[var(--heading)]">Notifications</p>
@@ -66,6 +79,7 @@ export function ProfileSettingsForm({
           Email notifications
         </label>
       </div>
+      {error ? <FormFlashError message={error} /> : null}
       {message ? (
         <p className={message.includes("saved") ? "text-xs text-[var(--emerald)]" : "text-xs text-red-600"}>{message}</p>
       ) : null}

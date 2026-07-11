@@ -13,7 +13,6 @@ type Props = {
   /** Linear extrapolation from a known rate (portfolio aggregate). */
   liveRate?: LiveRateTick;
   decimals?: number;
-  showRatePerSecond?: boolean;
 };
 
 function accrualAt(tick: LiveAccrualTick, nowMs: number) {
@@ -31,20 +30,17 @@ export function AnimatedEarningsCounter({
   className,
   liveAccrual,
   liveRate,
-  decimals = 3,
-  showRatePerSecond = false
+  decimals = 3
 }: Props) {
   const [display, setDisplay] = useState(value);
-  const [ratePerSecond, setRatePerSecond] = useState(0);
   const frameRef = useRef<number | null>(null);
   const fromRef = useRef(value);
 
   useEffect(() => {
     if (liveAccrual) {
       const tick = () => {
-        const { amount, ratePerSecond: rate } = accrualAt(liveAccrual, Date.now());
+        const { amount } = accrualAt(liveAccrual, Date.now());
         setDisplay(amount);
-        setRatePerSecond(rate);
         frameRef.current = requestAnimationFrame(tick);
       };
       frameRef.current = requestAnimationFrame(tick);
@@ -57,7 +53,6 @@ export function AnimatedEarningsCounter({
       const tick = () => {
         const elapsedSec = (Date.now() - liveRate.anchorMs) / 1000;
         setDisplay(liveRate.baseAmount + liveRate.ratePerSecond * elapsedSec);
-        setRatePerSecond(liveRate.ratePerSecond);
         frameRef.current = requestAnimationFrame(tick);
       };
       frameRef.current = requestAnimationFrame(tick);
@@ -97,11 +92,6 @@ export function AnimatedEarningsCounter({
   return (
     <span className={cn("tabular-nums tracking-tight", className)} aria-live="polite">
       {formatted}
-      {showRatePerSecond && isLive && ratePerSecond > 0 ? (
-        <span className="ml-2 text-[0.65em] font-medium opacity-75">
-          +{formatNairaLive(ratePerSecond, decimals)}/sec
-        </span>
-      ) : null}
     </span>
   );
 }

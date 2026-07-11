@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { AppError } from "@/lib/errors";
+import { assertValidAccountNumber, normalizeAccountNumber } from "@/lib/validation/identity";
 
 type Client = SupabaseClient<Database>;
 export type FundingAccount = Database["public"]["Tables"]["funding_accounts"]["Row"];
@@ -61,6 +62,9 @@ export class FundingAccountService {
   }
 
   async create(input: FundingAccountInput): Promise<FundingAccount> {
+    const accountNumber = normalizeAccountNumber(input.accountNumber);
+    assertValidAccountNumber(accountNumber);
+
     if (input.isPreferred) {
       await this.clearPreferred();
     }
@@ -70,7 +74,7 @@ export class FundingAccountService {
       .insert({
         bank_name: input.bankName.trim(),
         account_name: input.accountName.trim(),
-        account_number: input.accountNumber.trim(),
+        account_number: accountNumber,
         sort_code: input.sortCode?.trim() || null,
         display_name: input.displayName?.trim() || null,
         funding_instructions: input.fundingInstructions?.trim() || null,
@@ -97,7 +101,11 @@ export class FundingAccountService {
 
     if (input.bankName !== undefined) patch.bank_name = input.bankName.trim();
     if (input.accountName !== undefined) patch.account_name = input.accountName.trim();
-    if (input.accountNumber !== undefined) patch.account_number = input.accountNumber.trim();
+    if (input.accountNumber !== undefined) {
+      const accountNumber = normalizeAccountNumber(input.accountNumber);
+      assertValidAccountNumber(accountNumber);
+      patch.account_number = accountNumber;
+    }
     if (input.sortCode !== undefined) patch.sort_code = input.sortCode?.trim() || null;
     if (input.displayName !== undefined) patch.display_name = input.displayName?.trim() || null;
     if (input.fundingInstructions !== undefined) {
