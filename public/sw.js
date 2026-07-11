@@ -1,13 +1,13 @@
 /* AltoRich production service worker — static + navigation caching, no sensitive API cache */
-const CACHE_VERSION = "altorich-v2";
+const CACHE_VERSION = "altorich-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
 const PRECACHE_URLS = [
   "/offline",
   "/site.webmanifest",
-  "/icons/install-192.png",
-  "/icons/install-512.png"
+  "/icons/android-chrome-192x192.png",
+  "/icons/android-chrome-512x512.png"
 ];
 
 const NEVER_CACHE = ["/api/", "/auth/callback", "/hard/auth"];

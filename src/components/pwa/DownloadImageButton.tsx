@@ -20,6 +20,8 @@ export function DownloadImageButton({ className }: Props) {
     }
 
     if (pwa?.canInstall) {
+      // Let the tap animation finish, then show the native bottom install sheet (not the rich modal).
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
       const accepted = await pwa.promptInstall();
       if (accepted) return;
     }
