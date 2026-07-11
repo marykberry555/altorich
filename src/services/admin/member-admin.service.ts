@@ -131,13 +131,117 @@ export class MemberAdminService {
     return data;
   }
 
+  private async assertDeletable(userId: string) {
+    const { data: adminRole } = await this.supabase.from("admin_roles").select("id").eq("user_id", userId).maybeSingle();
+    if (adminRole) {
+      throw new AppError("Cannot delete admin accounts.", 403, "ADMIN_PROTECTED");
+    }
+  }
+
+  /** Remove dependent rows so auth user (and profile) can be deleted. */
+  private async purgeMemberData(userId: string) {
+    await this.assertDeletable(userId);
+
+    const deleteEq = async (table: keyof Database["public"]["Tables"], column: string) => {
+      const { error } = await this.supabase.from(table).delete().eq(column, userId);
+      if (error) throw error;
+    };
+
+    await deleteEq("roi_payouts", "user_id");
+    await deleteEq("roi_investments", "user_id");
+    await deleteEq("investments", "user_id");
+    await deleteEq("withdrawals", "user_id");
+    await deleteEq("payment_transactions", "user_id");
+    await deleteEq("deposits", "user_id");
+
+    const { data: wallets, error: walletListError } = await this.supabase
+      .from("wallets")
+      .select("id")
+      .eq("user_id", userId);
+    if (walletListError) throw walletListError;
+
+    for (const wallet of wallets ?? []) {
+      const { error } = await this.supabase.from("wallet_transactions").delete().eq("wallet_id", wallet.id);
+      if (error) throw error;
+    }
+
+    await deleteEq("wallets", "user_id");
+    const { error: referralsError } = await this.supabase
+      .from("referrals")
+      .delete()
+      .or(`referrer_id.eq.${userId},referred_id.eq.${userId}`);
+    if (referralsError) throw referralsError;
+    await this.supabase.from("profiles").update({ referred_by: null }).eq("referred_by", userId);
+
+    const { error: authError } = await this.supabase.auth.admin.deleteUser(userId);
+    if (authError) throw authError;
+  }
+
   async deleteMembers(userIds: string[]) {
     const results: { id: string; ok: boolean; error?: string }[] = [];
     for (const id of userIds) {
-      const { error } = await this.supabase.auth.admin.deleteUser(id);
-      results.push({ id, ok: !error, error: error?.message });
+      try {
+        await this.purgeMemberData(id);
+        results.push({ id, ok: true });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Delete failed";
+        results.push({ id, ok: false, error: message });
+      }
     }
     return results;
+  }
+
+  async getMemberDetail(userId: string) {
+    const { data: profile, error: profileError } = await this.supabase.from("profiles").select("*").eq("id", userId).single();
+    if (profileError || !profile) throw Errors.notFound("Member");
+
+    const authResult = await this.supabase.auth.admin.getUserById(userId);
+    const email = authResult.data.user?.email ?? null;
+
+    const walletRow = await this.supabase.from("wallets").select("id").eq("user_id", userId).eq("currency", "NGN").maybeSingle();
+    let walletBalance = 0;
+    let walletTransactions: Database["public"]["Tables"]["wallet_transactions"]["Row"][] = [];
+
+    if (walletRow.data?.id) {
+      walletBalance = await this.wallet.getBalance(walletRow.data.id);
+      const { data: txns } = await this.supabase
+        .from("wallet_transactions")
+        .select("*")
+        .eq("wallet_id", walletRow.data.id)
+        .order("created_at", { ascending: false })
+        .limit(40);
+      walletTransactions = txns ?? [];
+    }
+
+    const [investments, withdrawals, deposits, referralsAsReferrer, bankAccounts] = await Promise.all([
+      this.supabase
+        .from("investments")
+        .select("*, investment_plans(name, slug, settlement_frequency)")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      this.supabase.from("withdrawals").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(40),
+      this.supabase.from("deposits").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(40),
+      this.supabase.from("referrals").select("*").eq("referrer_id", userId),
+      this.supabase.from("bank_accounts").select("*").eq("user_id", userId).order("created_at", { ascending: false })
+    ]);
+
+    if (investments.error) throw investments.error;
+    if (withdrawals.error) throw withdrawals.error;
+    if (deposits.error) throw deposits.error;
+    if (referralsAsReferrer.error) throw referralsAsReferrer.error;
+    if (bankAccounts.error) throw bankAccounts.error;
+
+    return {
+      profile,
+      email,
+      walletBalance,
+      walletTransactions,
+      investments: investments.data ?? [],
+      withdrawals: withdrawals.data ?? [],
+      deposits: deposits.data ?? [],
+      referrals: referralsAsReferrer.data ?? [],
+      bankAccounts: bankAccounts.data ?? []
+    };
   }
 
   async adjustWallet(userId: string, amount: number, note?: string) {

@@ -16,6 +16,7 @@ export async function DELETE(request: Request) {
 
     const { ids } = schema.parse(await request.json());
     const results = await services.members.deleteMembers(ids);
+    const failed = results.filter((r) => !r.ok);
 
     await services.audit.log({
       actorId: admin.id,
@@ -23,6 +24,16 @@ export async function DELETE(request: Request) {
       entityType: "profile",
       metadata: { ids, results }
     });
+
+    if (failed.length > 0) {
+      return NextResponse.json(
+        {
+          error: failed.map((f) => f.error ?? "Delete failed").join("; "),
+          results
+        },
+        { status: 422 }
+      );
+    }
 
     return NextResponse.json({ results });
   } catch (error) {

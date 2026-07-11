@@ -318,4 +318,23 @@ export class InvestmentService {
     if (error) throw error;
     return data;
   }
+
+  async deletePlan(planId: string) {
+    const { count, error: countError } = await this.supabase
+      .from("investments")
+      .select("id", { count: "exact", head: true })
+      .eq("plan_id", planId);
+
+    if (countError) throw countError;
+    if (count && count > 0) {
+      throw new AppError(
+        "Cannot delete a package that has investments. Archive it instead.",
+        409,
+        "PLAN_IN_USE"
+      );
+    }
+
+    const { error } = await this.supabase.from("investment_plans").delete().eq("id", planId);
+    if (error) throw error;
+  }
 }

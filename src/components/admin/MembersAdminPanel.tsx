@@ -8,16 +8,17 @@ import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DataTable, SectionHeading, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/design-system";
+import { MemberActionsMenu, type MemberAction } from "@/components/admin/MemberActionsMenu";
+import { MemberDetailPanel } from "@/components/admin/MemberDetailPanel";
 import type { AdminMemberRow } from "@/services/admin/member-admin.service";
 
 type Member = AdminMemberRow;
 
-const STATUS_ACTIONS = [
-  { status: "active", label: "Activate" },
-  { status: "paused", label: "Pause" },
-  { status: "disabled", label: "Disable" },
-  { status: "deactivated", label: "Deactivate" }
-] as const;
+const STATUS_BY_ACTION: Partial<Record<MemberAction, string>> = {
+  pause: "paused",
+  disable: "disabled",
+  deactivate: "deactivated"
+};
 
 export function MembersAdminPanel() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -29,6 +30,7 @@ export function MembersAdminPanel() {
   const [message, setMessage] = useState<string | null>(null);
   const [createError, setCreateError] = useFlashError();
   const [showCreate, setShowCreate] = useState(false);
+  const [detailMember, setDetailMember] = useState<{ id: string; name: string } | null>(null);
   const [createForm, setCreateForm] = useState({
     fullName: "",
     username: "",
@@ -178,11 +180,20 @@ export function MembersAdminPanel() {
     }
   };
 
+  const handleMemberAction = (member: Member, action: MemberAction) => {
+    if (action === "fund" || action === "debit") {
+      void walletAction(member.id, action);
+      return;
+    }
+    const accountStatus = STATUS_BY_ACTION[action];
+    if (accountStatus) void setStatus(member.id, accountStatus);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <SectionHeading title="Members" description={`${total} total · select multiple to bulk delete`} />
+          <SectionHeading title="Members" description={`${total} total · tap a name for full profile · select multiple to bulk delete`} />
         </div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
@@ -300,35 +311,26 @@ export function MembersAdminPanel() {
                       <input type="checkbox" checked={selected.has(member.id)} onChange={() => toggleOne(member.id)} aria-label={`Select ${member.full_name}`} />
                     </TableCell>
                     <TableCell>
-                      <p className="font-medium">{member.full_name || "—"}</p>
-                      <p className="text-xs text-[var(--text-muted)]">{member.email ?? member.phone ?? member.invite_code}</p>
+                      <button
+                        type="button"
+                        className="text-left hover:text-[var(--emerald)]"
+                        onClick={() => setDetailMember({ id: member.id, name: member.full_name || "Member" })}
+                      >
+                        <p className="font-medium underline-offset-2 hover:underline">{member.full_name || "—"}</p>
+                        <p className="text-xs text-[var(--text-muted)]">{member.email ?? member.phone ?? member.invite_code}</p>
+                      </button>
                     </TableCell>
                     <TableCell>{member.username ?? "—"}</TableCell>
                     <TableCell className="tabular-nums">{formatNaira(member.walletBalance)}</TableCell>
                     <TableCell>
                       <StatusBadge status={member.account_status ?? "active"} />
                     </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap justify-end gap-1">
-                        <Button type="button" variant="outline" size="sm" onClick={() => void walletAction(member.id, "fund")} disabled={Boolean(busy)}>
-                          Fund
-                        </Button>
-                        <Button type="button" variant="outline" size="sm" onClick={() => void walletAction(member.id, "debit")} disabled={Boolean(busy)}>
-                          Debit
-                        </Button>
-                        {STATUS_ACTIONS.filter((a) => a.status !== (member.account_status ?? "active")).map((a) => (
-                          <Button
-                            key={a.status}
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => void setStatus(member.id, a.status)}
-                            disabled={busy === `status-${member.id}`}
-                          >
-                            {a.label}
-                          </Button>
-                        ))}
-                      </div>
+                    <TableCell className="text-right">
+                      <MemberActionsMenu
+                        busy={busy === `wallet-${member.id}` || busy === `status-${member.id}`}
+                        disabled={Boolean(busy && busy !== `wallet-${member.id}` && busy !== `status-${member.id}`)}
+                        onAction={(action) => handleMemberAction(member, action)}
+                      />
                     </TableCell>
                   </TableRow>
                 ))
@@ -337,6 +339,10 @@ export function MembersAdminPanel() {
           </Table>
         </DataTable>
       </Card>
+
+      {detailMember ? (
+        <MemberDetailPanel memberId={detailMember.id} memberName={detailMember.name} onClose={() => setDetailMember(null)} />
+      ) : null}
     </div>
   );
 }

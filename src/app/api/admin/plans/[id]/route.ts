@@ -74,3 +74,25 @@ export async function PATCH(request: NextRequest, context: Context) {
     return apiErrorResponse(error);
   }
 }
+
+export async function DELETE(_request: NextRequest, context: Context) {
+  try {
+    const reviewer = await requireAdmin();
+    const services = await getAdminServices();
+    if (!services) throw Errors.forbidden();
+
+    const { id } = await context.params;
+    await services.investments.deletePlan(id);
+
+    await services.audit.log({
+      actorId: reviewer.id,
+      action: "plan.deleted",
+      entityType: "investment_plan",
+      entityId: id
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
