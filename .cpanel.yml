@@ -1,11 +1,10 @@
 ---
-# cPanel Git deployment — AUTO BUILD DISABLED during SEV-1 incident.
-# See DEPLOY_LOCK. Manual deploy: DEPLOY_ENABLED=1 bash scripts/deploy/deploy-production.sh
+# cPanel Git deployment — git push updates code only; never builds unless explicitly enabled.
+# Production deploy: DEPLOY_ENABLED=1 bash scripts/deploy/deploy-production.sh
 deployment:
   tasks:
     - export APP_ROOT=/home/altosujd/repositories/alto-app
     - export LOG_DIR=/home/altosujd/logs
-    - echo "[deploy] Auto-deploy disabled (DEPLOY_LOCK). Git pull only — no build/restart."
-    - test ! -f $APP_ROOT/DEPLOY_LOCK || exit 0
+    - echo "[deploy] Git pull complete. Build/restart requires DEPLOY_ENABLED=1 + deploy-production.sh"
     - test "${DEPLOY_ENABLED:-0}" = "1" || exit 0
     - /bin/bash $APP_ROOT/scripts/deploy/post-deploy.sh

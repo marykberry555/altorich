@@ -1,9 +1,0 @@
-# AUTO-DEPLOY DISABLED — SEV-1 PRODUCTION INCIDENT
-#
-# While this file exists, cPanel Git hooks and deploy.sh will NOT build or restart production.
-# Remove this file only after ChunkLoadError is verified eliminated across devices.
-#
-# Manual deploy (when ready):
-#   DEPLOY_ENABLED=1 bash scripts/deploy/deploy-production.sh
-#
-# Re-enable Git auto-deploy only after removing this file AND updating .cpanel.yml.
