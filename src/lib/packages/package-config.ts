@@ -121,9 +121,7 @@ export const PACKAGE_SLUGS: PackageSlug[] = PACKAGE_CONFIG.sort(
 export const PACKAGE_ROI_RANGE = {
   minPercent: Math.min(...PACKAGE_CONFIG.map((p) => p.weeklyRoiPercent)),
   maxPercent: Math.max(...PACKAGE_CONFIG.map((p) => p.weeklyRoiPercent)),
-  get headline() {
-    return `${this.minPercent}% to ${this.maxPercent}% weekly`;
-  }
+  headline: `${Math.min(...PACKAGE_CONFIG.map((p) => p.weeklyRoiPercent))}% to ${Math.max(...PACKAGE_CONFIG.map((p) => p.weeklyRoiPercent))}% weekly`
 } as const;
 
 export const GUARANTEED_RETURNS_TAGLINE = "Returns are guaranteed.";

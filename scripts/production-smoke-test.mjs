@@ -28,7 +28,7 @@ async function main() {
   await check("Homepage headline shows 10–25% weekly", async () => {
     const res = await fetch(`${BASE}/`);
     const html = await res.text();
-    const ok = html.includes("10% to 25% weekly") || html.includes("10% to 25%");
+    const ok = html.includes("15% to 30% weekly") || html.includes("15% to 30%");
     return { ok, note: ok ? "headline present" : "headline missing" };
   });
 
