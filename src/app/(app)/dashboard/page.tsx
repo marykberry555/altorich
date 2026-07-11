@@ -89,6 +89,32 @@ async function DashboardContent() {
         </div>
       ) : null}
 
+      <DashboardSection className="space-y-6">
+        {showPlanInvestmentUi && investCtx ? (
+          <DashboardWealthHero
+            fullName={fullName}
+            avatarUrl={avatarUrl}
+            preferredPackageSlug={preferredPackage}
+            hasActiveInvestment={hasActiveInvestment}
+            walletBalance={investCtx.balance}
+            liveInputs={investCtx.liveInputs}
+            totalInvested={portfolio?.totalInvested ?? 0}
+            totalEarned={portfolio?.totalEarned ?? 0}
+          />
+        ) : (
+          <DashboardWealthHeroStatic
+            fullName={fullName}
+            avatarUrl={avatarUrl}
+            preferredPackageSlug={preferredPackage}
+            hasActiveInvestment={hasActiveInvestment}
+            walletBalance={balance}
+            portfolioValue={portfolio?.currentValue ?? balance}
+            totalInvested={portfolio?.totalInvested ?? 0}
+            totalEarned={portfolio?.totalEarned ?? 0}
+          />
+        )}
+      </DashboardSection>
+
       {roiEnabled && roiState?.activeInvestment ? (
         <DashboardCyclePanel
           fullName={fullName}
@@ -108,35 +134,6 @@ async function DashboardContent() {
           }
         />
       ) : null}
-
-      <DashboardSection className="space-y-6">
-        {!showPlanInvestmentUi && roiEnabled ? (
-          <DashboardWealthHeroStatic
-            fullName={fullName}
-            avatarUrl={avatarUrl}
-            preferredPackageSlug={preferredPackage}
-            hasActiveInvestment={hasActiveInvestment}
-            walletBalance={balance}
-            portfolioValue={portfolio?.currentValue ?? 0}
-            totalInvested={portfolio?.totalInvested ?? 0}
-            totalEarned={portfolio?.totalEarned ?? 0}
-            pendingPayouts={dashboard?.pendingWithdrawals ?? 0}
-            metricsOnly
-          />
-        ) : showPlanInvestmentUi && investCtx ? (
-          <DashboardWealthHero
-            fullName={fullName}
-            avatarUrl={avatarUrl}
-            preferredPackageSlug={preferredPackage}
-            hasActiveInvestment={hasActiveInvestment}
-            walletBalance={investCtx.balance}
-            liveInputs={investCtx.liveInputs}
-            totalInvested={portfolio?.totalInvested ?? 0}
-            totalEarned={portfolio?.totalEarned ?? 0}
-            pendingPayouts={dashboard?.pendingWithdrawals ?? 0}
-          />
-        ) : null}
-      </DashboardSection>
 
       <DashboardSection title="Quick actions">
         <DashboardQuickActions />
