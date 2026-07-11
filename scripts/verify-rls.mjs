@@ -64,6 +64,27 @@ async function main() {
 
   await expectBlocked("Anonymous cannot read notifications", () => anon.from("notifications").select("*").limit(5));
 
+  await expectBlocked("Anonymous cannot insert deposits", () =>
+    anon.from("deposits").insert({
+      member_name: "Probe",
+      phone: "08012345678",
+      amount: 1000,
+      reference: `probe-${Date.now()}`
+    })
+  );
+
+  await expectBlocked("Anonymous cannot execute wallet_balance RPC", async () => {
+    const { error } = await anon.rpc("wallet_balance", {
+      p_wallet_id: "00000000-0000-0000-0000-000000000001"
+    });
+    return { data: null, error };
+  });
+
+  await expectBlocked("Anonymous cannot execute has_admin_role RPC", async () => {
+    const { error } = await anon.rpc("has_admin_role");
+    return { data: null, error };
+  });
+
   const { data: settings } = await anon.from("settings").select("key").limit(1);
   tests.push({
     label: "Anonymous can read public settings",
