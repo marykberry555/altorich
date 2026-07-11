@@ -11,8 +11,6 @@ export type FundingAccountView = {
   bankName: string;
   accountName: string;
   accountNumber: string;
-  displayName?: string | null;
-  fundingInstructions?: string | null;
   isPreferred?: boolean;
 };
 
@@ -21,57 +19,37 @@ type Props = {
   className?: string;
 };
 
-function bankInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
 export function FundingAccountCard({ account, className }: Props) {
-  const title = account.displayName?.trim() || account.bankName;
-
   return (
-    <Card variant="elevated" className={cn("h-full", className)}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--emerald-soft)] text-sm font-bold text-[var(--emerald)]">
-            {bankInitials(account.bankName)}
-          </span>
-          <div>
-            <p className="font-semibold text-[var(--heading)]">{title}</p>
-            <p className="text-sm text-[var(--text-muted)]">{account.bankName}</p>
-          </div>
-        </div>
+    <Card variant="elevated" className={cn("p-5 sm:p-6", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-lg font-semibold text-[var(--heading)]">{account.bankName}</p>
         {account.isPreferred ? (
-          <Badge variant="gold" className="inline-flex items-center gap-1">
+          <Badge variant="gold" className="inline-flex shrink-0 items-center gap-1">
             <Star size={12} aria-hidden />
             Preferred
           </Badge>
         ) : null}
       </div>
 
-      <dl className="mt-5 space-y-3">
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--gray-50)] p-4 dark:bg-[var(--surface)]">
-          <dt className="text-xs font-medium uppercase tracking-wide text-[var(--text-subtle)]">Account name</dt>
-          <dd className="mt-1 flex items-center justify-between gap-3">
-            <span className="font-semibold text-[var(--heading)]">{account.accountName}</span>
-            <CopyButton value={account.accountName} label="Copy name" />
-          </dd>
+      <dl className="mt-6 space-y-4">
+        <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+          <div className="min-w-0">
+            <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Account name</dt>
+            <dd className="mt-1 truncate font-medium text-[var(--heading)]">{account.accountName}</dd>
+          </div>
+          <CopyButton value={account.accountName} label="Copy name" />
         </div>
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--gray-50)] p-4 dark:bg-[var(--surface)]">
-          <dt className="text-xs font-medium uppercase tracking-wide text-[var(--text-subtle)]">Account number</dt>
-          <dd className="mt-1 flex flex-wrap items-center justify-between gap-3">
-            <span className="text-2xl font-bold tabular-nums tracking-tight text-[var(--heading)]">{account.accountNumber}</span>
-            <CopyButton value={account.accountNumber} />
-          </dd>
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Account number</dt>
+            <dd className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-[var(--heading)] sm:text-3xl">
+              {account.accountNumber}
+            </dd>
+          </div>
+          <CopyButton value={account.accountNumber} />
         </div>
       </dl>
-
-      {account.fundingInstructions ? (
-        <p className="mt-4 text-sm leading-relaxed text-[var(--text-muted)]">{account.fundingInstructions}</p>
-      ) : null}
     </Card>
   );
 }
@@ -81,8 +59,7 @@ export function FundingAccountsGrid({ accounts }: { accounts: FundingAccountView
     return (
       <Card variant="elevated" padding="lg" className="text-center">
         <Building2 className="mx-auto text-[var(--text-subtle)]" size={28} aria-hidden />
-        <p className="mt-3 font-semibold text-[var(--heading)]">Funding accounts are being configured</p>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">Please check back shortly or contact support.</p>
+        <p className="mt-3 font-semibold text-[var(--heading)]">No receiving accounts yet</p>
       </Card>
     );
   }

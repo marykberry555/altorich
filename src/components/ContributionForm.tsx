@@ -1,1 +1,1 @@
-export { ContributionForm, InvestmentFundingForm, FundingSummary } from "@/components/funding/InvestmentFundingForm";
+export { ContributionForm, InvestmentFundingForm } from "@/components/funding/InvestmentFundingForm";

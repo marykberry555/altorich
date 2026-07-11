@@ -1,10 +1,7 @@
-import Link from "next/link";
 import { FundingAccountsGrid } from "@/components/funding/FundingAccountCard";
 import { FundingHistoryTable } from "@/components/funding/FundingHistoryTable";
-import { FundingSummary, InvestmentFundingForm } from "@/components/funding/InvestmentFundingForm";
-import { PageHero } from "@/components/marketing/PageHero";
-import { Card } from "@/components/ui/Card";
-import { formatNaira } from "@/lib/domain";
+import { InvestmentFundingForm } from "@/components/funding/InvestmentFundingForm";
+import { WalletFundingSummary } from "@/components/funding/WalletFundingSummary";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import type { Deposit } from "@/types/database";
@@ -38,72 +35,34 @@ export default async function DepositsPage() {
     bankName: account.bank_name,
     accountName: account.account_name,
     accountNumber: account.account_number,
-    displayName: account.display_name,
-    fundingInstructions: account.funding_instructions,
     isPreferred: account.is_preferred
   }));
 
-  const config = {
-    activeBankName: preferred?.active_bank_name ?? (accountViews[0]?.bankName ?? "Funding details pending"),
-    activeAccountName: preferred?.active_account_name ?? accountViews[0]?.accountName ?? "ALTORICH LTD",
-    activeAccountNumber: preferred?.active_account_number ?? accountViews[0]?.accountNumber ?? "—",
-    paymentInstruction:
-      preferred?.payment_instruction ??
-      accountViews[0]?.fundingInstructions ??
-      "Transfer the exact amount, then submit your reference for verification.",
-    transferNarration: preferred?.transfer_narration ?? "Use your registered phone number as transfer narration.",
-    contributionsEnabled: preferred?.contributions_enabled ?? fundingAccounts.length > 0
-  };
+  const fundingEnabled = preferred?.contributions_enabled ?? fundingAccounts.length > 0;
+  const receiptUploadEnabled = process.env.NEXT_PUBLIC_DEPOSIT_PROOF_UPLOAD === "true";
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
-      <PageHero
-        eyebrow="Wallet funding"
-        title="Fund your investment wallet"
-        description="Transfer naira from any Nigerian bank below. Once verified, funds are ready to invest."
-      />
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card variant="elevated" padding="md">
-          <p className="text-xs text-[var(--text-subtle)]">Wallet balance</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums">{formatNaira(balance)}</p>
-        </Card>
-        <Card variant="elevated" padding="md">
-          <p className="text-xs text-[var(--text-subtle)]">Pending funding</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-amber-600">{formatNaira(pendingFunding)}</p>
-        </Card>
-      </div>
+    <div className="mx-auto max-w-3xl space-y-12 pb-8">
+      <header className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Fund Wallet</h1>
+        <WalletFundingSummary balance={balance} pendingFunding={pendingFunding} />
+      </header>
 
       <section className="space-y-4">
-        <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Transfer to any account</h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Choose any active account. {config.transferNarration}
-          </p>
-        </div>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
+          Choose a receiving account
+        </h2>
         <FundingAccountsGrid accounts={accountViews} />
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <InvestmentFundingForm config={config} />
-        </div>
-        <div className="lg:col-span-2">
-          <FundingSummary balance={balance} pendingFunding={pendingFunding} fundingEnabled={config.contributionsEnabled} />
-        </div>
-      </div>
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
+          Enter funding amount
+        </h2>
+        <InvestmentFundingForm fundingEnabled={fundingEnabled} receiptUploadEnabled={receiptUploadEnabled} />
+      </section>
 
       <FundingHistoryTable rows={fundingHistory} />
-
-      <Card variant="elevated" padding="md" className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="font-semibold text-[var(--heading)]">Ready to invest?</p>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Choose a package and allocate from your wallet balance.</p>
-        </div>
-        <Link href="/investments" className="text-sm font-semibold text-[var(--emerald)] hover:underline">
-          Explore investment packages →
-        </Link>
-      </Card>
     </div>
   );
 }
