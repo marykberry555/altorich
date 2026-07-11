@@ -41,7 +41,7 @@ export function DownloadAppBadge({
           "active:bg-[var(--gray-200)]"
         )
       : cn(
-          "bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)]",
+          "bg-[var(--btn-primary-bg)] !text-white",
           "ring-1 ring-[var(--btn-primary-border)] shadow-[var(--shadow-md)]",
           "hover:bg-[var(--btn-primary-hover-bg)]",
           "active:bg-[var(--btn-primary-active-bg)]"
@@ -49,8 +49,9 @@ export function DownloadAppBadge({
 
   const sharedClass = cn(
     "inline-flex items-center rounded-[var(--radius-sm)] font-semibold transition",
-    "[&_svg]:shrink-0 [&_svg]:text-[var(--btn-primary-fg)]",
-    tone === "surface" && "[&_svg]:text-[var(--btn-surface-fg)]",
+    "[&_svg]:shrink-0 [&_svg]:!text-white",
+    tone === "surface" && "[&_svg]:!text-[var(--btn-surface-fg)]",
+    tone === "primary" && "[&_span]:!text-white",
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--emerald-mid)]",
     "disabled:pointer-events-none disabled:opacity-50",
     shellClass,

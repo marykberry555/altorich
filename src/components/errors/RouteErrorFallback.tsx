@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { logRouteError, errorMessage } from "@/lib/observability/route-error";
+import { isChunkLoadFailure, recoverFromChunkFailure } from "@/lib/cache/chunk-recovery";
 
 type Props = {
   error: Error & { digest?: string };
@@ -29,6 +30,11 @@ export function RouteErrorFallback({
 
   useEffect(() => {
     logRouteError(error, { route, component, digest: error.digest });
+
+    if (isChunkLoadFailure(error.message)) {
+      void recoverFromChunkFailure(error.message);
+      return;
+    }
 
     void fetch("/api/client-error", {
       method: "POST",

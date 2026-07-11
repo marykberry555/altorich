@@ -10,7 +10,9 @@ import { SmartsuppProvider } from "@/components/chat/SmartsuppProvider";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
 import { AppBootstrapLoader } from "@/components/brand/AppBootstrapLoader";
 import { ServiceWorkerCleanup } from "@/components/pwa/ServiceWorkerCleanup";
+import { ChunkLoadRecovery } from "@/components/pwa/ChunkLoadRecovery";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
+import { getBuildId } from "@/lib/build-id";
 import { organizationJsonLd, websiteJsonLd, defaultOpenGraphImages } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SocialProofToasts } from "@/components/social/SocialProofToasts";
@@ -78,6 +80,9 @@ export const metadata: Metadata = {
   }
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#064e3b" },
@@ -88,15 +93,19 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const buildId = getBuildId();
+
   return (
     <html lang="en-NG" className={`${jakarta.variable} ${instrument.variable}`} suppressHydrationWarning>
       <head>
+        <meta name="altorich-build-id" content={buildId} />
         <Script id="theme-init" strategy="beforeInteractive">
           {themeInitScript}
         </Script>
       </head>
       <body className="antialiased">
         <ServiceWorkerCleanup />
+        <ChunkLoadRecovery buildId={buildId} />
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         <PwaProvider>
           <AppBootstrapLoader />

@@ -62,6 +62,9 @@ materialize_node_modules_for_build() {
 ensure_venv_dependencies
 materialize_node_modules_for_build
 
+deploy_log "Removing previous .next build output (prevent mixed chunk artifacts)..."
+rm -rf "${APP_ROOT}/.next"
+
 deploy_log "Building (webpack — required on CloudLinux)..."
 npm run gate:production
 npm run build

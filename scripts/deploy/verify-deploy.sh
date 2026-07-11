@@ -75,10 +75,87 @@ check_route() {
   return 0
 }
 
+check_document_cache_headers() {
+  local base="$1"
+  local label="$2"
+  local headers
+
+  deploy_log "Checking $label document cache headers: $base/"
+  headers="$(curl -sSI --max-time 20 -H 'Cache-Control: no-cache' "${base%/}/" 2>&1)" || {
+    deploy_log "FAIL: $label homepage headers unreachable"
+    return 1
+  }
+
+  if grep -qi 's-maxage=31536000' <<<"$headers"; then
+    deploy_log "FAIL: $label homepage still allows long-lived CDN cache (s-maxage=31536000)"
+    return 1
+  fi
+
+  if ! grep -qi 'cdn-cache-control: no-store' <<<"$headers" && ! grep -qi 'cache-control:.*no-store' <<<"$headers"; then
+    deploy_log "WARNING: $label homepage missing explicit no-store cache directive"
+  fi
+
+  deploy_log "PASS: $label homepage cache headers look safe"
+  return 0
+}
+
+check_build_id() {
+  local base="$1"
+  local label="$2"
+  local local_id remote_id body
+
+  local_id="$(cat "${APP_ROOT}/.next/BUILD_ID" 2>/dev/null || true)"
+  if [[ -z "$local_id" ]]; then
+    deploy_log "WARNING: Local BUILD_ID missing during verify"
+    return 0
+  fi
+
+  body="$(curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "${base%/}/api/build-id" 2>&1)" || {
+    deploy_log "FAIL: $label /api/build-id unreachable"
+    return 1
+  }
+
+  remote_id="$(grep -o '"buildId"[[:space:]]*:[[:space:]]*"[^"]*"' <<<"$body" | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+  if [[ "$remote_id" != "$local_id" ]]; then
+    deploy_log "FAIL: $label BUILD_ID mismatch (local=$local_id remote=$remote_id)"
+    return 1
+  fi
+
+  deploy_log "PASS: $label BUILD_ID $local_id"
+  return 0
+}
+
+check_homepage_chunks() {
+  local base="$1"
+  local label="$2"
+  local html chunk status
+
+  deploy_log "Checking $label homepage chunk integrity: $base/"
+  html="$(curl -fsS --max-time 20 -H 'Cache-Control: no-cache' "${base%/}/" 2>&1)" || {
+    deploy_log "FAIL: $label homepage unreachable"
+    return 1
+  }
+
+  while read -r chunk; do
+    [[ -n "$chunk" ]] || continue
+    status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "${base%/}/_next/static/chunks/${chunk}")"
+    if [[ "$status" != "200" ]]; then
+      deploy_log "FAIL: $label homepage chunk ${chunk} returned HTTP $status"
+      return 1
+    fi
+  done < <(grep -oE '/_next/static/chunks/[^"'\'' ]+\.js' <<<"$html" | sed 's|^/_next/static/chunks/||' | sort -u | head -12)
+
+  deploy_log "PASS: $label homepage chunk references resolve"
+  return 0
+}
+
 deploy_log "=== verify-deploy start ==="
 wait_for_local_health
 verify_build_artifacts
 check_url "app health" "$PUBLIC_HEALTH"
+check_build_id "$PUBLIC_BASE" "public"
+check_document_cache_headers "$PUBLIC_BASE" "public"
+check_homepage_chunks "$PUBLIC_BASE" "public"
 check_login_chunk "$PUBLIC_BASE" "public"
 check_route "$PUBLIC_BASE" "public" "/download"
 check_route "$PUBLIC_BASE" "public" "/"

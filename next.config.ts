@@ -24,6 +24,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/(.*)", headers: securityHeaders },
+      {
+        source: "/_next/static/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }]
+      },
       { source: "/sw.js", headers: pwaHeaders },
       { source: "/site.webmanifest", headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }] },
       { source: "/download", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }] },

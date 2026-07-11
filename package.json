@@ -23,6 +23,8 @@
     "verify:ledger": "node scripts/verify-ledger-integrity.mjs",
     "smoke:production": "node scripts/production-smoke-test.mjs",
     "gate:production": "node scripts/production-readiness-gate.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:production": "PLAYWRIGHT_BASE_URL=https://altorich.com playwright test",
     "auth:hibp": "node scripts/enable-auth-hibp.mjs",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "seed:auth": "node scripts/seed-auth-accounts.mjs",
@@ -44,6 +46,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
+    "@playwright/test": "^1.52.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
