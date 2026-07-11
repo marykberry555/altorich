@@ -18,6 +18,7 @@ import {
   TableRow
 } from "@/components/design-system";
 import { Card } from "@/components/ui/Card";
+import { AdminOperationsPanel } from "@/components/admin/AdminOperationsPanel";
 import { RoiAdminControls } from "@/components/admin/RoiAdminControls";
 import { AdminFeatureFlags } from "@/components/admin/AdminFeatureFlags";
 import { AdminReferralManagement } from "@/components/admin/AdminReferralManagement";
@@ -80,6 +81,12 @@ export default async function AdminPage() {
           {COMPANY.legalName} · Co. {COMPANY.companyNumber}
         </p>
       </header>
+
+      <AdminOperationsPanel
+        metrics={metrics}
+        pendingReferralPayouts={referralAdmin?.pendingPayouts?.length ?? 0}
+        recentAuditCount={auditLogs.length}
+      />
 
       <DashboardSection title="Platform metrics">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

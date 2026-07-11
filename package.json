@@ -18,6 +18,8 @@
     "images:optimize": "node scripts/optimize-marketing-images.mjs",
     "verify:db": "node scripts/verify-database.mjs",
     "verify:rls": "node scripts/verify-rls.mjs",
+    "verify:ledger": "node scripts/verify-ledger-integrity.mjs",
+    "smoke:production": "node scripts/production-smoke-test.mjs",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "seed:auth": "node scripts/seed-auth-accounts.mjs",
     "deploy:checklist": "bash scripts/deploy/cpanel-checklist.sh",

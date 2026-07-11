@@ -101,6 +101,7 @@ export function InvestFlowSheet({
   );
 
   async function confirmInvest() {
+    if (loading) return;
     setLoading(true);
     setError("");
 

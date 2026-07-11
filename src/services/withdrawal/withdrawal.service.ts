@@ -71,6 +71,16 @@ export class WithdrawalService {
       throw new AppError("Insufficient wallet balance for payout.", 400, "INSUFFICIENT_BALANCE");
     }
 
+    const { count: pendingCount } = await this.supabase
+      .from("withdrawals")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", input.userId)
+      .eq("status", "pending");
+
+    if ((pendingCount ?? 0) > 0) {
+      throw new AppError("You already have a pending payout request.", 409, "PENDING_EXISTS");
+    }
+
     const { data, error } = await this.supabase
       .from("withdrawals")
       .insert({
