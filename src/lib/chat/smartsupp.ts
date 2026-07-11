@@ -3,6 +3,14 @@ import type { SmartsuppEventName } from "@/lib/chat/smartsupp-events";
 export const SMARTSUPP_REFRESH_EVENT = "smartsupp:refresh-identity";
 export const SMARTSUPP_SCRIPT_ID = "smartsupp-loader";
 
+/** Alto Rich navy-green — matches --emerald / primary CTA tokens in globals.css */
+export const SMARTSUPP_BRAND_COLORS = {
+  light: "#064e3b",
+  dark: "#047857"
+} as const;
+
+export const SMARTSUPP_DEFAULT_KEY = "c9c2f3f8e32cdb96c278d23abacde841c5e7e2da";
+
 export type SmartsuppIdentity = {
   authenticated: boolean;
   name?: string;
@@ -38,7 +46,7 @@ declare global {
 }
 
 export function getSmartsuppKey(): string | undefined {
-  const key = process.env.NEXT_PUBLIC_SMARTSUPP_KEY?.trim();
+  const key = process.env.NEXT_PUBLIC_SMARTSUPP_KEY?.trim() || SMARTSUPP_DEFAULT_KEY;
   return key || undefined;
 }
 
@@ -107,7 +115,7 @@ export function refreshSmartsuppIdentity() {
 }
 
 export function smartsuppThemeColor(theme: "light" | "dark") {
-  return theme === "dark" ? "#34d399" : "#047857";
+  return theme === "dark" ? SMARTSUPP_BRAND_COLORS.dark : SMARTSUPP_BRAND_COLORS.light;
 }
 
 export function buildSmartsuppBootstrap(key: string) {
@@ -117,15 +125,16 @@ export function buildSmartsuppBootstrap(key: string) {
   window.__SMARTSUPP_BOOTSTRAPPED__ = true;
 
   var theme = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  var color = theme === "dark" ? ${JSON.stringify(SMARTSUPP_BRAND_COLORS.dark)} : ${JSON.stringify(SMARTSUPP_BRAND_COLORS.light)};
 
   window._smartsupp = window._smartsupp || {};
   window._smartsupp.key = ${JSON.stringify(key)};
-  window._smartsupp.color = theme === "dark" ? "#34d399" : "#047857";
+  window._smartsupp.color = color;
   window._smartsupp.orientation = "right";
   window._smartsupp.ratingEnabled = true;
   window._smartsupp.privacyNoticeEnabled = true;
 
-  window.smartsupp||(function (d) {
+  window.smartsupp || (function (d) {
     var s, c, o = (window.smartsupp = function () { o._.push(arguments); });
     o._ = [];
     s = d.getElementsByTagName("script")[0];

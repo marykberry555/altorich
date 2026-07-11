@@ -473,10 +473,10 @@ img {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Smartsupp live chat — mobile-safe positioning */
+/* Smartsupp live chat — mobile-safe positioning + Alto Rich navy-green widget */
 :root {
   --smartsupp-offset-bottom: 0px;
-  --smartsupp-accent: #047857;
+  --smartsupp-accent: #064e3b;
 }
 
 body[data-mobile-nav="true"] {
@@ -494,6 +494,14 @@ body[data-mobile-nav="true"] {
 .smartsupp-widget-container {
   bottom: calc(1rem + var(--smartsupp-offset-bottom, 0px)) !important;
   z-index: 9990 !important;
+}
+
+#chat-widget-container .widget-label,
+#chat-widget-container .button,
+#chat-widget-container [class*="widget"] button,
+.smartsupp-widget-container .widget-label {
+  background-color: var(--smartsupp-accent) !important;
+  border-color: var(--smartsupp-accent) !important;
 }
 
 @media (max-width: 1023px) {
