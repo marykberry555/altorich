@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
   }
 
   const settlements = await services.settlements.processWeeklyMondaySettlements(new Date());
+  const promoted = await services.withdrawals.promoteScheduledWithdrawals(new Date());
 
   const { data: activeInvestments } = await services.supabase
     .from("investments")
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     settlementsProcessed: settlements.length,
+    scheduledPayoutsPromoted: promoted,
     emailsSent
   });
 }

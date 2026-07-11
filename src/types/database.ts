@@ -34,6 +34,7 @@ export type Database = {
           must_change_password: boolean;
           preferred_package_slug: string | null;
           account_status: "active" | "paused" | "disabled" | "deactivated";
+          auto_weekly_payout: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -54,6 +55,7 @@ export type Database = {
           must_change_password?: boolean;
           preferred_package_slug?: string | null;
           account_status?: "active" | "paused" | "disabled" | "deactivated";
+          auto_weekly_payout?: boolean;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]> & {
           notification_preferences?: Json;
@@ -67,6 +69,7 @@ export type Database = {
           must_change_pin?: boolean;
           must_change_password?: boolean;
           preferred_package_slug?: string | null;
+          auto_weekly_payout?: boolean;
         };
         Relationships: TableRelationships;
       };
@@ -217,10 +220,13 @@ export type Database = {
           bank_name: string;
           account_name: string;
           account_number: string;
-          status: "pending" | "approved" | "paid" | "rejected" | "cancelled";
+          status: "scheduled" | "pending" | "approved" | "paid" | "rejected" | "cancelled";
           rejection_reason: string | null;
           reviewed_by: string | null;
           wallet_transaction_id: string | null;
+          request_type: "manual" | "automatic";
+          scheduled_at: string | null;
+          note: string | null;
           created_at: string;
           reviewed_at: string | null;
         };
@@ -231,7 +237,10 @@ export type Database = {
           account_name: string;
           account_number: string;
           bank_account_id?: string | null;
-          status?: "pending" | "approved" | "paid" | "rejected" | "cancelled";
+          status?: "scheduled" | "pending" | "approved" | "paid" | "rejected" | "cancelled";
+          request_type?: "manual" | "automatic";
+          scheduled_at?: string | null;
+          note?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["withdrawals"]["Insert"]> & {
           status?: "pending" | "approved" | "paid" | "rejected" | "cancelled";

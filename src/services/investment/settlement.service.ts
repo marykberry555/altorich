@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
+import { WithdrawalService } from "@/services/withdrawal/withdrawal.service";
 import { settlementDates, type SettlementFrequency } from "@/lib/investment";
 import { settlementInterestForInvestment } from "@/lib/investment/accrual-math";
 
@@ -87,7 +88,65 @@ export class SettlementService {
       const stopRequested = Boolean((investment as { stop_requested_at?: string | null }).stop_requested_at);
       const userId = investment.user_id;
 
-      if (stopRequested) {
+      const { data: profile } = await this.supabase
+        .from("profiles")
+        .select("auto_weekly_payout")
+        .eq("id", userId)
+        .maybeSingle();
+
+      const autoWeeklyPayout = Boolean(profile?.auto_weekly_payout);
+
+      if (autoWeeklyPayout && !stopRequested) {
+        const wallet = await this.wallet.getWalletByUserId(userId);
+        await this.wallet.creditInvestmentSettlement(
+          wallet.id,
+          interest,
+          investment.id,
+          `auto-payout-${asOf.toISOString().slice(0, 10)}`
+        );
+
+        await this.supabase
+          .from("investments")
+          .update({
+            total_earned: Number(investment.total_earned ?? 0) + interest,
+            last_weekly_settlement_at: asOf.toISOString()
+          } as Database["public"]["Tables"]["investments"]["Update"])
+          .eq("id", investment.id);
+
+        await this.notifications.notifyEvent("settlement.completed", userId, {
+          amount: interest,
+          investment_id: investment.id,
+          action: "auto_payout"
+        });
+
+        const { data: bankAccounts } = await this.supabase
+          .from("bank_accounts")
+          .select("*")
+          .eq("user_id", userId)
+          .order("is_default", { ascending: false })
+          .limit(1);
+
+        const bank = bankAccounts?.[0];
+        if (bank) {
+          const withdrawals = new WithdrawalService(this.supabase);
+          await withdrawals.createAutomaticFromSettlement({
+            userId,
+            amount: interest,
+            bankName: bank.bank_name,
+            accountName: bank.account_name,
+            accountNumber: bank.account_number,
+            bankAccountId: bank.id,
+            asOf
+          });
+        } else {
+          await this.notifications.notifyEvent("withdrawal.auto_skipped", userId, {
+            amount: interest,
+            reason: "Add a payout bank account to receive automatic withdrawals."
+          });
+        }
+
+        results.push({ investmentId: investment.id, amount: interest, action: "payout" });
+      } else if (stopRequested) {
         const wallet = await this.wallet.getWalletByUserId(userId);
         await this.wallet.creditInvestmentSettlement(wallet.id, interest, investment.id, `stop-${asOf.toISOString().slice(0, 10)}`);
 

@@ -93,6 +93,51 @@ export class ProfileService {
     return data;
   }
 
+  async upsertPayoutBankAccount(
+    userId: string,
+    input: { bankName: string; accountName: string; accountNumber: string }
+  ) {
+    const accounts = await this.listBankAccounts(userId);
+    const primary = accounts.find((a) => a.is_default) ?? accounts[0];
+
+    if (!primary) {
+      return this.addBankAccount(userId, { ...input, isDefault: true });
+    }
+
+    const { data, error } = await this.supabase
+      .from("bank_accounts")
+      .update({
+        bank_name: input.bankName,
+        account_name: input.accountName,
+        account_number: input.accountNumber,
+        is_default: true
+      })
+      .eq("id", primary.id)
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (accounts.length > 1) {
+      await this.supabase.from("bank_accounts").delete().eq("user_id", userId).neq("id", primary.id);
+    }
+
+    return data;
+  }
+
+  async setAutoWeeklyPayout(userId: string, enabled: boolean) {
+    const { data, error } = await this.supabase
+      .from("profiles")
+      .update({ auto_weekly_payout: enabled })
+      .eq("id", userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
   async deleteBankAccount(userId: string, accountId: string) {
     const { data, error } = await this.supabase
       .from("bank_accounts")

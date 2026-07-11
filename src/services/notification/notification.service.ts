@@ -27,6 +27,9 @@ export type NotificationEvent =
   | "investment.purchased"
   | "settlement.completed"
   | "withdrawal.submitted"
+  | "withdrawal.auto_created"
+  | "withdrawal.auto_scheduled"
+  | "withdrawal.auto_skipped"
   | "withdrawal.approved"
   | "withdrawal.rejected"
   | "withdrawal.paid"
@@ -73,6 +76,7 @@ export class NotificationService {
       case "payment.received":
         return walletFundedEmailHtml(amount);
       case "withdrawal.submitted":
+      case "withdrawal.auto_created":
         return payoutSubmittedEmailHtml(amount);
       case "withdrawal.approved":
       case "withdrawal.paid":
@@ -174,7 +178,22 @@ export class NotificationService {
       },
       "withdrawal.submitted": {
         title: "Payout submitted",
-        body: `Your payout request of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
+        body: String(
+          data.schedule_message ??
+            `Your payout request of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
+        )
+      },
+      "withdrawal.auto_created": {
+        title: "Automatic payout created",
+        body: `Your automatic weekly payout of ${formatNaira(Number(data.amount ?? 0))} has been queued for processing.`
+      },
+      "withdrawal.auto_scheduled": {
+        title: "Automatic payout scheduled",
+        body: "Automatic weekly payout is enabled. Accrued earnings will be withdrawn every Monday."
+      },
+      "withdrawal.auto_skipped": {
+        title: "Automatic payout skipped",
+        body: String(data.reason ?? "Add a payout bank account to receive automatic withdrawals.")
       },
       "withdrawal.approved": {
         title: "Payout approved",
