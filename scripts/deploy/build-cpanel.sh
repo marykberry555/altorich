@@ -26,7 +26,8 @@ rm -rf node_modules 2>/dev/null || true
 npm install --include=dev
 
 deploy_log "Copying node_modules for build (CloudLinux symlink workaround)..."
-rm -f node_modules
+# rm -f leaves a partial directory after a failed deploy and breaks cp -a ("File exists").
+rm -rf node_modules
 cp -a "/home/altosujd/nodevenv/repositories/alto-app/${NODE_VERSION}/lib/node_modules" ./node_modules
 
 deploy_log "Building (webpack — required on CloudLinux)..."

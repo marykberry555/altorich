@@ -4,12 +4,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 export function DashboardSkeleton() {
   return (
     <div className="space-y-10 pb-4">
-      <Skeleton className="h-56 w-full rounded-[var(--radius-lg)]" />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 rounded-[var(--radius-lg)]" />
-        ))}
-      </div>
+      <Skeleton className="h-[22rem] w-full rounded-[var(--radius-lg)] sm:h-80" />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-24 rounded-[var(--radius-lg)]" />
