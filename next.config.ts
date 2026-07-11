@@ -51,7 +51,9 @@ const nextConfig: NextConfig = {
       { source: "/learn/investment-guide", destination: "/learn", permanent: true },
       { source: "/learn/help", destination: "/learn/faq", permanent: true },
       { source: "/partner", destination: "/contact", permanent: true },
-      { source: "/referral", destination: "/auth/register", permanent: true }
+      { source: "/referral", destination: "/auth/register", permanent: true },
+      { source: "/referrals", destination: "/team", permanent: true },
+      { source: "/funding", destination: "/deposits", permanent: true }
     ];
   }
 };

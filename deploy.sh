@@ -82,6 +82,10 @@ phase_cpanel() {
     git remote add "$PRODUCTION_REMOTE" "$PRODUCTION_URL"
   fi
 
+  if [[ "${PREPARE_CPANEL_REMOTE:-1}" != "0" ]]; then
+    bash "$ROOT/scripts/deploy/prepare-cpanel-remote.sh"
+  fi
+
   git push "$PRODUCTION_REMOTE" "$BRANCH"
   log "Pushed to $PRODUCTION_REMOTE/$BRANCH (cPanel post-deploy runs via .cpanel.yml)."
 

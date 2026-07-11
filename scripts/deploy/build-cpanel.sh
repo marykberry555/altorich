@@ -43,4 +43,11 @@ deploy_log "Build finished. BUILD_ID=$(cat .next/BUILD_ID 2>/dev/null || echo mi
 bash "$SCRIPT_DIR/refresh-node-app.sh"
 bash "$SCRIPT_DIR/verify-deploy.sh"
 
+# Keep cPanel Git working tree clean so the next `git push production` is accepted.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  deploy_log "Resetting git working tree after build..."
+  git reset --hard HEAD
+  git clean -fd --exclude=.env.production --exclude=.env.local 2>/dev/null || git clean -fd
+fi
+
 deploy_log "=== build-cpanel complete ==="
