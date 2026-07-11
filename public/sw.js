@@ -1,5 +1,5 @@
 /* AltoRich service worker — static assets only. Never cache HTML or Next.js runtime. */
-const BUILD_ID = "__BUILD_ID__";
+const BUILD_ID = "ckai0itnZ6YlS3GM-2FER";
 const CACHE_PREFIX = "altorich-static-";
 const CACHE_NAME = `${CACHE_PREFIX}${BUILD_ID}`;
 

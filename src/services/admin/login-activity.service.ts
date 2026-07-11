@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { parseUserAgent } from "@/lib/auth/user-agent";
+import { dispatchAdminPush } from "@/services/admin/admin-push.service";
 
 type Client = SupabaseClient<Database>;
 
@@ -9,7 +10,9 @@ export type RecordLoginActivityInput = {
   userAgent: string;
   ipAddress?: string;
   city?: string;
+  region?: string;
   country?: string;
+  isp?: string;
 };
 
 export class LoginActivityService {
@@ -28,7 +31,9 @@ export class LoginActivityService {
         browser: parsed.browser,
         operating_system: parsed.operatingSystem,
         city: input.city ?? null,
-        country: input.country ?? null
+        region: input.region ?? null,
+        country: input.country ?? null,
+        isp: input.isp ?? null
       })
       .select("id, user_id, created_at")
       .single();
@@ -42,7 +47,7 @@ export class LoginActivityService {
       .maybeSingle();
 
     const label = profile?.full_name ?? profile?.username ?? "Member";
-    const location = [input.city, input.country].filter(Boolean).join(", ");
+    const location = [input.city, input.region, input.country].filter(Boolean).join(", ");
 
     await this.supabase.from("admin_notifications").insert({
       event_type: "user.login",
@@ -58,13 +63,22 @@ export class LoginActivityService {
       }
     });
 
+    void dispatchAdminPush(this.supabase, {
+      event_type: "user.login",
+      title: "Successful login",
+      body: `${label} signed in${location ? ` · ${location}` : ""}`,
+      entity_type: "login_activity",
+      entity_id: data.id,
+      metadata: { user_id: input.userId }
+    });
+
     return data;
   }
 
   async listRecent(limit = 50) {
     const { data, error } = await this.supabase
       .from("login_activity")
-      .select("id, user_id, ip_address, device_type, browser, operating_system, city, country, created_at")
+      .select("id, user_id, ip_address, device_type, browser, operating_system, city, region, country, isp, created_at")
       .order("created_at", { ascending: false })
       .limit(limit);
 

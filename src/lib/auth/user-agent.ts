@@ -31,7 +31,9 @@ export function parseUserAgent(userAgent: string): ParsedUserAgent {
 
 export type LoginGeoHint = {
   city?: string;
+  region?: string;
   country?: string;
+  isp?: string;
 };
 
 /** Best-effort geo from CDN / proxy headers — no GPS required. */
@@ -41,15 +43,23 @@ export function geoFromRequestHeaders(headers: Headers): LoginGeoHint {
     headers.get("x-vercel-ip-city") ??
     headers.get("x-appengine-city") ??
     undefined;
+  const region =
+    headers.get("cf-region") ??
+    headers.get("cf-region-code") ??
+    headers.get("x-vercel-ip-country-region") ??
+    undefined;
   const country =
     headers.get("cf-ipcountry") ??
     headers.get("x-vercel-ip-country") ??
     headers.get("x-appengine-country") ??
     undefined;
+  const isp = headers.get("cf-asorganization") ?? undefined;
 
   return {
     city: city?.trim() || undefined,
-    country: country?.trim() || undefined
+    region: region?.trim() || undefined,
+    country: country?.trim() || undefined,
+    isp: isp?.trim() || undefined
   };
 }
 

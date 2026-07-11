@@ -375,7 +375,9 @@ export type Database = {
           browser: string | null;
           operating_system: string | null;
           city: string | null;
+          region: string | null;
           country: string | null;
+          isp: string | null;
           created_at: string;
         };
         Insert: {
@@ -387,7 +389,9 @@ export type Database = {
           browser?: string | null;
           operating_system?: string | null;
           city?: string | null;
+          region?: string | null;
           country?: string | null;
+          isp?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["login_activity"]["Insert"]>;
         Relationships: TableRelationships;
@@ -436,6 +440,45 @@ export type Database = {
           user_agent?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["admin_push_subscriptions"]["Insert"]>;
+        Relationships: TableRelationships;
+      };
+      admin_notes: {
+        Row: {
+          id: string;
+          member_id: string;
+          author_id: string;
+          body: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          member_id: string;
+          author_id: string;
+          body: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["admin_notes"]["Insert"]>;
+        Relationships: TableRelationships;
+      };
+      security_events: {
+        Row: {
+          id: string;
+          event_type: string;
+          user_id: string | null;
+          ip_address: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_type: string;
+          user_id?: string | null;
+          ip_address?: string | null;
+          metadata?: Json;
+        };
+        Update: never;
         Relationships: TableRelationships;
       };
       activity_logs: TableStub;

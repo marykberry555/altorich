@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useAdminRealtime } from "@/lib/admin-app/useAdminRealtime";
 
 type ActivityRow = {
   id: string;
@@ -10,29 +11,32 @@ type ActivityRow = {
   browser: string | null;
   operating_system: string | null;
   city: string | null;
+  region: string | null;
   country: string | null;
+  isp: string | null;
   created_at: string;
 };
 
 export function AdminActivityPageClient() {
   const [rows, setRows] = useState<ActivityRow[]>([]);
 
-  useEffect(() => {
-    async function load() {
-      const res = await fetch("/api/admin/login-activity?limit=100", { cache: "no-store" });
-      if (res.ok) setRows(await res.json());
-    }
-    void load();
-    const timer = window.setInterval(() => void load(), 15_000);
-    return () => window.clearInterval(timer);
+  const load = useCallback(async () => {
+    const res = await fetch("/api/admin/login-activity?limit=100", { cache: "no-store" });
+    if (res.ok) setRows(await res.json());
   }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  useAdminRealtime(() => void load(), ["login_activity"]);
 
   return (
     <div className="space-y-6">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">Monitoring</p>
         <h1 className="mt-2 text-2xl font-bold text-white">Login activity</h1>
-        <p className="mt-2 text-sm text-zinc-400">Successful sign-ins with device and approximate location metadata.</p>
+        <p className="mt-2 text-sm text-zinc-400">Successful sign-ins with device and approximate IP-derived location.</p>
       </header>
 
       <div className="overflow-x-auto rounded-xl border border-white/10">
@@ -41,7 +45,10 @@ export function AdminActivityPageClient() {
             <tr>
               <th className="px-4 py-3">Member</th>
               <th className="px-4 py-3">When</th>
-              <th className="px-4 py-3">Location</th>
+              <th className="px-4 py-3">City</th>
+              <th className="px-4 py-3">Region</th>
+              <th className="px-4 py-3">Country</th>
+              <th className="px-4 py-3">ISP</th>
               <th className="px-4 py-3">Device</th>
               <th className="px-4 py-3">Browser / OS</th>
               <th className="px-4 py-3">IP</th>
@@ -50,7 +57,7 @@ export function AdminActivityPageClient() {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-zinc-400">
+                <td colSpan={9} className="px-4 py-8 text-center text-zinc-400">
                   No login activity recorded yet
                 </td>
               </tr>
@@ -59,7 +66,10 @@ export function AdminActivityPageClient() {
                 <tr key={row.id} className="border-t border-white/5">
                   <td className="px-4 py-3 font-medium text-white">{row.member_name}</td>
                   <td className="px-4 py-3 text-zinc-300">{new Date(row.created_at).toLocaleString("en-NG")}</td>
-                  <td className="px-4 py-3 text-zinc-300">{[row.city, row.country].filter(Boolean).join(", ") || "—"}</td>
+                  <td className="px-4 py-3 text-zinc-300">{row.city ?? "—"}</td>
+                  <td className="px-4 py-3 text-zinc-300">{row.region ?? "—"}</td>
+                  <td className="px-4 py-3 text-zinc-300">{row.country ?? "—"}</td>
+                  <td className="px-4 py-3 text-zinc-300">{row.isp ?? "—"}</td>
                   <td className="px-4 py-3 capitalize text-zinc-300">{row.device_type ?? "—"}</td>
                   <td className="px-4 py-3 text-zinc-300">
                     {row.browser ?? "—"} / {row.operating_system ?? "—"}

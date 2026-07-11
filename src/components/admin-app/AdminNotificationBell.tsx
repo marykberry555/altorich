@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { useAdminRealtime, setAdminAppBadge } from "@/lib/admin-app/useAdminRealtime";
 
 type NotificationItem = {
   id: string;
@@ -25,13 +26,20 @@ export function AdminNotificationBell() {
     const data = (await res.json()) as { items: NotificationItem[]; unreadCount: number };
     setItems(data.items);
     setUnreadCount(data.unreadCount);
+    setAdminAppBadge(data.unreadCount);
+
+    if ("serviceWorker" in navigator && data.items[0] && !data.items[0].read_at) {
+      navigator.serviceWorker.ready
+        .then((reg) => reg.active?.postMessage({ type: "ADMIN_BADGE", count: data.unreadCount }))
+        .catch(() => undefined);
+    }
   }, []);
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 15_000);
-    return () => window.clearInterval(timer);
   }, [load]);
+
+  useAdminRealtime(() => void load(), ["admin_notifications"]);
 
   async function markAllRead() {
     await fetch("/api/admin/notifications", {

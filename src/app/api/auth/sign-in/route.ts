@@ -7,6 +7,7 @@ import { applySessionToCookies } from "@/lib/auth/apply-session";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
 import { userIsAdmin } from "@/lib/auth/admin-role";
 import { captureLoginActivity } from "@/lib/auth/capture-login-activity";
+import { recordSecurityEvent } from "@/lib/auth/record-security-event";
 
 const schema = z.object({
   email: z.string().email(),
@@ -37,6 +38,16 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, redirect, isAdmin });
   } catch (error) {
+    try {
+      const supabase = await getServiceClientOrThrow();
+      await recordSecurityEvent(supabase, {
+        eventType: "login.failed",
+        request: req,
+        metadata: { route: "admin_sign_in", message: error instanceof Error ? error.message : "Login failed" }
+      });
+    } catch {
+      // ignore
+    }
     return apiErrorResponse(error);
   }
 }

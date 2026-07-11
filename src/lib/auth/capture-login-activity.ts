@@ -12,7 +12,9 @@ export async function captureLoginActivity(req: Request, userId: string) {
       userAgent: req.headers.get("user-agent") ?? "",
       ipAddress: clientIpFromHeaders(req.headers),
       city: geo.city,
-      country: geo.country
+      region: geo.region,
+      country: geo.country,
+      isp: geo.isp
     });
   } catch {
     // Non-blocking — never fail auth because activity logging failed.

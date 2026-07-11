@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { useAdminRealtime } from "@/lib/admin-app/useAdminRealtime";
 
 type NotificationItem = {
   id: string;
@@ -25,9 +26,9 @@ export function AdminNotificationsPageClient() {
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 15_000);
-    return () => window.clearInterval(timer);
   }, [load]);
+
+  useAdminRealtime(() => void load(), ["admin_notifications"]);
 
   async function markAllRead() {
     await fetch("/api/admin/notifications", {

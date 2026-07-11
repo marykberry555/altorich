@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2, Plus, RefreshCw, Trash2, UserPlus } from "lucide-react";
 import { formatNaira } from "@/lib/domain";
 import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE } from "@/lib/validation/identity";
@@ -20,7 +21,14 @@ const STATUS_BY_ACTION: Partial<Record<MemberAction, string>> = {
   deactivate: "deactivated"
 };
 
-export function MembersAdminPanel() {
+export function MembersAdminPanel({
+  profilePath,
+  dark = false
+}: {
+  profilePath?: (id: string) => string;
+  dark?: boolean;
+} = {}) {
+  const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
@@ -314,7 +322,10 @@ export function MembersAdminPanel() {
                       <button
                         type="button"
                         className="text-left hover:text-[var(--emerald)]"
-                        onClick={() => setDetailMember({ id: member.id, name: member.full_name || "Member" })}
+                        onClick={() => {
+                          if (profilePath) router.push(profilePath(member.id));
+                          else setDetailMember({ id: member.id, name: member.full_name || "Member" });
+                        }}
                       >
                         <p className="font-medium underline-offset-2 hover:underline">{member.full_name || "—"}</p>
                         <p className="text-xs text-[var(--text-muted)]">{member.email ?? member.phone ?? member.invite_code}</p>
@@ -340,7 +351,7 @@ export function MembersAdminPanel() {
         </DataTable>
       </Card>
 
-      {detailMember ? (
+      {detailMember && !profilePath ? (
         <MemberDetailPanel memberId={detailMember.id} memberName={detailMember.name} onClose={() => setDetailMember(null)} />
       ) : null}
     </div>

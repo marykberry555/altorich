@@ -13,7 +13,9 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  ScrollText,
   Settings,
+  Shield,
   ShieldCheck,
   TrendingUp,
   Users,
@@ -28,6 +30,7 @@ import { ADMIN_APP_HOME, adminAppPath } from "@/lib/admin-app/constants";
 import { Button } from "@/components/ui/Button";
 import { AdminNotificationBell } from "@/components/admin-app/AdminNotificationBell";
 import { AdminInstallBanner } from "@/components/admin-app/AdminInstallBanner";
+import { AdminGlobalSearch } from "@/components/admin-app/AdminGlobalSearch";
 
 const navSections = [
   {
@@ -58,7 +61,8 @@ const navSections = [
     items: [
       { href: adminAppPath("/notifications"), label: "Notifications", icon: Bell },
       { href: adminAppPath("/activity"), label: "Login activity", icon: Activity },
-      { href: adminAppPath("/audit"), label: "Audit logs", icon: ShieldCheck },
+      { href: adminAppPath("/security"), label: "Security", icon: Shield },
+      { href: adminAppPath("/audit"), label: "Audit logs", icon: ScrollText },
       { href: adminAppPath("/reports"), label: "Reports", icon: FileText },
       { href: adminAppPath("/support"), label: "Support", icon: Headphones }
     ]
@@ -125,7 +129,7 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
 
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-950/90 px-4 py-3 backdrop-blur-md lg:px-8">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <Button
               type="button"
               variant="outline"
@@ -136,7 +140,8 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
             >
               <Menu size={18} />
             </Button>
-            <div>
+            <AdminGlobalSearch />
+            <div className="hidden lg:block">
               <p className="text-sm font-semibold text-white">Alto Rich Operations</p>
               <p className="text-xs text-zinc-400">{COMPANY.legalName}</p>
             </div>
