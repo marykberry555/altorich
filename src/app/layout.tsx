@@ -9,7 +9,6 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SmartsuppProvider } from "@/components/chat/SmartsuppProvider";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
 import { AppBootstrapLoader } from "@/components/brand/AppBootstrapLoader";
-import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { PwaUpdateToast } from "@/components/pwa/PwaUpdateToast";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
@@ -105,7 +104,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <SocialProofToasts />
             <SmartsuppProvider />
             <OfflineIndicator />
-            <InstallPrompt />
             <PwaUpdateToast />
           </ThemeProvider>
         </PwaProvider>
