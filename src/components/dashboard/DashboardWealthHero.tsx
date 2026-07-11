@@ -158,14 +158,6 @@ export function DashboardWealthHero({
             <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(walletBalance)}</dd>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Portfolio value</dt>
-            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(portfolioValue)}</dd>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Total invested</dt>
-            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(totalPrincipal)}</dd>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
             <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Today&apos;s earnings</dt>
             <dd className="mt-1 text-lg font-bold tabular-nums text-emerald-200 sm:text-xl">
               {isLive ? (
@@ -174,6 +166,14 @@ export function DashboardWealthHero({
                 formatNaira(0)
               )}
             </dd>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Total invested</dt>
+            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(totalPrincipal)}</dd>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Portfolio value</dt>
+            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(portfolioValue)}</dd>
           </div>
         </dl>
       </div>
@@ -235,16 +235,16 @@ export function DashboardWealthHeroStatic({
             <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(walletBalance)}</dd>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Portfolio value</dt>
-            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(portfolioValue)}</dd>
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Today&apos;s earnings</dt>
+            <dd className="mt-1 text-lg font-bold tabular-nums text-emerald-200 sm:text-xl">{formatNaira(0)}</dd>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
             <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Total invested</dt>
             <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(totalInvested)}</dd>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Today&apos;s earnings</dt>
-            <dd className="mt-1 text-lg font-bold tabular-nums text-emerald-200 sm:text-xl">{formatNaira(0)}</dd>
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Portfolio value</dt>
+            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(portfolioValue)}</dd>
           </div>
         </dl>
       </div>
