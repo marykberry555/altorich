@@ -1,13 +1,11 @@
 import type { MetadataRoute } from "next";
-import { COMPANY } from "@/lib/company";
 
+/** Disallow all crawlers — private site, link-only discovery. */
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
-      disallow: ["/hard/", "/api/", "/dashboard/", "/wallet/", "/portfolio/", "/profile/", "/settings/"]
-    },
-    sitemap: `${COMPANY.siteUrl}/sitemap.xml`
+      disallow: "/"
+    }
   };
 }

@@ -1,6 +1,5 @@
 import { DownloadPageContent } from "@/components/marketing/DownloadPageContent";
-import { JsonLd } from "@/components/seo/JsonLd";
-import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
+import { buildMetadata } from "@/lib/seo";
 import { downloadMeta } from "@/content/download";
 
 export const metadata = buildMetadata({
@@ -10,10 +9,5 @@ export const metadata = buildMetadata({
 });
 
 export default function DownloadPage() {
-  return (
-    <>
-      <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Download", path: "/download" }])} />
-      <DownloadPageContent />
-    </>
-  );
+  return <DownloadPageContent />;
 }

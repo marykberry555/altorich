@@ -3,7 +3,7 @@ import Script from "next/script";
 import { Plus_Jakarta_Sans, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { COMPANY } from "@/lib/company";
-import { BRAND, ICONS } from "@/lib/brand";
+import { ICONS } from "@/lib/brand";
 import { themeInitScript } from "@/lib/theme";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SmartsuppProvider } from "@/components/chat/SmartsuppProvider";
@@ -13,8 +13,7 @@ import { ServiceWorkerCleanup } from "@/components/pwa/ServiceWorkerCleanup";
 import { ChunkLoadRecovery } from "@/components/pwa/ChunkLoadRecovery";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { getBuildId } from "@/lib/build-id";
-import { organizationJsonLd, websiteJsonLd, defaultOpenGraphImages } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { PRIVATE_SITE_ROBOTS } from "@/lib/security/bot-block";
 import { SocialProofToasts } from "@/components/social/SocialProofToasts";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -29,7 +28,6 @@ const instrument = Instrument_Sans({
   display: "swap"
 });
 
-const ogImage = `${COMPANY.siteUrl}${BRAND.og.default}`;
 
 export const metadata: Metadata = {
   title: {
@@ -43,6 +41,7 @@ export const metadata: Metadata = {
   creator: COMPANY.brand,
   publisher: COMPANY.legalName,
   formatDetection: { email: false, address: false, telephone: false },
+  robots: PRIVATE_SITE_ROBOTS,
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -56,19 +55,17 @@ export const metadata: Metadata = {
   },
   manifest: "/site.webmanifest",
   openGraph: {
-    title: `${COMPANY.brand} — Premium wealth platform`,
+    title: `${COMPANY.brand}`,
     description: COMPANY.tagline,
     url: COMPANY.siteUrl,
     siteName: COMPANY.brand,
     locale: "en_NG",
-    type: "website",
-    images: defaultOpenGraphImages
+    type: "website"
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: COMPANY.brand,
-    description: COMPANY.tagline,
-    images: [ogImage]
+    description: COMPANY.tagline
   },
   other: {
     "msapplication-TileColor": "#064e3b",
@@ -106,7 +103,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="antialiased">
         <ServiceWorkerCleanup />
         <ChunkLoadRecovery buildId={buildId} />
-        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         <PwaProvider>
           <AppBootstrapLoader />
           <ThemeProvider>

@@ -1,6 +1,5 @@
 import { HomePage } from "@/components/marketing/HomePage";
-import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { buildMetadata } from "@/lib/seo";
 import { BRAND } from "@/lib/brand";
 import { COMPANY } from "@/lib/company";
 
@@ -13,10 +12,5 @@ export const metadata = buildMetadata({
 });
 
 export default function Page() {
-  return (
-    <>
-      <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }])} />
-      <HomePage />
-    </>
-  );
+  return <HomePage />;
 }

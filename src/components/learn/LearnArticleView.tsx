@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLearnArticle } from "@/content/learn";
-import { buildMetadata, breadcrumbJsonLd, articleJsonLd } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { buildMetadata } from "@/lib/seo";
 import { IMAGES } from "@/lib/images";
 import Image from "next/image";
 
@@ -31,19 +30,6 @@ export function LearnArticleView({ slug }: { slug: string }) {
 
   return (
     <>
-      <JsonLd
-        data={[
-          breadcrumbJsonLd([
-            { name: "Learn", path: "/learn" },
-            { name: article.title, path: article.path }
-          ]),
-          articleJsonLd({
-            title: article.title,
-            description: article.description,
-            path: article.path
-          })
-        ]}
-      />
       <article className="section-pad">
         <div className="container-ar">
           <nav className="text-sm text-[var(--text-subtle)]" aria-label="Breadcrumb">

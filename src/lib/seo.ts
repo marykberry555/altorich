@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { COMPANY } from "@/lib/company";
 import { BRAND, ICONS } from "@/lib/brand";
+import { PRIVATE_SITE_ROBOTS } from "@/lib/security/bot-block";
+
+export { PRIVATE_SITE_ROBOTS };
 
 const siteUrl = COMPANY.siteUrl;
 
@@ -44,7 +47,7 @@ export function buildMetadata(page: PageSeo): Metadata {
     title: page.title,
     description: page.description,
     alternates: { canonical: url },
-    robots: page.noIndex ? { index: false, follow: false } : { index: true, follow: true },
+    robots: PRIVATE_SITE_ROBOTS,
     openGraph: {
       title: page.title,
       description: page.description,

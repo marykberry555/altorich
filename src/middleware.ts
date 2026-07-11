@@ -3,6 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { HARD_OPS_HOME } from "@/lib/hard-ops";
 import { buildPublicUrl } from "@/lib/request-url";
 import { applyDocumentNoStoreHeaders } from "@/lib/cache/response-headers";
+import { botBlockedResponse, isBlockedBot, X_ROBOTS_TAG } from "@/lib/security/bot-block";
 
 const protectedRoutes = [
   "/dashboard",
@@ -41,11 +42,17 @@ function isHardOpsRoute(pathname: string) {
 }
 
 function withNoStore(response: NextResponse) {
+  response.headers.set("X-Robots-Tag", X_ROBOTS_TAG);
   return applyDocumentNoStoreHeaders(response);
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const userAgent = request.headers.get("user-agent");
+
+  if (isBlockedBot(userAgent, pathname)) {
+    return botBlockedResponse();
+  }
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     const target = pathname.replace(/^\/admin/, HARD_OPS_HOME) || HARD_OPS_HOME;
