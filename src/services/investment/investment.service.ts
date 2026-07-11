@@ -6,6 +6,7 @@ import { NotificationService } from "@/services/notification/notification.servic
 import { SettlementService } from "@/services/investment/settlement.service";
 import { ReferralService } from "@/services/referral/referral.service";
 import { addDays, makeInvestmentReference, type SettlementFrequency } from "@/lib/investment";
+import { buildPlanDefaults, type CreatePlanInput } from "@/lib/packages/plan-defaults";
 
 type Client = SupabaseClient<Database>;
 type InvestmentPlan = Database["public"]["Tables"]["investment_plans"]["Row"];
@@ -317,6 +318,44 @@ export class InvestmentService {
 
     if (error) throw error;
     return data;
+  }
+
+  private async uniquePlanSlug(base: string) {
+    let slug = base;
+    let suffix = 2;
+    while (true) {
+      const { data } = await this.supabase.from("investment_plans").select("id").eq("slug", slug).maybeSingle();
+      if (!data) return slug;
+      slug = `${base}-${suffix}`;
+      suffix += 1;
+    }
+  }
+
+  async createPlan(input: CreatePlanInput) {
+    const defaults = buildPlanDefaults(input);
+    const slug = await this.uniquePlanSlug(defaults.slugBase);
+
+    return this.upsertPlan({
+      slug,
+      name: defaults.name,
+      tier: defaults.tier,
+      category: defaults.category,
+      price: defaults.price,
+      min_investment: defaults.min_investment,
+      max_investment: defaults.max_investment,
+      currency: defaults.currency,
+      cycle_days: defaults.cycle_days,
+      projected_daily: defaults.projected_daily,
+      first_bonus: defaults.first_bonus,
+      description: defaults.description,
+      settlement_frequency: defaults.settlement_frequency,
+      plan_status: defaults.plan_status,
+      visibility: defaults.visibility,
+      is_active: defaults.is_active,
+      sort_order: defaults.sort_order,
+      weekly_roi_bps: defaults.weekly_roi_bps,
+      risk_disclosure: defaults.risk_disclosure
+    } as Database["public"]["Tables"]["investment_plans"]["Insert"]);
   }
 
   async deletePlan(planId: string) {

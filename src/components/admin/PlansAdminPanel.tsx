@@ -1,8 +1,10 @@
 "use client";
 
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { PackageSlug } from "@/content/packages";
 import { formatNaira } from "@/lib/domain";
+import { PACKAGE_TIER_CONFIG, getTierConfig } from "@/lib/packages/tier-config";
 import { DataTable, SectionHeading, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/design-system";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -13,46 +15,39 @@ type Props = {
 };
 
 type FormState = {
-  slug: string;
   name: string;
-  tier: string;
-  category: string;
-  price: string;
+  tier: PackageSlug;
   minInvestment: string;
   maxInvestment: string;
-  cycleDays: string;
-  projectedDaily: string;
-  settlementFrequency: "daily" | "weekly" | "monthly" | "maturity";
-  description: string;
-  riskDisclosure: string;
 };
 
-const emptyForm = (): FormState => ({
-  slug: "",
-  name: "",
-  tier: "starter",
-  category: "general",
-  price: "",
-  minInvestment: "",
-  maxInvestment: "",
-  cycleDays: "30",
-  projectedDaily: "0",
-  settlementFrequency: "weekly",
-  description: "Member investment package administered by AltoRich operations.",
-  riskDisclosure: "Returns are cooperative estimates, not guarantees. Capital is subject to pool performance and admin-approved settlements."
-});
+function formForTier(tier: PackageSlug): FormState {
+  const config = getTierConfig(tier)!;
+  return {
+    name: "",
+    tier,
+    minInvestment: String(config.minNgn),
+    maxInvestment: String(config.maxNgn)
+  };
+}
 
 export function PlansAdminPanel({ initialPlans }: Props) {
   const [plans, setPlans] = useState(initialPlans);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [form, setForm] = useState<FormState>(() => formForTier("starter"));
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const tierPreview = useMemo(() => getTierConfig(form.tier), [form.tier]);
 
   const reload = async () => {
     const res = await fetch("/api/admin/plans");
     const data = await res.json();
     if (res.ok) setPlans(data);
+  };
+
+  const setTier = (tier: PackageSlug) => {
+    setForm(formForTier(tier));
   };
 
   const createPlan = async (e: React.FormEvent) => {
@@ -64,30 +59,17 @@ export function PlansAdminPanel({ initialPlans }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          slug: form.slug.trim().toLowerCase().replace(/\s+/g, "-"),
-          name: form.name.trim(),
+          name: form.name.trim() || undefined,
           tier: form.tier,
-          category: form.category,
-          price: Number(form.price),
-          min_investment: Number(form.minInvestment || form.price),
-          max_investment: Number(form.maxInvestment || form.price),
-          cycle_days: Number(form.cycleDays),
-          projected_daily: Number(form.projectedDaily),
-          first_bonus: 0,
-          description: form.description,
-          settlement_frequency: form.settlementFrequency,
-          plan_status: "active",
-          visibility: "members",
-          is_active: true,
-          sort_order: plans.length,
-          risk_disclosure: form.riskDisclosure
+          min_investment: Number(form.minInvestment),
+          max_investment: Number(form.maxInvestment)
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Create failed");
-      setMessage(`Created package "${form.name}".`);
+      setMessage(`Created "${data.name}".`);
       setShowCreate(false);
-      setForm(emptyForm());
+      setForm(formForTier("starter"));
       await reload();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Create failed");
@@ -131,65 +113,62 @@ export function PlansAdminPanel({ initialPlans }: Props) {
 
       {showCreate ? (
         <Card variant="elevated" padding="md">
-          <form onSubmit={createPlan} className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1 text-sm">
-              Slug
-              <input className="field" value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} required />
-            </label>
-            <label className="grid gap-1 text-sm">
-              Name
-              <input className="field" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
-            </label>
-            <label className="grid gap-1 text-sm">
-              Tier
-              <select className="field" value={form.tier} onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value }))}>
-                <option value="starter">Starter</option>
-                <option value="growth">Growth</option>
-                <option value="premium">Premium</option>
-              </select>
-            </label>
-            <label className="grid gap-1 text-sm">
-              Category
-              <input className="field" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} required />
-            </label>
-            <label className="grid gap-1 text-sm">
-              Price (₦)
-              <input className="field" type="number" min="1" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} required />
-            </label>
-            <label className="grid gap-1 text-sm">
-              Min investment (₦)
-              <input className="field" type="number" min="1" value={form.minInvestment} onChange={(e) => setForm((f) => ({ ...f, minInvestment: e.target.value }))} />
-            </label>
-            <label className="grid gap-1 text-sm">
-              Max investment (₦)
-              <input className="field" type="number" min="1" value={form.maxInvestment} onChange={(e) => setForm((f) => ({ ...f, maxInvestment: e.target.value }))} />
-            </label>
-            <label className="grid gap-1 text-sm">
-              Cycle (days)
-              <input className="field" type="number" min="1" value={form.cycleDays} onChange={(e) => setForm((f) => ({ ...f, cycleDays: e.target.value }))} required />
-            </label>
-            <label className="grid gap-1 text-sm">
-              Projected daily (₦)
-              <input className="field" type="number" min="0" value={form.projectedDaily} onChange={(e) => setForm((f) => ({ ...f, projectedDaily: e.target.value }))} />
-            </label>
-            <label className="grid gap-1 text-sm">
-              Settlement
-              <select
-                className="field"
-                value={form.settlementFrequency}
-                onChange={(e) => setForm((f) => ({ ...f, settlementFrequency: e.target.value as FormState["settlementFrequency"] }))}
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="maturity">Maturity</option>
-              </select>
-            </label>
-            <label className="grid gap-1 text-sm sm:col-span-2">
-              Description
-              <textarea className="field min-h-20" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} required />
-            </label>
-            <div className="flex gap-2 sm:col-span-2">
+          <form onSubmit={createPlan} className="space-y-4">
+            <p className="text-sm text-[var(--text-muted)]">
+              Slug, weekly ROI, settlement, and description are filled in automatically from the package tier.
+            </p>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="grid gap-1 text-sm">
+                Package name
+                <input
+                  className="field"
+                  placeholder={tierPreview?.title ?? "Alto Starter"}
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                />
+              </label>
+              <label className="grid gap-1 text-sm">
+                Tier
+                <select className="field" value={form.tier} onChange={(e) => setTier(e.target.value as PackageSlug)}>
+                  {PACKAGE_TIER_CONFIG.map((tier) => (
+                    <option key={tier.slug} value={tier.slug}>
+                      {tier.title} ({tier.weeklyRoiPercent}% weekly)
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm">
+                Min investment (₦)
+                <input
+                  className="field"
+                  type="number"
+                  min="1"
+                  value={form.minInvestment}
+                  onChange={(e) => setForm((f) => ({ ...f, minInvestment: e.target.value }))}
+                  required
+                />
+              </label>
+              <label className="grid gap-1 text-sm">
+                Max investment (₦)
+                <input
+                  className="field"
+                  type="number"
+                  min="1"
+                  value={form.maxInvestment}
+                  onChange={(e) => setForm((f) => ({ ...f, maxInvestment: e.target.value }))}
+                  required
+                />
+              </label>
+            </div>
+
+            {tierPreview ? (
+              <p className="rounded-[var(--radius-sm)] bg-[var(--gray-100)] px-3 py-2 text-xs text-[var(--text-muted)]">
+                {tierPreview.subtitle} · Weekly settlement · {tierPreview.payoutTiming} · Open-ended ({365}-day cycle)
+              </p>
+            ) : null}
+
+            <div className="flex gap-2">
               <Button type="submit" disabled={busy === "create"}>
                 {busy === "create" ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                 Create package
@@ -207,8 +186,9 @@ export function PlansAdminPanel({ initialPlans }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Tier</TableHead>
               <TableHead>Min–Max</TableHead>
-              <TableHead>Frequency</TableHead>
+              <TableHead>Weekly ROI</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -217,10 +197,11 @@ export function PlansAdminPanel({ initialPlans }: Props) {
             {plans.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.name}</TableCell>
+                <TableCell className="capitalize">{p.tier}</TableCell>
                 <TableCell className="tabular-nums">
                   {formatNaira(Number(p.min_investment ?? p.price))} – {formatNaira(Number(p.max_investment ?? p.price))}
                 </TableCell>
-                <TableCell className="capitalize">{p.settlement_frequency ?? "daily"}</TableCell>
+                <TableCell>{((Number(p.weekly_roi_bps ?? 0) || 0) / 100).toFixed(0)}%</TableCell>
                 <TableCell>
                   <StatusBadge status={p.plan_status ?? "active"} />
                 </TableCell>
