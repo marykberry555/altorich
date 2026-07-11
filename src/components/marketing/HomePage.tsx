@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import { DownloadAppButton } from "@/components/pwa/DownloadAppButton";
+import { DownloadAppBadge } from "@/components/pwa/DownloadAppBadge";
 import { hero, investmentCategories, howItWorks, trustIndicators, sampleTestimonials, faqs } from "@/content/site";
 import { PageHero } from "@/components/marketing/PageHero";
 import { IMAGES } from "@/lib/images";
@@ -39,7 +39,7 @@ export function HomePage() {
                   {hero.ctaPrimary} <ArrowRight size={18} />
                 </Button>
               </Link>
-              <DownloadAppButton variant="outline" size="lg" label="Download App" />
+              <DownloadAppBadge size="lg" />
               <Link href="/learn/how-it-works">
                 <Button variant="outline" size="lg">
                   {hero.ctaSecondary}

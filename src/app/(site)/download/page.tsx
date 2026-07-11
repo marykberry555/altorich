@@ -3,6 +3,8 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import { downloadMeta } from "@/content/download";
 
+export const dynamic = "force-static";
+
 export const metadata = buildMetadata({
   title: downloadMeta.title,
   description: downloadMeta.description,

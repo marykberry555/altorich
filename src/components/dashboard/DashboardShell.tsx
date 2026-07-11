@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { dashboardNavItems, getDashboardNavLabel, mobileDashboardNavItems } from "@/lib/dashboard/nav";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Download, LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
+import { DownloadAppBadge } from "@/components/pwa/DownloadAppBadge";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -127,13 +128,7 @@ export function DashboardShell({ fullName, email, avatarUrl, children }: Props) 
         <NavPanel fullName={fullName} email={email} avatarUrl={avatarUrl} variant="sidebar" />
         <div className="mt-auto flex flex-col gap-2 border-t border-white/10 p-3">
           <ThemeToggle compact />
-          <Link
-            href="/download"
-            className="flex items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-white/15 px-3 py-2 text-xs text-[var(--sidebar-muted)] transition hover:border-white/25 hover:text-[var(--sidebar-text)]"
-          >
-            <Download size={14} aria-hidden />
-            Get the app
-          </Link>
+          <DownloadAppBadge size="sm" tone="light" className="w-full justify-center" />
           <Link
             href={MARKETING_HOME}
             className="rounded-[var(--radius-sm)] border border-white/15 px-3 py-2 text-center text-xs text-[var(--sidebar-muted)] transition hover:border-white/25 hover:text-[var(--sidebar-text)]"
