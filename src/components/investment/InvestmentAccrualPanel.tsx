@@ -6,6 +6,7 @@ import { useLiveNow } from "@/lib/hooks/use-live-now";
 import {
   calculateLiveAccrualState,
   formatCountdownHms,
+  toLiveAccrualTick,
   type LiveAccrualInput
 } from "@/lib/investment-accrual-live";
 import { formatNaira } from "@/lib/domain";
@@ -36,13 +37,20 @@ export function InvestmentAccrualPanel({ row }: Props) {
   );
 
   const state = useMemo(() => calculateLiveAccrualState(input, now), [input, now]);
+  const earningsTick = toLiveAccrualTick(state);
+  const valueTick = toLiveAccrualTick(state, row.amount);
 
   return (
     <Card variant="elevated" className="overflow-hidden">
       <div className="bg-gradient-to-br from-[var(--navy)] via-[var(--navy-mid)] to-[var(--emerald)] px-5 py-6 text-white sm:px-8 sm:py-8">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">Live interest accrual</p>
         <p className="mt-3 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl">
-          <AnimatedEarningsCounter value={state.liveTotal} className="text-emerald-200" />
+          <AnimatedEarningsCounter
+            value={state.liveTotal}
+            liveAccrual={earningsTick}
+            showRatePerSecond
+            className="text-emerald-200"
+          />
         </p>
         <p className="mt-2 text-sm text-white/75">{row.planName}</p>
 
@@ -63,13 +71,13 @@ export function InvestmentAccrualPanel({ row }: Props) {
         <div>
           <p className="text-xs text-[var(--text-subtle)]">Current accrued earnings</p>
           <p className="mt-1 text-xl font-bold tabular-nums text-[var(--emerald)]">
-            <AnimatedEarningsCounter value={state.liveTotal} />
+            <AnimatedEarningsCounter value={state.liveTotal} liveAccrual={earningsTick} />
           </p>
         </div>
         <div>
           <p className="text-xs text-[var(--text-subtle)]">Current investment value</p>
           <p className="mt-1 text-xl font-bold tabular-nums text-[var(--heading)]">
-            <AnimatedEarningsCounter value={state.currentValue} />
+            <AnimatedEarningsCounter value={state.currentValue} liveAccrual={valueTick} />
           </p>
         </div>
         <div>
@@ -86,7 +94,7 @@ export function InvestmentAccrualPanel({ row }: Props) {
         <div className="border-t border-[var(--border)] px-5 py-4">
           <div className="flex justify-between text-xs text-[var(--text-muted)]">
             <span>Accrual progress this period</span>
-            <span>{state.dayProgressPercent}%</span>
+            <span>{state.dayProgressPercent.toFixed(1)}%</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--gray-100)]">
             <div

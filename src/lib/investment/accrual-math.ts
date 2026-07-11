@@ -122,7 +122,7 @@ export function proRataInterest(input: {
     periodTarget = daily * step;
   }
 
-  const accrued = Math.round(periodTarget * progress * 100) / 100;
+  const accrued = periodTarget * progress;
   return { accrued, periodTarget, progress };
 }
 
@@ -146,12 +146,13 @@ export function settlementInterestForInvestment(input: {
 
   const settlementMoment = input.asOf.getTime() < periodEnd.getTime() ? input.asOf : periodEnd;
 
-  return proRataInterest({
+  const { accrued } = proRataInterest({
     principal: input.principal,
     weeklyRoiBps: input.weeklyRoiBps,
     frequency: "weekly",
     periodStart,
     periodEnd,
     asOf: settlementMoment
-  }).accrued;
+  });
+  return Math.round(accrued * 100) / 100;
 }

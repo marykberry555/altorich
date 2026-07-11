@@ -12,7 +12,7 @@ import {
   YAxis
 } from "recharts";
 import { useLiveNow } from "@/lib/hooks/use-live-now";
-import { aggregateLiveAccrual, formatCountdownHms, type LiveAccrualInput } from "@/lib/investment-accrual-live";
+import { aggregateLiveAccrual, formatCountdownHms, toLiveRateTick, type LiveAccrualInput } from "@/lib/investment-accrual-live";
 import type { LiveInvestmentInput } from "@/components/investment/LivePortfolioPanel";
 import type { ActiveInvestmentRow } from "@/components/investment/ActiveInvestmentCard";
 import type { ChartPoint } from "@/lib/dashboard/chart-data";
@@ -75,6 +75,7 @@ export function DashboardPortfolioSection({
   const portfolioValue = aggregate.activeCount > 0 ? aggregate.portfolioValue : totalInvested + totalEarned;
   const avgReturn = computeAverageReturn(rows);
   const liveTotalEarnings = aggregate.activeCount > 0 ? aggregate.totalLive : totalEarned;
+  const portfolioTick = toLiveRateTick(aggregate, now, portfolioValue);
   const hasChartData = earningsTrend.length > 0;
 
   if (!hasInvestments) {
@@ -118,7 +119,7 @@ export function DashboardPortfolioSection({
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Portfolio value</p>
               <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-[var(--heading)] sm:text-4xl">
-                <AnimatedEarningsCounter value={portfolioValue} />
+                <AnimatedEarningsCounter value={portfolioValue} liveRate={portfolioTick} />
               </p>
             </div>
             {aggregate.isAccruing ? (

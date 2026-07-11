@@ -14,23 +14,59 @@ export type LiveAccrualInput = {
   lastWeeklySettlementAt?: string | Date | null;
 };
 
+export type LiveAccrualTick = {
+  creditedTotal: number;
+  periodStartMs: number;
+  periodEndMs: number;
+  periodTarget: number;
+};
+
+export type LiveRateTick = {
+  baseAmount: number;
+  ratePerSecond: number;
+  anchorMs: number;
+};
+
 export type LiveAccrualState = {
   creditedTotal: number;
   liveTotal: number;
   todayAccrual: number;
   periodEarnings: number;
+  periodTarget: number;
   dayProgressPercent: number;
+  accrualPerSecond: number;
   nextAccrualInMs: number;
   isAccruing: boolean;
   nextSettlementAt: Date | null;
   estimatedNextSettlement: number;
   currentValue: number;
+  periodStart: Date | null;
+  periodEnd: Date | null;
 };
 
 function toDate(v: string | Date | null | undefined): Date | null {
   if (!v) return null;
   const d = v instanceof Date ? v : new Date(v);
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export function toLiveAccrualTick(state: LiveAccrualState, principal = 0): LiveAccrualTick | undefined {
+  if (!state.periodStart || !state.periodEnd || !state.isAccruing) return undefined;
+  return {
+    creditedTotal: state.creditedTotal + principal,
+    periodStartMs: state.periodStart.getTime(),
+    periodEndMs: state.periodEnd.getTime(),
+    periodTarget: state.periodTarget
+  };
+}
+
+export function toLiveRateTick(aggregate: LiveEarningsAggregate, now: Date, baseAmount: number): LiveRateTick | undefined {
+  if (!aggregate.isAccruing || aggregate.accrualPerSecond <= 0) return undefined;
+  return {
+    baseAmount,
+    ratePerSecond: aggregate.accrualPerSecond,
+    anchorMs: now.getTime()
+  };
 }
 
 export function calculateLiveAccrualState(input: LiveAccrualInput, now: Date = new Date()): LiveAccrualState {
@@ -52,12 +88,16 @@ export function calculateLiveAccrualState(input: LiveAccrualInput, now: Date = n
       liveTotal: creditedTotal,
       todayAccrual: 0,
       periodEarnings: 0,
+      periodTarget: 0,
       dayProgressPercent: 0,
+      accrualPerSecond: 0,
       nextAccrualInMs: 0,
       isAccruing: false,
       nextSettlementAt: null,
       estimatedNextSettlement: 0,
-      currentValue: principal + creditedTotal
+      currentValue: principal + creditedTotal,
+      periodStart: null,
+      periodEnd: null
     };
   }
 
@@ -82,6 +122,8 @@ export function calculateLiveAccrualState(input: LiveAccrualInput, now: Date = n
     asOf: now
   });
 
+  const periodMs = Math.max(1, periodEnd.getTime() - periodStart.getTime());
+  const accrualPerSecond = (periodTarget / periodMs) * 1000;
   const liveTotal = creditedTotal + accrued;
   const nextAccrualInMs = Math.max(0, periodEnd.getTime() - now.getTime());
 
@@ -90,12 +132,16 @@ export function calculateLiveAccrualState(input: LiveAccrualInput, now: Date = n
     liveTotal,
     todayAccrual: accrued,
     periodEarnings: periodTarget,
-    dayProgressPercent: Math.round(progress * 100),
+    periodTarget,
+    dayProgressPercent: Math.min(100, progress * 100),
+    accrualPerSecond,
     nextAccrualInMs,
     isAccruing: progress < 1 && (!endsAt || now < endsAt),
     nextSettlementAt: periodEnd,
     estimatedNextSettlement: periodTarget,
-    currentValue: principal + liveTotal
+    currentValue: principal + liveTotal,
+    periodStart,
+    periodEnd
   };
 }
 
@@ -105,6 +151,7 @@ export type LiveEarningsAggregate = {
   totalLive: number;
   totalTodayAccrual: number;
   totalPeriodTarget: number;
+  accrualPerSecond: number;
   activeCount: number;
   portfolioValue: number;
   isAccruing: boolean;
@@ -117,6 +164,7 @@ export function aggregateLiveAccrual(investments: LiveAccrualInput[], now: Date 
   let totalLive = 0;
   let totalTodayAccrual = 0;
   let totalPeriodTarget = 0;
+  let accrualPerSecond = 0;
   let activeCount = 0;
   let isAccruing = false;
   let nextAccrualInMs = Number.POSITIVE_INFINITY;
@@ -132,6 +180,7 @@ export function aggregateLiveAccrual(investments: LiveAccrualInput[], now: Date 
       totalPeriodTarget += state.periodEarnings;
       if (state.isAccruing) {
         isAccruing = true;
+        accrualPerSecond += state.accrualPerSecond;
         nextAccrualInMs = Math.min(nextAccrualInMs, state.nextAccrualInMs);
       }
     }
@@ -143,6 +192,7 @@ export function aggregateLiveAccrual(investments: LiveAccrualInput[], now: Date 
     totalLive,
     totalTodayAccrual,
     totalPeriodTarget,
+    accrualPerSecond,
     activeCount,
     portfolioValue: totalPrincipal + totalLive,
     isAccruing,
@@ -153,10 +203,12 @@ export function aggregateLiveAccrual(investments: LiveAccrualInput[], now: Date 
 export function formatCountdownHms(ms: number): string {
   if (ms <= 0) return "00:00:00";
   const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return [hours, minutes, seconds].map((n) => String(n).padStart(2, "0")).join(":");
+  const clock = [hours, minutes, seconds].map((n) => String(n).padStart(2, "0")).join(":");
+  return days > 0 ? `${days}d ${clock}` : clock;
 }
 
 export function settlementFrequencyLabel(frequency: SettlementFrequency) {

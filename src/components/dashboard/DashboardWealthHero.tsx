@@ -8,7 +8,7 @@ import { MetricStatCard } from "@/components/design-system";
 import { getGreeting } from "@/lib/utils/avatar";
 import { getPackageLabel } from "@/lib/packages/constants";
 import { formatNaira } from "@/lib/domain";
-import { aggregateLiveAccrual, type LiveAccrualInput } from "@/lib/investment-accrual-live";
+import { aggregateLiveAccrual, toLiveRateTick, type LiveAccrualInput } from "@/lib/investment-accrual-live";
 import { useLiveNow } from "@/lib/hooks/use-live-now";
 import type { LiveInvestmentInput } from "@/components/investment/LivePortfolioPanel";
 import { Card } from "@/components/ui/Card";
@@ -72,6 +72,8 @@ export function DashboardWealthHero({
   const portfolioValue = aggregate.activeCount > 0 ? aggregate.portfolioValue : totalInvested + totalEarned;
   const todayEarnings = aggregate.totalTodayAccrual;
   const liveTotalEarnings = aggregate.activeCount > 0 ? aggregate.totalLive : totalEarned;
+  const portfolioTick = toLiveRateTick(aggregate, now, portfolioValue);
+  const todayTick = toLiveRateTick(aggregate, now, todayEarnings);
 
   return (
     <>
@@ -99,7 +101,7 @@ export function DashboardWealthHero({
             <div className="lg:text-right">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">Portfolio value</p>
               <p className="mt-2 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl lg:text-[3.25rem]">
-                <AnimatedEarningsCounter value={portfolioValue} className="text-white" />
+                <AnimatedEarningsCounter value={portfolioValue} liveRate={portfolioTick} className="text-white" />
               </p>
             </div>
           </div>
@@ -114,7 +116,7 @@ export function DashboardWealthHero({
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
               <dt className="text-xs font-medium text-white/65">Today&apos;s earnings</dt>
               <dd className="mt-1 text-xl font-bold tabular-nums text-emerald-200 sm:text-2xl">
-                <AnimatedEarningsCounter value={todayEarnings} />
+                <AnimatedEarningsCounter value={todayEarnings} liveRate={todayTick} />
               </dd>
             </div>
           </dl>

@@ -7,10 +7,19 @@ export const contributionTiers = [
 export const NAIRA_SYMBOL = "\u20A6";
 
 export function formatNaira(amount: number) {
+  return formatNairaWithDecimals(amount, 2);
+}
+
+/** High-precision live accrual display (kobo-level tick). */
+export function formatNairaLive(amount: number, fractionDigits = 3) {
+  return formatNairaWithDecimals(amount, fractionDigits);
+}
+
+function formatNairaWithDecimals(amount: number, fractionDigits: number) {
   const abs = Math.abs(amount);
   const formatted = new Intl.NumberFormat("en-NG", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits
   }).format(abs);
   const sign = amount < 0 ? "−" : "";
   return `${sign}${NAIRA_SYMBOL}${formatted}`;

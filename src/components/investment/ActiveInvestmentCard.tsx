@@ -7,6 +7,7 @@ import { useLiveNow } from "@/lib/hooks/use-live-now";
 import {
   calculateLiveAccrualState,
   formatCountdownHms,
+  toLiveAccrualTick,
   type LiveAccrualInput
 } from "@/lib/investment-accrual-live";
 import type { SettlementFrequency } from "@/lib/investment";
@@ -62,6 +63,8 @@ type CardProps = {
 export function ActiveInvestmentCard({ row, compact }: CardProps) {
   const now = useLiveNow();
   const state = useMemo(() => calculateLiveAccrualState(toAccrualInput(row), now), [row, now]);
+  const earningsTick = toLiveAccrualTick(state);
+  const valueTick = toLiveAccrualTick(state, row.amount);
   const progress = progressPercent(row.startedAt, row.endsAt, now);
 
   return (
@@ -89,14 +92,14 @@ export function ActiveInvestmentCard({ row, compact }: CardProps) {
           <div>
             <dt className="text-xs text-[var(--text-subtle)]">Current value</dt>
             <dd className="mt-0.5 font-semibold tabular-nums text-[var(--emerald)]">
-              <AnimatedEarningsCounter value={row.amount + state.liveTotal} />
+              <AnimatedEarningsCounter value={row.amount + state.liveTotal} liveAccrual={valueTick} />
             </dd>
           </div>
           {!compact ? (
             <div>
               <dt className="text-xs text-[var(--text-subtle)]">Total earnings</dt>
               <dd className="mt-0.5 font-semibold tabular-nums text-[var(--emerald)]">
-                <AnimatedEarningsCounter value={state.liveTotal} />
+                <AnimatedEarningsCounter value={state.liveTotal} liveAccrual={earningsTick} />
               </dd>
             </div>
           ) : null}
