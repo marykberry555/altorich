@@ -18,6 +18,7 @@ const navSections = [
   {
     label: "Operations",
     items: [
+      { href: "/admin/funding-accounts", label: "Funding accounts", icon: Wallet },
       { href: "/admin#deposits", label: "Deposits", icon: ArrowDownLeft },
       { href: "/admin#withdrawals", label: "Payouts", icon: ArrowUpRight },
       { href: "/admin#investments", label: "Investments", icon: TrendingUp },

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BankTransferPanel } from "@/components/funding/BankTransferPanel";
+import { FundingAccountsGrid } from "@/components/funding/FundingAccountCard";
 import { FundingHistoryTable } from "@/components/funding/FundingHistoryTable";
 import { FundingSummary, InvestmentFundingForm } from "@/components/funding/InvestmentFundingForm";
 import { PageHero } from "@/components/marketing/PageHero";
@@ -13,16 +13,11 @@ export default async function DepositsPage() {
   const user = await getSessionUser();
   const services = await getUserServices();
 
-  const bank = services
-    ? await services.settings.getBankSwitchboard()
-    : {
-        active_bank_name: "Configure in admin",
-        active_account_name: "ALTORICH LTD",
-        active_account_number: "00000000",
-        payment_instruction: "Transfer the exact amount, then submit your reference for verification.",
-        transfer_narration: "Use your registered phone number as transfer narration.",
-        contributions_enabled: false
-      };
+  const fundingAccounts = services
+    ? await services.fundingAccounts.listActive().catch(() => [])
+    : [];
+
+  const preferred = services ? await services.settings.getBankSwitchboard() : null;
 
   let balance = 0;
   let pendingFunding = 0;
@@ -39,20 +34,30 @@ export default async function DepositsPage() {
   }
 
   const config = {
-    activeBankName: bank.active_bank_name,
-    activeAccountName: bank.active_account_name,
-    activeAccountNumber: bank.active_account_number,
-    paymentInstruction: bank.payment_instruction,
-    transferNarration: bank.transfer_narration,
-    contributionsEnabled: bank.contributions_enabled
+    activeBankName: preferred?.active_bank_name ?? "Configure in admin",
+    activeAccountName: preferred?.active_account_name ?? "ALTORICH LTD",
+    activeAccountNumber: preferred?.active_account_number ?? "00000000",
+    paymentInstruction: preferred?.payment_instruction ?? "Transfer the exact amount, then submit your reference for verification.",
+    transferNarration: preferred?.transfer_narration ?? "Use your registered phone number as transfer narration.",
+    contributionsEnabled: preferred?.contributions_enabled ?? false
   };
+
+  const accountViews = fundingAccounts.map((account) => ({
+    id: account.id,
+    bankName: account.bank_name,
+    accountName: account.account_name,
+    accountNumber: account.account_number,
+    displayName: account.display_name,
+    fundingInstructions: account.funding_instructions,
+    isPreferred: account.is_preferred
+  }));
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <PageHero
         eyebrow="Wallet funding"
         title="Fund your investment wallet"
-        description="Transfer naira from any Nigerian bank. Once verified, funds are ready to invest across your chosen packages."
+        description="Transfer naira from any Nigerian bank below. Once verified, funds are ready to invest."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -70,17 +75,14 @@ export default async function DepositsPage() {
         </Card>
       </div>
 
-      <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Bank details</h2>
-        <div className="mt-4">
-          <BankTransferPanel
-            bankName={config.activeBankName}
-            accountName={config.activeAccountName}
-            accountNumber={config.activeAccountNumber}
-            transferNarration={config.transferNarration}
-            paymentInstruction={config.paymentInstruction}
-          />
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Transfer to any account</h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            Choose any active account. {config.transferNarration}
+          </p>
         </div>
+        <FundingAccountsGrid accounts={accountViews} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-5">

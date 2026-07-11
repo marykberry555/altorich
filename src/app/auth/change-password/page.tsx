@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Card } from "@/components/ui/Card";
@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
 function ChangePasswordForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const isAdmin = searchParams.get("admin") === "1";
   const [password, setPassword] = useState("");
@@ -31,13 +30,11 @@ function ChangePasswordForm() {
       body: JSON.stringify({ newPassword: password })
     });
     const data = await res.json();
-    setLoading(false);
     if (!res.ok) {
       setError(data.error ?? "Could not update password.");
       return;
     }
-    router.push(data.redirect ?? (isAdmin ? "/admin" : "/dashboard"));
-    router.refresh();
+    window.location.assign(data.redirect ?? (isAdmin ? "/admin" : "/dashboard"));
   }
 
   return (

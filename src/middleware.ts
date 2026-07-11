@@ -38,6 +38,18 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (authRoutes.some((route) => pathname.startsWith(route))) {
+    if (user && pathname.startsWith("/auth/login")) {
+      let isAdminRole = false;
+      if (supabase) {
+        try {
+          const { data } = await supabase.rpc("has_admin_role");
+          isAdminRole = Boolean(data);
+        } catch {
+          isAdminRole = false;
+        }
+      }
+      return NextResponse.redirect(new URL(isAdminRole ? "/admin" : "/dashboard", request.url));
+    }
     return response;
   }
 
@@ -53,7 +65,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!user) {
-    const loginUrl = isAdmin ? new URL("/hard/auth", request.url) : new URL("/auth/login", request.url);
+    const loginUrl = new URL("/auth/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }

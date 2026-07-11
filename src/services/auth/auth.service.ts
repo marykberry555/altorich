@@ -298,7 +298,7 @@ export class AuthService {
     };
   }
 
-  async adminLogin(input: { email: string; password: string }) {
+  async emailPasswordLogin(input: { email: string; password: string }) {
     const { createClient } = await import("@/lib/supabase/server");
     const anon = await createClient();
     if (!anon) throw Errors.notConfigured();
@@ -310,26 +310,35 @@ export class AuthService {
     if (error) throw new AppError(error.message, 401, "INVALID_CREDENTIALS");
     if (!data.user || !data.session) throw Errors.unauthorized();
 
-    const { data: adminRole, error: adminError } = await this.supabase
-      .from("admin_roles")
-      .select("role")
-      .eq("user_id", data.user.id)
-      .maybeSingle();
-    if (adminError) throw adminError;
-    if (!adminRole) {
-      await anon.auth.signOut();
-      throw Errors.forbidden();
-    }
-
     const { data: profile } = await this.supabase
       .from("profiles")
-      .select("must_change_password")
+      .select("must_change_password, must_change_pin")
       .eq("id", data.user.id)
       .maybeSingle();
 
     return {
       session: data.session,
-      mustChangePassword: profile?.must_change_password ?? false
+      userId: data.user.id,
+      mustChangePassword: profile?.must_change_password ?? false,
+      mustChangePin: profile?.must_change_pin ?? false
+    };
+  }
+
+  /** @deprecated Use emailPasswordLogin + role-based redirect via /api/auth/sign-in */
+  async adminLogin(input: { email: string; password: string }) {
+    const result = await this.emailPasswordLogin(input);
+
+    const { data: adminRole, error: adminError } = await this.supabase
+      .from("admin_roles")
+      .select("role")
+      .eq("user_id", result.userId)
+      .maybeSingle();
+    if (adminError) throw adminError;
+    if (!adminRole) throw Errors.forbidden();
+
+    return {
+      session: result.session,
+      mustChangePassword: result.mustChangePassword
     };
   }
 

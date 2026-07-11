@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/errors";
-import { requireSessionUser } from "@/lib/auth/session";
+import { requireSessionUser, getServiceClientOrThrow } from "@/lib/auth/session";
 import { getAuthService } from "@/lib/auth/service";
+import { userIsAdmin } from "@/lib/auth/admin-role";
+import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
 
 const schema = z.object({
   newPassword: z.string().min(8)
@@ -14,7 +16,12 @@ export async function POST(req: Request) {
     const body = schema.parse(await req.json());
     const auth = await getAuthService();
     await auth.changePassword(user.id, body.newPassword);
-    return NextResponse.json({ ok: true, redirect: "/admin" });
+
+    const supabase = await getServiceClientOrThrow();
+    const isAdmin = await userIsAdmin(supabase, user.id);
+    const redirect = resolvePostLoginRedirect({ isAdmin, mustChangePin: false, mustChangePassword: false });
+
+    return NextResponse.json({ ok: true, redirect });
   } catch (error) {
     return apiErrorResponse(error);
   }

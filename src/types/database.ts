@@ -256,6 +256,38 @@ export type Database = {
       referrals: TableStub;
       referral_rewards: TableStub;
       referral_payouts: TableStub;
+      funding_accounts: {
+        Row: {
+          id: string;
+          bank_name: string;
+          account_name: string;
+          account_number: string;
+          sort_code: string | null;
+          display_name: string | null;
+          funding_instructions: string | null;
+          display_order: number;
+          status: "active" | "inactive" | "maintenance";
+          is_preferred: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          bank_name: string;
+          account_name: string;
+          account_number: string;
+          sort_code?: string | null;
+          display_name?: string | null;
+          funding_instructions?: string | null;
+          display_order?: number;
+          status?: "active" | "inactive" | "maintenance";
+          is_preferred?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["funding_accounts"]["Insert"]>;
+        Relationships: TableRelationships;
+      };
       bank_accounts: {
         Row: {
           id: string;
@@ -589,6 +621,7 @@ export type Database = {
       investment_currency: "ngn" | "usdt" | "btc";
       payout_method: "bank" | "crypto";
       auth_otp_purpose: "register" | "login_device" | "recover_pin" | "recover_username";
+      funding_account_status: "active" | "inactive" | "maintenance";
     };
     CompositeTypes: Record<string, never>;
     Functions: {

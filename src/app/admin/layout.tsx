@@ -5,7 +5,7 @@ import { SessionInactivityGuard } from "@/components/auth/SessionInactivityGuard
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const allowed = await hasAdminRole();
-  if (!allowed) redirect("/hard/auth");
+  if (!allowed) redirect("/auth/login?redirect=/admin");
 
   return (
     <>

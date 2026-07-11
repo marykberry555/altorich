@@ -3,6 +3,9 @@ import { z } from "zod";
 import { apiErrorResponse } from "@/lib/errors";
 import { getAuthService } from "@/lib/auth/service";
 import { applySessionToCookies } from "@/lib/auth/apply-session";
+import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
+import { getServiceClientOrThrow } from "@/lib/auth/session";
+import { userIsAdmin } from "@/lib/auth/admin-role";
 
 const schema = z.object({
   email: z.string().email(),
@@ -23,13 +26,15 @@ export async function POST(req: Request) {
     });
     await applySessionToCookies(result.session);
 
-    const redirect = result.mustChangePin
-      ? "/auth/change-pin"
-      : result.mustChangePassword
-        ? "/auth/change-password"
-        : "/dashboard";
+    const supabase = await getServiceClientOrThrow();
+    const isAdmin = await userIsAdmin(supabase, result.userId);
+    const redirect = resolvePostLoginRedirect({
+      isAdmin,
+      mustChangePin: result.mustChangePin,
+      mustChangePassword: result.mustChangePassword
+    });
 
-    return NextResponse.json({ ok: true, redirect });
+    return NextResponse.json({ ok: true, redirect, isAdmin });
   } catch (error) {
     return apiErrorResponse(error);
   }
