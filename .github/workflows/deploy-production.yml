@@ -34,6 +34,20 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p 21098 162.254.39.13 >> ~/.ssh/known_hosts 2>/dev/null || true
 
+      - name: Prepare cPanel remote for push
+        env:
+          CPANEL_DEPLOY_KEY: ${{ secrets.CPANEL_DEPLOY_KEY }}
+        run: |
+          if [ ! -f ~/.ssh/deploy_key ]; then
+            exit 0
+          fi
+          ssh -i ~/.ssh/deploy_key -p 21098 -o StrictHostKeyChecking=accept-new altosujd@162.254.39.13 bash -s <<'EOF'
+          set -euo pipefail
+          cd /home/altosujd/repositories/alto-app
+          git reset --hard HEAD
+          git clean -fd --exclude=.env.production --exclude=.env.local 2>/dev/null || git clean -fd
+          EOF
+
       - name: Push to cPanel production Git
         env:
           CPANEL_DEPLOY_KEY: ${{ secrets.CPANEL_DEPLOY_KEY }}
@@ -56,13 +70,14 @@ jobs:
           fi
           echo "Waiting for cPanel post-deploy (build + Node restart)..."
           sleep 45
-          for i in $(seq 1 20); do
+          for i in $(seq 1 24); do
             if curl -fsS --max-time 15 https://altorich.com/api/health | grep -q '"status"[[:space:]]*:[[:space:]]*"ok"'; then
               echo "Production health OK"
               curl -fsS -H 'Cache-Control: no-cache' https://altorich.com/auth/login | grep -q 'app/auth/login/page-' && echo "Login page chunk reference OK"
+              curl -fsS -o /dev/null -w '%{http_code}\n' -H 'Cache-Control: no-cache' https://altorich.com/download | grep -q '^200$' && echo "Download page OK"
               exit 0
             fi
-            echo "Attempt $i/20 — not ready yet, retrying in 15s..."
+            echo "Attempt $i/24 — not ready yet, retrying in 15s..."
             sleep 15
           done
           echo "Production health check timed out"

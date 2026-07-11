@@ -10,6 +10,7 @@ source "$SCRIPT_DIR/lib/deploy-common.sh"
 APP_ROOT="${APP_ROOT:-/home/altosujd/repositories/alto-app}"
 NODE_VERSION="${NODE_VERSION:-22}"
 VENV="/home/altosujd/nodevenv/repositories/alto-app/${NODE_VERSION}/bin/activate"
+VENV_MODULES="/home/altosujd/nodevenv/repositories/alto-app/${NODE_VERSION}/lib/node_modules"
 
 # shellcheck disable=SC1090
 set +u
@@ -21,24 +22,54 @@ export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=768}"
 
 deploy_log "=== build-cpanel start (Node ${NODE_VERSION}) ==="
 
-deploy_log "Installing dependencies into virtualenv..."
-rm -rf node_modules 2>/dev/null || true
-npm install --include=dev
+restore_node_modules_symlink() {
+  deploy_log "Restoring CloudLinux node_modules symlink..."
+  rm -rf node_modules 2>/dev/null || true
+  npm install --include=dev --prefer-offline
+}
 
-deploy_log "Copying node_modules for build (CloudLinux symlink workaround)..."
-# rm -f leaves a partial directory after a failed deploy and breaks cp -a ("File exists").
+ensure_venv_dependencies() {
+  deploy_log "Ensuring dependencies in Node virtualenv..."
+  if [[ -L node_modules ]]; then
+    npm install --include=dev --prefer-offline
+    return
+  fi
+
+  if [[ -d node_modules ]]; then
+    deploy_log "Replacing real node_modules directory with virtualenv symlink..."
+    rm -rf node_modules
+  fi
+
+  npm install --include=dev --prefer-offline
+}
+
+materialize_node_modules_for_build() {
+  deploy_log "Materializing node_modules copy for webpack build..."
+  if [[ -L node_modules ]]; then
+    rm -f node_modules
+  elif [[ -d node_modules ]]; then
+    rm -rf node_modules
+  fi
+
+  if [[ ! -d "$VENV_MODULES" ]]; then
+    deploy_log "ERROR: Missing virtualenv node_modules at $VENV_MODULES"
+    exit 1
+  fi
+
+  cp -a "$VENV_MODULES" ./node_modules
+}
+
+ensure_venv_dependencies
+materialize_node_modules_for_build
+
+deploy_log "Building (webpack — required on CloudLinux)..."
+npm run gate:production
+npm run build
+
+deploy_log "Removing build-time node_modules copy..."
 rm -rf node_modules
-cp -a "/home/altosujd/nodevenv/repositories/alto-app/${NODE_VERSION}/lib/node_modules" ./node_modules
 
-  deploy_log "Building (webpack — required on CloudLinux)..."
-  npm run gate:production
-  npm run build
-
-deploy_log "Removing local node_modules copy..."
-rm -rf node_modules
-
-deploy_log "Restoring CloudLinux node_modules symlink..."
-npm install --include=dev
+restore_node_modules_symlink
 
 deploy_log "Build finished. BUILD_ID=$(cat .next/BUILD_ID 2>/dev/null || echo missing)"
 

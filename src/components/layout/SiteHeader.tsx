@@ -88,7 +88,6 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2 sm:hidden">
-          <DownloadAppBadge size="sm" />
           <ThemeToggle compact />
           <Link href="/auth/login" className="text-sm font-semibold text-[var(--emerald)]">
             Sign in

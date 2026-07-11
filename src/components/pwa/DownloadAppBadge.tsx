@@ -9,6 +9,8 @@ type Props = {
   size?: "sm" | "md" | "lg";
   className?: string;
   tone?: "dark" | "light";
+  label?: string;
+  hideLabel?: boolean;
 };
 
 const sizes = {
@@ -17,13 +19,19 @@ const sizes = {
   lg: { pad: "px-5 py-3 gap-3", icon: 20, text: "text-base" }
 } as const;
 
-export function DownloadAppBadge({ size = "md", className, tone = "dark" }: Props) {
+export function DownloadAppBadge({
+  size = "md",
+  className,
+  tone = "dark",
+  label = "Download App",
+  hideLabel = false
+}: Props) {
   const pwa = usePwaOptional();
   const spec = sizes[size];
   const shellClass =
     tone === "light"
-      ? "bg-white text-[var(--emerald)] ring-1 ring-white/30 shadow-[var(--shadow-sm)] hover:bg-white/95"
-      : "bg-[var(--emerald)] text-white shadow-[var(--shadow-md)] hover:brightness-110";
+      ? "bg-white text-[var(--emerald)] ring-1 ring-[var(--emerald)]/25 shadow-[var(--shadow-sm)] hover:bg-white/95"
+      : "bg-[var(--emerald)] text-white ring-1 ring-[var(--emerald)]/30 shadow-[var(--shadow-md)] hover:brightness-110";
 
   if (pwa?.isStandalone) {
     return (
@@ -53,7 +61,7 @@ export function DownloadAppBadge({ size = "md", className, tone = "dark" }: Prop
       )}
     >
       <Download size={spec.icon} aria-hidden />
-      <span className={cn("font-semibold", spec.text)}>Download App</span>
+      {hideLabel ? null : <span className={cn("font-semibold", spec.text)}>{label}</span>}
     </Link>
   );
 }

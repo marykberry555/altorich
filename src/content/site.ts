@@ -7,7 +7,7 @@ export const hero = {
   subtitle:
     "For salary earners, entrepreneurs, and diaspora investors. Verified bank deposits, transparent ledgers, guaranteed weekly returns, and payouts every Monday at 09:00 WAT.",
   guarantee: "Returns are guaranteed.",
-  ctaPrimary: "Open your account",
+  ctaPrimary: "Get started",
   ctaSecondary: "See how it works"
 };
 

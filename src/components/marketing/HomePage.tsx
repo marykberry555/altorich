@@ -33,18 +33,13 @@ export function HomePage() {
             <div className="mt-6">
               <WeeklyCountdown />
             </div>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/auth/register">
-                <Button size="lg" className="shadow-[var(--shadow-glow)]">
-                  {hero.ctaPrimary} <ArrowRight size={18} />
+            <div className="mt-7 grid max-w-md grid-cols-2 gap-3">
+              <Link href="/auth/register" className="min-w-0">
+                <Button size="lg" className="h-full w-full px-4 shadow-[var(--shadow-glow)]">
+                  {hero.ctaPrimary} <ArrowRight size={18} className="shrink-0" />
                 </Button>
               </Link>
-              <DownloadAppBadge size="lg" />
-              <Link href="/learn/how-it-works">
-                <Button variant="outline" size="lg">
-                  {hero.ctaSecondary}
-                </Button>
-              </Link>
+              <DownloadAppBadge size="lg" label="Get app" className="h-13 w-full min-w-0 justify-center" />
             </div>
             {/* Intentionally minimal: no trust microcopy in hero */}
           </div>
