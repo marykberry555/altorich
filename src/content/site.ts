@@ -1,9 +1,9 @@
 import { COMPANY, REGULATORY_PLACEHOLDER } from "@/lib/company";
-import { PACKAGE_IMAGES } from "@/lib/images";
+import { PACKAGE_ROI_RANGE } from "@/lib/packages/package-config";
 
 export const hero = {
   eyebrow: "Built for Nigeria · WAT-aligned payouts",
-  title: "Grow your naira with clarity — earn 10% to 25% weekly.",
+  title: `Grow your naira with clarity — earn ${PACKAGE_ROI_RANGE.headline}.`,
   subtitle:
     "For salary earners, entrepreneurs, and diaspora investors. Verified bank deposits, transparent ledgers, guaranteed weekly returns, and payouts every Monday at 09:00 WAT.",
   guarantee: "Returns are guaranteed.",
@@ -24,56 +24,12 @@ export const valueProps = [
   },
   {
     title: "Guaranteed weekly returns",
-    description:
-      "Published weekly ROI tiers from 10% to 25%. Earnings auto-reinvest every Monday until you choose to stop and withdraw."
+    description: `Published weekly ROI tiers from ${PACKAGE_ROI_RANGE.minPercent}% to ${PACKAGE_ROI_RANGE.maxPercent}%. Earnings auto-reinvest every Monday until you choose to stop and withdraw.`
   },
   {
     title: "Local-first operations",
     description:
       "Naira-native flows, bank transfers, and support aligned with West Africa Time."
-  }
-];
-
-export const investmentCategories = [
-  {
-    slug: "starter",
-    title: "Alto Starter",
-    subtitle: "High-Yield Savings & Fintech Lock Plans",
-    description:
-      "Disciplined, fixed-term digital cooperative plans designed to shield your capital from daily inflation. Lock your funds securely into high-yield savings pools with consistent payouts visible directly in your dashboard upon login.",
-    href: "/packages/starter",
-    icon: "piggy",
-    image: PACKAGE_IMAGES.starter
-  },
-  {
-    slug: "growth",
-    title: "Alto Growth",
-    subtitle: "Agricultural Crowdfunding & Processing",
-    description:
-      "Direct access to seasonal crop production, poultry cycles, and agro-processing operations. Benefit from structured agro-cycles that align payouts precisely with real-world harvest timelines while actively supporting local food security.",
-    href: "/packages/growth",
-    icon: "leaf",
-    image: PACKAGE_IMAGES.growth
-  },
-  {
-    slug: "premium",
-    title: "Alto Premium",
-    subtitle: "Real Estate (Land & Property Banking)",
-    description:
-      "Position your wealth in Nigeria's ultimate security asset. Participate in cooperative land banking within fast-growing commercial hubs and co-own premium short-let or rental developments optimized for stable cash flow.",
-    href: "/packages/premium",
-    icon: "home",
-    image: PACKAGE_IMAGES.premium
-  },
-  {
-    slug: "elite",
-    title: "Alto Elite",
-    subtitle: "Foreign Exchange (USD & Hard Currency Assets)",
-    description:
-      "Total capital preservation against local currency depreciation. Access fractional global stocks, stablecoins, and high-yield, dollar-denominated assets with real-time currency tracking and priority performance reviews.",
-    href: "/packages/elite",
-    icon: "briefcase",
-    image: PACKAGE_IMAGES.elite
   }
 ];
 
@@ -122,7 +78,7 @@ export const faqs = [
   },
   {
     q: "Do you guarantee returns?",
-    a: "Yes. Alto Rich packages publish guaranteed weekly returns from 10% to 25%, paid every Monday at 09:00 WAT. Earnings auto-reinvest until you stop your investment and withdraw."
+    a: `Yes. Alto Rich packages publish guaranteed weekly returns from ${PACKAGE_ROI_RANGE.minPercent}% to ${PACKAGE_ROI_RANGE.maxPercent}%, paid every Monday at 09:00 WAT. Earnings auto-reinvest until you stop your investment and withdraw.`
   },
   {
     q: "How do I deposit money?",
@@ -151,7 +107,7 @@ export const vision = {
 export const values = [
   { title: "Transparency", description: "Every balance is ledger-derived. Every rule is published." },
   { title: "Discipline", description: "Cooperative structures, not speculation." },
-  { title: "Accessibility", description: "Entry from ₦3,000. Mobile-first. WAT support hours." },
+  { title: "Accessibility", description: "Entry from ₦20,000. Mobile-first. WAT support hours." },
   { title: "Integrity", description: "Guaranteed weekly returns with transparent ledgers and published Monday payout windows." }
 ];
 

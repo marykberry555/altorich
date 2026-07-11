@@ -1,5 +1,5 @@
-import type { PackageSlug } from "@/content/packages";
-import { packageList } from "@/content/packages";
+import type { PackageSlug } from "@/lib/packages/package-config";
+import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
 
 export type PreferredPackageOption = {
   slug: PackageSlug;
@@ -7,7 +7,7 @@ export type PreferredPackageOption = {
   subtitle: string;
 };
 
-export const PREFERRED_PACKAGE_OPTIONS: PreferredPackageOption[] = packageList.map((p) => ({
+export const PREFERRED_PACKAGE_OPTIONS: PreferredPackageOption[] = PACKAGE_CONFIG.map((p) => ({
   slug: p.slug,
   title: p.title,
   subtitle: p.subtitle

@@ -1,4 +1,5 @@
-import type { PackageSlug } from "@/content/packages";
+import type { PackageSlug } from "@/lib/packages/package-config";
+import { getReferralCommissionByPackage } from "@/lib/packages/package-config";
 
 export type ReferralProgramConfig = {
   enabled: boolean;
@@ -13,12 +14,7 @@ export const DEFAULT_REFERRAL_PROGRAM: ReferralProgramConfig = {
   milestone_bonuses_enabled: true,
   recurring_commissions_enabled: false,
   min_payout_threshold: 5000,
-  commission_by_package: {
-    starter: 3,
-    growth: 4,
-    elite: 5,
-    premium: 6
-  }
+  commission_by_package: getReferralCommissionByPackage(),
 };
 
 export function mergeReferralProgramConfig(

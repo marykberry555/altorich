@@ -1,11 +1,11 @@
+import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
+
 export type NavLink = { label: string; href: string };
 
-export const packageNav: NavLink[] = [
-  { label: "Alto Starter", href: "/packages/starter" },
-  { label: "Alto Growth", href: "/packages/growth" },
-  { label: "Alto Premium", href: "/packages/premium" },
-  { label: "Alto Elite", href: "/packages/elite" }
-];
+export const packageNav: NavLink[] = PACKAGE_CONFIG.map((pkg) => ({
+  label: pkg.title,
+  href: `/packages/${pkg.slug}`
+}));
 
 export type HeaderNavItem =
   | { label: string; href: string; children?: undefined }

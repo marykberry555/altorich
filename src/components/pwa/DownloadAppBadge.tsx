@@ -8,9 +8,11 @@ import { cn } from "@/lib/utils";
 type Props = {
   size?: "sm" | "md" | "lg";
   className?: string;
-  tone?: "dark" | "light";
+  /** primary = filled CTA; surface = light/outline on tinted backgrounds */
+  tone?: "primary" | "surface";
   label?: string;
   hideLabel?: boolean;
+  disabled?: boolean;
 };
 
 const sizes = {
@@ -22,30 +24,45 @@ const sizes = {
 export function DownloadAppBadge({
   size = "md",
   className,
-  tone = "dark",
+  tone = "primary",
   label = "Download App",
-  hideLabel = false
+  hideLabel = false,
+  disabled = false
 }: Props) {
   const pwa = usePwaOptional();
   const spec = sizes[size];
+
   const shellClass =
-    tone === "light"
-      ? "bg-white text-[var(--emerald)] ring-1 ring-[var(--emerald)]/25 shadow-[var(--shadow-sm)] hover:bg-white/95"
-      : "bg-[var(--emerald)] text-white ring-1 ring-[var(--emerald)]/30 shadow-[var(--shadow-md)] hover:brightness-110";
+    tone === "surface"
+      ? cn(
+          "bg-[var(--btn-surface-bg)] text-[var(--btn-surface-fg)]",
+          "ring-1 ring-[var(--btn-surface-border)] shadow-[var(--shadow-sm)]",
+          "hover:bg-[var(--btn-surface-hover-bg)]",
+          "active:bg-[var(--gray-200)]"
+        )
+      : cn(
+          "bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)]",
+          "ring-1 ring-[var(--btn-primary-border)] shadow-[var(--shadow-md)]",
+          "hover:bg-[var(--btn-primary-hover-bg)]",
+          "active:bg-[var(--btn-primary-active-bg)]"
+        );
+
+  const sharedClass = cn(
+    "inline-flex items-center rounded-[var(--radius-sm)] font-semibold transition",
+    "[&_svg]:shrink-0 [&_svg]:text-[var(--btn-primary-fg)]",
+    tone === "surface" && "[&_svg]:text-[var(--btn-surface-fg)]",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--emerald-mid)]",
+    "disabled:pointer-events-none disabled:opacity-50",
+    shellClass,
+    spec.pad,
+    className
+  );
 
   if (pwa?.isStandalone) {
     return (
-      <Link
-        href="/app"
-        className={cn(
-          "inline-flex items-center rounded-[var(--radius-sm)] transition",
-          shellClass,
-          spec.pad,
-          className
-        )}
-      >
+      <Link href="/app" className={sharedClass} aria-label="Open Alto Rich app">
         <ExternalLink size={spec.icon} aria-hidden />
-        <span className={cn("font-semibold", spec.text)}>Open App</span>
+        <span className={spec.text}>Open App</span>
       </Link>
     );
   }
@@ -53,15 +70,13 @@ export function DownloadAppBadge({
   return (
     <Link
       href="/download"
-      className={cn(
-        "inline-flex items-center rounded-[var(--radius-sm)] transition",
-        shellClass,
-        spec.pad,
-        className
-      )}
+      className={sharedClass}
+      aria-label={label}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : undefined}
     >
       <Download size={spec.icon} aria-hidden />
-      {hideLabel ? null : <span className={cn("font-semibold", spec.text)}>{label}</span>}
+      {hideLabel ? null : <span className={spec.text}>{label}</span>}
     </Link>
   );
 }

@@ -74,7 +74,7 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-2 sm:flex">
           <ThemeToggle compact />
-          <DownloadAppBadge size="sm" />
+          <DownloadAppBadge size="sm" tone="surface" />
           <Link href="/auth/login">
             <Button variant="ghost" size="sm">
               Sign in

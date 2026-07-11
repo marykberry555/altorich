@@ -1,9 +1,9 @@
-import Image from "next/image";
-import { investmentCategories } from "@/content/site";
+import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
 import { PACKAGE_IMAGES } from "@/lib/images";
 import { PageHero } from "@/components/marketing/PageHero";
 import { PackageCard } from "@/components/marketing/PackageCard";
 import { buildMetadata } from "@/lib/seo";
+import Image from "next/image";
 
 export const metadata = buildMetadata({
   title: "Packages — Structured investment pools",
@@ -13,6 +13,18 @@ export const metadata = buildMetadata({
 });
 
 export default function PackagesIndexPage() {
+  const packages = PACKAGE_CONFIG.map((pkg) => ({
+    slug: pkg.slug,
+    title: pkg.title,
+    subtitle: pkg.subtitle,
+    description: pkg.cardDescription,
+    href: `/packages/${pkg.slug}`,
+    image: pkg.image,
+    weeklyRoiPercent: pkg.weeklyRoiPercent,
+    keyBenefits: pkg.keyBenefits,
+    ctaLabel: pkg.ctaLabel
+  }));
+
   return (
     <>
       <section className="gradient-hero section-pad">
@@ -39,7 +51,7 @@ export default function PackagesIndexPage() {
       <section className="section-pad bg-section">
         <div className="container-ar">
           <div className="grid gap-6 sm:grid-cols-2">
-            {investmentCategories.map((pkg) => (
+            {packages.map((pkg) => (
               <PackageCard key={pkg.slug} pkg={pkg} />
             ))}
           </div>

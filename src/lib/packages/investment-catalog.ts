@@ -1,10 +1,10 @@
-import type { PackageSlug } from "@/content/packages";
+import type { PackageSlug } from "@/lib/packages/package-config";
 import { packageList } from "@/content/packages";
 import type { InvestmentPlan } from "@/types/database";
 import type { SettlementFrequency } from "@/lib/investment";
 import { settlementFrequencyLabel } from "@/lib/investment-accrual-live";
 import { formatNaira } from "@/lib/domain";
-import { getTierConfig, projectedDailyForPrincipal } from "@/lib/packages/tier-config";
+import { getPackageConfig, PACKAGE_SLUGS, projectedDailyForPrincipal } from "@/lib/packages/package-config";
 
 export type PackagePlanCard = {
   slug: PackageSlug;
@@ -22,9 +22,9 @@ export type PackagePlanCard = {
   planStatus: string;
   riskDisclosure: string;
   available: boolean;
+  accentGradient: string;
+  keyBenefits: string[];
 };
-
-const PACKAGE_SLUGS: PackageSlug[] = ["starter", "growth", "premium", "elite"];
 
 export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[] {
   const byTier = new Map<string, InvestmentPlan[]>();
@@ -36,44 +36,41 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
 
   return PACKAGE_SLUGS.map((slug) => {
     const content = packageList.find((p) => p.slug === slug)!;
+    const tierDefaults = getPackageConfig(slug)!;
     const tierPlans = (byTier.get(slug) ?? []).sort((a, b) => a.sort_order - b.sort_order);
     const primary = tierPlans[0] ?? null;
 
     if (!primary) {
-      const tierDefaults = getTierConfig(slug);
       return {
         slug,
-        title: content.title,
-        subtitle: content.subtitle,
-        description: content.heroDescription,
+        title: tierDefaults.title,
+        subtitle: tierDefaults.subtitle,
+        description: tierDefaults.cardDescription,
         planId: null,
-        minInvestment: tierDefaults?.minNgn ?? 0,
-        maxInvestment: tierDefaults?.maxNgn ?? 0,
-        weeklyRoiPercent: tierDefaults?.weeklyRoiPercent ?? 0,
+        minInvestment: tierDefaults.minNgn,
+        maxInvestment: tierDefaults.maxNgn,
+        weeklyRoiPercent: tierDefaults.weeklyRoiPercent,
         cycleDays: 365,
         settlementFrequency: "weekly",
         projectedDaily: 0,
-        payoutTiming: tierDefaults?.payoutTiming ?? "Every Monday, 09:00 WAT",
+        payoutTiming: tierDefaults.payoutTiming,
         planStatus: "unavailable",
         riskDisclosure: "Returns are guaranteed.",
-        available: false
+        available: false,
+        accentGradient: tierDefaults.accentGradient,
+        keyBenefits: tierDefaults.keyBenefits
       };
     }
 
     const minInvestment = Math.min(...tierPlans.map((p) => Number(p.min_investment ?? p.price)));
     const maxInvestment = Math.max(...tierPlans.map((p) => Number(p.max_investment ?? p.price)));
-    const tierDefaults = getTierConfig(slug);
-    const weeklyRoiBps = Number(
-      (primary as InvestmentPlan & { weekly_roi_bps?: number }).weekly_roi_bps ??
-        tierDefaults?.weeklyRoiBps ??
-        1000
-    );
-    const weeklyRoiPercent = weeklyRoiBps / 100;
+    const weeklyRoiBps = tierDefaults.weeklyRoiBps;
+    const weeklyRoiPercent = tierDefaults.weeklyRoiPercent;
 
     return {
       slug,
-      title: content.title,
-      subtitle: content.subtitle,
+      title: tierDefaults.title,
+      subtitle: tierDefaults.subtitle,
       description: primary.description || content.heroHeadline,
       planId: primary.id,
       minInvestment,
@@ -82,10 +79,12 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
       cycleDays: primary.cycle_days,
       settlementFrequency: (primary.settlement_frequency ?? "weekly") as SettlementFrequency,
       projectedDaily: projectedDailyForPrincipal(minInvestment, weeklyRoiBps),
-      payoutTiming: tierDefaults?.payoutTiming ?? "Every Monday, 09:00 WAT",
+      payoutTiming: tierDefaults.payoutTiming,
       planStatus: primary.plan_status,
       riskDisclosure: primary.risk_disclosure || "Returns are guaranteed.",
-      available: primary.is_active && primary.plan_status === "active"
+      available: primary.is_active && primary.plan_status === "active",
+      accentGradient: tierDefaults.accentGradient,
+      keyBenefits: tierDefaults.keyBenefits
     };
   });
 }

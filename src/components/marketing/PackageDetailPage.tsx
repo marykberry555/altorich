@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { StepNumber } from "@/components/ui/StepNumber";
+import { getPackageConfig, formatWeeklyRoiLabel } from "@/lib/packages/package-config";
 
 const benefitIcons = [Shield, TrendingUp, Wallet, CheckCircle2] as const;
 
@@ -15,6 +16,8 @@ type Props = {
 };
 
 export function PackageDetailPage({ pkg }: Props) {
+  const config = getPackageConfig(pkg.slug);
+
   return (
     <>
       <section className="gradient-hero section-pad">
@@ -27,7 +30,10 @@ export function PackageDetailPage({ pkg }: Props) {
           </Link>
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>
-              <Badge variant="emerald">{pkg.subtitle}</Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="emerald">{pkg.subtitle}</Badge>
+                {config ? <Badge variant="gold">{formatWeeklyRoiLabel(config.weeklyRoiPercent)}</Badge> : null}
+              </div>
               <PageHero
                 className="mt-4"
                 eyebrow="Investment package"

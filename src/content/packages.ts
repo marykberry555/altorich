@@ -1,28 +1,29 @@
-import { PACKAGE_IMAGES } from "@/lib/images";
+import { PACKAGE_CONFIG, type PackageSlug } from "@/lib/packages/package-config";
+import type { ImageAsset } from "@/lib/images";
 
-export type PackageSlug = "starter" | "growth" | "premium" | "elite";
+export type { PackageSlug };
 
 export type PackageContent = {
   slug: PackageSlug;
   title: string;
   subtitle: string;
+  weeklyRoiPercent: number;
   heroHeadline: string;
   heroDescription: string;
-  image: { src: string; alt: string };
+  image: ImageAsset;
   howItWorks: { step: string; title: string; description: string }[];
   benefits: { title: string; description: string }[];
   accessSteps: { step: string; title: string; description: string }[];
 };
 
-export const packages: Record<PackageSlug, PackageContent> = {
+const PACKAGE_PAGE_CONTENT: Record<
+  PackageSlug,
+  Pick<PackageContent, "heroHeadline" | "heroDescription" | "howItWorks" | "benefits" | "accessSteps">
+> = {
   starter: {
-    slug: "starter",
-    title: "Alto Starter",
-    subtitle: "High-Yield Savings & Fintech Lock Plans",
     heroHeadline: "Shield your capital from inflation with disciplined digital lock plans.",
     heroDescription:
       "Alto Starter is your entry point into structured wealth preservation — fixed-term cooperative savings pools that keep your money working while life stays predictable. Lock funds securely, track performance in your dashboard, and receive consistent payouts on published cycles once you are verified.",
-    image: PACKAGE_IMAGES.starter,
     howItWorks: [
       {
         step: "01",
@@ -86,13 +87,9 @@ export const packages: Record<PackageSlug, PackageContent> = {
     ]
   },
   growth: {
-    slug: "growth",
-    title: "Alto Growth",
-    subtitle: "Agricultural Crowdfunding & Processing",
     heroHeadline: "Grow wealth in step with real harvest cycles and local food production.",
     heroDescription:
       "Alto Growth connects your capital to seasonal crop production, poultry programmes, and agro-processing operations across verified partner networks. Payouts align with harvest and processing milestones — so your returns follow tangible agricultural output, not abstract promises.",
-    image: PACKAGE_IMAGES.growth,
     howItWorks: [
       {
         step: "01",
@@ -156,13 +153,9 @@ export const packages: Record<PackageSlug, PackageContent> = {
     ]
   },
   premium: {
-    slug: "premium",
-    title: "Alto Premium",
-    subtitle: "Real Estate — Land & Property Banking",
     heroHeadline: "Anchor your wealth in land banking and income-generating property cooperatives.",
     heroDescription:
       "Alto Premium positions members in Nigeria's most trusted long-term asset class. Participate in cooperative land banking within fast-growing commercial corridors, or co-own short-let and rental developments engineered for stable cash flow and documented exit windows.",
-    image: PACKAGE_IMAGES.premium,
     howItWorks: [
       {
         step: "01",
@@ -226,13 +219,9 @@ export const packages: Record<PackageSlug, PackageContent> = {
     ]
   },
   elite: {
-    slug: "elite",
-    title: "Alto Elite",
-    subtitle: "Foreign Exchange — USD & Hard Currency Assets",
     heroHeadline: "Preserve purchasing power with dollar-denominated and global asset exposure.",
     heroDescription:
       "Alto Elite is designed for members who prioritise capital preservation against naira depreciation. Access fractional global equities, stable digital assets, and hard-currency programmes with real-time FX tracking and priority performance reviews — all within AltoRich's audited cooperative structure.",
-    image: PACKAGE_IMAGES.elite,
     howItWorks: [
       {
         step: "01",
@@ -297,12 +286,27 @@ export const packages: Record<PackageSlug, PackageContent> = {
   }
 };
 
-export const packageList: PackageContent[] = [
-  packages.starter,
-  packages.growth,
-  packages.premium,
-  packages.elite
-];
+function buildPackageContent(slug: PackageSlug): PackageContent {
+  const config = PACKAGE_CONFIG.find((p) => p.slug === slug)!;
+  const page = PACKAGE_PAGE_CONTENT[slug];
+  return {
+    slug: config.slug,
+    title: config.title,
+    subtitle: config.subtitle,
+    weeklyRoiPercent: config.weeklyRoiPercent,
+    image: config.image,
+    ...page
+  };
+}
+
+export const packages: Record<PackageSlug, PackageContent> = {
+  starter: buildPackageContent("starter"),
+  growth: buildPackageContent("growth"),
+  premium: buildPackageContent("premium"),
+  elite: buildPackageContent("elite")
+};
+
+export const packageList: PackageContent[] = PACKAGE_CONFIG.map((config) => buildPackageContent(config.slug));
 
 export function getPackage(slug: string): PackageContent | null {
   if (slug in packages) return packages[slug as PackageSlug];

@@ -1,6 +1,6 @@
-import type { PackageSlug } from "@/content/packages";
+import type { PackageSlug } from "@/lib/packages/package-config";
 import { AppError } from "@/lib/errors";
-import { getTierConfig, projectedDailyForPrincipal } from "@/lib/packages/tier-config";
+import { getPackageConfig, projectedDailyForPrincipal } from "@/lib/packages/package-config";
 
 export const PLAN_RISK_DISCLOSURE =
   "Returns are guaranteed. Earnings auto-reinvest weekly until you stop and withdraw on Monday.";
@@ -24,7 +24,7 @@ export function slugifyPlanName(name: string) {
 }
 
 export function buildPlanDefaults(input: CreatePlanInput) {
-  const tier = getTierConfig(input.tier);
+  const tier = getPackageConfig(input.tier);
   if (!tier) {
     throw new AppError("Invalid package tier.", 400, "INVALID_TIER");
   }
@@ -58,13 +58,6 @@ export function buildPlanDefaults(input: CreatePlanInput) {
     is_active: true,
     weekly_roi_bps: tier.weeklyRoiBps,
     risk_disclosure: PLAN_RISK_DISCLOSURE,
-    sort_order: PACKAGE_SORT_ORDER[input.tier]
+    sort_order: tier.displayOrder
   };
 }
-
-const PACKAGE_SORT_ORDER: Record<PackageSlug, number> = {
-  starter: 1,
-  growth: 2,
-  premium: 3,
-  elite: 4
-};

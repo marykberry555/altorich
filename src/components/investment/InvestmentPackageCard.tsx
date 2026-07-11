@@ -10,13 +10,6 @@ import { Card } from "@/components/ui/Card";
 import { InvestFlowSheet } from "@/components/investment/InvestFlowSheet";
 import { cn } from "@/lib/utils";
 
-const ACCENTS: Record<string, string> = {
-  starter: "from-slate-500 to-slate-700",
-  growth: "from-[var(--emerald)] to-[var(--emerald-mid)]",
-  premium: "from-[var(--navy-mid)] to-[var(--navy)]",
-  elite: "from-[var(--gold)] to-amber-600"
-};
-
 type Props = {
   card: PackagePlanCard;
   walletBalance: number;
@@ -25,7 +18,7 @@ type Props = {
 
 export function InvestmentPackageCard({ card, walletBalance, featured }: Props) {
   const [open, setOpen] = useState(false);
-  const accent = ACCENTS[card.slug] ?? ACCENTS.starter;
+  const accent = card.accentGradient;
 
   const returnSummary = useMemo(() => {
     if (!card.available) return null;
@@ -48,6 +41,16 @@ export function InvestmentPackageCard({ card, walletBalance, featured }: Props) 
         <div className={cn("h-1 w-full bg-gradient-to-r", accent)} aria-hidden />
         <div className="flex flex-1 flex-col p-5 sm:p-6">
           <h3 className="text-lg font-bold tracking-tight text-[var(--heading)]">{card.title}</h3>
+          {card.keyBenefits.length ? (
+            <ul className="mt-3 space-y-1 text-xs text-[var(--text-muted)]">
+              {card.keyBenefits.slice(0, 2).map((benefit) => (
+                <li key={benefit} className="flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-[var(--emerald)]" aria-hidden />
+                  {benefit}
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           <dl className="mt-5 flex-1 space-y-3 text-sm">
             <div className="flex items-center justify-between gap-3">

@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { DownloadAppBadge } from "@/components/pwa/DownloadAppBadge";
-import { hero, investmentCategories, howItWorks, trustIndicators, sampleTestimonials, faqs } from "@/content/site";
+import { hero, howItWorks, trustIndicators, sampleTestimonials, faqs } from "@/content/site";
+import { PACKAGE_ROI_RANGE, PACKAGE_CONFIG } from "@/lib/packages/package-config";
 import { PageHero } from "@/components/marketing/PageHero";
 import { IMAGES } from "@/lib/images";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +15,18 @@ import { WeeklyCountdown } from "@/components/roi/WeeklyCountdown";
 import { StepNumber } from "@/components/ui/StepNumber";
 
 export function HomePage() {
+  const investmentCategories = PACKAGE_CONFIG.map((pkg) => ({
+    slug: pkg.slug,
+    title: pkg.title,
+    subtitle: pkg.subtitle,
+    description: pkg.cardDescription,
+    href: `/packages/${pkg.slug}`,
+    image: pkg.image,
+    weeklyRoiPercent: pkg.weeklyRoiPercent,
+    keyBenefits: pkg.keyBenefits,
+    ctaLabel: pkg.ctaLabel
+  }));
+
   return (
     <>
       {/* Hero */}
@@ -39,7 +52,7 @@ export function HomePage() {
                   {hero.ctaPrimary} <ArrowRight size={18} className="shrink-0" />
                 </Button>
               </Link>
-              <DownloadAppBadge size="lg" label="Get app" className="h-13 w-full min-w-0 justify-center" />
+              <DownloadAppBadge size="lg" label="Get app" tone="primary" className="h-13 w-full min-w-0 justify-center" />
             </div>
             {/* Intentionally minimal: no trust microcopy in hero */}
           </div>
@@ -90,7 +103,7 @@ export function HomePage() {
       {/* Trust */}
       <section className="gradient-navy section-pad text-white">
         <div className="container-ar grid gap-10 lg:grid-cols-2">
-          <PageHero dark eyebrow="Security & governance" title="Built on verification, not promises." description="Every funding request is reconciled against real bank transfers. Every payout follows published windows. Weekly returns from 10% to 25% are guaranteed and paid every Monday at 09:00 WAT." />
+          <PageHero dark eyebrow="Security & governance" title="Built on verification, not promises." description={`Every funding request is reconciled against real bank transfers. Every payout follows published windows. Weekly returns from ${PACKAGE_ROI_RANGE.minPercent}% to ${PACKAGE_ROI_RANGE.maxPercent}% are guaranteed and paid every Monday at 09:00 WAT.`} />
           <div className="grid gap-4 sm:grid-cols-2">
             {trustIndicators.map((item) => (
               <div key={item.label} className="rounded-[var(--radius)] border border-white/10 bg-white/5 p-5">
