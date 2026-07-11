@@ -22,8 +22,8 @@ export function DownloadAppBadge({ size = "md", className, tone = "dark" }: Prop
   const spec = sizes[size];
   const shellClass =
     tone === "light"
-      ? "bg-white text-[var(--navy)] shadow-[var(--shadow-sm)] hover:bg-white/95"
-      : "bg-[var(--navy)] text-white shadow-[var(--shadow-md)] hover:brightness-110";
+      ? "bg-white text-[var(--emerald)] ring-1 ring-white/30 shadow-[var(--shadow-sm)] hover:bg-white/95"
+      : "bg-[var(--emerald)] text-white shadow-[var(--shadow-md)] hover:brightness-110";
 
   if (pwa?.isStandalone) {
     return (

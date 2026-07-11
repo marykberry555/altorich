@@ -21,7 +21,7 @@ export function DownloadPageContent() {
           <DownloadImageButton />
         </div>
 
-        <div className="mt-12 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-raised)] p-6 text-left">
+        <div id="install-steps" className="mt-12 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-raised)] p-6 text-left">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--heading)]">How to install</h2>
           <ol className="mt-4 space-y-3 text-sm text-[var(--text-muted)]">
             <li>

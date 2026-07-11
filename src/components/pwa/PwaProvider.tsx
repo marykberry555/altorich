@@ -1,12 +1,19 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { isStandaloneDisplay, recordPwaVisit, registerServiceWorker } from "@/lib/pwa/runtime";
+import {
+  isStandaloneDisplay,
+  recordPwaVisit,
+  registerServiceWorker,
+  type BeforeInstallPromptEvent
+} from "@/lib/pwa/runtime";
 
 type PwaContextValue = {
   isStandalone: boolean;
   isOnline: boolean;
+  canInstall: boolean;
   updateAvailable: boolean;
+  promptInstall: () => Promise<boolean>;
   applyUpdate: () => void;
 };
 
@@ -15,6 +22,7 @@ const PwaContext = createContext<PwaContextValue | null>(null);
 export function PwaProvider({ children }: { children: React.ReactNode }) {
   const [isStandalone, setIsStandalone] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
@@ -26,6 +34,13 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     const onOffline = () => setIsOnline(false);
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
+
+    const onBeforeInstall = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
 
     void registerServiceWorker().then((registration) => {
       if (!registration) return;
@@ -43,8 +58,17 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
     };
   }, []);
+
+  const promptInstall = useCallback(async () => {
+    if (!installPrompt) return false;
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    setInstallPrompt(null);
+    return choice.outcome === "accepted";
+  }, [installPrompt]);
 
   const applyUpdate = useCallback(() => {
     navigator.serviceWorker.controller?.postMessage({ type: "SKIP_WAITING" });
@@ -55,10 +79,12 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     () => ({
       isStandalone,
       isOnline,
+      canInstall: Boolean(installPrompt) && !isStandalone,
       updateAvailable,
+      promptInstall,
       applyUpdate
     }),
-    [isStandalone, isOnline, updateAvailable, applyUpdate]
+    [isStandalone, isOnline, installPrompt, updateAvailable, promptInstall, applyUpdate]
   );
 
   return <PwaContext.Provider value={value}>{children}</PwaContext.Provider>;

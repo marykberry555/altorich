@@ -3,27 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { buildSocialProofEvents, type SocialEvent } from "@/lib/social/social-proof-events";
+import { isAppRoute } from "@/lib/route-zones";
 
 const SIGNUP_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-
-type SocialEvent = {
-  type: "signup" | "invest" | "withdraw";
-  firstName: string;
-  location: string;
-  amount?: string;
-  occurredAt: number;
-};
-
-function buildSeed(now: number): SocialEvent[] {
-  return [
-    { type: "signup", firstName: "Tola", location: "Lekki", occurredAt: now - 4 * 60 * 1000 },
-    { type: "invest", firstName: "Chinedu", location: "Abuja", amount: "₦150,000", occurredAt: now - 18 * 60 * 1000 },
-    { type: "withdraw", firstName: "Amina", location: "Kano", amount: "₦92,500", occurredAt: now - 42 * 60 * 1000 },
-    { type: "invest", firstName: "Kemi", location: "Ibadan", amount: "₦500,000", occurredAt: now - 55 * 60 * 1000 },
-    { type: "withdraw", firstName: "Seyi", location: "Surulere", amount: "₦210,000", occurredAt: now - 90 * 60 * 1000 },
-    { type: "signup", firstName: "Ngozi", location: "Port Harcourt", occurredAt: now - 28 * 60 * 60 * 1000 }
-  ];
-}
+const TOAST_INTERVAL_MS = 2 * 60 * 1000;
+const TOAST_VISIBLE_MS = 8000;
 
 function isEligible(ev: SocialEvent, now: number) {
   if (ev.type !== "signup") return true;
@@ -32,7 +17,7 @@ function isEligible(ev: SocialEvent, now: number) {
 
 function messageFor(ev: SocialEvent) {
   if (ev.type === "signup") return `${ev.firstName} from ${ev.location} just signed up`;
-  if (ev.type === "invest") return `${ev.firstName} from ${ev.location} invested ${ev.amount}`;
+  if (ev.type === "invest") return `${ev.firstName} from ${ev.location} deposited ${ev.amount}`;
   return `${ev.firstName} from ${ev.location} withdrew ${ev.amount}`;
 }
 
@@ -46,8 +31,6 @@ function timeAgo(ms: number, now: number) {
   return "Recently";
 }
 
-import { isAppRoute } from "@/lib/route-zones";
-
 export function SocialProofToasts({ className }: { className?: string }) {
   const pathname = usePathname();
   const [mountedAt] = useState(() => Date.now());
@@ -56,7 +39,7 @@ export function SocialProofToasts({ className }: { className?: string }) {
   const [now, setNow] = useState(() => Date.now());
 
   const events = useMemo(() => {
-    return buildSeed(mountedAt).filter((ev) => isEligible(ev, now));
+    return buildSocialProofEvents(mountedAt).filter((ev) => isEligible(ev, now));
   }, [mountedAt, now]);
 
   const current = events.length > 0 ? events[idx % events.length] : null;
@@ -69,14 +52,14 @@ export function SocialProofToasts({ className }: { className?: string }) {
     const show = () => {
       setNow(Date.now());
       setVisible(true);
-      window.setTimeout(() => setVisible(false), 8000);
+      window.setTimeout(() => setVisible(false), TOAST_VISIBLE_MS);
     };
 
-    const first = window.setTimeout(show, 10_000);
+    const first = window.setTimeout(show, 12_000);
     const interval = window.setInterval(() => {
       setIdx((i) => i + 1);
       show();
-    }, 60_000);
+    }, TOAST_INTERVAL_MS);
 
     return () => {
       window.clearInterval(tick);
