@@ -17,8 +17,8 @@ export default async function WithdrawalsPage() {
 
   if (user && services) {
     const wallet = await services.wallet.getWalletByUserId(user.id).catch(() => null);
-    if (wallet) balance = await services.wallet.getBalance(wallet.id);
-    withdrawals = await services.withdrawals.listForUser(user.id, 50);
+    if (wallet) balance = await services.wallet.getBalance(wallet.id).catch(() => 0);
+    withdrawals = await services.withdrawals.listForUser(user.id, 50).catch(() => []);
   }
 
   return (

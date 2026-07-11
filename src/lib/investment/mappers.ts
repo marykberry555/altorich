@@ -87,21 +87,39 @@ export async function fetchInvestmentContext(
   services: NonNullable<Awaited<ReturnType<typeof import("@/lib/services").getUserServices>>>,
   userId: string
 ) {
-  const investments = await services.investments.listUserInvestments(userId);
-  const ids = investments.map((i) => i.id);
-  let settlements: SettlementRow[] = [];
-  if (ids.length > 0) {
-    const { data } = await services.supabase
-      .from("investment_settlements")
-      .select("investment_id, settled_at, status")
-      .in("investment_id", ids)
-      .eq("status", "paid");
-    settlements = (data ?? []) as SettlementRow[];
+  const { logQueryFailure } = await import("@/lib/supabase/safe-query");
+  const baseContext = { route: "investment-context", component: "fetchInvestmentContext", userId };
+
+  try {
+    const investments = await services.investments.listUserInvestments(userId).catch((error) => {
+      logQueryFailure({ ...baseContext, fn: "listUserInvestments" }, error);
+      return [];
+    });
+
+    const ids = investments.map((i) => i.id);
+    let settlements: SettlementRow[] = [];
+
+    if (ids.length > 0) {
+      const { data, error } = await services.supabase
+        .from("investment_settlements")
+        .select("investment_id, settled_at, status")
+        .in("investment_id", ids)
+        .eq("status", "paid");
+
+      if (error) {
+        logQueryFailure({ ...baseContext, fn: "investment_settlements.select" }, error);
+      } else {
+        settlements = (data ?? []) as SettlementRow[];
+      }
+    }
+
+    const rows = mapInvestmentRows(investments as InvestmentWithPlan[], settlements);
+    const wallet = await services.wallet.getWalletByUserId(userId).catch(() => null);
+    const balance = wallet ? await services.wallet.getBalance(wallet.id).catch(() => 0) : 0;
+
+    return { investments, rows, liveInputs: mapLiveInputs(rows), balance };
+  } catch (error) {
+    logQueryFailure({ ...baseContext, fn: "fetchInvestmentContext" }, error);
+    return null;
   }
-
-  const rows = mapInvestmentRows(investments as InvestmentWithPlan[], settlements);
-  const wallet = await services.wallet.getWalletByUserId(userId).catch(() => null);
-  const balance = wallet ? await services.wallet.getBalance(wallet.id) : 0;
-
-  return { investments, rows, liveInputs: mapLiveInputs(rows), balance };
 }

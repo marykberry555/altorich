@@ -23,11 +23,11 @@ export default async function DepositsPage() {
   if (user && services) {
     const wallet = await services.wallet.getWalletByUserId(user.id).catch(() => null);
     if (wallet) {
-      balance = await services.wallet.getBalance(wallet.id);
-      const stats = await services.deposits.getUserStats(user.id);
+      balance = await services.wallet.getBalance(wallet.id).catch(() => 0);
+      const stats = await services.deposits.getUserStats(user.id).catch(() => ({ approved: 0, pending: 0, count: 0 }));
       pendingFunding = stats.pending;
     }
-    fundingHistory = await services.deposits.listForUser(user.id, 10);
+    fundingHistory = await services.deposits.listForUser(user.id, 10).catch(() => []);
   }
 
   const accountViews = fundingAccounts.map((account) => ({

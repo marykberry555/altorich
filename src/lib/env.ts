@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const publicEnvSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().url().default("https://altorich.com"),
@@ -37,15 +38,32 @@ export function isServiceRoleConfigured(): boolean {
   );
 }
 
+const DEFAULT_PUBLIC_ENV: PublicEnv = {
+  NEXT_PUBLIC_SITE_URL: "https://altorich.com",
+  NEXT_PUBLIC_SUPABASE_URL: undefined,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: undefined,
+  NEXT_PUBLIC_SMARTSUPP_KEY: undefined,
+  NEXT_PUBLIC_ROI_MODE_ENABLED: false
+};
+
 /** Public env — safe for browser bundles */
 export function getPublicEnv(): PublicEnv {
-  return publicEnvSchema.parse({
+  const parsed = publicEnvSchema.safeParse({
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_SMARTSUPP_KEY: process.env.NEXT_PUBLIC_SMARTSUPP_KEY,
     NEXT_PUBLIC_ROI_MODE_ENABLED: process.env.NEXT_PUBLIC_ROI_MODE_ENABLED
   });
+
+  if (!parsed.success) {
+    logger.warn("Invalid public environment configuration; using safe defaults", {
+      issues: parsed.error.issues.map((issue) => issue.path.join("."))
+    });
+    return DEFAULT_PUBLIC_ENV;
+  }
+
+  return parsed.data;
 }
 
 /** Server-only env — never import from client components */

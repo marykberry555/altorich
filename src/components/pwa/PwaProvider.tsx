@@ -70,8 +70,13 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     return choice.outcome === "accepted";
   }, [installPrompt]);
 
-  const applyUpdate = useCallback(() => {
+  const applyUpdate = useCallback(async () => {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((key) => key.startsWith("altorich-")).map((key) => caches.delete(key)));
+    }
     navigator.serviceWorker.controller?.postMessage({ type: "SKIP_WAITING" });
+    navigator.serviceWorker.controller?.postMessage({ type: "CLEAR_CACHES" });
     window.location.reload();
   }, []);
 

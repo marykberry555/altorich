@@ -20,8 +20,12 @@ export default async function PortfolioPage() {
   const env = getPublicEnv();
   const roiEnabled = Boolean(env.NEXT_PUBLIC_ROI_MODE_ENABLED);
 
-  const investCtx = user && services ? await fetchInvestmentContext(services, user.id) : null;
-  const portfolio = user && services ? await services.investments.getPortfolioSummary(user.id) : null;
+  const investCtx =
+    user && services ? await fetchInvestmentContext(services, user.id).catch(() => null) : null;
+  const portfolio =
+    user && services
+      ? await services.investments.getPortfolioSummary(user.id).catch(() => null)
+      : null;
   const roiState =
     roiEnabled && user && services ? await services.roi.getState(user.id).catch(() => null) : null;
 

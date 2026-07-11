@@ -17,7 +17,7 @@ export default async function SettingsPage() {
 
   if (user && services) {
     profile = await services.profile.getProfile(user.id).catch(() => null);
-    bankAccounts = await services.profile.listBankAccounts(user.id);
+    bankAccounts = await services.profile.listBankAccounts(user.id).catch(() => []);
   }
 
   const prefs = (profile?.notification_preferences ?? { in_app: true, email: true, sms: false }) as {

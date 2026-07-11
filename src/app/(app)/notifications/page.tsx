@@ -9,7 +9,7 @@ export default async function NotificationsPage() {
   const user = await getSessionUser();
   const services = await getUserServices();
   const notifications =
-    user && services ? await services.notifications.listForUser(user.id, 50) : [];
+    user && services ? await services.notifications.listForUser(user.id, 50).catch(() => []) : [];
 
   return (
     <div className="mx-auto max-w-3xl">

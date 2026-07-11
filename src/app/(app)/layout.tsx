@@ -18,7 +18,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   if (user && services) {
-    const { data: profile } = await services.supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle();
+    const { data: profile, error: profileError } = await services.supabase
+      .from("profiles")
+      .select("full_name, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      const { logQueryFailure } = await import("@/lib/supabase/safe-query");
+      logQueryFailure(
+        { route: "/app", component: "AppLayout", fn: "profiles.select", userId: user.id },
+        profileError
+      );
+    }
+
     if (profile?.full_name) fullName = profile.full_name;
     avatarUrl = profile?.avatar_url ?? null;
   }

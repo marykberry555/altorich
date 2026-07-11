@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, TrendingUp } from "lucide-react";
 import { getSessionUser } from "@/lib/auth/session";
 import { getUserServices } from "@/lib/services";
@@ -13,6 +12,7 @@ import { StatusBadge } from "@/components/design-system";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -22,18 +22,47 @@ export default async function InvestmentDetailPage({ params }: Props) {
   const { id } = await params;
   const user = await getSessionUser();
   const services = await getUserServices();
-  if (!user || !services) notFound();
 
-  const { data: investment } = await services.supabase
+  if (!user || !services) {
+    return (
+      <div className="mx-auto max-w-lg py-16 text-center">
+        <EmptyState
+          title="Sign in required"
+          description="Sign in to view investment details."
+          action={
+            <Link href="/auth/login">
+              <Button>Sign in</Button>
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
+  const { data: investment, error: investmentError } = await services.supabase
     .from("investments")
     .select("*, investment_plans(*)")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!investment) notFound();
+  if (investmentError || !investment) {
+    return (
+      <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
+        <EmptyState
+          title="Investment not found"
+          description="This investment may have been removed or you may not have access to it."
+          action={
+            <Link href="/portfolio">
+              <Button variant="outline">Back to portfolio</Button>
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
 
-  const settlements = await services.settlements.listForInvestment(id);
+  const settlements = await services.settlements.listForInvestment(id).catch(() => []);
   const paidSettlements = settlements.filter((s) => s.status === "paid");
   const lastPaid = paidSettlements.reduce<string | null>((max, s) => {
     if (!s.settled_at) return max;

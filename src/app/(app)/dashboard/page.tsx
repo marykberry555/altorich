@@ -31,7 +31,10 @@ async function DashboardContent() {
   const services = await getUserServices();
   const env = getPublicEnv();
   const roiEnabled = Boolean(env.NEXT_PUBLIC_ROI_MODE_ENABLED);
-  const dashboard = user && services ? await services.dashboard.getMemberDashboard(user.id) : null;
+  const dashboard =
+    user && services
+      ? await services.dashboard.getMemberDashboard(user.id).catch(() => null)
+      : null;
   const roiState =
     roiEnabled && user && services ? await services.roi.getState(user.id).catch(() => null) : null;
   const investCtx = user && services ? await fetchInvestmentContext(services, user.id) : null;

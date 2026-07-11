@@ -16,10 +16,10 @@ export default async function ProfilePage() {
   let balance = 0;
 
   if (user && services) {
-    const { data } = await services.supabase.from("profiles").select("*").eq("id", user.id).single();
+    const { data } = await services.supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
     profile = data;
     const wallet = await services.wallet.getWalletByUserId(user.id).catch(() => null);
-    if (wallet) balance = await services.wallet.getBalance(wallet.id);
+    if (wallet) balance = await services.wallet.getBalance(wallet.id).catch(() => 0);
   }
 
   const links = [

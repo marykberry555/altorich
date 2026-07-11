@@ -1,11 +1,25 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import { logQueryFailure } from "@/lib/supabase/safe-query";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { DepositService } from "@/services/deposit/deposit.service";
 import { NotificationService } from "@/services/notification/notification.service";
-import { InvestmentService } from "@/services/investment/investment.service";
+import {
+  InvestmentService,
+  type PortfolioSummary
+} from "@/services/investment/investment.service";
 
 type Client = SupabaseClient<Database>;
+
+const EMPTY_PORTFOLIO: PortfolioSummary = {
+  activeCount: 0,
+  completedCount: 0,
+  maturedCount: 0,
+  totalInvested: 0,
+  totalEarned: 0,
+  currentValue: 0,
+  upcomingMaturities: []
+};
 
 export type MemberDashboardData = {
   profile: Database["public"]["Tables"]["profiles"]["Row"] | null;
@@ -13,7 +27,7 @@ export type MemberDashboardData = {
   pendingDeposits: number;
   pendingWithdrawals: number;
   activeInvestments: number;
-  portfolio: Awaited<ReturnType<InvestmentService["getPortfolioSummary"]>>;
+  portfolio: PortfolioSummary;
   referralCount: number;
   unreadNotifications: number;
   recentTransactions: Awaited<ReturnType<WalletService["getTransactions"]>>;
@@ -40,15 +54,37 @@ export class DashboardService {
   }
 
   async getMemberDashboard(userId: string): Promise<MemberDashboardData> {
-    const [profileResult, announcement, depositStats, unreadNotifications, portfolio] = await Promise.all([
-      this.supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-      this.settings.getAnnouncement(),
-      this.deposits.getUserStats(userId),
-      this.notifications.getUnreadCount(userId),
-      this.investments.getPortfolioSummary(userId)
+    const baseContext = {
+      route: "/dashboard",
+      component: "DashboardService",
+      userId
+    };
+
+    const profileResult = await this.supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+    if (profileResult.error) {
+      logQueryFailure({ ...baseContext, fn: "profiles.select" }, profileResult.error);
+    }
+
+    const [announcement, depositStats, unreadNotifications, portfolio] = await Promise.all([
+      this.settings.getAnnouncement().catch((error) => {
+        logQueryFailure({ ...baseContext, fn: "getAnnouncement" }, error);
+        return "";
+      }),
+      this.deposits.getUserStats(userId).catch((error) => {
+        logQueryFailure({ ...baseContext, fn: "getUserStats" }, error);
+        return { approved: 0, pending: 0, count: 0 };
+      }),
+      this.notifications.getUnreadCount(userId).catch((error) => {
+        logQueryFailure({ ...baseContext, fn: "getUnreadCount" }, error);
+        return 0;
+      }),
+      this.investments.getPortfolioSummary(userId).catch((error) => {
+        logQueryFailure({ ...baseContext, fn: "getPortfolioSummary" }, error);
+        return EMPTY_PORTFOLIO;
+      })
     ]);
 
-    const profile = profileResult.data;
+    const profile = profileResult.data ?? null;
     let balance = 0;
     let recentTransactions: MemberDashboardData["recentTransactions"] = [];
     let recentEarnings: MemberDashboardData["recentEarnings"] = [];
@@ -66,11 +102,14 @@ export class DashboardService {
           created_at: t.created_at,
           reason: t.reason
         }));
-    } catch {
-      // Wallet may not exist yet
+    } catch (error) {
+      logQueryFailure({ ...baseContext, fn: "wallet" }, error);
     }
 
-    const recentDeposits = await this.deposits.listForUser(userId, 5);
+    const recentDeposits = await this.deposits.listForUser(userId, 5).catch((error) => {
+      logQueryFailure({ ...baseContext, fn: "listForUser(deposits)" }, error);
+      return [];
+    });
 
     const [referralResult, pendingWithdrawalsResult] = await Promise.all([
       this.supabase.from("referrals").select("*", { count: "exact", head: true }).eq("referrer_id", userId),
@@ -80,6 +119,13 @@ export class DashboardService {
         .eq("user_id", userId)
         .eq("status", "pending")
     ]);
+
+    if (referralResult.error) {
+      logQueryFailure({ ...baseContext, fn: "referrals.count" }, referralResult.error);
+    }
+    if (pendingWithdrawalsResult.error) {
+      logQueryFailure({ ...baseContext, fn: "withdrawals.count" }, pendingWithdrawalsResult.error);
+    }
 
     return {
       profile,

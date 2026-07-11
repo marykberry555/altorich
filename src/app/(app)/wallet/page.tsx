@@ -17,8 +17,8 @@ export default async function WalletPage() {
   if (user && services) {
     const wallet = await services.wallet.getWalletByUserId(user.id).catch(() => null);
     if (wallet) {
-      balance = await services.wallet.getBalance(wallet.id);
-      const txs = await services.wallet.getTransactions(wallet.id, 25);
+      balance = await services.wallet.getBalance(wallet.id).catch(() => 0);
+      const txs = await services.wallet.getTransactions(wallet.id, 25).catch(() => []);
       transactions = txs.map((t) => ({
         id: t.id,
         type: t.type,
