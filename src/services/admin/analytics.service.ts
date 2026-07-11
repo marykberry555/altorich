@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import { isPayoutSchemaCompatError } from "@/lib/payout/withdrawal-compat";
 
 type Client = SupabaseClient<Database>;
 
@@ -44,14 +45,32 @@ export class AnalyticsService {
     ]);
 
     const pendingDeposits = (pendingDepositsRes.data ?? []).reduce((s, d) => s + Number(d.amount), 0);
-    const pendingWithdrawals = pendingWithdrawalsRes.data?.length ?? 0;
+    let pendingWithdrawals = pendingWithdrawalsRes.data?.length ?? 0;
+
+    if (pendingWithdrawalsRes.error && isPayoutSchemaCompatError(pendingWithdrawalsRes.error)) {
+      const legacyPending = await this.supabase.from("withdrawals").select("id").eq("status", "pending");
+      pendingWithdrawals = legacyPending.data?.length ?? 0;
+    } else if (pendingWithdrawalsRes.error) {
+      throw pendingWithdrawalsRes.error;
+    } else {
+      const scheduledRes = await this.supabase.from("withdrawals").select("id").eq("status", "scheduled");
+      if (!scheduledRes.error) {
+        pendingWithdrawals += scheduledRes.data?.length ?? 0;
+      } else if (!isPayoutSchemaCompatError(scheduledRes.error)) {
+        throw scheduledRes.error;
+      }
+    }
 
     const { data: wallets } = await this.supabase.from("wallets").select("id");
     let totalWalletBalance = 0;
     if (wallets) {
       for (const w of wallets) {
-        const { data: bal } = await this.supabase.rpc("wallet_balance", { p_wallet_id: w.id });
-        totalWalletBalance += Number(bal ?? 0);
+        try {
+          const { data: bal } = await this.supabase.rpc("wallet_balance", { p_wallet_id: w.id });
+          totalWalletBalance += Number(bal ?? 0);
+        } catch {
+          // Skip wallets that fail balance lookup.
+        }
       }
     }
 

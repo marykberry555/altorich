@@ -2,6 +2,7 @@ import { Check, X } from "lucide-react";
 import { formatNaira } from "@/lib/domain";
 import { payoutStatusLabel, payoutStatusVariant } from "@/lib/payout/status";
 import { getServiceRoleServices } from "@/lib/services";
+import type { AdminMetrics } from "@/services/admin/analytics.service";
 import type { Withdrawal } from "@/types/database";
 import { DashboardSection, MetricStatCard, SectionHeading, StatusBadge } from "@/components/design-system";
 import { Badge } from "@/components/ui/Badge";
@@ -16,11 +17,39 @@ function requestTypeLabel(type: string | null | undefined) {
 
 export default async function PayoutsPage() {
   const services = await getServiceRoleServices();
-  const pendingWithdrawals = services ? await services.withdrawals.listPending() : [];
-  const metrics = services ? await services.analytics.getAdminMetrics() : null;
+  let pendingWithdrawals: Withdrawal[] = [];
   let withdrawals: Withdrawal[] = [];
+  let metrics: AdminMetrics | null = null;
+  let loadError: string | null = null;
+
   if (services) {
-    withdrawals = await services.withdrawals.listRecent(50);
+    try {
+      const [pending, adminMetrics, recent] = await Promise.all([
+        services.withdrawals.listPending(),
+        services.analytics.getAdminMetrics(),
+        services.withdrawals.listRecent(50)
+      ]);
+      pendingWithdrawals = pending;
+      metrics = adminMetrics;
+      withdrawals = recent;
+    } catch (error) {
+      loadError = error instanceof Error ? error.message : "Could not load payout data.";
+      try {
+        pendingWithdrawals = await services.withdrawals.listPending();
+      } catch {
+        pendingWithdrawals = [];
+      }
+      try {
+        withdrawals = await services.withdrawals.listRecent(50);
+      } catch {
+        withdrawals = [];
+      }
+      try {
+        metrics = await services.analytics.getAdminMetrics();
+      } catch {
+        metrics = null;
+      }
+    }
   }
 
   return (
@@ -30,6 +59,12 @@ export default async function PayoutsPage() {
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--heading)]">Payouts</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">Review manual and automatic payout requests.</p>
       </header>
+
+      {loadError ? (
+        <Card variant="elevated" padding="md" className="border-red-200 bg-red-50/80 dark:border-red-500/30 dark:bg-red-500/10">
+          <p className="text-sm text-red-700 dark:text-red-200">{loadError}</p>
+        </Card>
+      ) : null}
 
       <DashboardSection title="Payout metrics">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
