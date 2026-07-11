@@ -25,6 +25,20 @@ async function fetchStatus(url, init) {
 async function main() {
   console.log(`AltoRich — Production Smoke Test (${BASE})\n`);
 
+  await check("Homepage headline shows 10–25% weekly", async () => {
+    const res = await fetch(`${BASE}/`);
+    const html = await res.text();
+    const ok = html.includes("10% to 25% weekly") || html.includes("10% to 25%");
+    return { ok, note: ok ? "headline present" : "headline missing" };
+  });
+
+  await check("Homepage mentions guaranteed returns", async () => {
+    const res = await fetch(`${BASE}/`);
+    const html = await res.text();
+    const ok = /Returns are guaranteed/i.test(html) || /guaranteed weekly returns/i.test(html);
+    return { ok, note: ok ? "guarantee copy present" : "guarantee copy missing" };
+  });
+
   await check("Homepage returns 200", async () => {
     const { status } = await fetchStatus(`${BASE}/`);
     return { ok: status === 200, note: `HTTP ${status}` };
