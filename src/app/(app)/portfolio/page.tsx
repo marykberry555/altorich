@@ -20,9 +20,14 @@ export default async function PortfolioPage() {
   const env = getPublicEnv();
   const roiEnabled = Boolean(env.NEXT_PUBLIC_ROI_MODE_ENABLED);
 
-  const roiState = roiEnabled && user && services ? await services.roi.getState(user.id).catch(() => null) : null;
-  const ctx = user && services && !roiEnabled ? await fetchInvestmentContext(services, user.id) : null;
-  const portfolio = ctx && services ? await services.investments.getPortfolioSummary(user!.id) : null;
+  const investCtx = user && services ? await fetchInvestmentContext(services, user.id) : null;
+  const portfolio = user && services ? await services.investments.getPortfolioSummary(user.id) : null;
+  const roiState =
+    roiEnabled && user && services ? await services.roi.getState(user.id).catch(() => null) : null;
+
+  const hasRoiInvestment = Boolean(roiState?.activeInvestment);
+  const hasPlanInvestments = (investCtx?.investments.length ?? 0) > 0;
+  const hasActivePlans = investCtx?.rows.some((r) => ["active", "stopping"].includes(r.status)) ?? false;
 
   let balanceHistory: { date: string; value: number }[] = [];
   let earningsTrend: { date: string; value: number }[] = [];
@@ -37,9 +42,9 @@ export default async function PortfolioPage() {
     }
   }
 
-  if (ctx?.rows.length) {
+  if (investCtx?.rows.length) {
     const byPlan = new Map<string, number>();
-    for (const row of ctx.rows.filter((r) => r.status === "active")) {
+    for (const row of investCtx.rows.filter((r) => r.status === "active" || r.status === "stopping")) {
       byPlan.set(row.planName, (byPlan.get(row.planName) ?? 0) + row.amount);
     }
     const planAllocation = Array.from(byPlan.entries()).map(([name, value]) => ({ name, value }));
@@ -59,42 +64,32 @@ export default async function PortfolioPage() {
         </Link>
       </header>
 
-      {roiEnabled ? (
+      {roiEnabled && hasRoiInvestment && roiState?.activeInvestment ? (
         <DashboardSection title="Weekly ROI">
-          {roiState?.activeInvestment ? (
-            <Card variant="elevated" className="grid gap-6 sm:grid-cols-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Active tier</p>
-                <p className="mt-1 text-lg font-semibold text-[var(--heading)]">{roiState.activeInvestment.tier.name}</p>
-                <p className="mt-2 text-sm text-[var(--text-muted)]">
-                  Principal:{" "}
-                  <span className="font-semibold text-[var(--heading)]">
-                    {formatNaira(Number(roiState.activeInvestment.principal_ngn))}
-                  </span>
-                </p>
-              </div>
-              <EarningsTicker
-                principalNgn={Number(roiState.activeInvestment.principal_ngn)}
-                weeklyRoiBps={Number(roiState.activeInvestment.tier.weekly_roi_bps)}
-                cycleStartedAt={roiState.activeInvestment.cycle_started_at}
-                cycleEndsAt={roiState.activeInvestment.cycle_ends_at}
-              />
-            </Card>
-          ) : (
-            <EmptyState
-              title="No active weekly ROI investment"
-              description="Choose a tier to start your weekly cycle."
-              action={
-                <Link href="/investments">
-                  <Button>Browse packages</Button>
-                </Link>
-              }
+          <Card variant="elevated" className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Active tier</p>
+              <p className="mt-1 text-lg font-semibold text-[var(--heading)]">{roiState.activeInvestment.tier.name}</p>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">
+                Principal:{" "}
+                <span className="font-semibold text-[var(--heading)]">
+                  {formatNaira(Number(roiState.activeInvestment.principal_ngn))}
+                </span>
+              </p>
+            </div>
+            <EarningsTicker
+              principalNgn={Number(roiState.activeInvestment.principal_ngn)}
+              weeklyRoiBps={Number(roiState.activeInvestment.tier.weekly_roi_bps)}
+              cycleStartedAt={roiState.activeInvestment.cycle_started_at}
+              cycleEndsAt={roiState.activeInvestment.cycle_ends_at}
             />
-          )}
+          </Card>
         </DashboardSection>
-      ) : (
+      ) : null}
+
+      {hasPlanInvestments || hasActivePlans ? (
         <>
-          {ctx ? <LivePortfolioPanel walletBalance={ctx.balance} investments={ctx.liveInputs} /> : null}
+          {investCtx ? <LivePortfolioPanel walletBalance={investCtx.balance} investments={investCtx.liveInputs} /> : null}
 
           <DashboardSection title="Portfolio summary">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -115,7 +110,7 @@ export default async function PortfolioPage() {
             </div>
           </DashboardSection>
 
-          {ctx ? <ActiveInvestmentsList investments={ctx.rows} /> : null}
+          {investCtx ? <ActiveInvestmentsList investments={investCtx.rows} /> : null}
 
           <DashboardSection title="Upcoming settlements">
             {(portfolio?.upcomingMaturities.length ?? 0) === 0 ? (
@@ -139,7 +134,7 @@ export default async function PortfolioPage() {
           </DashboardSection>
 
           <DashboardSection title="All investments">
-            {!ctx || ctx.investments.length === 0 ? (
+            {!investCtx || investCtx.investments.length === 0 ? (
               <EmptyState
                 title="No investments yet"
                 description="Fund your wallet and purchase a plan to start your first cycle."
@@ -164,7 +159,7 @@ export default async function PortfolioPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {ctx.investments.map((inv) => {
+                      {investCtx.investments.map((inv) => {
                         const plan = (inv as { investment_plans?: { name?: string } | null }).investment_plans;
                         return (
                           <tr key={inv.id} className="border-b border-[var(--border)]">
@@ -195,7 +190,17 @@ export default async function PortfolioPage() {
             )}
           </DashboardSection>
         </>
-      )}
+      ) : !hasRoiInvestment ? (
+        <EmptyState
+          title="No investments yet"
+          description="Fund your wallet and choose a package to start earning."
+          action={
+            <Link href="/investments">
+              <Button>Browse packages</Button>
+            </Link>
+          }
+        />
+      ) : null}
     </div>
   );
 }

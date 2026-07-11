@@ -27,7 +27,10 @@ async function DashboardContent() {
   const dashboard = user && services ? await services.dashboard.getMemberDashboard(user.id) : null;
   const roiState =
     roiEnabled && user && services ? await services.roi.getState(user.id).catch(() => null) : null;
-  const investCtx = user && services && !roiEnabled ? await fetchInvestmentContext(services, user.id) : null;
+  const investCtx = user && services ? await fetchInvestmentContext(services, user.id) : null;
+  const hasActivePlanInvestments =
+    investCtx?.rows.some((r) => r.status === "active" || r.status === "stopping") ?? false;
+  const showPlanInvestmentUi = Boolean(investCtx) && (!roiEnabled || !roiState?.activeInvestment || hasActivePlanInvestments);
 
   const balance = dashboard?.balance ?? 0;
   const portfolio = dashboard?.portfolio;
@@ -86,7 +89,7 @@ async function DashboardContent() {
         </div>
       ) : null}
 
-      {roiEnabled ? (
+      {roiEnabled && roiState?.activeInvestment ? (
         <DashboardCyclePanel
           fullName={fullName}
           avatarUrl={avatarUrl}
@@ -107,19 +110,7 @@ async function DashboardContent() {
       ) : null}
 
       <DashboardSection className="space-y-6">
-        {!roiEnabled && investCtx ? (
-          <DashboardWealthHero
-            fullName={fullName}
-            avatarUrl={avatarUrl}
-            preferredPackageSlug={preferredPackage}
-            hasActiveInvestment={hasActiveInvestment}
-            walletBalance={investCtx.balance}
-            liveInputs={investCtx.liveInputs}
-            totalInvested={portfolio?.totalInvested ?? 0}
-            totalEarned={portfolio?.totalEarned ?? 0}
-            pendingPayouts={dashboard?.pendingWithdrawals ?? 0}
-          />
-        ) : roiEnabled ? (
+        {!showPlanInvestmentUi && roiEnabled ? (
           <DashboardWealthHeroStatic
             fullName={fullName}
             avatarUrl={avatarUrl}
@@ -132,6 +123,18 @@ async function DashboardContent() {
             pendingPayouts={dashboard?.pendingWithdrawals ?? 0}
             metricsOnly
           />
+        ) : showPlanInvestmentUi && investCtx ? (
+          <DashboardWealthHero
+            fullName={fullName}
+            avatarUrl={avatarUrl}
+            preferredPackageSlug={preferredPackage}
+            hasActiveInvestment={hasActiveInvestment}
+            walletBalance={investCtx.balance}
+            liveInputs={investCtx.liveInputs}
+            totalInvested={portfolio?.totalInvested ?? 0}
+            totalEarned={portfolio?.totalEarned ?? 0}
+            pendingPayouts={dashboard?.pendingWithdrawals ?? 0}
+          />
         ) : null}
       </DashboardSection>
 
@@ -139,7 +142,7 @@ async function DashboardContent() {
         <DashboardQuickActions />
       </DashboardSection>
 
-      {!roiEnabled && investCtx ? (
+      {showPlanInvestmentUi && investCtx ? (
         <DashboardPortfolioSection
           liveInputs={investCtx.liveInputs}
           rows={investCtx.rows}
