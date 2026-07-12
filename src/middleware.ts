@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { HARD_OPS_HOME } from "@/lib/hard-ops";
-import { ADMIN_APP_HOME } from "@/lib/admin-app/constants";
+import { ADMIN_APP_HOME, ADMIN_APP_INSTALL } from "@/lib/admin-app/constants";
 import { buildPublicUrl } from "@/lib/request-url";
 import { applyDocumentNoStoreHeaders } from "@/lib/cache/response-headers";
 import { botBlockedResponse, isBlockedBot, X_ROBOTS_TAG } from "@/lib/security/bot-block";
@@ -31,6 +31,7 @@ const authRoutes = [
   "/auth/verify",
   "/hard/auth",
   "/admin-app/login",
+  "/admin-app/install",
   "/login",
   "/signup",
   "/auth/callback",
@@ -43,10 +44,20 @@ function isHardOpsRoute(pathname: string) {
   return pathname === HARD_OPS_HOME || (pathname.startsWith(`${HARD_OPS_HOME}/`) && !pathname.startsWith("/hard/auth"));
 }
 
-function isAdminAppRoute(pathname: string) {
-  if (pathname === `${ADMIN_APP_HOME}/manifest.webmanifest`) return false;
-  if (pathname === `${ADMIN_APP_HOME}/sw.js`) return false;
-  return pathname === ADMIN_APP_HOME || (pathname.startsWith(`${ADMIN_APP_HOME}/`) && !pathname.startsWith("/admin-app/login"));
+function isAdminAppPublicAsset(pathname: string) {
+  return (
+    pathname === `${ADMIN_APP_HOME}/manifest.webmanifest` ||
+    pathname === `${ADMIN_APP_HOME}/sw.js` ||
+    pathname === `${ADMIN_APP_HOME}/offline.html` ||
+    pathname.startsWith(`${ADMIN_APP_HOME}/icon-`) ||
+    pathname === `${ADMIN_APP_HOME}/splash.png`
+  );
+}
+
+function isAdminAppProtectedRoute(pathname: string) {
+  if (isAdminAppPublicAsset(pathname)) return false;
+  if (pathname === ADMIN_APP_INSTALL || pathname.startsWith("/admin-app/login")) return false;
+  return pathname === ADMIN_APP_HOME || pathname.startsWith(`${ADMIN_APP_HOME}/`);
 }
 
 async function enforceAdminRoute(
@@ -123,7 +134,7 @@ export async function middleware(request: NextRequest) {
 
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
   const isHardOps = isHardOpsRoute(pathname);
-  const isAdminApp = isAdminAppRoute(pathname);
+  const isAdminApp = isAdminAppProtectedRoute(pathname);
 
   if (!isProtected && !isHardOps && !isAdminApp) {
     return withNoStore(response);
@@ -134,6 +145,9 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!user) {
+    if (isAdminApp && pathname === ADMIN_APP_HOME) {
+      return withNoStore(NextResponse.redirect(buildPublicUrl(ADMIN_APP_INSTALL, request)));
+    }
     const loginUrl = buildPublicUrl(isAdminApp ? "/admin-app/login" : "/auth/login", request);
     loginUrl.searchParams.set("redirect", pathname);
     return withNoStore(NextResponse.redirect(loginUrl));
