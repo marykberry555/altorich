@@ -1,14 +1,22 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import type { AdminNotificationFilter } from "@/lib/admin-app/notification-events";
 
 type Client = SupabaseClient<Database>;
 
 export type AdminNotificationRow = Database["public"]["Tables"]["admin_notifications"]["Row"];
 
+const FILTER_TYPES: Record<Exclude<AdminNotificationFilter, "all">, string[]> = {
+  registrations: ["member.registered"],
+  logins: ["user.login"],
+  investments: ["investment.created"],
+  payouts: ["withdrawal.requested"]
+};
+
 export class AdminNotificationService {
   constructor(private readonly supabase: Client) {}
 
-  async list(limit = 40, unreadOnly = false) {
+  async list(limit = 40, unreadOnly = false, filter: AdminNotificationFilter = "all") {
     let query = this.supabase
       .from("admin_notifications")
       .select("*")
@@ -16,6 +24,7 @@ export class AdminNotificationService {
       .limit(limit);
 
     if (unreadOnly) query = query.is("read_at", null);
+    if (filter !== "all") query = query.in("event_type", FILTER_TYPES[filter]);
 
     const { data, error } = await query;
     if (error) throw error;

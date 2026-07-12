@@ -1,38 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { cn } from "@/lib/utils";
 import { useAdminRealtime, setAdminAppBadge } from "@/lib/admin-app/useAdminRealtime";
-
-type NotificationItem = {
-  id: string;
-  event_type: string;
-  title: string;
-  body: string;
-  created_at: string;
-  read_at: string | null;
-};
+import { AdminNotificationFeedItem } from "@/components/admin-app/AdminNotificationFeedItem";
+import { adminAppPath } from "@/lib/admin-app/constants";
+import type { AdminNotificationItem } from "@/lib/admin-app/notification-events";
 
 export function AdminNotificationBell() {
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [items, setItems] = useState<AdminNotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/notifications?limit=20", { cache: "no-store" });
+    const res = await fetch("/api/admin/notifications?limit=12", { cache: "no-store" });
     if (!res.ok) return;
-    const data = (await res.json()) as { items: NotificationItem[]; unreadCount: number };
+    const data = (await res.json()) as { items: AdminNotificationItem[]; unreadCount: number };
     setItems(data.items);
     setUnreadCount(data.unreadCount);
     setAdminAppBadge(data.unreadCount);
-
-    if ("serviceWorker" in navigator && data.items[0] && !data.items[0].read_at) {
-      navigator.serviceWorker.ready
-        .then((reg) => reg.active?.postMessage({ type: "ADMIN_BADGE", count: data.unreadCount }))
-        .catch(() => undefined);
-    }
   }, []);
 
   useEffect(() => {
@@ -46,6 +34,15 @@ export function AdminNotificationBell() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({})
+    });
+    await load();
+  }
+
+  async function markRead(id: string) {
+    await fetch("/api/admin/notifications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [id] })
     });
     await load();
   }
@@ -71,31 +68,24 @@ export function AdminNotificationBell() {
       {open ? (
         <>
           <button type="button" className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-label="Close notifications" />
-          <div className="absolute right-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-2xl">
+          <div className="absolute right-0 z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-              <p className="text-sm font-semibold text-white">Notifications</p>
-              <button type="button" className="text-xs text-emerald-400 hover:underline" onClick={() => void markAllRead()}>
-                Mark all read
-              </button>
+              <p className="text-sm font-semibold text-white">Live feed</p>
+              <div className="flex items-center gap-3">
+                <Link href={adminAppPath("/notifications")} className="text-xs text-emerald-400 hover:underline" onClick={() => setOpen(false)}>
+                  View all
+                </Link>
+                <button type="button" className="text-xs text-emerald-400 hover:underline" onClick={() => void markAllRead()}>
+                  Mark all read
+                </button>
+              </div>
             </div>
-            <ul className="max-h-80 overflow-y-auto">
+            <ul className="max-h-[28rem] overflow-y-auto p-2 space-y-2">
               {items.length === 0 ? (
                 <li className="px-4 py-6 text-center text-sm text-zinc-400">No notifications yet</li>
               ) : (
                 items.map((item) => (
-                  <li
-                    key={item.id}
-                    className={cn(
-                      "border-b border-white/5 px-4 py-3 last:border-0",
-                      !item.read_at && "bg-emerald-500/5"
-                    )}
-                  >
-                    <p className="text-sm font-medium text-white">{item.title}</p>
-                    <p className="mt-0.5 text-xs text-zinc-400">{item.body}</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-wide text-zinc-500">
-                      {new Date(item.created_at).toLocaleString("en-NG")}
-                    </p>
-                  </li>
+                  <AdminNotificationFeedItem key={item.id} item={item} compact onMarkRead={(id) => void markRead(id)} />
                 ))
               )}
             </ul>

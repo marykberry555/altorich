@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import type { Database, Json } from "@/types/database";
 import { parseUserAgent } from "@/lib/auth/user-agent";
-import { dispatchAdminPush } from "@/services/admin/admin-push.service";
+import { AdminPushService } from "@/services/admin/admin-push.service";
 
 type Client = SupabaseClient<Database>;
 
@@ -46,31 +46,53 @@ export class LoginActivityService {
       .eq("id", input.userId)
       .maybeSingle();
 
-    const label = profile?.full_name ?? profile?.username ?? "Member";
-    const location = [input.city, input.region, input.country].filter(Boolean).join(", ");
+    const memberName = profile?.full_name ?? "Member";
+    const username = profile?.username ?? "";
+    const locationParts = [input.city, input.region, input.country].filter(Boolean);
+    const location = locationParts.join(", ");
+    const loginTime = new Date(data.created_at).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" });
 
-    await this.supabase.from("admin_notifications").insert({
-      event_type: "user.login",
-      title: "Successful login",
-      body: `${label} signed in${location ? ` · ${location}` : ""}`,
-      entity_type: "login_activity",
-      entity_id: data.id,
-      metadata: {
-        user_id: input.userId,
-        device_type: parsed.deviceType,
-        browser: parsed.browser,
-        operating_system: parsed.operatingSystem
-      }
-    });
+    const title = "Member Login";
+    const body = [
+      memberName,
+      username ? `@${username}` : null,
+      location || null,
+      `${parsed.deviceType} · ${parsed.browser} · ${parsed.operatingSystem}`,
+      loginTime
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-    void dispatchAdminPush(this.supabase, {
-      event_type: "user.login",
-      title: "Successful login",
-      body: `${label} signed in${location ? ` · ${location}` : ""}`,
-      entity_type: "login_activity",
-      entity_id: data.id,
-      metadata: { user_id: input.userId }
-    });
+    const metadata = {
+      priority: "information",
+      member_name: memberName,
+      username,
+      user_id: input.userId,
+      city: input.city ?? null,
+      region: input.region ?? null,
+      country: input.country ?? null,
+      device_type: parsed.deviceType,
+      browser: parsed.browser,
+      operating_system: parsed.operatingSystem,
+      login_at: data.created_at
+    };
+
+    const { data: notification } = await this.supabase
+      .from("admin_notifications")
+      .insert({
+        event_type: "user.login",
+        title,
+        body,
+        entity_type: "login_activity",
+        entity_id: data.id,
+        metadata: metadata as Json
+      })
+      .select("id")
+      .single();
+
+    if (notification?.id) {
+      void new AdminPushService(this.supabase).deliverPushForNotificationId(notification.id);
+    }
 
     return data;
   }
@@ -87,9 +109,6 @@ export class LoginActivityService {
   }
 }
 
-export async function recordLoginActivity(
-  supabase: Client,
-  input: RecordLoginActivityInput
-) {
+export async function recordLoginActivity(supabase: Client, input: RecordLoginActivityInput) {
   return new LoginActivityService(supabase).record(input);
 }
