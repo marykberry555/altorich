@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { formatNaira, NAIRA_SYMBOL } from "@/lib/domain";
-import { trackSmartsuppEvent } from "@/lib/chat/smartsupp";
-import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
@@ -84,7 +82,6 @@ export function PayoutRequestForm({ availableBalance }: Props) {
     setMessage(body.scheduleMessage ?? "Your payout request has been queued for the next cycle.");
     setAmount("");
     setNote("");
-    trackSmartsuppEvent(SMARTSUPP_EVENTS.PAYOUT_REQUESTED, { Amount_NGN: parsedAmount });
   }
 
   return (

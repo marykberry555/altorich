@@ -19,6 +19,8 @@
     "pwa:icons": "npm run brand:optimize",
     "admin-app:icons": "node scripts/generate-admin-app-icons.mjs",
     "android:build": "bash scripts/android/build-twa.sh",
+    "android:admin:build": "bash scripts/android/build-admin-twa.sh",
+    "android:admin:publish": "bash scripts/android/publish-admin-apk.sh",
     "images:optimize": "node scripts/optimize-marketing-images.mjs",
     "verify:db": "node scripts/verify-database.mjs",
     "verify:rls": "node scripts/verify-rls.mjs",

@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, X } from "lucide-react";
 import type { SettlementFrequency } from "@/lib/investment";
 import { formatNaira } from "@/lib/domain";
-import { refreshSmartsuppIdentity, trackSmartsuppEvent } from "@/lib/chat/smartsupp";
-import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
 import { Button } from "@/components/ui/Button";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Card } from "@/components/ui/Card";
@@ -118,11 +116,6 @@ export function InvestFlowSheet({
 
       setStep("success");
       setLoading(false);
-      trackSmartsuppEvent(SMARTSUPP_EVENTS.INVESTMENT_STARTED, {
-        Amount_NGN: parsedAmount,
-        Package: packageTitle
-      });
-      refreshSmartsuppIdentity();
       setTimeout(() => {
         onClose();
         router.push("/dashboard");

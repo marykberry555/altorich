@@ -12,8 +12,6 @@ import { OtpModal } from "@/components/auth/OtpModal";
 import { useDeviceFingerprint } from "@/lib/auth/use-device-fingerprint";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
-import { refreshSmartsuppIdentity, trackSmartsuppEvent } from "@/lib/chat/smartsupp";
-import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
 
 type LoadingPhase = "idle" | "signing-in" | "authenticating" | "redirecting";
 
@@ -94,8 +92,6 @@ export function LoginForm() {
       }
 
       setPhase("redirecting");
-      trackSmartsuppEvent(SMARTSUPP_EVENTS.LOGIN);
-      refreshSmartsuppIdentity();
       completeSignIn(resolveRedirect(data.redirect ?? "/dashboard"));
     } catch {
       setError("Network error. Please try again.");
@@ -127,8 +123,6 @@ export function LoginForm() {
 
     setOtpOpen(false);
     setPhase("redirecting");
-    trackSmartsuppEvent(SMARTSUPP_EVENTS.LOGIN);
-    refreshSmartsuppIdentity();
     completeSignIn(resolveRedirect(data.redirect ?? "/dashboard"));
   }
 

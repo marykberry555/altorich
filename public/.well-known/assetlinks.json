@@ -9,5 +9,16 @@
         "REPLACE_WITH_DEBUG_KEY_SHA256_FINGERPRINT"
       ]
     }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.altorich.admin",
+      "sha256_cert_fingerprints": [
+        "REPLACE_WITH_RELEASE_KEY_SHA256_FINGERPRINT",
+        "REPLACE_WITH_DEBUG_KEY_SHA256_FINGERPRINT"
+      ]
+    }
   }
 ]

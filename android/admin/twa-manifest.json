@@ -1,0 +1,46 @@
+{
+  "packageId": "com.altorich.admin",
+  "host": "altorich.com",
+  "name": "Alto Rich Admin",
+  "launcherName": "Admin",
+  "display": "standalone",
+  "themeColor": "#09090B",
+  "themeColorDark": "#09090B",
+  "navigationColor": "#09090B",
+  "navigationColorDark": "#09090B",
+  "navigationDividerColor": "#18181B",
+  "navigationDividerColorDark": "#18181B",
+  "backgroundColor": "#09090B",
+  "enableNotifications": true,
+  "startUrl": "/admin/auth",
+  "iconUrl": "https://altorich.com/admin-app/icon-512.png",
+  "maskableIconUrl": "https://altorich.com/admin-app/icon-512-maskable.png",
+  "monochromeIconUrl": "https://altorich.com/admin-app/icon-192.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "../signing-key.jks",
+    "alias": "altorich-admin"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    { "name": "Dashboard", "shortName": "Dashboard", "url": "https://altorich.com/admin-app", "chosenIconUrl": "https://altorich.com/admin-app/icon-192.png" },
+    { "name": "Members", "shortName": "Members", "url": "https://altorich.com/admin-app/members", "chosenIconUrl": "https://altorich.com/admin-app/icon-192.png" },
+    { "name": "Deposits", "shortName": "Deposits", "url": "https://altorich.com/admin-app/deposits", "chosenIconUrl": "https://altorich.com/admin-app/icon-192.png" },
+    { "name": "Payouts", "shortName": "Payouts", "url": "https://altorich.com/admin-app/payouts", "chosenIconUrl": "https://altorich.com/admin-app/icon-192.png" }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://altorich.com/admin-app/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": { "enabled": false },
+    "playBilling": { "enabled": false }
+  },
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": false,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://altorich.com/",
+  "minSdkVersion": 21,
+  "orientation": "any"
+}

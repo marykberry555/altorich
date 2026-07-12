@@ -6,7 +6,6 @@ import { COMPANY } from "@/lib/company";
 import { ICONS } from "@/lib/brand";
 import { themeInitScript } from "@/lib/theme";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import { SmartsuppProvider } from "@/components/chat/SmartsuppProvider";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
 import { AppBootstrapLoader } from "@/components/brand/AppBootstrapLoader";
 import { ServiceWorkerCleanup } from "@/components/pwa/ServiceWorkerCleanup";
@@ -110,7 +109,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <ThemeProvider>
             {children}
             <SocialProofToasts />
-            <SmartsuppProvider />
             <OfflineIndicator />
           </ThemeProvider>
         </PwaProvider>

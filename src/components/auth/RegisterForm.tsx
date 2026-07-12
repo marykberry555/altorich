@@ -12,8 +12,6 @@ import { PinField } from "@/components/ui/PinField";
 import { MathChallenge, useMathChallenge } from "@/components/ui/MathChallenge";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
-import { refreshSmartsuppIdentity, trackSmartsuppEvent } from "@/lib/chat/smartsupp";
-import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
 import type { PackageSlug } from "@/content/packages";
 import { PackageSelectionField } from "@/components/auth/PackageSelectionField";
 import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
@@ -99,8 +97,6 @@ export function RegisterForm() {
     setOtpOpen(false);
     router.push(data.redirect ?? "/dashboard");
     router.refresh();
-    trackSmartsuppEvent(SMARTSUPP_EVENTS.ACCOUNT_CREATED);
-    refreshSmartsuppIdentity();
   }
 
   return (

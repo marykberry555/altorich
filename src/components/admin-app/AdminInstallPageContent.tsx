@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Download, Shield } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAdminPwa } from "@/components/admin-app/AdminAppPwaProvider";
-import { ADMIN_APP_INSTALL } from "@/lib/admin-app/constants";
+import { ADMIN_APP_INSTALL, ADMIN_AUTH } from "@/lib/admin-app/constants";
 
 export function AdminInstallPageContent() {
   const { canInstall, promptInstall, isStandalone, pushReady, subscribePush } = useAdminPwa();
@@ -52,7 +52,13 @@ export function AdminInstallPageContent() {
                   <strong className="text-zinc-200">Chrome / Edge:</strong> menu → Install app
                 </li>
                 <li>
-                  <strong className="text-zinc-200">Android:</strong> Add to Home screen
+                  <strong className="text-zinc-200">Android (native):</strong>{" "}
+                  <a href="/downloads/altorich-admin-release.apk" className="text-emerald-400 hover:underline">
+                    Download APK
+                  </a>
+                </li>
+                <li>
+                  <strong className="text-zinc-200">Android (browser):</strong> Add to Home screen
                 </li>
                 <li>
                   <strong className="text-zinc-200">iPhone:</strong> Share → Add to Home Screen
@@ -67,7 +73,7 @@ export function AdminInstallPageContent() {
             </Button>
           ) : null}
 
-          <Link href="/admin-app/login" className="text-sm text-emerald-400 hover:underline">
+          <Link href={ADMIN_AUTH} className="text-sm text-emerald-400 hover:underline">
             Already installed? Sign in
           </Link>
         </div>

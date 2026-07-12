@@ -19,8 +19,7 @@ export async function AdminOperationsPanel({ metrics, pendingReferralPayouts, re
     supabasePublic: isSupabaseConfigured(),
     supabaseService: isServiceRoleConfigured(),
     resend: Boolean(process.env.RESEND_API_KEY?.trim()),
-    siteUrl: Boolean(process.env.NEXT_PUBLIC_SITE_URL?.trim()),
-    smartsupp: Boolean(process.env.NEXT_PUBLIC_SMARTSUPP_KEY?.trim())
+    siteUrl: Boolean(process.env.NEXT_PUBLIC_SITE_URL?.trim())
   };
 
   let database = false;
@@ -60,7 +59,6 @@ export async function AdminOperationsPanel({ metrics, pendingReferralPayouts, re
             <li>Supabase public: {checks.supabasePublic ? "ok" : "missing"}</li>
             <li>Service role: {checks.supabaseService ? "ok" : "missing"}</li>
             <li>Resend email: {checks.resend ? "ok" : "optional"}</li>
-            <li>Smartsupp: {checks.smartsupp ? "ok" : "optional"}</li>
           </ul>
         </Card>
 

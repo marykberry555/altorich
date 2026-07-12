@@ -11,9 +11,7 @@ type PwaContextValue = {
   isStandalone: boolean;
   isOnline: boolean;
   canInstall: boolean;
-  updateAvailable: boolean;
   promptInstall: () => Promise<boolean>;
-  applyUpdate: () => void;
 };
 
 const PwaContext = createContext<PwaContextValue | null>(null);
@@ -22,7 +20,6 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
   const [isStandalone, setIsStandalone] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
     setIsStandalone(isStandaloneDisplay());
@@ -41,9 +38,6 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
 
-    // Service worker disabled during stability incident — stale caches crash hydration.
-    // void registerServiceWorker().then((registration) => { ... });
-
     return () => {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
@@ -59,26 +53,14 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     return choice.outcome === "accepted";
   }, [installPrompt]);
 
-  const applyUpdate = useCallback(async () => {
-    if ("caches" in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.filter((key) => key.startsWith("altorich-")).map((key) => caches.delete(key)));
-    }
-    navigator.serviceWorker.controller?.postMessage({ type: "SKIP_WAITING" });
-    navigator.serviceWorker.controller?.postMessage({ type: "CLEAR_CACHES" });
-    window.location.reload();
-  }, []);
-
   const value = useMemo(
     () => ({
       isStandalone,
       isOnline,
       canInstall: Boolean(installPrompt) && !isStandalone,
-      updateAvailable,
-      promptInstall,
-      applyUpdate
+      promptInstall
     }),
-    [isStandalone, isOnline, installPrompt, updateAvailable, promptInstall, applyUpdate]
+    [isStandalone, isOnline, installPrompt, promptInstall]
   );
 
   return <PwaContext.Provider value={value}>{children}</PwaContext.Provider>;

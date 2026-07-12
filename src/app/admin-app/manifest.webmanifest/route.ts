@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { ADMIN_APP_HOME, ADMIN_APP_INSTALL } from "@/lib/admin-app/constants";
+import { ADMIN_APP_HOME, ADMIN_AUTH } from "@/lib/admin-app/constants";
 
 export async function GET() {
   const manifest = {
     name: "Alto Rich Admin",
     short_name: "Admin",
     description: "Alto Rich operations console for administrators.",
-    start_url: ADMIN_APP_INSTALL,
+    start_url: ADMIN_AUTH,
     scope: `${ADMIN_APP_HOME}/`,
     id: ADMIN_APP_HOME,
     display: "standalone",

@@ -1,5 +1,7 @@
 /** Dedicated installable Admin PWA — separate from member app and /hard web ops. */
 export const ADMIN_APP_HOME = "/admin-app";
+/** Canonical admin authentication entry for web + native Android app. */
+export const ADMIN_AUTH = "/admin/auth";
 /** Public install landing — no sign-in required to add the admin PWA. */
 export const ADMIN_APP_INSTALL = "/admin-app/install";
 

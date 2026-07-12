@@ -14,6 +14,8 @@ type Props = {
   title?: string;
   subtitle?: string;
   submitLabel?: string;
+  /** Minimal dark card — used by /admin/auth native entry. */
+  shell?: "default" | "minimal";
 };
 
 export function AdminLoginForm({
@@ -21,7 +23,8 @@ export function AdminLoginForm({
   successRedirect = "/hard",
   title = "Operations sign in",
   subtitle = "Admin and finance operators only.",
-  submitLabel = "Sign in to ops centre"
+  submitLabel = "Sign in to ops centre",
+  shell = "default"
 }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -60,34 +63,42 @@ export function AdminLoginForm({
     }
   }
 
-  return (
-    <AuthShell>
-      <Card variant="elevated" padding="lg" className="w-full">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">{title}</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p>
-        </div>
+  const form = (
+    <Card
+      variant="elevated"
+      padding="lg"
+      className={shell === "minimal" ? "w-full border-white/10 bg-zinc-900/90 text-white shadow-2xl" : "w-full"}
+    >
+      <div className="mb-6">
+        <h1 className={`text-2xl font-bold tracking-tight ${shell === "minimal" ? "text-white" : "text-[var(--heading)]"}`}>
+          {title}
+        </h1>
+        <p className={`mt-1 text-sm ${shell === "minimal" ? "text-zinc-400" : "text-[var(--text-muted)]"}`}>{subtitle}</p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-3">
-          <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" />
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-          {error ? <p className="text-xs text-red-600">{error}</p> : null}
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Signing in..." : submitLabel}
-          </Button>
-        </form>
+      <form onSubmit={handleSubmit} className="grid gap-3">
+        <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" />
+        <Input
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="current-password"
+        />
+        {error ? <p className="text-xs text-red-400">{error}</p> : null}
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? "Signing in..." : submitLabel}
+        </Button>
+      </form>
 
-        <p className="mt-4 text-center text-[10px] text-[var(--text-subtle)]">
-          {COMPANY.legalName} · Co. {COMPANY.companyNumber}
-        </p>
-      </Card>
-    </AuthShell>
+      <p className={`mt-4 text-center text-[10px] ${shell === "minimal" ? "text-zinc-500" : "text-[var(--text-subtle)]"}`}>
+        {COMPANY.legalName} · Co. {COMPANY.companyNumber}
+      </p>
+    </Card>
   );
+
+  if (shell === "minimal") return form;
+
+  return <AuthShell>{form}</AuthShell>;
 }

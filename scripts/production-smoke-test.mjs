@@ -141,15 +141,6 @@ async function main() {
     return { ok, note: ok ? "not exposed" : "possible leak" };
   });
 
-  await check("Smartsupp configured in env probe", async () => {
-    const res = await fetch(`${BASE}/api/health/env`);
-    const body = await res.json();
-    return {
-      ok: body.env?.NEXT_PUBLIC_SMARTSUPP_KEY === true,
-      note: body.env?.NEXT_PUBLIC_SMARTSUPP_KEY ? "enabled" : "missing"
-    };
-  });
-
   await check("Security headers present", async () => {
     const res = await fetch(`${BASE}/`, { redirect: "follow" });
     const hsts = res.headers.get("strict-transport-security");

@@ -30,6 +30,7 @@ const authRoutes = [
   "/auth/change-password",
   "/auth/verify",
   "/hard/auth",
+  "/admin/auth",
   "/admin-app/login",
   "/admin-app/install",
   "/login",
@@ -109,8 +110,12 @@ export async function middleware(request: NextRequest) {
     return botBlockedResponse();
   }
 
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-    const target = pathname.replace(/^\/admin/, HARD_OPS_HOME) || HARD_OPS_HOME;
+  if (pathname === "/admin") {
+    return withNoStore(NextResponse.redirect(buildPublicUrl("/admin/auth", request), 308));
+  }
+
+  if (pathname.startsWith("/admin/") && !pathname.startsWith("/admin/auth")) {
+    const target = pathname.replace(/^\/admin/, ADMIN_APP_HOME) || ADMIN_APP_HOME;
     return withNoStore(NextResponse.redirect(buildPublicUrl(target, request), 308));
   }
 
@@ -148,7 +153,7 @@ export async function middleware(request: NextRequest) {
     if (isAdminApp && pathname === ADMIN_APP_HOME) {
       return withNoStore(NextResponse.redirect(buildPublicUrl(ADMIN_APP_INSTALL, request)));
     }
-    const loginUrl = buildPublicUrl(isAdminApp ? "/admin-app/login" : "/auth/login", request);
+    const loginUrl = buildPublicUrl(isAdminApp ? "/admin/auth" : "/auth/login", request);
     loginUrl.searchParams.set("redirect", pathname);
     return withNoStore(NextResponse.redirect(loginUrl));
   }

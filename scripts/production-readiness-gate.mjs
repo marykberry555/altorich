@@ -14,8 +14,7 @@ const ALLOWLIST = new Map([
   ["src/services/auth/auth.service.ts", [/localhost/i]],
   ["src/lib/env.ts", [/localhost/i, /\.env\.local/]],
   ["src/lib/supabase/client.ts", [/not configured/i]],
-  ["src/lib/request-url.ts", [/0\.0\.0\.0/, /127\.0\.0\.1/, /localhost/]],
-  ["src/components/chat/SmartsuppProvider.tsx", [/\.env\.local/]]
+  ["src/lib/request-url.ts", [/0\.0\.0\.0/, /127\.0\.0\.1/, /localhost/]]
 ]);
 
 const CHECKS = [

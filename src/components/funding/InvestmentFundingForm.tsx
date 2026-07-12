@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { formatNaira, NAIRA_SYMBOL } from "@/lib/domain";
-import { trackSmartsuppEvent } from "@/lib/chat/smartsupp";
-import { SMARTSUPP_EVENTS } from "@/lib/chat/smartsupp-events";
 import { MIN_FUNDING_AMOUNT_NGN } from "@/lib/payments";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -78,7 +76,6 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
     setSuccess(true);
     setAmountRaw("");
     setPaymentReference("");
-    trackSmartsuppEvent(SMARTSUPP_EVENTS.WALLET_FUNDED, { Amount_NGN: parsedAmount });
   }
 
   if (success) {

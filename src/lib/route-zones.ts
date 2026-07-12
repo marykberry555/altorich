@@ -20,7 +20,7 @@ export function isAppRoute(pathname: string) {
   return APP_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
-/** Public marketing site — Smartsupp and social proof allowed. */
+/** Public marketing site — social proof allowed on landing pages. */
 export function isMarketingRoute(pathname: string) {
   return !isAppRoute(pathname);
 }

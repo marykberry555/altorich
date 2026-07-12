@@ -473,43 +473,6 @@ img {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Smartsupp live chat — mobile-safe positioning + Alto Rich navy-green widget */
-:root {
-  --smartsupp-offset-bottom: 0px;
-  --smartsupp-accent: #064e3b;
-}
-
-body[data-mobile-nav="true"] {
-  --smartsupp-offset-bottom: 4.25rem;
-}
-
-@media (min-width: 1024px) {
-  body[data-mobile-nav="true"] {
-    --smartsupp-offset-bottom: 0px;
-  }
-}
-
-#chat-widget-container,
-#smartsupp-widget-container,
-.smartsupp-widget-container {
-  bottom: calc(1rem + var(--smartsupp-offset-bottom, 0px)) !important;
-  z-index: 9990 !important;
-}
-
-#chat-widget-container .widget-label,
-#chat-widget-container .button,
-#chat-widget-container [class*="widget"] button,
-.smartsupp-widget-container .widget-label {
-  background-color: var(--smartsupp-accent) !important;
-  border-color: var(--smartsupp-accent) !important;
-}
-
-@media (max-width: 1023px) {
-  .smartsupp-welcome-hint {
-    right: 1rem !important;
-  }
-}
-
 @media (display-mode: standalone) {
   body {
     padding-top: env(safe-area-inset-top);

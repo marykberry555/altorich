@@ -11,7 +11,6 @@ export async function GET() {
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
     "RESEND_API_KEY",
-    "NEXT_PUBLIC_SMARTSUPP_KEY",
     "NEXT_PUBLIC_ROI_MODE_ENABLED"
   ] as const;
 
