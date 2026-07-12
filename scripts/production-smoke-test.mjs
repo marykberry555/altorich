@@ -121,11 +121,30 @@ async function main() {
     };
   });
 
-  await check("Legacy /admin redirects to /hard", async () => {
+  await check("Legacy /admin redirects to /admin/auth", async () => {
     const { status, location } = await fetchStatus(`${BASE}/admin`);
     return {
-      ok: status >= 300 && status < 400 && location.includes("/hard"),
+      ok: status >= 300 && status < 400 && location.includes("/admin/auth"),
       note: `${status} → ${location}`
+    };
+  });
+
+  await check("Admin auth page returns 200", async () => {
+    const res = await fetch(`${BASE}/admin/auth`);
+    return { ok: res.status === 200, note: `HTTP ${res.status}` };
+  });
+
+  await check("Admin app install page returns 200", async () => {
+    const res = await fetch(`${BASE}/admin-app/install`);
+    return { ok: res.status === 200, note: `HTTP ${res.status}` };
+  });
+
+  await check("Asset links include admin package", async () => {
+    const res = await fetch(`${BASE}/.well-known/assetlinks.json`);
+    const body = await res.text();
+    return {
+      ok: res.status === 200 && body.includes("com.altorich.admin"),
+      note: body.includes("com.altorich.admin") ? "com.altorich.admin present" : "missing"
     };
   });
 
