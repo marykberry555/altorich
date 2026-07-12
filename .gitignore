@@ -42,6 +42,21 @@ deploy/.env.production.upload
 
 # Android TWA build artifacts (keep twa-manifest.json + README)
 android/signing-key.jks
+android/.keystore-password
+android/admin/app/
+android/admin/.bw-deps/
+android/admin/.gradle/
+android/admin/build/
+android/admin/gradle/
+android/admin/gradlew
+android/admin/gradlew.bat
+android/admin/build.gradle
+android/admin/settings.gradle
+android/admin/gradle.properties
+android/admin/local.properties
+android/admin/manifest-checksum.txt
+android/admin/store_icon.png
+android/admin/twa-manifest.pre-init.json
 android/app/
 android/.gradle/
 android/build/
@@ -53,4 +68,10 @@ android/gradle.properties
 android/gradlew
 android/gradlew.bat
 android/gradle/
+# Signed Admin release artifacts are published for sideload
+public/downloads/*.apk
+public/downloads/*.aab
+!public/downloads/altorich-admin-release.apk
+!public/downloads/altorich-admin-release.aab
+!public/downloads/admin-release.json
 test-results/

@@ -21,6 +21,8 @@
     "android:build": "bash scripts/android/build-twa.sh",
     "android:admin:build": "bash scripts/android/build-admin-twa.sh",
     "android:admin:publish": "bash scripts/android/publish-admin-apk.sh",
+    "android:admin:release": "bash scripts/android/release-admin-rc.sh",
+    "android:admin:gradle-release": "bash scripts/android/gradle-release-admin.sh",
     "images:optimize": "node scripts/optimize-marketing-images.mjs",
     "verify:db": "node scripts/verify-database.mjs",
     "verify:rls": "node scripts/verify-rls.mjs",

@@ -11,6 +11,7 @@ import { AppBootstrapLoader } from "@/components/brand/AppBootstrapLoader";
 import { ServiceWorkerCleanup } from "@/components/pwa/ServiceWorkerCleanup";
 import { ChunkLoadRecovery } from "@/components/pwa/ChunkLoadRecovery";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
+import { GlobalCrashReporter } from "@/components/errors/GlobalCrashReporter";
 import { getBuildId } from "@/lib/build-id";
 import { PRIVATE_SITE_ROBOTS } from "@/lib/security/bot-block";
 import {
@@ -103,6 +104,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="antialiased">
         <ServiceWorkerCleanup />
         <ChunkLoadRecovery buildId={buildId} />
+        <GlobalCrashReporter />
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         <PwaProvider>
           <AppBootstrapLoader />

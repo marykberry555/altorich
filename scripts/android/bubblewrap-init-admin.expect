@@ -1,0 +1,68 @@
+#!/usr/bin/env expect -f
+# Non-interactive Bubblewrap init for Alto Rich Admin TWA
+# Requires: ANDROID_KEYSTORE_PASSWORD, JAVA_HOME, ANDROID_HOME
+set timeout 600
+if {![info exists env(JAVA_HOME)] || $env(JAVA_HOME) eq ""} {
+  set env(JAVA_HOME) "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+}
+if {![info exists env(ANDROID_HOME)] || $env(ANDROID_HOME) eq ""} {
+  set env(ANDROID_HOME) "$env(HOME)/Library/Android/sdk"
+}
+set env(ANDROID_SDK_ROOT) "$env(ANDROID_HOME)"
+set env(PATH) "$env(JAVA_HOME)/bin:$env(PATH)"
+
+if {![info exists env(ANDROID_KEYSTORE_PASSWORD)] || $env(ANDROID_KEYSTORE_PASSWORD) eq ""} {
+  puts stderr "ANDROID_KEYSTORE_PASSWORD is required"
+  exit 1
+}
+set pass $env(ANDROID_KEYSTORE_PASSWORD)
+
+set root [lindex $argv 0]
+if {$root eq ""} {
+  puts stderr "Usage: bubblewrap-init-admin.expect <repo-root>"
+  exit 1
+}
+set admin "$root/android/admin"
+set keystore "$root/android/signing-key.jks"
+# Bubblewrap requires a public Web Manifest URL (not the local twa-manifest.json)
+set webManifest "https://altorich.com/admin-app/manifest.webmanifest"
+
+cd $admin
+spawn npx --yes @bubblewrap/cli@latest init --manifest=$webManifest --directory=.
+
+expect {
+  -re {(?i)install the JDK} { send "N\r"; exp_continue }
+  -re {(?i)Path to your existing JDK} { send "$env(JAVA_HOME)\r"; exp_continue }
+  -re {(?i)install the Android SDK} { send "N\r"; exp_continue }
+  -re {(?i)Path to your existing Android SDK} { send "$env(ANDROID_HOME)\r"; exp_continue }
+  -re {(?i)Domain:?} { send "altorich.com\r"; exp_continue }
+  -re {(?i)URL path} { send "/admin/auth\r"; exp_continue }
+  -re {(?i)Application name} { send "Alto Rich Admin\r"; exp_continue }
+  -re {(?i)Short name|Launcher name} { send "Alto Rich Admin\r"; exp_continue }
+  -re {(?i)Application ID|Package ID} { send "com.altorich.admin\r"; exp_continue }
+  -re {(?i)Display mode} { send "\r"; exp_continue }
+  -re {(?i)Status bar color} { send "#09090B\r"; exp_continue }
+  -re {(?i)Splash screen color|Background color} { send "#09090B\r"; exp_continue }
+  -re {(?i)Theme color} { send "#09090B\r"; exp_continue }
+  -re {(?i)Icon URL} { send "https://altorich.com/admin-app/icon-512.png\r"; exp_continue }
+  -re {(?i)Maskable icon} { send "https://altorich.com/admin-app/icon-512-maskable.png\r"; exp_continue }
+  -re {(?i)Monochrome icon} { send "https://altorich.com/admin-app/icon-192.png\r"; exp_continue }
+  -re {(?i)Create.*signing key|generate.*key} { send "N\r"; exp_continue }
+  -re {(?i)Key store location|Keystore location} { send "$keystore\r"; exp_continue }
+  -re {(?i)Key name|Key alias} { send "altorich-admin\r"; exp_continue }
+  -re {(?i)Key store password|Keystore password} { send "$pass\r"; exp_continue }
+  -re {(?i)Key password} { send "$pass\r"; exp_continue }
+  -re {(?i)password again|re-enter} { send "$pass\r"; exp_continue }
+  -re {(?i)Enable notifications} { send "Y\r"; exp_continue }
+  -re {(?i)fallback} { send "\r"; exp_continue }
+  -re {(?i)Press enter} { send "\r"; exp_continue }
+  -re {(?i)\(Y/n\)|\(y/N\)} { send "\r"; exp_continue }
+  eof {}
+  timeout { puts "TIMEOUT during bubblewrap init"; exit 1 }
+}
+
+catch wait result
+set exitcode [lindex $result 3]
+if {$exitcode eq ""} { set exitcode 0 }
+puts "INIT_DONE exit=$exitcode"
+exit $exitcode

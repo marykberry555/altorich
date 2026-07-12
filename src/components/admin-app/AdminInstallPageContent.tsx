@@ -52,9 +52,9 @@ export function AdminInstallPageContent() {
                   <strong className="text-zinc-200">Chrome / Edge:</strong> menu → Install app
                 </li>
                 <li>
-                  <strong className="text-zinc-200">Android (native):</strong>{" "}
-                  <a href="/downloads/altorich-admin-release.apk" className="text-emerald-400 hover:underline">
-                    Download APK
+                  <strong className="text-zinc-200">Android (native APK):</strong>{" "}
+                  <a href="/admin/download" className="text-emerald-400 hover:underline">
+                    Download page
                   </a>
                 </li>
                 <li>

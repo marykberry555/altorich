@@ -4,6 +4,10 @@ export const ADMIN_APP_HOME = "/admin-app";
 export const ADMIN_AUTH = "/admin/auth";
 /** Public install landing — no sign-in required to add the admin PWA. */
 export const ADMIN_APP_INSTALL = "/admin-app/install";
+/** Public APK download page for the native Admin Android app. */
+export const ADMIN_DOWNLOAD = "/admin/download";
+/** Auto-generated release metadata written by android:admin:release. */
+export const ADMIN_RELEASE_META = "/downloads/admin-release.json";
 
 export function adminAppPath(segment?: string) {
   if (!segment) return ADMIN_APP_HOME;

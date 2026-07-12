@@ -31,6 +31,7 @@ const authRoutes = [
   "/auth/verify",
   "/hard/auth",
   "/admin/auth",
+  "/admin/download",
   "/admin-app/login",
   "/admin-app/install",
   "/login",
@@ -114,7 +115,13 @@ export async function middleware(request: NextRequest) {
     return withNoStore(NextResponse.redirect(buildPublicUrl("/admin/auth", request), 308));
   }
 
-  if (pathname.startsWith("/admin/") && !pathname.startsWith("/admin/auth")) {
+  // Public admin surfaces kept on /admin/* (auth + APK download). Everything else
+  // under /admin maps into the installable admin-app console.
+  if (
+    pathname.startsWith("/admin/") &&
+    !pathname.startsWith("/admin/auth") &&
+    !pathname.startsWith("/admin/download")
+  ) {
     const target = pathname.replace(/^\/admin/, ADMIN_APP_HOME) || ADMIN_APP_HOME;
     return withNoStore(NextResponse.redirect(buildPublicUrl(target, request), 308));
   }

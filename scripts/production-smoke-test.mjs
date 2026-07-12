@@ -148,6 +148,30 @@ async function main() {
     };
   });
 
+  await check("Admin download page returns 200", async () => {
+    const res = await fetch(`${BASE}/admin/download`);
+    return { ok: res.status === 200, note: `HTTP ${res.status}` };
+  });
+
+  await check("Admin release metadata JSON present", async () => {
+    const res = await fetch(`${BASE}/downloads/admin-release.json`);
+    if (!res.ok) return { ok: false, note: `HTTP ${res.status}` };
+    const body = await res.json();
+    return {
+      ok: body.packageId === "com.altorich.admin" && typeof body.versionName === "string",
+      note: `v${body.versionName} build ${body.buildNumber}`
+    };
+  });
+
+  await check("Admin APK is downloadable when published", async () => {
+    const metaRes = await fetch(`${BASE}/downloads/admin-release.json`);
+    if (!metaRes.ok) return { ok: false, note: "missing metadata" };
+    const meta = await metaRes.json();
+    if (!meta.apkBytes) return { ok: true, note: "apk not published yet (skipped)" };
+    const res = await fetch(`${BASE}/downloads/altorich-admin-release.apk`, { method: "HEAD" });
+    return { ok: res.status === 200, note: `HTTP ${res.status} · ${meta.apkBytes} bytes` };
+  });
+
   await check("Dashboard requires auth", async () => {
     const { status, location } = await fetchStatus(`${BASE}/dashboard`);
     return { ok: status === 307 && location.includes("/auth/login"), note: `${status} → ${location}` };

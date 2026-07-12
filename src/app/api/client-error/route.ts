@@ -2,25 +2,45 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
 import { logger } from "@/lib/logger";
 
+export const dynamic = "force-dynamic";
+
+type ClientErrorBody = {
+  route?: string;
+  component?: string;
+  message?: string;
+  digest?: string;
+  stack?: string;
+  kind?: string;
+  status?: number;
+  url?: string;
+  at?: string;
+  device?: {
+    userAgent?: string;
+    language?: string;
+    platform?: string;
+    standalone?: boolean;
+    viewport?: string;
+    online?: boolean;
+  };
+};
+
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as {
-      route?: string;
-      component?: string;
-      message?: string;
-      digest?: string;
-      stack?: string;
-    };
-
+    const body = (await request.json()) as ClientErrorBody;
     const user = await getSessionUser().catch(() => null);
 
-    logger.error("Client route error report", {
+    logger.error("Client crash report", {
+      kind: body.kind ?? "route-error",
       route: body.route,
       component: body.component,
-      userId: user?.id,
-      digest: body.digest,
+      adminId: user?.id,
       message: body.message,
-      stack: body.stack
+      digest: body.digest,
+      status: body.status,
+      url: body.url,
+      at: body.at,
+      device: body.device,
+      stack: body.stack?.slice(0, 4000)
     });
 
     return NextResponse.json({ ok: true });

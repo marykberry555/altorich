@@ -40,11 +40,23 @@ export function RouteErrorFallback({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        kind: route.startsWith("/admin") ? "admin-route" : "route-error",
         route,
         component,
         message: error.message,
         digest: error.digest,
-        stack: error.stack
+        stack: error.stack,
+        at: new Date().toISOString(),
+        device: {
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          platform: navigator.platform,
+          standalone:
+            window.matchMedia("(display-mode: standalone)").matches ||
+            Boolean((navigator as Navigator & { standalone?: boolean }).standalone),
+          viewport: `${window.innerWidth}x${window.innerHeight}`,
+          online: navigator.onLine
+        }
       })
     })
       .then((res) => {
@@ -59,11 +71,13 @@ export function RouteErrorFallback({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        kind: route.startsWith("/admin") ? "admin-route" : "route-error",
         route,
         component,
         message: error.message,
         digest: error.digest,
-        stack: error.stack
+        stack: error.stack,
+        at: new Date().toISOString()
       })
     })
       .then((res) => {
