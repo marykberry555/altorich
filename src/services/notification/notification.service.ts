@@ -40,7 +40,10 @@ export type NotificationEvent =
   | "referral.payout_requested"
   | "referral.payout_approved"
   | "referral.payout_rejected"
-  | "vip.level_up";
+  | "vip.level_up"
+  | "liquidation.requested"
+  | "liquidation.approved"
+  | "liquidation.rejected";
 
 type Client = SupabaseClient<Database>;
 
@@ -161,16 +164,16 @@ export class NotificationService {
         body: `${formatNaira(Number(data.amount ?? 0))} credited to your wallet.`
       },
       "deposit.approved": {
-        title: "Deposit approved",
-        body: `${formatNaira(Number(data.amount ?? 0))} has been added to your wallet.`
+        title: "Funding approved",
+        body: `${formatNaira(Number(data.amount ?? 0))} credited. Your preferred package invests automatically when the amount meets the plan minimum.`
       },
       "deposit.rejected": {
-        title: "Deposit declined",
+        title: "Funding declined",
         body: String(data.reason ?? "Your deposit could not be verified.")
       },
       "investment.purchased": {
-        title: "Investment confirmed",
-        body: `Your investment of ${formatNaira(Number(data.amount ?? 0))} is now active.`
+        title: "Investment active",
+        body: `Your investment of ${formatNaira(Number(data.amount ?? 0))} is live. Earnings accrue toward Monday payout.`
       },
       "settlement.completed": {
         title: "Settlement posted",
@@ -238,6 +241,18 @@ export class NotificationService {
       "vip.level_up": {
         title: "VIP level unlocked",
         body: `Congratulations — you reached ${String(data.label ?? "a new VIP level")}! Your referral commission is now ${Number(data.commission_percent ?? 0)}%.`
+      },
+      "liquidation.requested": {
+        title: "Capital liquidation submitted",
+        body: `Your request to liquidate ${formatNaira(Number(data.amount ?? 0))} principal is pending admin review.`
+      },
+      "liquidation.approved": {
+        title: "Capital liquidation approved",
+        body: `${formatNaira(Number(data.amount ?? 0))} principal has been returned to your wallet.`
+      },
+      "liquidation.rejected": {
+        title: "Capital liquidation declined",
+        body: String(data.reason ?? "Your capital liquidation request was not approved. Your investment remains active.")
       }
     };
 

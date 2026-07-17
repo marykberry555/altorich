@@ -65,7 +65,7 @@ export function resolveNextAction(state: DashboardConversionState): NextAction {
       title: "Fund your wallet",
       description: "Add naira to your Alto Rich wallet — the first step toward your first investment.",
       href: "/deposits",
-      cta: "Fund wallet",
+      cta: "Fund my account",
       tone: "emerald"
     };
   }

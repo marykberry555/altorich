@@ -103,6 +103,44 @@ export class InvestmentService {
     }
   }
 
+  /**
+   * After funding approval: invest credited amount into the member's preferred package.
+   * Skips quietly when no package is set or amount is below the plan minimum.
+   */
+  async autoInvestFromPreferredPackage(
+    userId: string,
+    amount: number,
+    context?: { depositId?: string }
+  ): Promise<Investment | null> {
+    const { data: profile } = await this.supabase
+      .from("profiles")
+      .select("preferred_package_slug")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const slug = profile?.preferred_package_slug?.trim();
+    if (!slug) return null;
+
+    const plan = await this.getPlanBySlug(slug);
+    if (!plan) return null;
+
+    const min = Number(plan.min_investment ?? plan.price);
+    const max = Number(plan.max_investment ?? plan.price);
+    if (amount < min) {
+      await this.notifications.dispatch({
+        userId,
+        title: "Wallet funded — top up to invest",
+        body: `${plan.name} needs at least ₦${min.toLocaleString("en-NG")}. Your funds are in your wallet.`,
+        channel: "in_app",
+        metadata: { preferred_package: slug, deposit_id: context?.depositId ?? null }
+      });
+      return null;
+    }
+
+    const investAmount = Math.min(amount, max);
+    return this.purchasePlan(userId, plan.id, investAmount);
+  }
+
   async purchasePlan(userId: string, planId: string, amount: number): Promise<Investment> {
     const plan = await this.getPlanById(planId);
     if (!plan) throw Errors.notFound("Investment plan");

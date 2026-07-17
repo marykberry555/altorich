@@ -22,7 +22,8 @@ import {
   Wallet,
   X,
   Crown,
-  Headphones
+  Headphones,
+  Landmark
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COMPANY } from "@/lib/company";
@@ -43,6 +44,7 @@ const navSections = [
       { href: adminAppPath("/members"), label: "Members", icon: Users },
       { href: adminAppPath("/deposits"), label: "Deposits", icon: ArrowDownLeft },
       { href: adminAppPath("/payouts"), label: "Withdrawals", icon: ArrowUpRight },
+      { href: adminAppPath("/liquidations"), label: "Liquidations", icon: Landmark },
       { href: adminAppPath("/investments"), label: "Investments", icon: TrendingUp },
       { href: adminAppPath("/plans"), label: "Packages", icon: Wallet },
       { href: adminAppPath("/funding-accounts"), label: "Funding accounts", icon: Wallet },

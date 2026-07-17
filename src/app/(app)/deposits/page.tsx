@@ -50,7 +50,8 @@ export default async function DepositsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-12 pb-8">
       <header className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Fund Wallet</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Fund my account</h1>
+        <p className="text-sm text-[var(--text-muted)]">Transfer to an Alto Rich account, then submit your proof below.</p>
         <WalletFundingSummary balance={balance} pendingFunding={pendingFunding} />
       </header>
 

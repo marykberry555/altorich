@@ -3,8 +3,10 @@ import type { Database, Deposit, Json } from "@/types/database";
 import { AppError } from "@/lib/errors";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
+import { InvestmentService } from "@/services/investment/investment.service";
 import { RoiService } from "@/services/roi/roi.service";
 import { getPublicEnv } from "@/lib/env";
+import { logger } from "@/lib/logger";
 
 type Client = SupabaseClient<Database>;
 
@@ -132,6 +134,27 @@ export class DepositService {
       if (getPublicEnv().NEXT_PUBLIC_ROI_MODE_ENABLED) {
         const roi = new RoiService(this.supabase);
         await roi.resetWeeklyCycle(userId).catch(() => null);
+      }
+
+      try {
+        const investments = new InvestmentService(this.supabase);
+        const created = await investments.autoInvestFromPreferredPackage(userId, Number(deposit.amount), {
+          depositId
+        });
+        if (created) {
+          logger.info("Auto-invested preferred package after deposit approval", {
+            userId,
+            depositId,
+            investmentId: created.id,
+            amount: Number(deposit.amount)
+          });
+        }
+      } catch (autoInvestError) {
+        logger.warn("Auto-invest after deposit approval skipped", {
+          userId,
+          depositId,
+          error: autoInvestError instanceof Error ? autoInvestError.message : String(autoInvestError)
+        });
       }
     }
 

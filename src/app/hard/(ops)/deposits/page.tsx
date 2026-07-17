@@ -63,7 +63,15 @@ export default async function DepositsPage() {
                       <X size={14} /> Reject
                     </button>
                   </form>
+                  {deposit.proof_url ? (
+                    <a href={deposit.proof_url} target="_blank" rel="noreferrer" className="button text-xs">
+                      View proof
+                    </a>
+                  ) : null}
                 </div>
+                {deposit.reference ? (
+                  <p className="mt-2 text-[11px] text-[var(--text-subtle)]">Ref: {deposit.reference}</p>
+                ) : null}
               </div>
             ))
           )}

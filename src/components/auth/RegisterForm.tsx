@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { AuthShell } from "@/components/auth/AuthShell";
@@ -18,7 +18,6 @@ import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
 import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE, WEAK_PASSWORD_MESSAGE } from "@/lib/validation/identity";
 
 export function RegisterForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const math = useMathChallenge();
   const [fullName, setFullName] = useState("");
@@ -94,9 +93,10 @@ export function RegisterForm() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Verification failed.");
-    setOtpOpen(false);
-    router.push(data.redirect ?? "/dashboard");
-    router.refresh();
+    // Brief success beat, then auto-login redirect to dashboard
+    window.setTimeout(() => {
+      window.location.assign(data.redirect ?? "/dashboard");
+    }, 1400);
   }
 
   return (
@@ -141,7 +141,9 @@ export function RegisterForm() {
       <OtpModal
         open={otpOpen}
         title="Verify your email"
-        description={`Enter the 6-digit code sent to ${email}, or use the link in your inbox.`}
+        description={`Enter the 6-digit code sent to ${email}.`}
+        successTitle="Email verified successfully"
+        successBody="Welcome to Alto Rich. Taking you to your dashboard…"
         onVerify={verifyOtp}
       />
     </AuthShell>

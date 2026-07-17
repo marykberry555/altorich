@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Upload } from "lucide-react";
 import { formatNaira, NAIRA_SYMBOL } from "@/lib/domain";
 import { MIN_FUNDING_AMOUNT_NGN } from "@/lib/payments";
 import { Button } from "@/components/ui/Button";
@@ -19,6 +19,7 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
   const [fullName, setFullName] = useState(defaultFullName);
   const [amountRaw, setAmountRaw] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
@@ -26,6 +27,16 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
   useEffect(() => {
     if (defaultFullName) setFullName(defaultFullName);
   }, [defaultFullName]);
+
+  async function uploadProofIfNeeded(): Promise<string | undefined> {
+    if (!proofFile) return undefined;
+    const formData = new FormData();
+    formData.append("file", proofFile);
+    const res = await fetch("/api/uploads/deposit-proof", { method: "POST", body: formData });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error ?? "Receipt upload failed.");
+    return body.signedUrl as string;
+  }
 
   async function submitFunding(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,48 +66,53 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
       return;
     }
 
-    const response = await fetch("/api/deposits", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount: parsedAmount,
-        paymentReference: reference,
-        memberName: name
-      })
-    });
+    try {
+      const proofUrl = await uploadProofIfNeeded();
+      const response = await fetch("/api/deposits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: parsedAmount,
+          paymentReference: reference,
+          memberName: name,
+          proofUrl
+        })
+      });
 
-    setIsSubmitting(false);
+      if (!response.ok) {
+        const body = await response.json();
+        setMessage(body.error ?? "Unable to submit funding request.");
+        setIsSubmitting(false);
+        return;
+      }
 
-    if (!response.ok) {
-      const body = await response.json();
-      setMessage(body.error ?? "Unable to submit funding request.");
-      return;
+      setSuccess(true);
+      setAmountRaw("");
+      setPaymentReference("");
+      setProofFile(null);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Unable to submit funding request.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setSuccess(true);
-    setAmountRaw("");
-    setPaymentReference("");
   }
 
   if (success) {
     return (
       <Card variant="elevated" className="p-6 sm:p-8">
-        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--emerald-soft)] text-[var(--emerald)]">
-              <Check size={20} aria-hidden />
-            </span>
-            <div>
-              <p className="font-semibold text-[var(--heading)]">Funding request submitted</p>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">Your wallet will be credited after verification.</p>
-            </div>
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--emerald-soft)] text-[var(--emerald)]">
+            <Check size={20} aria-hidden />
+          </span>
+          <div>
+            <p className="text-lg font-semibold text-[var(--heading)]">Funding submitted</p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Awaiting admin verification. Once approved, your preferred package invests automatically.
+            </p>
+            <Link href="/dashboard" className="mt-4 inline-block">
+              <Button size="sm">Back to dashboard</Button>
+            </Link>
           </div>
-          <Link href="/investments">
-            <Button variant="gold" className="gap-2">
-              Invest Now
-              <ArrowRight size={16} aria-hidden />
-            </Button>
-          </Link>
         </div>
       </Card>
     );
@@ -108,7 +124,7 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
         <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
 
         <CurrencyInput
-          label={`Funding amount (${NAIRA_SYMBOL})`}
+          label={`Transfer amount (${NAIRA_SYMBOL})`}
           prefix="₦"
           value={amountRaw}
           onChange={setAmountRaw}
@@ -117,17 +133,31 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
         />
 
         <Input
-          label="Payment reference"
+          label="Transfer reference"
           value={paymentReference}
           onChange={(e) => setPaymentReference(e.target.value)}
           required
           placeholder="Bank transfer reference"
         />
 
+        <div className="grid gap-1.5">
+          <span className="text-sm font-medium text-[var(--text-muted)]">Receipt upload (optional)</span>
+          <label className="flex min-h-[var(--tap-min)] cursor-pointer items-center gap-3 rounded-[var(--radius-sm)] border border-dashed border-[var(--border-strong)] bg-[var(--gray-50)] px-4 py-3 text-sm text-[var(--text-muted)] transition hover:border-[var(--emerald)]/40">
+            <Upload size={16} aria-hidden />
+            <span className="truncate">{proofFile ? proofFile.name : "Upload transfer receipt"}</span>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              className="sr-only"
+              onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+            />
+          </label>
+        </div>
+
         <div className="pt-1">
           <Button disabled={!fundingEnabled || isSubmitting} type="submit" className="w-full gap-2 sm:w-auto">
             {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : null}
-            Submit
+            Submit funding
           </Button>
           {!fundingEnabled ? (
             <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">Wallet funding is temporarily paused.</p>

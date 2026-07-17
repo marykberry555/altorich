@@ -10,7 +10,8 @@ const schema = z.object({
   email: z.string().email(),
   phone: phoneSchema,
   pin: z.string().length(6),
-  preferredPackage: z.enum(["starter", "growth", "premium", "elite"])
+  preferredPackage: z.enum(["starter", "growth", "premium", "elite"]),
+  referralCode: z.string().min(3).max(32).optional()
 });
 
 export async function POST(req: Request) {

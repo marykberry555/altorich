@@ -20,10 +20,24 @@ type Props = {
 };
 
 export function FundingAccountCard({ account, className }: Props) {
+  const initials = account.bankName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+
   return (
     <Card variant="elevated" className={cn("p-5 sm:p-6", className)}>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-lg font-semibold text-[var(--heading)]">{account.bankName}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--navy)] text-sm font-bold text-white"
+            aria-hidden
+          >
+            {initials || <Building2 size={18} />}
+          </span>
+          <p className="truncate text-lg font-semibold text-[var(--heading)]">{account.bankName}</p>
+        </div>
         {account.isPreferred ? (
           <Badge variant="gold" className="inline-flex shrink-0 items-center gap-1">
             <Star size={12} aria-hidden />
