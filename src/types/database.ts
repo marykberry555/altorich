@@ -33,6 +33,8 @@ export type Database = {
           must_change_pin: boolean;
           must_change_password: boolean;
           preferred_package_slug: string | null;
+          location_state_code: string | null;
+          location_city_area: string | null;
           account_status: "active" | "paused" | "disabled" | "deactivated";
           auto_weekly_payout: boolean;
           created_at: string;
@@ -54,6 +56,8 @@ export type Database = {
           must_change_pin?: boolean;
           must_change_password?: boolean;
           preferred_package_slug?: string | null;
+          location_state_code?: string | null;
+          location_city_area?: string | null;
           account_status?: "active" | "paused" | "disabled" | "deactivated";
           auto_weekly_payout?: boolean;
         };
@@ -69,6 +73,8 @@ export type Database = {
           must_change_pin?: boolean;
           must_change_password?: boolean;
           preferred_package_slug?: string | null;
+          location_state_code?: string | null;
+          location_city_area?: string | null;
           auto_weekly_payout?: boolean;
         };
         Relationships: TableRelationships;

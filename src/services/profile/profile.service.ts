@@ -28,7 +28,14 @@ export class ProfileService {
 
   async updateProfile(
     userId: string,
-    input: { fullName?: string; phone?: string; avatarUrl?: string; preferredPackageSlug?: string }
+    input: {
+      fullName?: string;
+      phone?: string;
+      avatarUrl?: string;
+      preferredPackageSlug?: string;
+      locationStateCode?: string;
+      locationCityArea?: string;
+    }
   ) {
     const updates: Database["public"]["Tables"]["profiles"]["Update"] = {};
     if (input.fullName !== undefined) updates.full_name = input.fullName;
@@ -41,6 +48,12 @@ export class ProfileService {
     if (input.avatarUrl !== undefined) updates.avatar_url = input.avatarUrl;
     if (input.preferredPackageSlug !== undefined) {
       updates.preferred_package_slug = input.preferredPackageSlug;
+    }
+    if (input.locationStateCode !== undefined) {
+      updates.location_state_code = input.locationStateCode;
+    }
+    if (input.locationCityArea !== undefined) {
+      updates.location_city_area = input.locationCityArea;
     }
 
     const { data, error } = await this.supabase

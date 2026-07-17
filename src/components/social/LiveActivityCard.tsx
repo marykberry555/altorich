@@ -55,9 +55,8 @@ export function LiveActivityCard({
             Live Activity
           </p>
           <p className="mt-1.5 truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
-            {activity.firstName}
+            {activity.firstName} from {activity.locationLabel}
           </p>
-          <p className="truncate text-xs font-medium text-slate-500 dark:text-slate-400">{activity.city}</p>
           <p className="mt-1.5 text-sm font-medium leading-snug text-slate-800 dark:text-slate-100">
             {activityActionLabel(activity)}
           </p>

@@ -3,61 +3,89 @@ import type { Database } from "@/types/database";
 import { LIVE_ACTIVITY_CONFIG } from "@/lib/social/live-activity-config";
 import { buildFallbackActivities } from "@/lib/social/live-activity-fallback";
 import {
-  cityFromSeed,
   firstNameOnly,
   formatActivityNaira,
-  sanitizeCity
+  resolveVerifiedLocation
 } from "@/lib/social/live-activity-format";
 import type { LiveActivity } from "@/lib/social/live-activity-types";
 
 type Client = SupabaseClient<Database>;
+
+type ProfileLocation = {
+  id: string;
+  full_name: string;
+  location_state_code: string | null;
+  location_city_area: string | null;
+};
 
 function lookbackIso() {
   const ms = LIVE_ACTIVITY_CONFIG.lookbackDays * 24 * 60 * 60 * 1000;
   return new Date(Date.now() - ms).toISOString();
 }
 
-async function latestCityByUser(supabase: Client, userIds: string[]) {
-  const map = new Map<string, string>();
+function toActivityLocation(profile: ProfileLocation | undefined) {
+  if (!profile) return null;
+  return resolveVerifiedLocation(profile.location_state_code, profile.location_city_area);
+}
+
+async function profilesByIds(supabase: Client, userIds: string[]) {
+  const map = new Map<string, ProfileLocation>();
   if (userIds.length === 0) return map;
-
   const { data } = await supabase
-    .from("login_activity")
-    .select("user_id, city, created_at")
-    .in("user_id", userIds)
-    .order("created_at", { ascending: false })
-    .limit(200);
-
+    .from("profiles")
+    .select("id, full_name, location_state_code, location_city_area")
+    .in("id", userIds);
   for (const row of data ?? []) {
-    if (map.has(row.user_id)) continue;
-    if (row.city) map.set(row.user_id, row.city);
+    map.set(row.id, row as ProfileLocation);
   }
   return map;
+}
+
+function buildActivity(input: {
+  id: string;
+  type: LiveActivity["type"];
+  profile?: ProfileLocation;
+  amount?: number;
+  occurredAt: string;
+}): LiveActivity | null {
+  const loc = toActivityLocation(input.profile);
+  // Never invent locations for real platform events.
+  if (!loc || !input.profile) return null;
+
+  return {
+    id: input.id,
+    type: input.type,
+    firstName: firstNameOnly(input.profile.full_name),
+    cityArea: loc.cityArea,
+    stateCode: loc.stateCode,
+    locationLabel: loc.locationLabel,
+    amountLabel: input.amount != null ? formatActivityNaira(input.amount) : undefined,
+    occurredAt: input.occurredAt,
+    source: "live"
+  };
 }
 
 async function fetchJoined(supabase: Client): Promise<LiveActivity[]> {
   const { data } = await supabase
     .from("profiles")
-    .select("id, full_name, email_verified_at, created_at")
+    .select("id, full_name, email_verified_at, created_at, location_state_code, location_city_area")
     .not("email_verified_at", "is", null)
+    .not("location_state_code", "is", null)
+    .not("location_city_area", "is", null)
     .gte("created_at", lookbackIso())
     .order("created_at", { ascending: false })
     .limit(LIVE_ACTIVITY_CONFIG.fetchLimitPerType);
 
-  const rows = data ?? [];
-  const cities = await latestCityByUser(
-    supabase,
-    rows.map((r) => r.id)
-  );
-
-  return rows.map((row) => ({
-    id: `joined-${row.id}`,
-    type: "joined" as const,
-    firstName: firstNameOnly(row.full_name),
-    city: sanitizeCity(cities.get(row.id), row.id),
-    occurredAt: row.email_verified_at ?? row.created_at,
-    source: "live" as const
-  }));
+  return (data ?? [])
+    .map((row) =>
+      buildActivity({
+        id: `joined-${row.id}`,
+        type: "joined",
+        profile: row as ProfileLocation,
+        occurredAt: row.email_verified_at ?? row.created_at
+      })
+    )
+    .filter((row): row is LiveActivity => Boolean(row));
 }
 
 async function fetchInvested(supabase: Client): Promise<LiveActivity[]> {
@@ -70,22 +98,22 @@ async function fetchInvested(supabase: Client): Promise<LiveActivity[]> {
     .limit(LIVE_ACTIVITY_CONFIG.fetchLimitPerType);
 
   const rows = data ?? [];
-  const userIds = [...new Set(rows.map((r) => r.user_id))];
-  const [{ data: profiles }, cities] = await Promise.all([
-    supabase.from("profiles").select("id, full_name").in("id", userIds),
-    latestCityByUser(supabase, userIds)
-  ]);
-  const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
+  const profiles = await profilesByIds(
+    supabase,
+    [...new Set(rows.map((r) => r.user_id))]
+  );
 
-  return rows.map((row) => ({
-    id: `invested-${row.id}`,
-    type: "invested" as const,
-    firstName: firstNameOnly(nameById.get(row.user_id)),
-    city: sanitizeCity(cities.get(row.user_id), row.user_id),
-    amountLabel: formatActivityNaira(Number(row.amount)),
-    occurredAt: row.started_at || row.created_at,
-    source: "live" as const
-  }));
+  return rows
+    .map((row) =>
+      buildActivity({
+        id: `invested-${row.id}`,
+        type: "invested",
+        profile: profiles.get(row.user_id),
+        amount: Number(row.amount),
+        occurredAt: row.started_at || row.created_at
+      })
+    )
+    .filter((row): row is LiveActivity => Boolean(row));
 }
 
 async function fetchPayouts(supabase: Client): Promise<LiveActivity[]> {
@@ -98,26 +126,25 @@ async function fetchPayouts(supabase: Client): Promise<LiveActivity[]> {
     .limit(LIVE_ACTIVITY_CONFIG.fetchLimitPerType);
 
   const rows = data ?? [];
-  const userIds = [...new Set(rows.map((r) => r.user_id))];
-  const [{ data: profiles }, cities] = await Promise.all([
-    supabase.from("profiles").select("id, full_name").in("id", userIds),
-    latestCityByUser(supabase, userIds)
-  ]);
-  const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
+  const profiles = await profilesByIds(
+    supabase,
+    [...new Set(rows.map((r) => r.user_id))]
+  );
 
-  return rows.map((row) => ({
-    id: `payout-${row.id}`,
-    type: "payout" as const,
-    firstName: firstNameOnly(nameById.get(row.user_id)),
-    city: sanitizeCity(cities.get(row.user_id), row.user_id),
-    amountLabel: formatActivityNaira(Number(row.amount)),
-    occurredAt: row.reviewed_at ?? row.created_at,
-    source: "live" as const
-  }));
+  return rows
+    .map((row) =>
+      buildActivity({
+        id: `payout-${row.id}`,
+        type: "payout",
+        profile: profiles.get(row.user_id),
+        amount: Number(row.amount),
+        occurredAt: row.reviewed_at ?? row.created_at
+      })
+    )
+    .filter((row): row is LiveActivity => Boolean(row));
 }
 
 async function fetchReinvested(supabase: Client): Promise<LiveActivity[]> {
-  // Paid settlements without a wallet credit are treated as compounded reinvestments.
   const { data: settlements } = await supabase
     .from("investment_settlements")
     .select("id, investment_id, amount, status, settled_at, wallet_transaction_id, created_at")
@@ -138,25 +165,20 @@ async function fetchReinvested(supabase: Client): Promise<LiveActivity[]> {
 
   const userByInvestment = new Map((investments ?? []).map((i) => [i.id, i.user_id]));
   const userIds = [...new Set([...(investments ?? []).map((i) => i.user_id)])];
-  const [{ data: profiles }, cities] = await Promise.all([
-    supabase.from("profiles").select("id, full_name").in("id", userIds),
-    latestCityByUser(supabase, userIds)
-  ]);
-  const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
+  const profiles = await profilesByIds(supabase, userIds);
 
   const activities: LiveActivity[] = [];
   for (const row of rows) {
     const userId = userByInvestment.get(row.investment_id);
     if (!userId) continue;
-    activities.push({
+    const activity = buildActivity({
       id: `reinvested-${row.id}`,
       type: "reinvested",
-      firstName: firstNameOnly(nameById.get(userId)),
-      city: sanitizeCity(cities.get(userId), userId),
-      amountLabel: formatActivityNaira(Number(row.amount)),
-      occurredAt: row.settled_at ?? row.created_at,
-      source: "live"
+      profile: profiles.get(userId),
+      amount: Number(row.amount),
+      occurredAt: row.settled_at ?? row.created_at
     });
+    if (activity) activities.push(activity);
   }
   return activities;
 }
@@ -166,11 +188,6 @@ function mergeUnique(activities: LiveActivity[]): LiveActivity[] {
   const merged: LiveActivity[] = [];
   for (const item of activities) {
     if (seen.has(item.id)) continue;
-    if (!item.firstName || item.firstName === "Member") {
-      // Keep but soft-anonymize consistency
-      item.firstName = item.firstName || "Member";
-    }
-    if (!item.city) item.city = cityFromSeed(item.id);
     seen.add(item.id);
     merged.push(item);
   }

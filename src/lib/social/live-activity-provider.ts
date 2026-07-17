@@ -17,7 +17,9 @@ function isValidActivity(value: unknown): value is LiveActivity {
     typeof row.id === "string" &&
     typeof row.type === "string" &&
     typeof row.firstName === "string" &&
-    typeof row.city === "string" &&
+    typeof row.cityArea === "string" &&
+    typeof row.stateCode === "string" &&
+    typeof row.locationLabel === "string" &&
     typeof row.occurredAt === "string" &&
     (row.source === "live" || row.source === "fallback")
   );

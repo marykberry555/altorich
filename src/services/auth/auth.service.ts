@@ -73,6 +73,8 @@ export class AuthService {
     pin: string;
     referralCode?: string;
     preferredPackage: "starter" | "growth" | "premium" | "elite";
+    locationStateCode: string;
+    locationCityArea: string;
   }) {
     const username = input.username.trim().toLowerCase();
     if (!/^[a-z0-9_]{3,24}$/.test(username)) {
@@ -100,6 +102,8 @@ export class AuthService {
         pin_hash: pinHash,
         referral_code: input.referralCode ?? null,
         preferred_package_slug: input.preferredPackage,
+        location_state_code: input.locationStateCode,
+        location_city_area: input.locationCityArea,
         must_change_pin: false
       }
     });
@@ -118,7 +122,9 @@ export class AuthService {
         pin_hash: pinHash,
         phone,
         full_name: input.fullName.trim(),
-        preferred_package_slug: input.preferredPackage
+        preferred_package_slug: input.preferredPackage,
+        location_state_code: input.locationStateCode,
+        location_city_area: input.locationCityArea
       })
       .eq("id", created.user.id);
 

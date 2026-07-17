@@ -14,8 +14,10 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
 import type { PackageSlug } from "@/content/packages";
 import { PackageSelectionField } from "@/components/auth/PackageSelectionField";
+import { LocationFields } from "@/components/location/LocationFields";
 import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
 import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE, WEAK_PASSWORD_MESSAGE } from "@/lib/validation/identity";
+import type { NgStateCode } from "@/lib/location/ng-locations";
 
 export function RegisterForm() {
   const searchParams = useSearchParams();
@@ -27,6 +29,8 @@ export function RegisterForm() {
   const [pin, setPin] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [preferredPackage, setPreferredPackage] = useState<PackageSlug | "">("");
+  const [locationStateCode, setLocationStateCode] = useState<NgStateCode | "">("");
+  const [locationCityArea, setLocationCityArea] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useFlashError();
   const [otpOpen, setOtpOpen] = useState(false);
@@ -40,7 +44,11 @@ export function RegisterForm() {
     event.preventDefault();
     if (!math.solved) return;
     if (!preferredPackage) {
-      setError("Select a package.");
+      setError("Select a preferred investment sector.");
+      return;
+    }
+    if (!locationStateCode || !locationCityArea) {
+      setError("Select your state and city / area.");
       return;
     }
     if (!isSupabaseConfigured()) {
@@ -62,7 +70,9 @@ export function RegisterForm() {
           phone,
           pin,
           referralCode: referralCode || undefined,
-          preferredPackage
+          preferredPackage,
+          locationStateCode,
+          locationCityArea
         })
       });
       const data = await res.json();
@@ -116,6 +126,13 @@ export function RegisterForm() {
           />
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <Input label="Phone number" value={phone} onChange={(e) => setPhone(capPhoneInput(e.target.value))} required placeholder="08012345678" maxLength={11} inputMode="numeric" />
+          <LocationFields
+            stateCode={locationStateCode}
+            cityArea={locationCityArea}
+            onStateChange={setLocationStateCode}
+            onCityChange={setLocationCityArea}
+            disabled={loading}
+          />
           <PackageSelectionField value={preferredPackage} onChange={setPreferredPackage} disabled={loading} />
           <PinField value={pin} onChange={setPin} autoComplete="new-password" />
           <Input label="Referral code (optional)" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} />

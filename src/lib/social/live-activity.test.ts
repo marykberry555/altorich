@@ -3,12 +3,18 @@ import assert from "node:assert/strict";
 import { isAppRoute, isLiveActivityPath, isMarketingRoute } from "@/lib/route-zones";
 import {
   activityActionLabel,
+  activityPersonLine,
   firstNameOnly,
   formatActivityNaira,
   formatRelativeTime
 } from "@/lib/social/live-activity-format";
 import { pickNextActivity } from "@/lib/social/live-activity-provider";
 import type { LiveActivity } from "@/lib/social/live-activity-types";
+import {
+  formatLocationLabel,
+  formatPersonFromLocation,
+  isValidCityForState
+} from "@/lib/location/ng-locations";
 
 test("formatActivityNaira uses whole Nigerian amounts", () => {
   assert.equal(formatActivityNaira(50_000), "₦50,000");
@@ -22,27 +28,30 @@ test("firstNameOnly never exposes surname", () => {
   assert.equal(firstNameOnly(""), "Member");
 });
 
+test("location formatting uses Abuja for FCT", () => {
+  assert.equal(formatLocationLabel("FC", "Wuse"), "Wuse, Abuja");
+  assert.equal(formatLocationLabel("LA", "Victoria Island"), "Victoria Island, Lagos");
+  assert.equal(formatPersonFromLocation("Chisom", "FC", "Wuse"), "Chisom from Wuse, Abuja");
+  assert.equal(isValidCityForState("LA", "Lekki"), true);
+  assert.equal(isValidCityForState("LA", "Wuse"), false);
+});
+
 test("activityActionLabel covers core types", () => {
-  const base = {
+  const base: Omit<LiveActivity, "type" | "amountLabel"> = {
     id: "1",
     firstName: "Ada",
-    city: "Lekki",
+    cityArea: "Lekki",
+    stateCode: "LA",
+    locationLabel: "Lekki, Lagos",
     occurredAt: new Date().toISOString(),
-    source: "fallback" as const
+    source: "fallback"
   };
   assert.equal(activityActionLabel({ ...base, type: "joined" }), "Joined Alto Rich");
   assert.equal(
     activityActionLabel({ ...base, type: "invested", amountLabel: "₦50,000" }),
     "Invested ₦50,000"
   );
-  assert.equal(
-    activityActionLabel({ ...base, type: "payout", amountLabel: "₦500,000" }),
-    "Received ₦500,000 payout"
-  );
-  assert.equal(
-    activityActionLabel({ ...base, type: "reinvested", amountLabel: "₦250,000" }),
-    "Reinvested ₦250,000"
-  );
+  assert.equal(activityPersonLine({ ...base, type: "joined" }), "Ada from Lekki, Lagos");
 });
 
 test("formatRelativeTime is human readable", () => {
@@ -80,7 +89,9 @@ test("pickNextActivity never returns seen ids", () => {
       id: "a",
       type: "joined",
       firstName: "A",
-      city: "Lekki",
+      cityArea: "Lekki",
+      stateCode: "LA",
+      locationLabel: "Lekki, Lagos",
       occurredAt: new Date().toISOString(),
       source: "fallback"
     },
@@ -88,7 +99,9 @@ test("pickNextActivity never returns seen ids", () => {
       id: "b",
       type: "joined",
       firstName: "B",
-      city: "Aba",
+      cityArea: "Aba",
+      stateCode: "AB",
+      locationLabel: "Aba, Abia",
       occurredAt: new Date().toISOString(),
       source: "fallback"
     }

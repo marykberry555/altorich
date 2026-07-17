@@ -1,5 +1,13 @@
 import { NAIRA_SYMBOL } from "@/lib/domain";
-import { LIVE_ACTIVITY_CITIES, LIVE_ACTIVITY_LABELS, type LiveActivityType } from "@/lib/social/live-activity-config";
+import { LIVE_ACTIVITY_LABELS, type LiveActivityType } from "@/lib/social/live-activity-config";
+import {
+  formatLocationLabel,
+  formatPersonFromLocation,
+  isNgStateCode,
+  isValidCityForState,
+  locationFromSeed,
+  type NgStateCode
+} from "@/lib/location/ng-locations";
 import type { LiveActivity } from "@/lib/social/live-activity-types";
 
 /** Whole-naira formatting for social proof (no kobo). */
@@ -24,6 +32,11 @@ export function activityActionLabel(activity: LiveActivity): string {
   return LIVE_ACTIVITY_LABELS[activity.type](activity.amountLabel);
 }
 
+/** "{Name} from {City}, {State}" — never invent for live rows without a profile location. */
+export function activityPersonLine(activity: LiveActivity): string {
+  return formatPersonFromLocation(activity.firstName, activity.stateCode, activity.cityArea);
+}
+
 export function formatRelativeTime(iso: string, nowMs = Date.now()): string {
   const occurred = new Date(iso).getTime();
   if (!Number.isFinite(occurred)) return "Just now";
@@ -37,32 +50,27 @@ export function formatRelativeTime(iso: string, nowMs = Date.now()): string {
   return `${diffDay} day${diffDay === 1 ? "" : "s"} ago`;
 }
 
-/** Stable privacy-safe city when we lack a verified Nigerian locality. */
-export function cityFromSeed(seed: string): string {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  }
-  return LIVE_ACTIVITY_CITIES[hash % LIVE_ACTIVITY_CITIES.length];
+export function resolveVerifiedLocation(
+  stateCode: string | null | undefined,
+  cityArea: string | null | undefined
+): { stateCode: NgStateCode; cityArea: string; locationLabel: string } | null {
+  if (!stateCode || !cityArea || !isNgStateCode(stateCode)) return null;
+  if (!isValidCityForState(stateCode, cityArea)) return null;
+  return {
+    stateCode,
+    cityArea,
+    locationLabel: formatLocationLabel(stateCode, cityArea)
+  };
 }
 
-export function sanitizeCity(raw: string | null | undefined, seed: string): string {
-  const city = (raw ?? "").trim();
-  if (!city) return cityFromSeed(seed);
-  const lower = city.toLowerCase();
-  // Drop anything that looks like an IP-derived foreign city dump or over-specific address
-  if (/\d/.test(city) || city.length > 32) return cityFromSeed(seed);
-  if (lower.includes("null") || lower === "unknown") return cityFromSeed(seed);
-  const match = LIVE_ACTIVITY_CITIES.find((c) => c.toLowerCase() === lower);
-  if (match) return match;
-  // Title-case a short African-looking locality from geo, else fallback
-  if (city.length >= 3 && city.length <= 24 && /^[A-Za-z\s'-]+$/.test(city)) {
-    return city
-      .split(/\s+/)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(" ");
-  }
-  return cityFromSeed(seed);
+/** Fallback-only seeded location — never used to invent live member cities. */
+export function fallbackLocationFromSeed(seed: string) {
+  const loc = locationFromSeed(seed);
+  return {
+    stateCode: loc.stateCode,
+    cityArea: loc.cityArea,
+    locationLabel: formatLocationLabel(loc.stateCode, loc.cityArea)
+  };
 }
 
 export function randomInRange(min: number, max: number): number {
