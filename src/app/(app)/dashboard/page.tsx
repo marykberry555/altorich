@@ -8,10 +8,12 @@ import type { AllocationPoint, ChartPoint } from "@/lib/dashboard/chart-data";
 import { COMPANY } from "@/lib/company";
 import { DEFAULT_REFERRAL_PROGRAM } from "@/lib/referral/config";
 import { buildActionHints, toConversionState } from "@/lib/dashboard/conversion-hints";
+import { resolveNextAction } from "@/lib/dashboard/conversion";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { DashboardCyclePanel } from "@/components/dashboard/DashboardCyclePanel";
 import { DashboardWealthHero, DashboardWealthHeroStatic } from "@/components/dashboard/DashboardWealthHero";
 import { DashboardProgressJourney } from "@/components/dashboard/DashboardProgressJourney";
+import { DashboardNextStepCard } from "@/components/dashboard/DashboardNextStepCard";
 import { DashboardEarningsPreview } from "@/components/dashboard/DashboardEarningsPreview";
 import { DashboardQuickActions } from "@/components/dashboard/DashboardQuickActions";
 import { DashboardPortfolioSection } from "@/components/dashboard/DashboardPortfolioSection";
@@ -55,6 +57,8 @@ async function DashboardContent() {
     totalEarned: portfolio?.totalEarned ?? 0,
     preferredPackageSlug: preferredPackage
   });
+  const nextAction = resolveNextAction(conversionState);
+  const primaryCta = { href: nextAction.href, label: nextAction.cta };
 
   let balanceHistory: ChartPoint[] = [];
   let earningsTrend: ChartPoint[] = [];
@@ -131,6 +135,7 @@ async function DashboardContent() {
             liveInputs={investCtx.liveInputs}
             totalInvested={portfolio?.totalInvested ?? 0}
             totalEarned={portfolio?.totalEarned ?? 0}
+            primaryCta={primaryCta}
           />
         ) : (
           <DashboardWealthHeroStatic
@@ -142,9 +147,11 @@ async function DashboardContent() {
             portfolioValue={portfolio?.currentValue ?? balance}
             totalInvested={portfolio?.totalInvested ?? 0}
             totalEarned={portfolio?.totalEarned ?? 0}
+            primaryCta={primaryCta}
           />
         )}
 
+        <DashboardNextStepCard action={nextAction} />
         <DashboardProgressJourney state={conversionState} />
       </DashboardSection>
 
@@ -171,7 +178,7 @@ async function DashboardContent() {
       ) : null}
 
       <DashboardSection title="Quick actions">
-        <DashboardQuickActions />
+        <DashboardQuickActions nextHref={nextAction.href} />
       </DashboardSection>
 
       {showPlanInvestmentUi && investCtx ? (

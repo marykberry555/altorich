@@ -60,11 +60,12 @@ export default async function PortfolioPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Portfolio</p>
-          <h1 className="mt-2 text-2xl font-bold text-[var(--heading)]">Investment overview</h1>
-          <p className="mt-2 text-sm text-[var(--text-muted)]">Track positions, live earnings, and settlement history.</p>
+          <h1 className="mt-2 text-2xl font-bold text-[var(--heading)]">Your investments</h1>
         </div>
         <Link href="/investments">
-          <Button size="sm">Invest now</Button>
+          <Button size="md" className="gap-1.5">
+            {hasActivePlans || hasRoiInvestment ? "Invest more" : "Invest now"}
+          </Button>
         </Link>
       </header>
 

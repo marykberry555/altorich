@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { pushEligibleEventTypes } from "@/lib/admin-app/notification-events";
 
@@ -26,6 +26,11 @@ async function deliverPushForNotification(id: string) {
 export function useAdminRealtime(onChange: () => void, tables: AdminRealtimeTables[] = ["admin_notifications", "login_activity"]) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const tablesKey = useMemo(() => tables.join(","), [tables]);
+  const tableList = useMemo(
+    () => tablesKey.split(",").filter(Boolean) as AdminRealtimeTables[],
+    [tablesKey]
+  );
 
   useEffect(() => {
     let supabase: ReturnType<typeof createClient> | null = null;
@@ -37,7 +42,7 @@ export function useAdminRealtime(onChange: () => void, tables: AdminRealtimeTabl
 
     const channel = supabase.channel("admin-ops-realtime");
 
-    if (tables.includes("admin_notifications")) {
+    if (tableList.includes("admin_notifications")) {
       channel.on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "admin_notifications" },
@@ -66,7 +71,7 @@ export function useAdminRealtime(onChange: () => void, tables: AdminRealtimeTabl
       );
     }
 
-    for (const table of tables.filter((t) => t !== "admin_notifications")) {
+    for (const table of tableList.filter((t) => t !== "admin_notifications")) {
       channel.on("postgres_changes", { event: "*", schema: "public", table }, () => onChangeRef.current());
     }
 
@@ -75,7 +80,7 @@ export function useAdminRealtime(onChange: () => void, tables: AdminRealtimeTabl
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [tables.join(",")]);
+  }, [tableList]);
 }
 
 /** Update PWA app badge from unread notification count (where supported). */

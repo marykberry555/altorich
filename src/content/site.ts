@@ -2,12 +2,11 @@ import { COMPANY, REGULATORY_PLACEHOLDER } from "@/lib/company";
 import { PACKAGE_ROI_RANGE } from "@/lib/packages/package-config";
 
 export const hero = {
-  eyebrow: "Built for Nigeria · WAT-aligned payouts",
-  title: `Grow your naira with clarity — earn ${PACKAGE_ROI_RANGE.headline}.`,
-  subtitle:
-    "For salary earners, entrepreneurs, and diaspora investors. Verified bank deposits, transparent ledgers, guaranteed weekly returns, and payouts every Monday at 09:00 WAT.",
+  eyebrow: "Nigeria · Monday payouts · Guaranteed returns",
+  title: `Grow your naira. Earn ${PACKAGE_ROI_RANGE.headline}.`,
+  subtitle: "Verified deposits. Clear ledgers. Payouts every Monday at 09:00 WAT.",
   guarantee: "Returns are guaranteed.",
-  ctaPrimary: "Get started",
+  ctaPrimary: "Open an account",
   ctaSecondary: "See how it works"
 };
 

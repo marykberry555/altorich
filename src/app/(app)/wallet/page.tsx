@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { SectionHeading } from "@/components/design-system";
 import { LedgerTable } from "@/components/dashboard/LedgerTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { formatNaira } from "@/lib/domain";
+import { AnimatedBalance } from "@/components/ui/AnimatedBalance";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 
@@ -30,40 +31,52 @@ export default async function WalletPage() {
     }
   }
 
+  const primaryHref = balance > 0 ? "/investments" : "/deposits";
+  const primaryLabel = balance > 0 ? "Invest now" : "Submit transfer";
+
   return (
     <div className="space-y-8">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Wallet</p>
         <h1 className="mt-2 text-2xl font-bold text-[var(--heading)]">Your naira wallet</h1>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">Ledger-based balance — every credit and debit is recorded and verifiable.</p>
       </header>
 
-      <Card variant="elevated" padding="lg" className="overflow-hidden bg-gradient-to-br from-[var(--emerald)] to-[var(--emerald-mid)] text-white">
+      <Card
+        variant="elevated"
+        padding="lg"
+        className="overflow-hidden bg-gradient-to-br from-[var(--emerald)] to-[var(--emerald-mid)] text-white"
+      >
         <p className="text-sm text-white/80">Available balance</p>
-        <p className="mt-2 text-4xl font-bold tabular-nums">{formatNaira(balance)}</p>
+        <p className="mt-2 text-4xl font-bold tabular-nums sm:text-5xl">
+          <AnimatedBalance value={balance} className="text-white" />
+        </p>
         <div className="mt-6 flex flex-wrap gap-2">
-          <Link href="/deposits">
-            <Button variant="gold" size="sm">
-              Fund wallet
+          <Link href={primaryHref}>
+            <Button variant="gold" size="md" className="gap-2">
+              {primaryLabel}
+              <ArrowRight size={16} aria-hidden />
             </Button>
           </Link>
-          <Link href="/withdrawals">
-            <Button variant="outline" size="sm" className="border-white/30 bg-transparent text-white hover:bg-white/10">
-              Request payout
+          <Link href={balance > 0 ? "/deposits" : "/withdrawals"}>
+            <Button variant="outline" size="md" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+              {balance > 0 ? "Fund wallet" : "Request payout"}
             </Button>
           </Link>
         </div>
       </Card>
 
       <Card variant="elevated" padding="md">
-        <SectionHeading title="Transaction history" description="Tap a row for details." />
+        <SectionHeading title="Transaction history" description="Every credit and debit is recorded." />
         {transactions.length === 0 ? (
           <EmptyState
             title="No transactions yet"
             description="Fund your wallet to get started."
             action={
               <Link href="/deposits">
-                <Button size="sm">Fund wallet</Button>
+                <Button size="sm" className="gap-1.5">
+                  Submit transfer
+                  <ArrowRight size={14} aria-hidden />
+                </Button>
               </Link>
             }
           />

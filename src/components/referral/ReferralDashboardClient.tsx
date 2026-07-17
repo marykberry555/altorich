@@ -94,10 +94,10 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
         <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[var(--emerald)]/20 blur-3xl" aria-hidden />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">Referral programme</p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Grow with Alto Rich</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">What&apos;s next</p>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Invite friends</h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/80">
-              Invite friends. Grow together. Earn referral rewards when your invitations become active investors.
+              Share your code. Earn when they invest.
             </p>
           </div>
           <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
@@ -150,9 +150,9 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
           <div className="mt-4 rounded-xl border border-[var(--border)] p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Referral link</p>
             <p className="mt-2 break-all text-sm font-medium text-[var(--heading)]">{dashboard.inviteLink}</p>
-            <Button type="button" size="sm" className="mt-3 gap-2" onClick={() => copy(dashboard.inviteLink, "link")}>
+            <Button type="button" size="md" className="mt-3 gap-2" onClick={() => copy(dashboard.inviteLink, "link")}>
               {copied === "link" ? <Check size={14} /> : <Copy size={14} />}
-              {copied === "link" ? "Copied" : "Copy link"}
+              {copied === "link" ? "Copied" : "Invite friends — copy link"}
             </Button>
           </div>
 

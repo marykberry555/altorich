@@ -26,8 +26,9 @@ export default async function WithdrawalsPage() {
       <header className="space-y-2">
         <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Payout</h1>
         <p className="text-sm text-[var(--text-muted)]">
-          Available balance · <span className="font-semibold tabular-nums text-[var(--heading)]">{formatNaira(balance)}</span>
+          Available · <span className="font-semibold tabular-nums text-[var(--heading)]">{formatNaira(balance)}</span>
         </p>
+        <p className="text-xs font-medium text-[var(--emerald)]">Next step: request payout to your bank</p>
       </header>
 
       <PayoutScheduleCard />
