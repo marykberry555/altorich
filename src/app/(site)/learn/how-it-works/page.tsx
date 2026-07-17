@@ -8,7 +8,7 @@ import { StepNumber } from "@/components/ui/StepNumber";
 export default function HowItWorksPage() {
   return (
     <>
-      <section className="gradient-hero section-pad">
+      <section className="gradient-hero section-pad-hero">
         <div className="container-ar">
           <PageHero
             eyebrow="How it works"
@@ -30,7 +30,7 @@ export default function HowItWorksPage() {
             ))}
           </div>
 
-          <Card variant="outline" className="mt-10 border-amber-200 bg-amber-50">
+          <Card variant="outline" className="mt-8 border-amber-200 bg-amber-50">
             <p className="text-sm text-amber-950">
               <strong>Important:</strong> Deposits are credited only after an administrator verifies your bank transfer
               against our receiving account. Never send money without submitting your transfer reference in the dashboard.

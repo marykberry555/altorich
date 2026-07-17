@@ -104,7 +104,7 @@ export function WeeklyCountdown({
   if (variant === "section") {
     return (
       <section
-        className={cn("border-b border-[var(--border)] bg-[var(--surface)] section-pad", className)}
+        className={cn("border-b border-[var(--border)] bg-[var(--surface)] section-pad-sm", className)}
         aria-labelledby="payout-countdown-heading"
       >
         <div className="container-ar mx-auto max-w-2xl text-center">
@@ -115,7 +115,7 @@ export function WeeklyCountdown({
             Payout In
           </p>
           <div
-            className="mt-6 flex items-start justify-center gap-4 sm:gap-8"
+            className="mt-4 flex items-start justify-center gap-4 sm:gap-8"
             role="timer"
             aria-live="polite"
             suppressHydrationWarning
@@ -125,7 +125,7 @@ export function WeeklyCountdown({
             <CountdownBlock value={pad2(minutes)} label="Minutes" muted />
             <CountdownBlock value={pad2(seconds)} label="Seconds" muted />
           </div>
-          <p className="mt-6 text-sm text-[var(--text-muted)]">
+          <p className="mt-4 text-sm text-[var(--text-muted)]">
             Next Settlement:{" "}
             <span className="font-semibold text-[var(--heading)]">Monday · 09:00 WAT</span>
           </p>

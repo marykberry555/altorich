@@ -168,23 +168,23 @@ export function PlatformByTheNumbers({ config, className }: Props) {
           </p>
           <h2
             id="platform-numbers-heading"
-            className="mt-3 text-3xl font-bold tracking-tight text-[var(--heading)] sm:text-4xl"
+            className="mt-2 text-3xl font-bold tracking-tight text-[var(--heading)] sm:text-4xl"
           >
             Platform by the numbers
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
+          <p className="mt-2.5 text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
             Scale, reliability, and member confidence — the signals that matter when growing wealth.
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-5">
+        <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           {cards.map((card) => {
             const Icon = card.icon;
             return (
               <Card
                 key={card.key}
                 variant="elevated"
-                padding="lg"
+                padding="md"
                 className="card-lift flex h-full flex-col items-start"
               >
                 <div

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 export default function FaqPage() {
   return (
     <>
-      <section className="gradient-hero section-pad">
+      <section className="gradient-hero section-pad-hero">
         <div className="container-ar max-w-3xl">
           <PageHero
             eyebrow="FAQs"

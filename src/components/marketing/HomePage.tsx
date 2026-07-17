@@ -37,27 +37,27 @@ export function HomePage({ homepageStats }: Props) {
 
   return (
     <>
-      <section className="gradient-hero relative overflow-hidden section-pad">
+      <section className="gradient-hero relative overflow-hidden section-pad-hero">
         <div
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.14),transparent_55%)]"
           aria-hidden
         />
-        <div className="container-ar relative grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
+        <div className="container-ar relative grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
           <div className="animate-fade-up">
             <Badge variant="emerald">{hero.eyebrow}</Badge>
-            <h1 className="mt-5 max-w-xl text-4xl font-bold tracking-tight text-[var(--heading)] sm:text-5xl lg:text-[3.4rem] lg:leading-[1.05]">
+            <h1 className="mt-4 max-w-xl text-4xl font-bold tracking-tight text-[var(--heading)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.05]">
               {hero.title}
             </h1>
-            <p className="mt-4 max-w-md text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
+            <p className="mt-3 max-w-md text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
               {hero.subtitle}
             </p>
             {"guarantee" in hero && hero.guarantee ? (
-              <p className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--emerald)]">
+              <p className="mt-2.5 inline-flex items-center gap-2 text-sm font-semibold text-[var(--emerald)]">
                 <ShieldCheck size={16} aria-hidden />
                 {hero.guarantee}
               </p>
             ) : null}
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-stretch">
               <Link href="/auth/register" className="min-w-0 flex-1 sm:max-w-xs">
                 <Button size="lg" className="h-13 w-full gap-2 shadow-[var(--shadow-glow)]">
                   {hero.ctaPrimary}
@@ -71,7 +71,7 @@ export function HomePage({ homepageStats }: Props) {
                 className="h-13 w-full min-w-0 justify-center sm:max-w-[11rem]"
               />
             </div>
-            <p className="mt-4 text-xs text-[var(--text-subtle)]">
+            <p className="mt-3 text-xs text-[var(--text-subtle)]">
               UK-registered · Naira-native · Monday 09:00 WAT payouts
             </p>
           </div>
@@ -135,12 +135,12 @@ export function HomePage({ homepageStats }: Props) {
             align="center"
             className="mx-auto"
           />
-          <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {howItWorks.map((step) => (
               <div key={step.step} className="relative">
                 <StepNumber value={step.step} size="lg" />
-                <h3 className="mt-3 font-semibold text-[var(--heading)]">{step.title}</h3>
-                <p className="mt-2 text-sm text-[var(--text-muted)]">{step.description}</p>
+                <h3 className="mt-2.5 font-semibold text-[var(--heading)]">{step.title}</h3>
+                <p className="mt-1.5 text-sm text-[var(--text-muted)]">{step.description}</p>
               </div>
             ))}
           </div>
@@ -148,14 +148,14 @@ export function HomePage({ homepageStats }: Props) {
       </section>
 
       <section className="gradient-navy section-pad text-white">
-        <div className="container-ar grid gap-10 lg:grid-cols-2">
+        <div className="container-ar grid gap-8 lg:grid-cols-2">
           <PageHero
             dark
             eyebrow="Trust"
             title="Built on verification, not promises."
             description={`Every deposit is reconciled. Every payout follows published windows. One ${PLATFORM_EARNING.modelName} — up to ${PLATFORM_EARNING.dailyReturnPercent}% daily — guaranteed.`}
           />
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {trustIndicators.map((item) => (
               <div
                 key={item.label}
@@ -172,7 +172,7 @@ export function HomePage({ homepageStats }: Props) {
       <section className="section-pad bg-[var(--gold-soft)]">
         <div className="container-ar">
           <PageHero eyebrow="Members" title="What members say" align="center" className="mx-auto" />
-          <div className="mt-10">
+          <div className="mt-8">
             <TestimonialsMarquee
               items={sampleTestimonials.map((t) => ({ name: t.name, role: t.role, quote: t.quote }))}
             />
@@ -183,18 +183,18 @@ export function HomePage({ homepageStats }: Props) {
       <section className="section-pad bg-section">
         <div className="container-ar max-w-3xl">
           <PageHero eyebrow="FAQ" title="Common questions" align="center" className="mx-auto" />
-          <div className="mt-10 space-y-4">
+          <div className="mt-8 space-y-3">
             {faqs.map((item) => (
               <details
                 key={item.q}
                 className="group rounded-[var(--radius)] border border-[var(--border)] bg-[var(--gray-50)] p-5"
               >
                 <summary className="cursor-pointer font-semibold text-[var(--heading)]">{item.q}</summary>
-                <p className="mt-3 text-sm leading-relaxed text-[var(--text-muted)]">{item.a}</p>
+                <p className="mt-2.5 text-sm leading-relaxed text-[var(--text-muted)]">{item.a}</p>
               </details>
             ))}
           </div>
-          <div className="mt-8 text-center">
+          <div className="mt-6 text-center">
             <Link href="/learn/faq">
               <Button variant="outline">View all FAQs</Button>
             </Link>
@@ -202,13 +202,13 @@ export function HomePage({ homepageStats }: Props) {
         </div>
       </section>
 
-      <section className="section-pad bg-[var(--emerald-soft)]">
+      <section className="section-pad-sm bg-[var(--emerald-soft)]">
         <div className="container-ar text-center">
           <h2 className="text-3xl font-bold text-[var(--heading)]">Ready when you are</h2>
-          <p className="mx-auto mt-3 max-w-md text-[var(--text-muted)]">
+          <p className="mx-auto mt-2.5 max-w-md text-[var(--text-muted)]">
             Open an account, fund your wallet, and earn on Monday.
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link href="/auth/register">
               <Button size="lg" className="shadow-[var(--shadow-glow)]">
                 Open an account

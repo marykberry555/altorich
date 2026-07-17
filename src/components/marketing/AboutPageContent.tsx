@@ -79,7 +79,7 @@ export function AboutPageContent() {
   return (
     <>
       {/* Hero */}
-      <section className="gradient-hero relative overflow-hidden section-pad">
+      <section className="gradient-hero relative overflow-hidden section-pad-hero">
         <div
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,168,83,0.12),transparent_55%)]"
           aria-hidden
@@ -88,16 +88,16 @@ export function AboutPageContent() {
           className="pointer-events-none absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-[var(--emerald)]/10 blur-3xl"
           aria-hidden
         />
-        <div className="container-ar relative grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+        <div className="container-ar relative grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
           <div className="animate-fade-up">
             <Badge variant="gold">{hero.eyebrow}</Badge>
-            <h1 className="mt-5 max-w-xl text-4xl font-bold tracking-tight text-[var(--heading)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
+            <h1 className="mt-4 max-w-xl text-4xl font-bold tracking-tight text-[var(--heading)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
               {hero.title}
             </h1>
-            <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
+            <p className="mt-3 max-w-lg text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
               {hero.description}
             </p>
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2" aria-label="Trust indicators">
+            <ul className="mt-6 grid gap-2.5 sm:grid-cols-2" aria-label="Trust indicators">
               {hero.trustItems.map((item) => (
                 <li
                   key={item}
@@ -110,7 +110,7 @@ export function AboutPageContent() {
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-xs text-[var(--text-subtle)]">
+            <p className="mt-4 text-xs text-[var(--text-subtle)]">
               {COMPANY.legalName} · Company No. {COMPANY.companyNumber} · Lagos operations hub
             </p>
           </div>
@@ -134,7 +134,7 @@ export function AboutPageContent() {
 
       {/* Story */}
       <section className="section-pad bg-section">
-        <div className="container-ar grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+        <div className="container-ar grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
           <div>
             <SectionEyebrow>{story.eyebrow}</SectionEyebrow>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-[var(--heading)] sm:text-4xl">
@@ -159,7 +159,7 @@ export function AboutPageContent() {
             align="center"
             className="mx-auto"
           />
-          <div className="mt-12 grid gap-6 md:grid-cols-2">
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
             <Card
               variant="elevated"
               padding="lg"
@@ -196,7 +196,7 @@ export function AboutPageContent() {
             align="center"
             className="mx-auto"
           />
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {values.map((value) => {
               const Icon = VALUE_ICONS[value.title as keyof typeof VALUE_ICONS] ?? ShieldCheck;
               return (
@@ -229,7 +229,7 @@ export function AboutPageContent() {
             align="center"
             className="mx-auto"
           />
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {trustReasons.map((reason, index) => {
               const Icon = TRUST_ICONS[index % TRUST_ICONS.length];
               return (
@@ -260,7 +260,7 @@ export function AboutPageContent() {
             title="How we operate"
             description="UK governance. Nigerian member care. Clear processes from deposit to settlement."
           />
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {operations.map((item, index) => {
               const Icon = OPERATION_ICONS[index % OPERATION_ICONS.length];
               return (
@@ -287,7 +287,7 @@ export function AboutPageContent() {
             align="center"
             className="mx-auto"
           />
-          <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2">
+          <div className="mx-auto mt-8 grid max-w-4xl gap-6 md:grid-cols-2">
             {leadership.map((person, index) => (
               <Card key={person.name} variant="elevated" padding="lg" className="h-full">
                 <div
@@ -346,7 +346,7 @@ export function AboutPageContent() {
       </section>
 
       {/* Numbers */}
-      <section className="border-y border-[var(--border)] bg-[var(--navy)] section-pad !py-14">
+      <section className="border-y border-[var(--border)] bg-[var(--navy)] section-pad-sm">
         <div className="container-ar">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
             {stats.map((stat) => (
@@ -362,7 +362,7 @@ export function AboutPageContent() {
       </section>
 
       {/* CTA */}
-      <section className="gradient-hero relative overflow-hidden section-pad">
+      <section className="gradient-hero relative overflow-hidden section-pad-hero">
         <div
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(16,185,129,0.12),transparent_50%)]"
           aria-hidden

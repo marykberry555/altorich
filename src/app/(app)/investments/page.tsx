@@ -52,7 +52,7 @@ export default async function InvestmentsPage() {
   const availableCards = cards.filter((c) => c.available && c.planId);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-6">
       <header className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Invest</p>
         <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Select package</h1>

@@ -11,7 +11,7 @@ export function LegalDocument({ title, lastUpdated, children }: Props) {
     <section className="section-pad">
       <div className="container-ar max-w-3xl">
         <PageHero eyebrow="Legal" title={title} description={`Last updated: ${lastUpdated}`} />
-        <div className="prose-ar mt-10">{children}</div>
+        <div className="prose-ar mt-8">{children}</div>
       </div>
     </section>
   );

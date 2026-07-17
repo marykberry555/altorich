@@ -35,7 +35,7 @@ export default async function WalletPage() {
   const primaryLabel = balance > 0 ? "Invest now" : "Submit transfer";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Wallet</p>
         <h1 className="mt-2 text-2xl font-bold text-[var(--heading)]">Your naira wallet</h1>

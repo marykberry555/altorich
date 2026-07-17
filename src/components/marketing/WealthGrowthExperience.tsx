@@ -105,7 +105,7 @@ export function WealthGrowthExperience({ config, className }: Props) {
   return (
     <section
       className={cn(
-        "relative overflow-hidden border-b border-[var(--border)] bg-[var(--gray-50)] section-pad",
+        "relative overflow-hidden border-b border-[var(--border)] bg-[var(--gray-50)] section-pad-sm",
         className
       )}
       aria-labelledby="wealth-growth-heading"
@@ -125,7 +125,7 @@ export function WealthGrowthExperience({ config, className }: Props) {
 
           <p
             className={cn(
-              "mt-8 w-full font-extrabold tabular-nums tracking-tight text-[var(--emerald)]",
+              "mt-6 w-full font-extrabold tabular-nums tracking-tight text-[var(--emerald)]",
               "text-[clamp(2.5rem,9vw,4.25rem)] leading-none",
               "drop-shadow-[0_0_28px_rgba(16,185,129,0.35)]"
             )}
@@ -135,16 +135,16 @@ export function WealthGrowthExperience({ config, className }: Props) {
           </p>
         </div>
 
-        <div className="mx-auto mt-12 max-w-3xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-raised)] p-6 shadow-[var(--shadow-md)] sm:p-8">
+        <div className="mx-auto mt-8 max-w-3xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-raised)] p-5 shadow-[var(--shadow-md)] sm:p-7">
           <h3 className="text-center text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">
             {config.calculatorTitle}
           </h3>
-          <p className="mx-auto mt-3 max-w-lg text-center text-sm leading-relaxed text-[var(--text-muted)]">
+          <p className="mx-auto mt-2.5 max-w-lg text-center text-sm leading-relaxed text-[var(--text-muted)]">
             Enter your intended investment amount to instantly preview your projected earnings.
           </p>
 
-          <label className="mx-auto mt-6 block max-w-md">
-            <span className="mb-2 block text-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
+          <label className="mx-auto mt-5 block max-w-md">
+            <span className="mb-1.5 block text-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
               Investment Amount (₦)
             </span>
             <div
@@ -179,14 +179,14 @@ export function WealthGrowthExperience({ config, className }: Props) {
             ) : null}
           </label>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4">
             <ResultCard label="Today's Earnings" value={formatProjection(projection.today)} />
             <ResultCard label="Weekly Earnings" value={formatProjection(projection.weekly)} />
             <ResultCard label="Monthly Projection" value={formatProjection(projection.monthly)} />
             <ResultCard label="Annual Projection" value={formatProjection(projection.annual)} />
           </div>
 
-          <p className="mt-5 text-center text-xs leading-relaxed text-[var(--text-subtle)]">
+          <p className="mt-4 text-center text-xs leading-relaxed text-[var(--text-subtle)]">
             Illustrative projections based on Alto Rich&apos;s current Platform Earning Model.
           </p>
         </div>

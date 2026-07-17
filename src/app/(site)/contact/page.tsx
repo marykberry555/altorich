@@ -10,14 +10,14 @@ import { COMPANY } from "@/lib/company";
 export default function ContactPage() {
   return (
     <>
-      <section className="gradient-hero section-pad">
+      <section className="gradient-hero section-pad-hero">
         <div className="container-ar">
           <PageHero
             eyebrow="Contact"
             title="Reach our team in Lagos and London"
             description="Member support operates on West Africa Time. For account-specific issues, log in and use your dashboard — it helps us resolve matters faster."
           />
-          <div className="mt-10 flex justify-center">
+          <div className="mt-8 flex justify-center">
             <ContactForm />
           </div>
         </div>
@@ -61,7 +61,7 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <Card variant="outline" className="mt-10">
+          <Card variant="outline" className="mt-8">
             <h2 className="font-semibold text-[var(--heading)]">Before you write</h2>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
               Many questions are answered in our help centre and FAQs. For deposit or withdrawal issues, include your

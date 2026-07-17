@@ -27,7 +27,7 @@ export default function PackagesIndexPage() {
 
   return (
     <>
-      <section className="gradient-hero section-pad">
+      <section className="gradient-hero section-pad-hero">
         <div className="container-ar grid items-center gap-10 lg:grid-cols-2">
           <PageHero
             eyebrow="Investment sectors"

@@ -39,7 +39,7 @@ const educationArticles = LEARN_ARTICLES.filter((article) => article.slug !== "g
 export default function LearnPage() {
   return (
     <>
-      <section className="gradient-hero section-pad">
+      <section className="gradient-hero section-pad-hero">
         <div className="container-ar">
           <PageHero
             eyebrow="Learn"

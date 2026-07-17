@@ -32,7 +32,7 @@ export function SolutionPage({
 }: Props) {
   return (
     <>
-      <section className="gradient-hero section-pad">
+      <section className="gradient-hero section-pad-hero">
         <div className="container-ar grid items-center gap-10 lg:grid-cols-2">
           <PageHero eyebrow={eyebrow} title={title} description={description} />
           <div className="overflow-hidden rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)]">

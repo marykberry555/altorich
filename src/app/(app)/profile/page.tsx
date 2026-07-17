@@ -28,7 +28,7 @@ export default async function ProfilePage() {
   ];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 pb-8">
+    <div className="mx-auto max-w-3xl space-y-6 pb-8">
       <header>
         <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Profile</h1>
       </header>

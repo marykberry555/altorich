@@ -6,12 +6,12 @@ import { footerLinks } from "@/content/navigation";
 export function SiteFooter() {
   return (
     <footer className="gradient-navy text-white">
-      <div className="container-ar section-pad">
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className="container-ar section-pad-sm">
+        <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <BrandLogoStatic variant="full" href="/" />
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">{COMPANY.tagline}</p>
-            <p className="mt-4 text-xs text-white/50">
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/70">{COMPANY.tagline}</p>
+            <p className="mt-3 text-xs text-white/50">
               {COMPANY.legalName} · Co. {COMPANY.companyNumber}
               <br />
               {COMPANY.addressFull}
@@ -24,11 +24,11 @@ export function SiteFooter() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 lg:col-span-3">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 lg:col-span-3">
             {Object.entries(footerLinks).map(([title, links]) => (
               <div key={title}>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--gold-light)]">{title}</h4>
-                <ul className="mt-4 space-y-2">
+                <ul className="mt-3 space-y-1.5">
                   {links.map((link) => (
                     <li key={link.href}>
                       <Link href={link.href} className="text-sm text-white/70 transition hover:text-white">

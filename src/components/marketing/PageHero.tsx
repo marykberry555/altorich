@@ -23,9 +23,9 @@ export function PageHero({ eyebrow, title, description, align = "left", dark, cl
           {eyebrow}
         </p>
       ) : null}
-      <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">{title}</h1>
+      <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">{title}</h1>
       {description ? (
-        <p className={cn("mt-4 max-w-2xl text-base leading-relaxed sm:text-lg", dark ? "text-white/75" : "text-[var(--text-muted)]", align === "center" && "mx-auto")}>
+        <p className={cn("mt-3 max-w-2xl text-base leading-relaxed sm:text-lg", dark ? "text-white/75" : "text-[var(--text-muted)]", align === "center" && "mx-auto")}>
           {description}
         </p>
       ) : null}

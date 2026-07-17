@@ -21,7 +21,7 @@ export function PackageDetailPage({ pkg }: Props) {
 
   return (
     <>
-      <section className="gradient-hero section-pad">
+      <section className="gradient-hero section-pad-hero">
         <div className="container-ar max-w-5xl">
           <Link
             href="/packages"
@@ -129,7 +129,7 @@ export function PackageDetailPage({ pkg }: Props) {
             ))}
           </div>
 
-          <Card variant="elevated" className="mt-10 border-[var(--emerald-mid)]/30 bg-[var(--emerald-soft)]/30">
+          <Card variant="elevated" className="mt-8 border-[var(--emerald-mid)]/30 bg-[var(--emerald-soft)]/30">
             <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
               <div>
                 <h3 className="text-lg font-semibold text-[var(--heading)]">Ready to activate this investment sector?</h3>

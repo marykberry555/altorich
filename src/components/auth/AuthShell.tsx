@@ -20,7 +20,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      <div className="mx-auto grid min-h-screen w-full max-w-6xl items-stretch gap-10 px-4 pb-12 pt-24 sm:px-6 lg:grid-cols-2 lg:gap-0 lg:pt-24">
+      <div className="mx-auto grid min-h-screen w-full max-w-6xl items-stretch gap-8 px-4 pb-10 pt-20 sm:px-6 lg:grid-cols-2 lg:gap-0 lg:pt-20">
         <aside className="hidden lg:flex lg:flex-col lg:justify-between lg:pr-14">
           <div className="animate-fade-up">
             <Badge variant="gold">Secure · Verified</Badge>

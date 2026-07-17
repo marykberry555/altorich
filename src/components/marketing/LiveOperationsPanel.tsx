@@ -136,12 +136,12 @@ export function LiveOperationsPanel({ config, className }: Props) {
           >
             {config.opsHeadline}
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
+          <p className="mt-2.5 text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
             {config.opsDescription}
           </p>
         </div>
 
-        <div className="mx-auto mt-10 max-w-4xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-raised)] p-4 shadow-[var(--shadow-md)] sm:p-6">
+        <div className="mx-auto mt-8 max-w-4xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-raised)] p-4 shadow-[var(--shadow-md)] sm:p-5">
           <div className="relative w-full overflow-hidden rounded-[var(--radius-sm)] bg-[var(--gray-50)] ring-1 ring-[var(--border)]">
             <svg
               viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
@@ -190,7 +190,7 @@ export function LiveOperationsPanel({ config, className }: Props) {
           </div>
         </div>
 
-        <ul className="mx-auto mt-8 grid max-w-4xl gap-3 sm:grid-cols-2">
+        <ul className="mx-auto mt-6 grid max-w-4xl gap-2.5 sm:grid-cols-2">
           {sectors.map((sector) => (
             <li
               key={sector.id}

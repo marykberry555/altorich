@@ -211,7 +211,7 @@ export function DashboardShell({ fullName, username, avatarUrl, children }: Prop
           </div>
         ) : null}
 
-        <main className="dashboard-main mx-auto max-w-6xl space-y-6 !px-4 !pb-20 !pt-5 sm:space-y-8 sm:!py-6 lg:!px-8 lg:!py-8 lg:!pb-8">
+        <main className="dashboard-main mx-auto max-w-6xl space-y-5 !px-4 !pb-16 !pt-4 sm:space-y-6 sm:!py-5 lg:!px-8 lg:!py-6 lg:!pb-6">
           {children}
         </main>
 

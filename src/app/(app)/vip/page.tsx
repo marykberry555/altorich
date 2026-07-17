@@ -58,7 +58,7 @@ export default async function VipPage() {
   const currentDisplayLabel = current ? getVipDisplayTitle(current.level, current.label) : "Member (Starter)";
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-6">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">VIP programme</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Community growth tiers</h1>
