@@ -57,9 +57,6 @@ export function HomePage({ homepageStats }: Props) {
                 {hero.guarantee}
               </p>
             ) : null}
-            <div className="mt-6">
-              <WeeklyCountdown />
-            </div>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch">
               <Link href="/auth/register" className="min-w-0 flex-1 sm:max-w-xs">
                 <Button size="lg" className="h-13 w-full gap-2 shadow-[var(--shadow-glow)]">
@@ -109,6 +106,8 @@ export function HomePage({ homepageStats }: Props) {
 
       <WealthGrowthExperience config={homepageStats} />
 
+      <WeeklyCountdown variant="section" />
+
       <section className="section-pad bg-section">
         <div className="container-ar">
           <PageHero
@@ -124,9 +123,9 @@ export function HomePage({ homepageStats }: Props) {
         </div>
       </section>
 
-      <LiveOperationsPanel config={homepageStats} />
-
       <PlatformByTheNumbers config={homepageStats} />
+
+      <LiveOperationsPanel config={homepageStats} />
 
       <section className="section-pad bg-[var(--gray-50)]">
         <div className="container-ar">

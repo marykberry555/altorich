@@ -106,9 +106,9 @@ export const DEFAULT_HOMEPAGE_STATS: HomepageStatsConfig = {
   calculatorWeeklyRatePercent: PLATFORM_EARNING.weeklyReturnPercent,
   calculatorTitle: "See How Your Investment Can Grow",
   calculatorDescription:
-    "Enter your intended investment amount to preview earnings using Alto Rich's current Platform Earning Model.",
+    "Enter your intended investment amount to instantly preview your projected earnings.",
   calculatorDisclaimer:
-    "Illustrative estimates based on the current Platform Earning Model. Calculations update automatically whenever the Platform Earning Model changes.",
+    "Illustrative projections based on Alto Rich's current Platform Earning Model.",
 
   opsGraphSpeed: 1,
   opsGraphBaseline: 0.42,

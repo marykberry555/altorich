@@ -11,7 +11,8 @@ import {
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
-const CALCULATOR_DEFAULT = 1_000_000;
+/** Matches the brief’s live example (₦45,000 → Today ₦2,250). */
+const CALCULATOR_DEFAULT = 45_000;
 
 type Props = {
   config: HomepageStatsConfig;
@@ -23,12 +24,10 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** Keep digits only (max 12). */
 function digitsOnly(raw: string) {
   return raw.replace(/\D/g, "").slice(0, 12);
 }
 
-/** 65000 → 65,000 (locale-independent). */
 function withCommas(digits: string) {
   if (!digits) return "";
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -45,7 +44,7 @@ function formatProjection(amount: number) {
   return formatNairaCounter(amount);
 }
 
-/** Live wealth growth counter + compact earnings calculator. */
+/** Live wealth growth counter + earnings calculator — primary conversion block after hero. */
 export function WealthGrowthExperience({ config, className }: Props) {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [counterLabel, setCounterLabel] = useState(() =>
@@ -72,7 +71,6 @@ export function WealthGrowthExperience({ config, className }: Props) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  // Always tick — including reduced-motion (interval) and background-tab throttling.
   useEffect(() => {
     let raf = 0;
     let interval = 0;
@@ -88,7 +86,6 @@ export function WealthGrowthExperience({ config, className }: Props) {
     };
 
     paint();
-
     interval = window.setInterval(paint, reducedMotion ? 200 : 50);
 
     if (!reducedMotion) {
@@ -108,7 +105,7 @@ export function WealthGrowthExperience({ config, className }: Props) {
   return (
     <section
       className={cn(
-        "relative overflow-hidden border-y border-[var(--border)] bg-[var(--gray-50)] section-pad",
+        "relative overflow-hidden border-b border-[var(--border)] bg-[var(--gray-50)] section-pad",
         className
       )}
       aria-labelledby="wealth-growth-heading"
@@ -129,7 +126,7 @@ export function WealthGrowthExperience({ config, className }: Props) {
           <p
             className={cn(
               "mt-8 w-full font-extrabold tabular-nums tracking-tight text-[var(--emerald)]",
-              "text-[clamp(2.5rem,9vw,4.25rem)] leading-none tracking-tight",
+              "text-[clamp(2.5rem,9vw,4.25rem)] leading-none",
               "drop-shadow-[0_0_28px_rgba(16,185,129,0.35)]"
             )}
             aria-live="off"
@@ -138,20 +135,22 @@ export function WealthGrowthExperience({ config, className }: Props) {
           </p>
         </div>
 
-        <div className="mx-auto mt-12 max-w-3xl">
+        <div className="mx-auto mt-12 max-w-3xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-raised)] p-6 shadow-[var(--shadow-md)] sm:p-8">
           <h3 className="text-center text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">
             {config.calculatorTitle}
           </h3>
-          <p className="mx-auto mt-3 max-w-md text-center text-sm text-[var(--text-muted)]">
-            Enter your intended investment amount to see your projected numbers below.
+          <p className="mx-auto mt-3 max-w-lg text-center text-sm leading-relaxed text-[var(--text-muted)]">
+            Enter your intended investment amount to instantly preview your projected earnings.
           </p>
 
-          <label className="mx-auto mt-5 block max-w-md">
-            <span className="sr-only">Investment amount in naira</span>
+          <label className="mx-auto mt-6 block max-w-md">
+            <span className="mb-2 block text-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
+              Investment Amount (₦)
+            </span>
             <div
               className={cn(
                 "flex h-14 w-full items-center justify-center gap-1 rounded-[var(--radius)]",
-                "border border-[var(--border-strong)] bg-[var(--surface-raised)] px-4 shadow-[var(--shadow-sm)]",
+                "border border-[var(--border-strong)] bg-[var(--surface)] px-4 shadow-[var(--shadow-sm)]",
                 "transition focus-within:border-[var(--emerald)] focus-within:ring-2 focus-within:ring-[var(--emerald)]/25"
               )}
             >
@@ -164,8 +163,8 @@ export function WealthGrowthExperience({ config, className }: Props) {
                 autoComplete="off"
                 value={displayValue}
                 onChange={(e) => setAmountDigits(digitsOnly(e.target.value))}
-                placeholder="1,000,000"
-                style={{ width: `${Math.max((displayValue || "1,000,000").length, 1) + 1}ch` }}
+                placeholder="45,000"
+                style={{ width: `${Math.max((displayValue || "45,000").length, 1) + 1}ch` }}
                 className={cn(
                   "max-w-[min(100%,18ch)] bg-transparent text-center text-lg font-semibold tabular-nums text-[var(--heading)]",
                   "placeholder:text-[var(--text-subtle)] outline-none"
@@ -181,14 +180,14 @@ export function WealthGrowthExperience({ config, className }: Props) {
           </label>
 
           <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
-            <ResultCard label="Today" value={formatProjection(projection.today)} />
-            <ResultCard label="Weekly" value={formatProjection(projection.weekly)} />
-            <ResultCard label="Monthly" value={formatProjection(projection.monthly)} />
-            <ResultCard label="Annual" value={formatProjection(projection.annual)} />
+            <ResultCard label="Today's Earnings" value={formatProjection(projection.today)} />
+            <ResultCard label="Weekly Earnings" value={formatProjection(projection.weekly)} />
+            <ResultCard label="Monthly Projection" value={formatProjection(projection.monthly)} />
+            <ResultCard label="Annual Projection" value={formatProjection(projection.annual)} />
           </div>
 
-          <p className="mt-4 text-center text-xs text-[var(--text-subtle)]">
-            Illustrative · {config.calculatorDailyRatePercent}% daily / {config.calculatorWeeklyRatePercent}% weekly
+          <p className="mt-5 text-center text-xs leading-relaxed text-[var(--text-subtle)]">
+            Illustrative projections based on Alto Rich&apos;s current Platform Earning Model.
           </p>
         </div>
       </div>
@@ -198,11 +197,14 @@ export function WealthGrowthExperience({ config, className }: Props) {
 
 function ResultCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card variant="elevated" padding="sm" className="text-center">
+    <Card variant="elevated" padding="sm" className="text-center transition-shadow duration-200">
       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-subtle)]">
         {label}
       </p>
-      <p className="mt-1.5 text-xl font-bold tabular-nums tracking-tight text-[var(--emerald)] sm:text-2xl">
+      <p
+        key={value}
+        className="mt-1.5 animate-fade-in text-xl font-bold tabular-nums tracking-tight text-[var(--emerald)] sm:text-2xl"
+      >
         {value}
       </p>
     </Card>

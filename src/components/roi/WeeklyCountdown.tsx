@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Clock } from "lucide-react";
 import { weeklyCountdownTarget } from "@/lib/roi/time";
 import { cn } from "@/lib/utils";
 
@@ -18,12 +17,35 @@ function splitSeconds(total: number) {
   return { days, hours, minutes, seconds };
 }
 
-function CountdownBlock({ value, label, compact }: { value: string; label: string; compact?: boolean }) {
+function CountdownBlock({
+  value,
+  label,
+  compact,
+  muted
+}: {
+  value: string;
+  label: string;
+  compact?: boolean;
+  muted?: boolean;
+}) {
   if (compact) {
     return (
       <div className="flex min-w-[2.5rem] flex-col items-center rounded-lg border border-[var(--emerald)]/30 bg-[var(--emerald-soft)]/40 px-1.5 py-1">
         <span className="text-sm font-bold tabular-nums text-[var(--emerald)]">{value}</span>
         <span className="text-[8px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
+      </div>
+    );
+  }
+
+  if (muted) {
+    return (
+      <div className="flex min-w-[3.75rem] flex-1 flex-col items-center sm:min-w-[4.5rem]">
+        <span className="text-2xl font-semibold tabular-nums tracking-tight text-[var(--heading)] sm:text-3xl">
+          {value}
+        </span>
+        <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--text-subtle)]">
+          {label}
+        </span>
       </div>
     );
   }
@@ -43,11 +65,14 @@ function CountdownBlock({ value, label, compact }: { value: string; label: strin
 export function WeeklyCountdown({
   className,
   label = "Payout in",
-  compact = false
+  compact = false,
+  variant = "hero"
 }: {
   className?: string;
   label?: string;
   compact?: boolean;
+  /** `section` = quieter informational band below the calculator. */
+  variant?: "hero" | "section";
 }) {
   const [now, setNow] = useState(() => new Date());
 
@@ -64,7 +89,6 @@ export function WeeklyCountdown({
     return (
       <div className={cn("w-full", className)} role="timer" aria-live="polite">
         <div className="flex items-center gap-1.5">
-          <Clock size={14} className="shrink-0 text-[var(--emerald)]" aria-hidden />
           <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--emerald)]">{label}</p>
         </div>
         <div className="mt-2 flex gap-1" suppressHydrationWarning>
@@ -77,6 +101,39 @@ export function WeeklyCountdown({
     );
   }
 
+  if (variant === "section") {
+    return (
+      <section
+        className={cn("border-b border-[var(--border)] bg-[var(--surface)] section-pad", className)}
+        aria-labelledby="payout-countdown-heading"
+      >
+        <div className="container-ar mx-auto max-w-2xl text-center">
+          <p
+            id="payout-countdown-heading"
+            className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-subtle)]"
+          >
+            Payout In
+          </p>
+          <div
+            className="mt-6 flex items-start justify-center gap-4 sm:gap-8"
+            role="timer"
+            aria-live="polite"
+            suppressHydrationWarning
+          >
+            <CountdownBlock value={String(days)} label="Days" muted />
+            <CountdownBlock value={pad2(hours)} label="Hours" muted />
+            <CountdownBlock value={pad2(minutes)} label="Minutes" muted />
+            <CountdownBlock value={pad2(seconds)} label="Seconds" muted />
+          </div>
+          <p className="mt-6 text-sm text-[var(--text-muted)]">
+            Next Settlement:{" "}
+            <span className="font-semibold text-[var(--heading)]">Monday · 09:00 WAT</span>
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -86,20 +143,13 @@ export function WeeklyCountdown({
       role="timer"
       aria-live="polite"
     >
-      <div className="flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--emerald)] text-white">
-          <Clock size={18} aria-hidden />
-        </div>
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--emerald)] sm:text-sm">{label}</p>
-      </div>
-
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--emerald)] sm:text-sm">{label}</p>
       <div className="mt-3 flex gap-2 sm:gap-3" suppressHydrationWarning>
         <CountdownBlock value={String(days)} label="Days" />
         <CountdownBlock value={pad2(hours)} label="Hours" />
         <CountdownBlock value={pad2(minutes)} label="Mins" />
         <CountdownBlock value={pad2(seconds)} label="Secs" />
       </div>
-
       <p className="mt-3 text-center text-xs text-[var(--text-muted)] sm:text-left">
         Next payout: <span className="font-semibold text-[var(--heading)]">Monday 09:00 WAT</span>
       </p>
