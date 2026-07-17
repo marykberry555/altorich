@@ -7,7 +7,7 @@ export { PRIVATE_SITE_ROBOTS };
 
 /** Canonical social sharing copy — used across OG, Twitter, and JSON-LD. */
 export const SOCIAL_SHARE_TITLE = "Alto Rich";
-export const SOCIAL_SHARE_DESCRIPTION = "Grow your naira with clarity — earn 15% to 30% weekly.";
+export const SOCIAL_SHARE_DESCRIPTION = "Grow your naira with clarity — earn up to 5% daily on one transparent platform model.";
 
 const siteUrl = COMPANY.siteUrl;
 

@@ -9,6 +9,7 @@ import { DashboardPayoutCountdown } from "@/components/dashboard/DashboardPayout
 import { getGreeting } from "@/lib/utils/avatar";
 import { getPackageLabel } from "@/lib/packages/constants";
 import { formatNaira } from "@/lib/domain";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { aggregateLiveAccrual, toLiveRateTick, type LiveAccrualInput } from "@/lib/investment-accrual-live";
 import { useLiveNow } from "@/lib/hooks/use-live-now";
 import type { LiveInvestmentInput } from "@/components/investment/LivePortfolioPanel";
@@ -58,7 +59,7 @@ export function DashboardWealthHero({
 }: Props) {
   const now = useLiveNow();
   const name = fullName.trim() || "Member";
-  const packageLabel = getPackageLabel(preferredPackageSlug);
+  const sectorLabel = getPackageLabel(preferredPackageSlug);
 
   const aggregate = useMemo(
     () => aggregateLiveAccrual(toAccrualInputs(liveInputs), now),
@@ -66,14 +67,11 @@ export function DashboardWealthHero({
   );
 
   const isLive = aggregate.activeCount > 0;
-  /** Current settlement-period earnings (weekly window) — money hero. */
-  const earnedThisWeek = isLive ? aggregate.totalTodayAccrual : 0;
-  const liveLifetime = isLive ? aggregate.totalLive : totalEarned;
-  const portfolioValue = isLive ? aggregate.portfolioValue : totalInvested + totalEarned;
-  const totalPrincipal = isLive ? aggregate.totalPrincipal : totalInvested;
-
-  const weekTick = toLiveRateTick(aggregate, now, earnedThisWeek);
-  const lifetimeTick = toLiveRateTick(aggregate, now, liveLifetime);
+  const todaysEarnings = isLive ? aggregate.totalTodayAccrual : 0;
+  const liveAccrued = isLive ? aggregate.totalLive : totalEarned;
+  const principal = isLive ? aggregate.totalPrincipal : totalInvested;
+  const todayTick = toLiveRateTick(aggregate, now, todaysEarnings);
+  const liveTick = toLiveRateTick(aggregate, now, liveAccrued);
 
   const cta =
     primaryCta ??
@@ -88,7 +86,6 @@ export function DashboardWealthHero({
         aria-hidden
       />
       <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[var(--gold)]/10 blur-3xl" aria-hidden />
-      <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-[var(--emerald-light)]/20 blur-3xl" aria-hidden />
 
       <div className="relative p-5 text-white sm:p-7 lg:p-8">
         <div className="flex items-start justify-between gap-4">
@@ -97,9 +94,8 @@ export function DashboardWealthHero({
             <div>
               <p className="text-sm font-medium text-white/70">{getGreeting()},</p>
               <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{name}</h1>
-              <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-white/90">
-                {isLive ? <span className="live-dot" aria-hidden /> : null}
-                {hasActiveInvestment ? "Active" : "Preferred"} · {packageLabel}
+              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200/90">
+                My Investment
               </p>
             </div>
           </div>
@@ -120,27 +116,19 @@ export function DashboardWealthHero({
               aggregate.isAccruing && "animate-live-glow"
             )}
           >
-            <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-400/10 via-transparent to-transparent" aria-hidden />
-            <div className="relative">
-              <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">
-                {aggregate.isAccruing ? <span className="live-dot" aria-hidden /> : null}
-                Earned this week
-              </p>
-              <p className="mt-3 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl lg:text-[3.5rem]">
-                <AnimatedEarningsCounter
-                  value={earnedThisWeek}
-                  liveRate={weekTick}
-                  decimals={2}
-                  className="text-white"
-                />
-              </p>
-              <p className="mt-2 text-sm text-white/70">
-                Lifetime earnings{" "}
-                <span className="font-semibold text-white">
-                  <AnimatedEarningsCounter value={liveLifetime} liveRate={lifetimeTick} decimals={2} />
-                </span>
-              </p>
-            </div>
+            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">
+              {aggregate.isAccruing ? <span className="live-dot" aria-hidden /> : null}
+              Today&apos;s Earnings
+            </p>
+            <p className="mt-3 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl lg:text-[3.5rem]">
+              <AnimatedEarningsCounter value={todaysEarnings} liveRate={todayTick} decimals={2} className="text-white" />
+            </p>
+            <p className="mt-2 text-sm text-white/70">
+              Live accrued earnings{" "}
+              <span className="font-semibold text-white">
+                <AnimatedEarningsCounter value={liveAccrued} liveRate={liveTick} decimals={2} />
+              </span>
+            </p>
           </div>
         ) : (
           <div className="relative mt-6 rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm sm:mt-7 sm:p-6">
@@ -148,8 +136,8 @@ export function DashboardWealthHero({
             <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">₦0.00</p>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/80">
               {walletBalance > 0
-                ? "Your wallet is funded. Activate a package to watch earnings grow."
-                : "Fund your wallet, pick a package, and earn every Monday."}
+                ? "Your wallet is funded. Allocate to your preferred investment sector to begin."
+                : "Fund your wallet, choose an investment sector, and earn every Monday."}
             </p>
             <div className="mt-5">
               <Link href={cta.href}>
@@ -166,22 +154,32 @@ export function DashboardWealthHero({
           <DashboardPayoutCountdown active={hasActiveInvestment} />
         </div>
 
-        <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <dl className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Wallet</dt>
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Principal</dt>
+            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(principal)}</dd>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              Current Investment Sector
+            </dt>
+            <dd className="mt-1 truncate text-lg font-bold sm:text-xl">{sectorLabel}</dd>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              {PLATFORM_EARNING.modelName}
+            </dt>
+            <dd className="mt-1 text-lg font-bold sm:text-xl">Up to {PLATFORM_EARNING.dailyReturnPercent}% daily</dd>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Withdrawable Balance</dt>
             <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(walletBalance)}</dd>
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Invested</dt>
-            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(totalPrincipal)}</dd>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Package</dt>
-            <dd className="mt-1 truncate text-lg font-bold sm:text-xl">{packageLabel}</dd>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Portfolio</dt>
-            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(portfolioValue)}</dd>
+          <div className="col-span-2 rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm lg:col-span-2">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              {PLATFORM_EARNING.nextSettlementLabel}
+            </dt>
+            <dd className="mt-1 text-sm font-medium text-white/90">{PLATFORM_EARNING.payoutTiming}</dd>
           </div>
         </dl>
 
@@ -206,13 +204,13 @@ export function DashboardWealthHeroStatic({
   preferredPackageSlug,
   hasActiveInvestment,
   walletBalance,
-  portfolioValue,
+  portfolioValue: _portfolioValue,
   totalInvested,
   totalEarned,
   primaryCta
 }: Omit<Props, "liveInputs"> & { portfolioValue: number }) {
   const name = fullName.trim() || "Member";
-  const packageLabel = getPackageLabel(preferredPackageSlug);
+  const sectorLabel = getPackageLabel(preferredPackageSlug);
   const cta =
     primaryCta ??
     (walletBalance > 0
@@ -228,17 +226,17 @@ export function DashboardWealthHeroStatic({
           <div>
             <p className="text-sm font-medium text-white/70">{getGreeting()},</p>
             <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{name}</h1>
-            <p className="mt-1 inline-flex items-center rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-white/90">
-              {hasActiveInvestment ? "Active" : "Preferred"} · {packageLabel}
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200/90">
+              My Investment
             </p>
           </div>
         </div>
 
         {hasActiveInvestment ? (
           <div className="relative mt-6 rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm sm:mt-7 sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">Earned this week</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">Live Accrued Earnings</p>
             <p className="mt-3 text-4xl font-bold tabular-nums tracking-tight sm:text-5xl">{formatNaira(totalEarned)}</p>
-            <p className="mt-2 text-sm text-white/70">Lifetime earnings update after settlement.</p>
+            <p className="mt-2 text-sm text-white/70">Updates after each settlement cycle.</p>
           </div>
         ) : (
           <div className="relative mt-6 rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm sm:mt-7 sm:p-6">
@@ -246,8 +244,8 @@ export function DashboardWealthHeroStatic({
             <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">₦0.00</p>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/80">
               {walletBalance > 0
-                ? "Your wallet is funded. Activate a package to watch earnings grow."
-                : "Fund your wallet, pick a package, and earn every Monday."}
+                ? "Your wallet is funded. Allocate to your preferred investment sector to begin."
+                : "Fund your wallet, choose an investment sector, and earn every Monday."}
             </p>
             <div className="mt-5">
               <Link href={cta.href}>
@@ -264,22 +262,32 @@ export function DashboardWealthHeroStatic({
           <DashboardPayoutCountdown active={hasActiveInvestment} />
         </div>
 
-        <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <dl className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Wallet</dt>
-            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(walletBalance)}</dd>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Invested</dt>
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Principal</dt>
             <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(totalInvested)}</dd>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Package</dt>
-            <dd className="mt-1 truncate text-lg font-bold sm:text-xl">{packageLabel}</dd>
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              Current Investment Sector
+            </dt>
+            <dd className="mt-1 truncate text-lg font-bold sm:text-xl">{sectorLabel}</dd>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
-            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Portfolio</dt>
-            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(portfolioValue)}</dd>
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              {PLATFORM_EARNING.modelName}
+            </dt>
+            <dd className="mt-1 text-lg font-bold sm:text-xl">Up to {PLATFORM_EARNING.dailyReturnPercent}% daily</dd>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">Withdrawable Balance</dt>
+            <dd className="mt-1 text-lg font-bold tabular-nums sm:text-xl">{formatNaira(walletBalance)}</dd>
+          </div>
+          <div className="col-span-2 rounded-xl border border-white/10 bg-white/5 px-3 py-3 lg:col-span-2">
+            <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
+              {PLATFORM_EARNING.nextSettlementLabel}
+            </dt>
+            <dd className="mt-1 text-sm font-medium text-white/90">{PLATFORM_EARNING.payoutTiming}</dd>
           </div>
         </dl>
       </div>

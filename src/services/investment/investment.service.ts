@@ -7,6 +7,7 @@ import { SettlementService } from "@/services/investment/settlement.service";
 import { ReferralService } from "@/services/referral/referral.service";
 import { addDays, makeInvestmentReference, type SettlementFrequency } from "@/lib/investment";
 import { buildPlanDefaults, type CreatePlanInput } from "@/lib/packages/plan-defaults";
+import { PLATFORM_EARNING, platformProjectedDaily } from "@/lib/earning/platform-earning";
 
 type Client = SupabaseClient<Database>;
 type InvestmentPlan = Database["public"]["Tables"]["investment_plans"]["Row"];
@@ -99,7 +100,7 @@ export class InvestmentService {
       throw new AppError(`Maximum investment is ₦${max.toLocaleString("en-NG")}.`, 400, "ABOVE_MAXIMUM");
     }
     if (!plan.is_active || plan.plan_status !== "active") {
-      throw Errors.badRequest("This plan is not available for purchase.");
+      throw Errors.badRequest("This investment sector is not available.");
     }
   }
 
@@ -143,7 +144,7 @@ export class InvestmentService {
 
   async purchasePlan(userId: string, planId: string, amount: number): Promise<Investment> {
     const plan = await this.getPlanById(planId);
-    if (!plan) throw Errors.notFound("Investment plan");
+    if (!plan) throw Errors.notFound("Investment sector");
 
     this.validatePurchaseAmount(plan, amount);
 
@@ -158,11 +159,9 @@ export class InvestmentService {
     const startedAt = new Date();
     const endsAt = addDays(startedAt, plan.cycle_days);
     const frequency = (plan.settlement_frequency ?? "weekly") as SettlementFrequency;
-    const weeklyRoiBps = Number((plan as InvestmentPlan & { weekly_roi_bps?: number }).weekly_roi_bps ?? 1000);
-    const projectedDaily =
-      Number(plan.projected_daily) > 0
-        ? Number(plan.projected_daily)
-        : Math.round(((amount * weeklyRoiBps) / 10_000 / 7) * 100) / 100;
+    // Unified platform earning engine — sector/plan never sets independent ROI.
+    const weeklyRoiBps = PLATFORM_EARNING.weeklyRoiBps;
+    const projectedDaily = platformProjectedDaily(amount);
 
     const { data: investment, error: invError } = await this.supabase
       .from("investments")
@@ -405,7 +404,7 @@ export class InvestmentService {
     if (countError) throw countError;
     if (count && count > 0) {
       throw new AppError(
-        "Cannot delete a package that has investments. Archive it instead.",
+        "Cannot delete a sector that has investments. Archive it instead.",
         409,
         "PLAN_IN_USE"
       );

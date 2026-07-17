@@ -25,11 +25,14 @@ async function fetchStatus(url, init) {
 async function main() {
   console.log(`AltoRich — Production Smoke Test (${BASE})\n`);
 
-  await check("Homepage headline shows 10–25% weekly", async () => {
+  await check("Homepage shows investment sector framing", async () => {
     const res = await fetch(`${BASE}/`);
     const html = await res.text();
-    const ok = html.includes("15% to 30% weekly") || html.includes("15% to 30%");
-    return { ok, note: ok ? "headline present" : "headline missing" };
+    const ok =
+      html.includes("Choose Your Investment Sector") ||
+      html.includes("Platform Earning Model") ||
+      html.includes("Earn Up To 5% Daily");
+    return { ok, note: ok ? "sector framing present" : "sector framing missing" };
   });
 
   await check("Homepage mentions guaranteed returns", async () => {
@@ -202,6 +205,25 @@ async function main() {
   await check("Admin metrics API returns 401/403 without session", async () => {
     const res = await fetch(`${BASE}/api/admin/metrics`);
     return { ok: res.status === 401 || res.status === 403, note: `HTTP ${res.status}` };
+  });
+
+  await check("Live activity API returns anonymized feed", async () => {
+    const res = await fetch(`${BASE}/api/social/live-activity`);
+    const body = await res.json();
+    const activities = Array.isArray(body?.activities) ? body.activities : [];
+    const sample = activities[0];
+    const hasShape =
+      activities.length > 0 &&
+      typeof sample?.id === "string" &&
+      typeof sample?.firstName === "string" &&
+      typeof sample?.city === "string" &&
+      typeof sample?.type === "string" &&
+      !JSON.stringify(sample).includes("@") &&
+      !/\d{10}/.test(JSON.stringify(sample));
+    return {
+      ok: res.status === 200 && hasShape,
+      note: `HTTP ${res.status}, ${activities.length} activities`
+    };
   });
 
   const passed = tests.filter((t) => t.ok).length;

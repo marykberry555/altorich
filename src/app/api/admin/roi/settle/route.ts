@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdminService } from "@/lib/auth/session";
 import { getPublicEnv } from "@/lib/env";
 import { currentTickerWindowLagos, SECONDS_IN_WEEK, clamp01 } from "@/lib/roi/time";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 /**
  * Settle any ROI investments whose cycle has ended.
@@ -27,8 +28,7 @@ export async function POST() {
   const results: Array<{ investment_id: string; payout_id?: string; status: string }> = [];
 
   for (const inv of ended ?? []) {
-    const tier = (inv as unknown as { tier?: { weekly_roi_bps?: number } | null }).tier;
-    const weeklyBps = Number(tier?.weekly_roi_bps ?? 0);
+    const weeklyBps = PLATFORM_EARNING.weeklyRoiBps;
     const principal = Number(inv.principal_ngn);
 
     const start = new Date(inv.cycle_started_at);

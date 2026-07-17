@@ -67,10 +67,10 @@ export function InvestmentPackageCard({ card, walletBalance, featured }: Props) 
             <div className="flex items-center justify-between gap-3">
               <dt className="flex items-center gap-2 text-[var(--text-muted)]">
                 <TrendingUp size={15} aria-hidden />
-                Weekly ROI
+                Platform Earning Model
               </dt>
               <dd className="font-semibold text-[var(--emerald)]">
-                {card.available ? `${card.weeklyRoiPercent}%` : "—"}
+                {card.available ? `${card.dailyReturnPercent}% daily` : "—"}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3">

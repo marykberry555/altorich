@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Calendar, TrendingUp } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { getSessionUser } from "@/lib/auth/session";
 import { getUserServices } from "@/lib/services";
 import { mapInvestmentRows } from "@/lib/investment/mappers";
@@ -7,7 +7,7 @@ import { formatSettlementLabel } from "@/lib/packages/investment-catalog";
 import { formatNaira } from "@/lib/domain";
 import { InvestmentAccrualPanel } from "@/components/investment/InvestmentAccrualPanel";
 import { InvestmentStopPanel } from "@/components/investment/InvestmentStopPanel";
-import { getTierConfig } from "@/lib/packages/tier-config";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { StatusBadge } from "@/components/design-system";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -71,12 +71,8 @@ export default async function InvestmentDetailPage({ params }: Props) {
 
   const rows = mapInvestmentRows([investment as Parameters<typeof mapInvestmentRows>[0][0]], settlements);
   const row = rows[0];
-  const plan = (investment as { investment_plans?: { name?: string; tier?: string; weekly_roi_bps?: number } | null })
-    .investment_plans;
-  const tierConfig = getTierConfig(String(plan?.tier ?? "starter"));
-  const weeklyRoiPercent =
-    Number((investment as { weekly_roi_bps?: number }).weekly_roi_bps ?? plan?.weekly_roi_bps ?? tierConfig?.weeklyRoiBps ?? 1000) /
-    100;
+  const plan = (investment as { investment_plans?: { name?: string; tier?: string } | null }).investment_plans;
+  const weeklyRoiPercent = PLATFORM_EARNING.weeklyReturnPercent;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -92,8 +88,42 @@ export default async function InvestmentDetailPage({ params }: Props) {
 
       <header>
         <p className="font-mono text-xs text-[var(--text-subtle)]">{investment.reference ?? investment.id}</p>
-        <h1 className="mt-2 text-2xl font-bold text-[var(--heading)]">Investment details</h1>
+        <h1 className="mt-2 text-2xl font-bold text-[var(--heading)]">Investment Sector Details</h1>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          {plan?.name ?? "Investment"} · {PLATFORM_EARNING.modelName}
+        </p>
       </header>
+
+      <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Card variant="elevated" padding="md">
+          <dt className="text-xs text-[var(--text-subtle)]">Investment Sector</dt>
+          <dd className="mt-1 text-lg font-semibold text-[var(--heading)]">{plan?.name ?? "Investment"}</dd>
+        </Card>
+        <Card variant="elevated" padding="md">
+          <dt className="text-xs text-[var(--text-subtle)]">Principal</dt>
+          <dd className="mt-1 text-lg font-bold tabular-nums">{formatNaira(Number(investment.amount))}</dd>
+        </Card>
+        <Card variant="elevated" padding="md">
+          <dt className="text-xs text-[var(--text-subtle)]">Investment Date</dt>
+          <dd className="mt-1 font-medium">{new Date(investment.started_at).toLocaleString("en-NG")}</dd>
+        </Card>
+        <Card variant="elevated" padding="md">
+          <dt className="text-xs text-[var(--text-subtle)]">{PLATFORM_EARNING.modelName}</dt>
+          <dd className="mt-1 font-semibold text-[var(--emerald)]">
+            Up to {PLATFORM_EARNING.dailyReturnPercent}% daily
+          </dd>
+        </Card>
+        <Card variant="elevated" padding="md">
+          <dt className="text-xs text-[var(--text-subtle)]">{PLATFORM_EARNING.settlementScheduleLabel}</dt>
+          <dd className="mt-1 font-medium">{formatSettlementLabel(row.settlementFrequency)}</dd>
+        </Card>
+        <Card variant="elevated" padding="md">
+          <dt className="text-xs text-[var(--text-subtle)]">Status</dt>
+          <dd className="mt-1">
+            <StatusBadge status={investment.status} />
+          </dd>
+        </Card>
+      </dl>
 
       <InvestmentAccrualPanel row={row} />
 
@@ -108,46 +138,16 @@ export default async function InvestmentDetailPage({ params }: Props) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card variant="elevated" padding="md">
-          <p className="text-xs text-[var(--text-subtle)]">Investment amount</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums">{formatNaira(Number(investment.amount))}</p>
-        </Card>
-        <Card variant="elevated" padding="md">
           <p className="text-xs text-[var(--text-subtle)]">Credited earnings</p>
           <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--emerald)]">
             {formatNaira(Number(investment.total_earned ?? 0))}
           </p>
         </Card>
+        <Card variant="elevated" padding="md">
+          <p className="text-xs text-[var(--text-subtle)]">Current cycle ends</p>
+          <p className="mt-1 text-lg font-semibold">{new Date(investment.ends_at).toLocaleString("en-NG")}</p>
+        </Card>
       </div>
-
-      <Card variant="elevated" padding="md">
-        <h2 className="font-semibold text-[var(--heading)]">Investment timeline</h2>
-        <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="flex items-start gap-2">
-            <Calendar size={16} className="mt-0.5 text-[var(--emerald)]" aria-hidden />
-            <div>
-              <dt className="text-xs text-[var(--text-subtle)]">Started on</dt>
-              <dd className="font-medium">{new Date(investment.started_at).toLocaleString("en-NG")}</dd>
-            </div>
-          </div>
-          <div className="flex items-start gap-2">
-            <TrendingUp size={16} className="mt-0.5 text-[var(--emerald)]" aria-hidden />
-            <div>
-              <dt className="text-xs text-[var(--text-subtle)]">Matures on</dt>
-              <dd className="font-medium">{new Date(investment.ends_at).toLocaleString("en-NG")}</dd>
-            </div>
-          </div>
-          <div>
-            <dt className="text-xs text-[var(--text-subtle)]">Settlement frequency</dt>
-            <dd className="font-medium">{formatSettlementLabel(row.settlementFrequency)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-[var(--text-subtle)]">Last settlement</dt>
-            <dd className="font-medium">
-              {lastPaid ? new Date(lastPaid).toLocaleString("en-NG") : "Pending first settlement"}
-            </dd>
-          </div>
-        </dl>
-      </Card>
 
       <Card variant="elevated" padding="md">
         <h2 className="font-semibold text-[var(--heading)]">Settlement history</h2>

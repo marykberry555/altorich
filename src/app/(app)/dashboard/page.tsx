@@ -4,6 +4,7 @@ import { getPublicEnv } from "@/lib/env";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import { formatNaira } from "@/lib/domain";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import type { AllocationPoint, ChartPoint } from "@/lib/dashboard/chart-data";
 import { COMPANY } from "@/lib/company";
 import { DEFAULT_REFERRAL_PROGRAM } from "@/lib/referral/config";
@@ -169,7 +170,7 @@ async function DashboardContent() {
           hasActiveInvestment={hasActiveInvestment}
           roi={{
             principalNgn: Number(roiState.activeInvestment.principal_ngn),
-            weeklyRoiBps: Number(roiState.activeInvestment.tier.weekly_roi_bps),
+            weeklyRoiBps: PLATFORM_EARNING.weeklyRoiBps,
             cycleStartedAt: roiState.activeInvestment.cycle_started_at,
             cycleEndsAt: roiState.activeInvestment.cycle_ends_at,
             tierName: roiState.activeInvestment.tier.name

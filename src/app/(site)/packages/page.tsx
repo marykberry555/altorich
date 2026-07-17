@@ -6,9 +6,9 @@ import { buildMetadata } from "@/lib/seo";
 import Image from "next/image";
 
 export const metadata = buildMetadata({
-  title: "Packages — Structured investment pools",
+  title: "Investment sectors — Choose Your Investment Sector",
   description:
-    "Four disciplined cooperative pools — from savings locks to hard-currency assets. Yields and rates are visible only after sign-in.",
+    "Four professionally managed investment sectors. One Platform Earning Model — up to 5% daily.",
   path: "/packages"
 });
 
@@ -20,8 +20,8 @@ export default function PackagesIndexPage() {
     description: pkg.cardDescription,
     href: `/packages/${pkg.slug}`,
     image: pkg.image,
-    weeklyRoiPercent: pkg.weeklyRoiPercent,
     keyBenefits: pkg.keyBenefits,
+    bestFor: pkg.bestFor,
     ctaLabel: pkg.ctaLabel
   }));
 
@@ -30,9 +30,9 @@ export default function PackagesIndexPage() {
       <section className="gradient-hero section-pad">
         <div className="container-ar grid items-center gap-10 lg:grid-cols-2">
           <PageHero
-            eyebrow="Packages"
-            title="Structured pools for every stage of wealth building"
-            description="AltoRich packages map to real sectors — savings, agriculture, property, and hard currency. Each plan follows published rules, verified wallet funding, and auditable ledger records."
+            eyebrow="Investment sectors"
+            title="Choose Your Investment Sector"
+            description="Diversify your wealth across professionally managed investment sectors while earning through Alto Rich's unified Platform Earning Model."
           />
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] shadow-[var(--shadow-lg)]">
             <Image

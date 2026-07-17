@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, X } from "lucide-react";
 import type { SettlementFrequency } from "@/lib/investment";
 import { formatNaira } from "@/lib/domain";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { Button } from "@/components/ui/Button";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Card } from "@/components/ui/Card";
@@ -136,7 +137,9 @@ export function InvestFlowSheet({
           <div className="min-w-0">
             {step !== "success" ? (
               <>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Select package</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">
+                  Select investment sector
+                </p>
                 <h2 id="invest-flow-title" className="truncate text-lg font-bold text-[var(--heading)]">
                   {packageTitle}
                 </h2>
@@ -226,7 +229,7 @@ export function InvestFlowSheet({
 
             <dl className="divide-y divide-[var(--border)] rounded-xl border border-[var(--border)] text-sm">
               <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">Package</dt>
+                <dt className="text-[var(--text-muted)]">Investment sector</dt>
                 <dd className="font-semibold text-[var(--heading)]">{packageTitle}</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
@@ -234,8 +237,8 @@ export function InvestFlowSheet({
                 <dd className="currency-ngn font-bold tabular-nums text-[var(--heading)]">{formatNaira(parsedAmount)}</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">Weekly ROI</dt>
-                <dd className="font-semibold text-[var(--emerald)]">{weeklyRoiPercent}%</dd>
+                <dt className="text-[var(--text-muted)]">{PLATFORM_EARNING.modelName}</dt>
+                <dd className="font-semibold text-[var(--emerald)]">Up to {PLATFORM_EARNING.dailyReturnPercent}% daily</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
                 <dt className="text-[var(--text-muted)]">Payout</dt>
@@ -248,7 +251,7 @@ export function InvestFlowSheet({
               <div className="flex justify-between gap-4 px-4 py-3">
                 <dt className="text-[var(--text-muted)]">This week at your amount</dt>
                 <dd className="currency-ngn font-bold tabular-nums text-[var(--emerald)]">
-                  {formatNaira(Math.round((parsedAmount * weeklyRoiPercent) / 100))}
+                  {formatNaira(Math.round((parsedAmount * PLATFORM_EARNING.weeklyReturnPercent) / 100))}
                 </dd>
               </div>
             </dl>

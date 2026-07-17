@@ -23,7 +23,7 @@ import {
   websiteJsonLd
 } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { SocialProofToasts } from "@/components/social/SocialProofToasts";
+import { LiveActivityFeed } from "@/components/social/LiveActivityFeed";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -110,7 +110,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <AppBootstrapLoader />
           <ThemeProvider>
             {children}
-            <SocialProofToasts />
+            <LiveActivityFeed />
             <OfflineIndicator />
           </ThemeProvider>
         </PwaProvider>

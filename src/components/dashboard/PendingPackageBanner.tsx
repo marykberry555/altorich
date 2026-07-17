@@ -21,11 +21,11 @@ export function PendingPackageBanner({ preferredPackageSlug }: Props) {
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="gold">Awaiting funding</Badge>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-subtle)]">Preferred package</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-subtle)]">Preferred investment sector</p>
           </div>
           <h2 className="text-lg font-bold text-[var(--heading)]">{label}</h2>
           <p className="max-w-lg text-sm text-[var(--text-muted)]">
-            You selected this plan at sign-up. Fund your wallet and activate it to start earning on the weekly cycle.
+            You selected this sector at sign-up. Fund your wallet to allocate capital — earnings follow Alto Rich&apos;s unified Platform Earning Model.
           </p>
         </div>
         <div className="flex shrink-0 flex-col gap-2 sm:items-end">
@@ -36,7 +36,7 @@ export function PendingPackageBanner({ preferredPackageSlug }: Props) {
             </Button>
           </Link>
           <Link href={`/packages/${preferredPackageSlug}`} className="text-xs font-semibold text-[var(--emerald)] hover:underline">
-            View plan details
+            View sector details
             <ArrowRight size={12} className="ml-0.5 inline" aria-hidden />
           </Link>
         </div>

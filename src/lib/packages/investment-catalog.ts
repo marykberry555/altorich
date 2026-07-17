@@ -5,6 +5,7 @@ import type { SettlementFrequency } from "@/lib/investment";
 import { settlementFrequencyLabel } from "@/lib/investment-accrual-live";
 import { formatNaira } from "@/lib/domain";
 import { getPackageConfig, PACKAGE_SLUGS, projectedDailyForPrincipal } from "@/lib/packages/package-config";
+import { PLATFORM_EARNING, formatPlatformDailyLabel } from "@/lib/earning/platform-earning";
 
 export type PackagePlanCard = {
   slug: PackageSlug;
@@ -15,6 +16,7 @@ export type PackagePlanCard = {
   minInvestment: number;
   maxInvestment: number;
   weeklyRoiPercent: number;
+  dailyReturnPercent: number;
   cycleDays: number;
   settlementFrequency: SettlementFrequency;
   projectedDaily: number;
@@ -39,6 +41,8 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
     const tierDefaults = getPackageConfig(slug)!;
     const tierPlans = (byTier.get(slug) ?? []).sort((a, b) => a.sort_order - b.sort_order);
     const primary = tierPlans[0] ?? null;
+    const weeklyRoiPercent = PLATFORM_EARNING.weeklyReturnPercent;
+    const dailyReturnPercent = PLATFORM_EARNING.dailyReturnPercent;
 
     if (!primary) {
       return {
@@ -49,13 +53,14 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
         planId: null,
         minInvestment: tierDefaults.minNgn,
         maxInvestment: tierDefaults.maxNgn,
-        weeklyRoiPercent: tierDefaults.weeklyRoiPercent,
+        weeklyRoiPercent,
+        dailyReturnPercent,
         cycleDays: 365,
         settlementFrequency: "weekly",
         projectedDaily: 0,
         payoutTiming: tierDefaults.payoutTiming,
         planStatus: "unavailable",
-        riskDisclosure: "Returns are guaranteed.",
+        riskDisclosure: PLATFORM_EARNING.guarantee,
         available: false,
         accentGradient: tierDefaults.accentGradient,
         keyBenefits: tierDefaults.keyBenefits
@@ -64,8 +69,6 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
 
     const minInvestment = Math.min(...tierPlans.map((p) => Number(p.min_investment ?? p.price)));
     const maxInvestment = Math.max(...tierPlans.map((p) => Number(p.max_investment ?? p.price)));
-    const weeklyRoiBps = tierDefaults.weeklyRoiBps;
-    const weeklyRoiPercent = tierDefaults.weeklyRoiPercent;
 
     return {
       slug,
@@ -76,12 +79,13 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
       minInvestment,
       maxInvestment,
       weeklyRoiPercent,
+      dailyReturnPercent,
       cycleDays: primary.cycle_days,
       settlementFrequency: (primary.settlement_frequency ?? "weekly") as SettlementFrequency,
-      projectedDaily: projectedDailyForPrincipal(minInvestment, weeklyRoiBps),
+      projectedDaily: projectedDailyForPrincipal(minInvestment),
       payoutTiming: tierDefaults.payoutTiming,
       planStatus: primary.plan_status,
-      riskDisclosure: primary.risk_disclosure || "Returns are guaranteed.",
+      riskDisclosure: primary.risk_disclosure || PLATFORM_EARNING.guarantee,
       available: primary.is_active && primary.plan_status === "active",
       accentGradient: tierDefaults.accentGradient,
       keyBenefits: tierDefaults.keyBenefits
@@ -93,12 +97,12 @@ export function formatSettlementLabel(frequency: SettlementFrequency) {
   return settlementFrequencyLabel(frequency);
 }
 
-/** One-line expected return for package cards and review step. */
+/** One-line expected return for sector cards — always the platform engine. */
 export function formatExpectedReturnSummary(card: {
-  weeklyRoiPercent: number;
+  weeklyRoiPercent?: number;
   minInvestment: number;
   payoutTiming: string;
 }) {
-  const weeklyAtMin = Math.round((card.minInvestment * card.weeklyRoiPercent) / 100);
-  return `${card.weeklyRoiPercent}% weekly · ${formatNaira(weeklyAtMin)}/wk at min · ${card.payoutTiming}`;
+  const weeklyAtMin = Math.round((card.minInvestment * PLATFORM_EARNING.weeklyReturnPercent) / 100);
+  return `${formatPlatformDailyLabel()} · ${formatNaira(weeklyAtMin)}/wk at min · ${card.payoutTiming}`;
 }

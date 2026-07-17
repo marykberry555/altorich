@@ -1,9 +1,10 @@
 import type { PackageSlug } from "@/lib/packages/package-config";
 import { AppError } from "@/lib/errors";
 import { getPackageConfig, projectedDailyForPrincipal } from "@/lib/packages/package-config";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 export const PLAN_RISK_DISCLOSURE =
-  "Returns are guaranteed. Earnings auto-reinvest weekly until you stop and withdraw on Monday.";
+  "Returns follow the Alto Rich platform earning model (up to 5% daily). Earnings auto-reinvest weekly until you stop and withdraw on Monday.";
 
 export const PLAN_CYCLE_DAYS = 365;
 
@@ -37,7 +38,7 @@ export function buildPlanDefaults(input: CreatePlanInput) {
 
   const name = (input.name?.trim() || tier.title).slice(0, 120);
   const slugBase = slugifyPlanName(name) || `alto-${input.tier}`;
-  const description = `${tier.subtitle} — ${tier.weeklyRoiPercent}% weekly, guaranteed returns, auto-reinvest until you stop.`;
+  const description = `${tier.subtitle} — ${PLATFORM_EARNING.productReturnLabel} Auto-reinvest until you stop.`;
 
   return {
     slugBase,
@@ -49,14 +50,14 @@ export function buildPlanDefaults(input: CreatePlanInput) {
     max_investment: maxInvestment,
     currency: "NGN" as const,
     cycle_days: PLAN_CYCLE_DAYS,
-    projected_daily: projectedDailyForPrincipal(minInvestment, tier.weeklyRoiBps),
+    projected_daily: projectedDailyForPrincipal(minInvestment),
     first_bonus: 0,
     description,
     settlement_frequency: "weekly" as const,
     plan_status: "active" as const,
     visibility: "public" as const,
     is_active: true,
-    weekly_roi_bps: tier.weeklyRoiBps,
+    weekly_roi_bps: PLATFORM_EARNING.weeklyRoiBps,
     risk_disclosure: PLAN_RISK_DISCLOSURE,
     sort_order: tier.displayOrder
   };

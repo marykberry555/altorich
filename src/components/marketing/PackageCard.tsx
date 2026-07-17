@@ -3,9 +3,8 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import type { ImageAsset } from "@/lib/images";
-import { formatWeeklyRoiLabel } from "@/lib/packages/package-config";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 export type PackageCardData = {
   slug: string;
@@ -14,8 +13,8 @@ export type PackageCardData = {
   description: string;
   href: string;
   image: ImageAsset;
-  weeklyRoiPercent?: number;
   keyBenefits?: string[];
+  bestFor?: string;
   ctaLabel?: string;
 };
 
@@ -37,18 +36,13 @@ export function PackageCard({ pkg, compact = false }: Props) {
         />
       </Link>
       <div className="flex flex-1 flex-col p-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--emerald)]">{pkg.subtitle}</p>
-          {pkg.weeklyRoiPercent != null ? (
-            <Badge variant="emerald">{formatWeeklyRoiLabel(pkg.weeklyRoiPercent)}</Badge>
-          ) : null}
-        </div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--emerald)]">{pkg.subtitle}</p>
         <h3 className="mt-2 font-semibold text-[var(--heading)]">
           <Link href={pkg.href} className="transition hover:text-[var(--emerald)]">
             {pkg.title}
           </Link>
         </h3>
-        <p className={`mt-2 flex-1 leading-relaxed text-[var(--text-muted)] ${compact ? "text-sm line-clamp-3" : "text-sm"}`}>
+        <p className={`mt-2 leading-relaxed text-[var(--text-muted)] ${compact ? "text-sm line-clamp-3" : "text-sm"}`}>
           {pkg.description}
         </p>
         {pkg.keyBenefits?.length ? (
@@ -61,20 +55,22 @@ export function PackageCard({ pkg, compact = false }: Props) {
             ))}
           </ul>
         ) : null}
+        {pkg.bestFor ? (
+          <p className="mt-3 text-xs font-medium text-[var(--heading)]">{pkg.bestFor}</p>
+        ) : null}
         <div className={`flex flex-wrap gap-2 ${compact ? "mt-4" : "mt-5"}`}>
-          {!compact ? (
-            <Link href={pkg.href}>
-              <Button variant="outline" size="sm">
-                View package
-              </Button>
-            </Link>
-          ) : null}
-          <Link href="/auth/register" className={compact ? "w-full" : undefined}>
+          <Link href={pkg.href} className={compact ? "flex-1" : undefined}>
+            <Button variant="outline" size="sm" className={compact ? "w-full" : undefined}>
+              Learn More
+            </Button>
+          </Link>
+          <Link href="/auth/register" className={compact ? "flex-1" : undefined}>
             <Button size="sm" className={`gap-2 shadow-[var(--shadow-glow)] ${compact ? "w-full" : ""}`}>
               {pkg.ctaLabel ?? "Get Started"} <ArrowRight size={14} />
             </Button>
           </Link>
         </div>
+        <p className="mt-4 text-[10px] leading-relaxed text-[var(--text-subtle)]">{PLATFORM_EARNING.poweredByLabel}</p>
       </div>
     </Card>
   );

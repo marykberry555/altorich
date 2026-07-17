@@ -4,6 +4,7 @@ import { sendEmail } from "@/lib/email/send";
 import { COMPANY } from "@/lib/company";
 import { formatNaira } from "@/lib/domain";
 import { weeklyInterestForAmount } from "@/lib/packages/tier-config";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
       const inv = (activeInvestments ?? []).find((r) => String(r.user_id) === userId);
       if (!inv) continue;
 
-      const bps = Number(inv.weekly_roi_bps ?? 1000);
+      const bps = PLATFORM_EARNING.weeklyRoiBps;
       const weeklyDue = weeklyInterestForAmount(Number(inv.amount), bps);
       const stopping = Boolean(inv.stop_requested_at);
       const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://altorich.com";

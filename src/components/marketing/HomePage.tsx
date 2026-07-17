@@ -3,7 +3,8 @@ import Image from "next/image";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { DownloadAppBadge } from "@/components/pwa/DownloadAppBadge";
 import { hero, howItWorks, trustIndicators, sampleTestimonials, faqs } from "@/content/site";
-import { PACKAGE_ROI_RANGE, PACKAGE_CONFIG } from "@/lib/packages/package-config";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
+import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
 import { PageHero } from "@/components/marketing/PageHero";
 import { IMAGES } from "@/lib/images";
 import { Button } from "@/components/ui/Button";
@@ -21,8 +22,8 @@ export function HomePage() {
     description: pkg.cardDescription,
     href: `/packages/${pkg.slug}`,
     image: pkg.image,
-    weeklyRoiPercent: pkg.weeklyRoiPercent,
     keyBenefits: pkg.keyBenefits,
+    bestFor: pkg.bestFor,
     ctaLabel: pkg.ctaLabel
   }));
 
@@ -79,12 +80,17 @@ export function HomePage() {
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             </div>
-            <div className="absolute -bottom-4 left-4 right-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)]/95 p-4 shadow-[var(--shadow-md)] backdrop-blur sm:left-auto sm:right-6 sm:w-64">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-subtle)]">Weekly returns</p>
-              <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--heading)]">
-                {PACKAGE_ROI_RANGE.headline}
+            <div className="absolute -bottom-4 left-4 right-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)]/95 p-4 shadow-[var(--shadow-md)] backdrop-blur sm:left-auto sm:right-6 sm:w-72">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-subtle)]">
+                {PLATFORM_EARNING.modelName}
               </p>
-              <p className="mt-0.5 text-xs text-[var(--text-muted)]">Paid every Monday</p>
+              <p className="mt-1 text-lg font-bold text-[var(--heading)]">
+                {PLATFORM_EARNING.currentDailyRateLabel}: up to {PLATFORM_EARNING.dailyReturnPercent}%
+              </p>
+              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                {PLATFORM_EARNING.currentWeeklyEquivalentLabel}: {PLATFORM_EARNING.weeklyReturnPercent}% ·{" "}
+                {PLATFORM_EARNING.payoutTiming}
+              </p>
             </div>
           </div>
         </div>
@@ -93,9 +99,9 @@ export function HomePage() {
       <section className="section-pad bg-section">
         <div className="container-ar">
           <PageHero
-            eyebrow="Products"
-            title="Choose your pace"
-            description="Four structured packages. One clear ledger."
+            eyebrow="Investment sectors"
+            title="Choose Your Investment Sector"
+            description="Diversify your wealth across professionally managed investment sectors while earning through Alto Rich's unified Platform Earning Model."
           />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {investmentCategories.map((cat) => (
@@ -126,7 +132,7 @@ export function HomePage() {
             dark
             eyebrow="Trust"
             title="Built on verification, not promises."
-            description={`Every deposit is reconciled. Every payout follows published windows. Weekly returns from ${PACKAGE_ROI_RANGE.minPercent}% to ${PACKAGE_ROI_RANGE.maxPercent}% — guaranteed.`}
+            description={`Every deposit is reconciled. Every payout follows published windows. One ${PLATFORM_EARNING.modelName} — up to ${PLATFORM_EARNING.dailyReturnPercent}% daily — guaranteed.`}
           />
           <div className="grid gap-4 sm:grid-cols-2">
             {trustIndicators.map((item) => (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PauseCircle, Wallet, Landmark } from "lucide-react";
 import Link from "next/link";
 import { formatNaira } from "@/lib/domain";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -91,8 +92,9 @@ export function InvestmentStopPanel({
         <div>
           <h2 className="font-semibold text-[var(--heading)]">Earnings options</h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Weekly ROI <strong>{weeklyRoiPercent}%</strong> on {formatNaira(amount)}. Earnings auto-reinvest every
-            Monday unless you withdraw them.
+            {PLATFORM_EARNING.modelName}: <strong>{weeklyRoiPercent}% weekly</strong> (up to{" "}
+            {Math.round(weeklyRoiPercent / 7)}% daily) on {formatNaira(amount)}. Earnings auto-reinvest every Monday
+            unless you withdraw them.
           </p>
         </div>
 

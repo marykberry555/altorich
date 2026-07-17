@@ -165,7 +165,7 @@ export class NotificationService {
       },
       "deposit.approved": {
         title: "Funding approved",
-        body: `${formatNaira(Number(data.amount ?? 0))} credited. Your preferred package invests automatically when the amount meets the plan minimum.`
+        body: `${formatNaira(Number(data.amount ?? 0))} credited. Your preferred investment sector invests automatically when the amount meets the sector minimum.`
       },
       "deposit.rejected": {
         title: "Funding declined",

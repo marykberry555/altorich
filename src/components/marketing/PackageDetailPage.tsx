@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { StepNumber } from "@/components/ui/StepNumber";
-import { getPackageConfig, formatWeeklyRoiLabel } from "@/lib/packages/package-config";
+import { getPackageConfig } from "@/lib/packages/package-config";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 const benefitIcons = [Shield, TrendingUp, Wallet, CheckCircle2] as const;
 
@@ -26,21 +27,32 @@ export function PackageDetailPage({ pkg }: Props) {
             href="/packages"
             className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--text-muted)] transition hover:text-[var(--heading)]"
           >
-            <ArrowLeft size={16} /> All packages
+            <ArrowLeft size={16} /> All investment sectors
           </Link>
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="emerald">{pkg.subtitle}</Badge>
-                {config ? <Badge variant="gold">{formatWeeklyRoiLabel(config.weeklyRoiPercent)}</Badge> : null}
+                <Badge variant="gold">{PLATFORM_EARNING.modelName}</Badge>
               </div>
               <PageHero
                 className="mt-4"
-                eyebrow="Investment package"
+                eyebrow="Investment sector"
                 title={pkg.title}
                 description={pkg.heroHeadline}
               />
               <p className="mt-4 text-sm leading-relaxed text-[var(--text-muted)] sm:text-base">{pkg.heroDescription}</p>
+              {config?.whyChoose ? (
+                <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--surface-raised)]/80 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">
+                    Why choose this sector?
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{config.whyChoose}</p>
+                  {config.bestFor ? (
+                    <p className="mt-2 text-xs font-medium text-[var(--heading)]">{config.bestFor}</p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] shadow-[var(--shadow-lg)]">
               <Image
@@ -79,7 +91,7 @@ export function PackageDetailPage({ pkg }: Props) {
 
       <section className="section-pad bg-[var(--gray-50)]">
         <div className="container-ar max-w-5xl">
-          <h2 className="text-2xl font-bold text-[var(--heading)]">Key benefits</h2>
+          <h2 className="text-2xl font-bold text-[var(--heading)]">Sector Benefits</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {pkg.benefits.map((benefit, i) => {
               const Icon = benefitIcons[i % benefitIcons.length];
@@ -120,9 +132,9 @@ export function PackageDetailPage({ pkg }: Props) {
           <Card variant="elevated" className="mt-10 border-[var(--emerald-mid)]/30 bg-[var(--emerald-soft)]/30">
             <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
               <div>
-                <h3 className="text-lg font-semibold text-[var(--heading)]">Ready to view yields and activate this package?</h3>
+                <h3 className="text-lg font-semibold text-[var(--heading)]">Ready to activate this investment sector?</h3>
                 <p className="mt-1 text-sm text-[var(--text-muted)]">
-                  Sign in to see current rates, fund your wallet, and select your preferred duration pool.
+                  Sign in to allocate capital under Alto Rich&apos;s {PLATFORM_EARNING.modelName}.
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -133,7 +145,7 @@ export function PackageDetailPage({ pkg }: Props) {
                 </Link>
                 <Link href="/auth/login" className="w-full sm:w-auto">
                   <Button variant="outline" className="w-full">
-                    Login to view yields
+                    Sign in
                   </Button>
                 </Link>
               </div>

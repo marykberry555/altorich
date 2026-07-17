@@ -31,7 +31,7 @@ export function ProfileSettingsForm({
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
     if (!preferredPackage) {
-      setMessage("Select your preferred investment package.");
+      setMessage("Select your preferred investment sector.");
       return;
     }
 

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { PackageSlug } from "@/content/packages";
 import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { formatNaira } from "@/lib/domain";
 import { weeklyEarningEstimate } from "@/lib/dashboard/conversion";
 import { Button } from "@/components/ui/Button";
@@ -24,21 +25,23 @@ export function DashboardEarningsPreview({ preferredPackageSlug, className }: Pr
   const amount = parseCurrencyInput(amountRaw) || selected.minNgn;
 
   const weekly = useMemo(
-    () => weeklyEarningEstimate(amount, selected.weeklyRoiBps),
-    [amount, selected.weeklyRoiBps]
+    () => weeklyEarningEstimate(amount, PLATFORM_EARNING.weeklyRoiBps),
+    [amount]
   );
+  const daily = weekly / 7;
   const monthly = weekly * 4;
 
   return (
     <Card variant="elevated" padding="md" className={className}>
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Estimated earnings</p>
       <p className="mt-2 text-sm text-[var(--text-muted)]">
-        Select a package and enter an amount to see an illustration of your projected returns.
+        Choose an investment sector and amount. All sectors use the same Platform Earning Model — up to{" "}
+        {PLATFORM_EARNING.dailyReturnPercent}% daily.
       </p>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="grid gap-1.5 text-sm">
-          <span className="font-medium text-[var(--text-muted)]">Package</span>
+          <span className="font-medium text-[var(--text-muted)]">Investment sector</span>
           <select
             value={packageSlug}
             onChange={(e) => setPackageSlug(e.target.value as PackageSlug)}
@@ -61,13 +64,17 @@ export function DashboardEarningsPreview({ preferredPackageSlug, className }: Pr
         />
       </div>
 
-      <dl className="mt-5 grid gap-3 sm:grid-cols-2">
+      <dl className="mt-5 grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-[var(--border)] bg-[var(--gray-50)]/50 px-4 py-3 dark:bg-[var(--surface)]/40">
-          <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Estimated weekly return</dt>
-          <dd className="mt-1 text-xl font-bold tabular-nums text-[var(--emerald)]">{formatNaira(weekly)}</dd>
+          <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Daily return</dt>
+          <dd className="mt-1 text-xl font-bold tabular-nums text-[var(--emerald)]">{formatNaira(daily)}</dd>
         </div>
         <div className="rounded-xl border border-[var(--border)] bg-[var(--gray-50)]/50 px-4 py-3 dark:bg-[var(--surface)]/40">
-          <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Estimated monthly return</dt>
+          <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Weekly return</dt>
+          <dd className="mt-1 text-xl font-bold tabular-nums text-[var(--heading)]">{formatNaira(weekly)}</dd>
+        </div>
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--gray-50)]/50 px-4 py-3 dark:bg-[var(--surface)]/40">
+          <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Monthly (×4)</dt>
           <dd className="mt-1 text-xl font-bold tabular-nums text-[var(--heading)]">{formatNaira(monthly)}</dd>
         </div>
       </dl>
@@ -76,7 +83,7 @@ export function DashboardEarningsPreview({ preferredPackageSlug, className }: Pr
         Update illustration
       </Button>
 
-      <p className="mt-3 text-[11px] text-[var(--text-subtle)]">*Illustration only.</p>
+      <p className="mt-3 text-[11px] text-[var(--text-subtle)]">*Illustration only. Sector choice allocates capital; earnings follow the platform engine.</p>
     </Card>
   );
 }

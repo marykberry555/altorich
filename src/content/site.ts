@@ -1,11 +1,12 @@
 import { COMPANY, REGULATORY_PLACEHOLDER } from "@/lib/company";
-import { PACKAGE_ROI_RANGE } from "@/lib/packages/package-config";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 export const hero = {
   eyebrow: "Nigeria · Monday payouts · Guaranteed returns",
-  title: `Grow your naira. Earn ${PACKAGE_ROI_RANGE.headline}.`,
-  subtitle: "Verified deposits. Clear ledgers. Payouts every Monday at 09:00 WAT.",
-  guarantee: "Returns are guaranteed.",
+  title: PLATFORM_EARNING.headlineDaily,
+    subtitle:
+    "Invest in the sector that matches your financial goals while enjoying one transparent Platform Earning Model across the Alto Rich platform.",
+  guarantee: PLATFORM_EARNING.guarantee,
   ctaPrimary: "Open an account",
   ctaSecondary: "See how it works"
 };
@@ -22,8 +23,8 @@ export const valueProps = [
       "Payouts follow published schedules. You always know when requests are reviewed and processed."
   },
   {
-    title: "Guaranteed weekly returns",
-    description: `Published weekly ROI tiers from ${PACKAGE_ROI_RANGE.minPercent}% to ${PACKAGE_ROI_RANGE.maxPercent}%. Earnings auto-reinvest every Monday until you choose to stop and withdraw.`
+    title: "One transparent Platform Earning Model",
+    description: `Every investment earns up to ${PLATFORM_EARNING.dailyReturnPercent}% daily (${PLATFORM_EARNING.weeklyReturnPercent}% weekly equivalent) under Alto Rich's ${PLATFORM_EARNING.modelName}. Earnings auto-reinvest every Monday until you choose to stop and withdraw.`
   },
   {
     title: "Local-first operations",
@@ -33,10 +34,26 @@ export const valueProps = [
 ];
 
 export const howItWorks = [
-  { step: "01", title: "Create your account", description: "Register with your email, Nigerian phone number, and preferred investment package." },
-  { step: "02", title: "Verify & fund", description: "Transfer from any Nigerian bank and see funds in your wallet after verification." },
-  { step: "03", title: "Activate your plan", description: "Choose Alto Starter, Growth, Premium, or Elite — track everything in your dashboard." },
-  { step: "04", title: "Earn on schedule", description: "Weekly settlements every Monday. Request payout to your bank on published windows." }
+  {
+    step: "01",
+    title: "Create your account",
+    description: "Register with your email, Nigerian phone number, and preferred investment sector."
+  },
+  {
+    step: "02",
+    title: "Verify & fund",
+    description: "Transfer from any Nigerian bank and see funds in your wallet after verification."
+  },
+  {
+    step: "03",
+    title: "Allocate to a sector",
+    description: "Choose Starter, Growth, Premium, or Elite — your capital is allocated while earnings follow one platform model."
+  },
+  {
+    step: "04",
+    title: "Earn on schedule",
+    description: "Weekly settlements every Monday. Request payout to your bank on published windows."
+  }
 ];
 
 export const trustIndicators = [
@@ -77,7 +94,7 @@ export const faqs = [
   },
   {
     q: "Do you guarantee returns?",
-    a: `Yes. Alto Rich packages publish guaranteed weekly returns from ${PACKAGE_ROI_RANGE.minPercent}% to ${PACKAGE_ROI_RANGE.maxPercent}%, paid every Monday at 09:00 WAT. Earnings auto-reinvest until you stop your investment and withdraw.`
+    a: `Yes. Alto Rich uses one ${PLATFORM_EARNING.modelName} — up to ${PLATFORM_EARNING.dailyReturnPercent}% daily (${PLATFORM_EARNING.weeklyReturnPercent}% weekly equivalent), settled every Monday at 09:00 WAT. Earnings auto-reinvest until you stop your investment and withdraw.`
   },
   {
     q: "How do I deposit money?",
@@ -89,7 +106,11 @@ export const faqs = [
   },
   {
     q: "Who can invest?",
-    a: "Verified members aged 18 and above with a valid Nigerian bank account. Additional eligibility may apply per product."
+    a: "Verified members aged 18 and above with a valid Nigerian bank account. Additional eligibility may apply per investment sector."
+  },
+  {
+    q: "Do different sectors pay different returns?",
+    a: "No. Starter, Growth, Premium, and Elite are capital allocation sectors. Every active investment earns through Alto Rich's unified Platform Earning Model."
   }
 ];
 
@@ -107,7 +128,10 @@ export const values = [
   { title: "Transparency", description: "Every balance is ledger-derived. Every rule is published." },
   { title: "Discipline", description: "Cooperative structures, not speculation." },
   { title: "Accessibility", description: "Entry from ₦20,000. Mobile-first. WAT support hours." },
-  { title: "Integrity", description: "Guaranteed weekly returns with transparent ledgers and published Monday payout windows." }
+  {
+    title: "Integrity",
+    description: "One guaranteed platform earning model with transparent ledgers and published Monday payout windows."
+  }
 ];
 
 export const leadership = [

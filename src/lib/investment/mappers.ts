@@ -1,4 +1,5 @@
 import { projectedDailyForPrincipal } from "@/lib/packages/tier-config";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import type { SettlementFrequency } from "@/lib/investment";
 import type { ActiveInvestmentRow } from "@/components/investment/ActiveInvestmentCard";
 import type { LiveInvestmentInput } from "@/components/investment/LivePortfolioPanel";
@@ -42,12 +43,9 @@ export function mapInvestmentRows(
   return investments.map((inv) => {
     const plan = inv.investment_plans;
     const frequency = (inv.settlement_frequency ?? plan?.settlement_frequency ?? "weekly") as SettlementFrequency;
-    const weeklyRoiBps = Number(inv.weekly_roi_bps ?? plan?.weekly_roi_bps ?? 1000);
+    const weeklyRoiBps = PLATFORM_EARNING.weeklyRoiBps;
     const amount = Number(inv.amount);
-    const projectedDaily =
-      Number(plan?.projected_daily ?? 0) > 0
-        ? Number(plan?.projected_daily)
-        : projectedDailyForPrincipal(amount, weeklyRoiBps);
+    const projectedDaily = projectedDailyForPrincipal(amount);
 
     return {
       id: inv.id,

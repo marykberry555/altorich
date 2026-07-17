@@ -99,10 +99,10 @@ export function PlansAdminPanel({ initialPlans }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SectionHeading title={`Investment plans (${plans.length})`} />
+        <SectionHeading title={`Investment sectors (${plans.length})`} />
         <Button type="button" size="sm" onClick={() => setShowCreate((v) => !v)}>
           <Plus size={14} />
-          Add package
+          Add sector
         </Button>
       </div>
 
@@ -116,12 +116,13 @@ export function PlansAdminPanel({ initialPlans }: Props) {
         <Card variant="elevated" padding="md">
           <form onSubmit={createPlan} className="space-y-4">
             <p className="text-sm text-[var(--text-muted)]">
-              Slug, weekly ROI, settlement, and description are filled in automatically from the package tier.
+              Sector name, description, limits, and visibility are editable. Earnings use the global Platform Earning
+              Model (up to 5% daily) and cannot be set per sector.
             </p>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
-                Package name
+                Sector name
                 <input
                   className="field"
                   placeholder={tierPreview?.title ?? "Alto Starter"}
@@ -130,11 +131,11 @@ export function PlansAdminPanel({ initialPlans }: Props) {
                 />
               </label>
               <label className="grid gap-1 text-sm">
-                Tier
+                Investment sector
                 <select className="field" value={form.tier} onChange={(e) => setTier(e.target.value as PackageSlug)}>
                   {PACKAGE_TIER_CONFIG.map((tier) => (
                     <option key={tier.slug} value={tier.slug}>
-                      {tier.title} ({tier.weeklyRoiPercent}% weekly)
+                      {tier.title}
                     </option>
                   ))}
                 </select>
@@ -164,7 +165,7 @@ export function PlansAdminPanel({ initialPlans }: Props) {
             <div className="flex gap-2">
               <Button type="submit" disabled={busy === "create"}>
                 {busy === "create" ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                Create package
+                Create sector
               </Button>
               <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
                 Cancel
@@ -179,9 +180,9 @@ export function PlansAdminPanel({ initialPlans }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Tier</TableHead>
+              <TableHead>Investment Sector</TableHead>
               <TableHead>Min–Max</TableHead>
-              <TableHead>Weekly ROI</TableHead>
+              <TableHead>Platform Earning Model</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -194,7 +195,7 @@ export function PlansAdminPanel({ initialPlans }: Props) {
                 <TableCell className="tabular-nums">
                   {formatNaira(Number(p.min_investment ?? p.price))} – {formatNaira(Number(p.max_investment ?? p.price))}
                 </TableCell>
-                <TableCell>{((Number(p.weekly_roi_bps ?? 0) || 0) / 100).toFixed(0)}%</TableCell>
+                <TableCell>Up to 5% daily</TableCell>
                 <TableCell>
                   <StatusBadge status={p.plan_status ?? "active"} />
                 </TableCell>

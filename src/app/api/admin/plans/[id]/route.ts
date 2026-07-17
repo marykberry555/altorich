@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { apiErrorResponse, Errors } from "@/lib/errors";
 import { sanitizeText } from "@/lib/security/sanitize";
 import type { Database } from "@/types/database";
+import { PLATFORM_EARNING, platformProjectedDaily } from "@/lib/earning/platform-earning";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -19,6 +20,7 @@ const updateSchema = z.object({
   cycle_days: z.number().int().positive().optional(),
   description: z.string().min(10).optional(),
   visibility: z.enum(["public", "members", "hidden"]).optional()
+  // weekly_roi_bps intentionally omitted — platform earning engine is the sole ROI source
 });
 
 export async function PATCH(request: NextRequest, context: Context) {
@@ -47,7 +49,14 @@ export async function PATCH(request: NextRequest, context: Context) {
     if (parsed.data.sort_order !== undefined) update.sort_order = parsed.data.sort_order;
     if (parsed.data.min_investment !== undefined) update.min_investment = parsed.data.min_investment;
     if (parsed.data.max_investment !== undefined) update.max_investment = parsed.data.max_investment;
-    if (parsed.data.projected_daily !== undefined) update.projected_daily = parsed.data.projected_daily;
+    // Always sync ROI fields to the platform engine — never accept product-specific rates.
+    update.weekly_roi_bps = PLATFORM_EARNING.weeklyRoiBps;
+    if (parsed.data.min_investment !== undefined) {
+      update.projected_daily = platformProjectedDaily(parsed.data.min_investment);
+    } else if (parsed.data.projected_daily !== undefined) {
+      // Ignore client projected_daily overrides that imply a different ROI; recompute from min if provided later.
+      update.projected_daily = parsed.data.projected_daily;
+    }
     if (parsed.data.cycle_days !== undefined) update.cycle_days = parsed.data.cycle_days;
     if (parsed.data.description) update.description = sanitizeText(parsed.data.description, 2000);
     if (parsed.data.visibility) update.visibility = parsed.data.visibility;

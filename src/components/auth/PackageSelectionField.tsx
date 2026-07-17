@@ -21,7 +21,7 @@ export function PackageSelectionField({ value, onChange, disabled, error }: Prop
     <fieldset className="space-y-2" disabled={disabled}>
       <legend className="mb-1 flex items-center gap-1.5 text-sm font-medium text-[var(--heading)]">
         <Sparkles size={14} className="text-[var(--emerald)]" aria-hidden />
-        Select package
+        Preferred Investment Sector
         <span className="text-red-500" aria-hidden>
           *
         </span>
@@ -49,7 +49,7 @@ export function PackageSelectionField({ value, onChange, disabled, error }: Prop
             </span>
           ) : null}
           <span className={cn("truncate text-sm", selected ? "font-semibold text-[var(--heading)]" : "text-[var(--text-muted)]")}>
-            {selected ? selected.title : "Tap to select a package"}
+            {selected ? selected.title : "Tap to select an investment sector"}
           </span>
         </span>
         <ChevronDown
@@ -61,7 +61,7 @@ export function PackageSelectionField({ value, onChange, disabled, error }: Prop
       {open ? (
         <div
           role="listbox"
-          aria-label="Investment packages"
+          aria-label="Investment sectors"
           className="flex flex-col gap-1.5 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] p-1.5 shadow-[var(--shadow-md)]"
         >
           {PREFERRED_PACKAGE_OPTIONS.map((pkg) => {
@@ -98,6 +98,23 @@ export function PackageSelectionField({ value, onChange, disabled, error }: Prop
               </button>
             );
           })}
+        </div>
+      ) : null}
+
+      {selected ? (
+        <div
+          className="animate-fade-up rounded-xl border border-emerald-700/20 bg-[var(--emerald-soft)]/40 px-4 py-3 dark:border-emerald-400/25 dark:bg-emerald-500/10"
+          role="status"
+        >
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-800 dark:text-emerald-300">
+            <Check size={14} aria-hidden />
+            Investment Sector Selected
+          </p>
+          <p className="mt-1.5 text-sm font-semibold text-[var(--heading)]">{selected.title}</p>
+          <p className="text-xs text-[var(--text-muted)]">{selected.subtitle}</p>
+          <p className="mt-2 text-[11px] leading-relaxed text-[var(--text-subtle)]">
+            You can update your preferred investment sector before your first funded investment.
+          </p>
         </div>
       ) : null}
 

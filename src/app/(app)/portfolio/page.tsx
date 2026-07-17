@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/design-system";
 import { formatNaira } from "@/lib/domain";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import { getPublicEnv } from "@/lib/env";
@@ -73,7 +74,7 @@ export default async function PortfolioPage() {
         <DashboardSection title="Weekly ROI">
           <Card variant="elevated" className="grid gap-6 sm:grid-cols-2">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Active tier</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Active investment sector</p>
               <p className="mt-1 text-lg font-semibold text-[var(--heading)]">{roiState.activeInvestment.tier.name}</p>
               <p className="mt-2 text-sm text-[var(--text-muted)]">
                 Principal:{" "}
@@ -84,7 +85,7 @@ export default async function PortfolioPage() {
             </div>
             <EarningsTicker
               principalNgn={Number(roiState.activeInvestment.principal_ngn)}
-              weeklyRoiBps={Number(roiState.activeInvestment.tier.weekly_roi_bps)}
+              weeklyRoiBps={PLATFORM_EARNING.weeklyRoiBps}
               cycleStartedAt={roiState.activeInvestment.cycle_started_at}
               cycleEndsAt={roiState.activeInvestment.cycle_ends_at}
             />
@@ -111,7 +112,7 @@ export default async function PortfolioPage() {
               <EarningsTrendChart data={earningsTrend} />
             </div>
             <div className="mt-6">
-              <AllocationChart data={allocation} title="Package distribution" />
+              <AllocationChart data={allocation} title="Sector distribution" />
             </div>
           </DashboardSection>
 
@@ -142,7 +143,7 @@ export default async function PortfolioPage() {
             {!investCtx || investCtx.investments.length === 0 ? (
               <EmptyState
                 title="No investments yet"
-                description="Fund your wallet and purchase a plan to start your first cycle."
+                description="Fund your wallet and allocate to a sector to start your first cycle."
                 action={
                   <Link href="/investments">
                     <Button>Browse packages</Button>
@@ -170,7 +171,7 @@ export default async function PortfolioPage() {
                           <tr key={inv.id} className="border-b border-[var(--border)]">
                             <td className="px-4 py-3">
                               <p className="font-medium">{inv.reference ?? inv.id.slice(0, 8)}</p>
-                              <p className="text-xs text-[var(--text-subtle)]">{plan?.name ?? "Plan"}</p>
+                              <p className="text-xs text-[var(--text-subtle)]">{plan?.name ?? "Sector"}</p>
                             </td>
                             <td className="py-3">
                               <StatusBadge status={inv.status} />
@@ -198,7 +199,7 @@ export default async function PortfolioPage() {
       ) : !hasRoiInvestment ? (
         <EmptyState
           title="No investments yet"
-          description="Fund your wallet and choose a package to start earning."
+          description="Fund your wallet and choose an investment sector to start earning."
           action={
             <Link href="/investments">
               <Button>Browse packages</Button>
