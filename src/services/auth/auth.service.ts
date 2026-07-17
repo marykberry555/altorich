@@ -99,7 +99,6 @@ export class AuthService {
         full_name: input.fullName,
         phone,
         username,
-        pin_hash: pinHash,
         referral_code: input.referralCode ?? null,
         preferred_package_slug: input.preferredPackage,
         location_state_code: input.locationStateCode,

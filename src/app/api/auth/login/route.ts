@@ -8,6 +8,7 @@ import { getServiceClientOrThrow } from "@/lib/auth/session";
 import { userIsAdmin } from "@/lib/auth/admin-role";
 import { captureLoginActivity } from "@/lib/auth/capture-login-activity";
 import { recordSecurityEvent } from "@/lib/auth/record-security-event";
+import { clientIp, rateLimit } from "@/lib/security/rate-limit";
 
 const schema = z.object({
   username: z.string().min(3),
@@ -18,7 +19,24 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const ip = clientIp(req);
+    const limited = rateLimit(`auth:login:${ip}`, 20, 15 * 60_000);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Try again shortly." },
+        { status: 429, headers: { "Retry-After": String(limited.retryAfter ?? 60) } }
+      );
+    }
+
     const body = schema.parse(await req.json());
+    const userLimited = rateLimit(`auth:login:user:${body.username.toLowerCase()}`, 10, 15 * 60_000);
+    if (!userLimited.ok) {
+      return NextResponse.json(
+        { error: "Too many login attempts for this account. Try again shortly." },
+        { status: 429, headers: { "Retry-After": String(userLimited.retryAfter ?? 60) } }
+      );
+    }
+
     const auth = await getAuthService();
     const result = await auth.login({
       username: body.username,
@@ -58,7 +76,7 @@ export async function POST(req: Request) {
         metadata: { route: "pin_login", message: error instanceof Error ? error.message : "Login failed" }
       });
     } catch {
-      // ignore
+      /* ignore secondary logging failures */
     }
     return apiErrorResponse(error);
   }

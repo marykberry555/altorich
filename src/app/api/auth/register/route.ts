@@ -4,6 +4,7 @@ import { apiErrorResponse } from "@/lib/errors";
 import { getAuthService } from "@/lib/auth/service";
 import { phoneSchema } from "@/lib/validation/schemas";
 import { memberLocationSchema } from "@/lib/location/validation";
+import { clientIp, rateLimit } from "@/lib/security/rate-limit";
 
 const schema = z
   .object({
@@ -31,6 +32,15 @@ const schema = z
 
 export async function POST(req: Request) {
   try {
+    const ip = clientIp(req);
+    const limited = rateLimit(`auth:register:${ip}`, 8, 60 * 60_000);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: "Too many registration attempts. Try again later." },
+        { status: 429, headers: { "Retry-After": String(limited.retryAfter ?? 60) } }
+      );
+    }
+
     const body = schema.parse(await req.json());
     const auth = await getAuthService();
     const result = await auth.register(body);

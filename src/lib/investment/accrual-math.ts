@@ -122,7 +122,9 @@ export function proRataInterest(input: {
 
   let periodTarget: number;
   if (input.frequency === "weekly" && input.weeklyRoiBps > 0) {
-    periodTarget = weeklyInterestForAmount(input.principal, input.weeklyRoiBps);
+    const fullWeek = weeklyInterestForAmount(input.principal, input.weeklyRoiBps);
+    // Mid-week starts must not earn a full 35% — scale by actual period length / 7d.
+    periodTarget = fullWeek * Math.min(1, periodMs / MS_PER_WEEK);
   } else {
     const step = periodDays(input.frequency);
     const daily = input.projectedDaily ?? 0;
@@ -133,6 +135,10 @@ export function proRataInterest(input: {
   return { accrued, periodTarget, progress };
 }
 
+/**
+ * Interest due for a completed weekly period ending at/before `asOf`.
+ * Does not roll into the next open week (avoids ~0 interest when cron runs after Monday 09:00).
+ */
 export function settlementInterestForInvestment(input: {
   principal: number;
   weeklyRoiBps: number;
@@ -141,17 +147,23 @@ export function settlementInterestForInvestment(input: {
   endsAt?: Date | null;
   asOf: Date;
 }): number {
-  const { periodStart, periodEnd } = resolveAccrualPeriod(
-    {
-      startedAt: input.startedAt,
-      lastWeeklySettlementAt: input.lastWeeklySettlementAt,
-      endsAt: input.endsAt,
-      asOf: input.asOf
-    },
-    "weekly"
-  );
+  const periodStart = new Date(input.lastWeeklySettlementAt ?? input.startedAt);
+  let periodEnd = nextMondayNineAmWat(periodStart);
+  if (periodEnd.getTime() <= periodStart.getTime()) {
+    periodEnd = new Date(periodEnd.getTime() + MS_PER_WEEK);
+  }
+  if (input.endsAt) {
+    const ends = new Date(input.endsAt);
+    if (periodEnd > ends) periodEnd = ends;
+  }
+  if (periodEnd.getTime() <= periodStart.getTime()) {
+    return 0;
+  }
 
-  const settlementMoment = input.asOf.getTime() < periodEnd.getTime() ? input.asOf : periodEnd;
+  // Period not complete — nothing to settle yet.
+  if (input.asOf.getTime() < periodEnd.getTime()) {
+    return 0;
+  }
 
   const { accrued } = proRataInterest({
     principal: input.principal,
@@ -159,7 +171,7 @@ export function settlementInterestForInvestment(input: {
     frequency: "weekly",
     periodStart,
     periodEnd,
-    asOf: settlementMoment
+    asOf: periodEnd
   });
   return Math.round(accrued * 100) / 100;
 }

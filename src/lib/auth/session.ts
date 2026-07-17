@@ -21,6 +21,21 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 export async function requireSessionUser(): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) throw Errors.unauthorized();
+
+  const supabase = await createClient();
+  if (supabase) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("account_status")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const status = profile?.account_status;
+    if (status && status !== "active") {
+      throw new AppError("This account is not active. Contact support.", 403, "ACCOUNT_INACTIVE");
+    }
+  }
+
   return user;
 }
 

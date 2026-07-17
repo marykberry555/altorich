@@ -11,14 +11,15 @@ export async function POST() {
     if (!services) throw Errors.notConfigured();
 
     const weeklyResults = await services.settlements.processWeeklyMondaySettlements();
-    const results = await services.settlements.processDueSettlements();
+    // Platform weekly engine is the sole settlement path for active book.
+    // Do not also run legacy scheduled settlement rows (double-pay risk).
     await services.settlements.matureInvestments();
 
     await services.audit.log({
       actorId: reviewer.id,
       action: "settlement.triggered",
       entityType: "settlement_batch",
-      metadata: { processed: results.length, weekly: weeklyResults.length }
+      metadata: { weekly: weeklyResults.length }
     });
   } catch (error) {
     return apiErrorResponse(error);

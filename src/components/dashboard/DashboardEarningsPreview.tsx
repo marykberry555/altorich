@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { PackageSlug } from "@/content/packages";
 import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
@@ -23,11 +23,7 @@ export function DashboardEarningsPreview({ preferredPackageSlug, className }: Pr
 
   const selected = packages.find((p) => p.slug === packageSlug) ?? packages[0];
   const amount = parseCurrencyInput(amountRaw) || selected.minNgn;
-
-  const weekly = useMemo(
-    () => weeklyEarningEstimate(amount, PLATFORM_EARNING.weeklyRoiBps),
-    [amount]
-  );
+  const weekly = weeklyEarningEstimate(amount, PLATFORM_EARNING.weeklyRoiBps);
   const daily = weekly / 7;
   const monthly = weekly * 4;
 
@@ -83,7 +79,9 @@ export function DashboardEarningsPreview({ preferredPackageSlug, className }: Pr
         Update illustration
       </Button>
 
-      <p className="mt-3 text-[11px] text-[var(--text-subtle)]">*Illustration only. Sector choice allocates capital; earnings follow the platform engine.</p>
+      <p className="mt-3 text-[11px] text-[var(--text-subtle)]">
+        *Illustration only. Sector choice allocates capital; earnings follow the platform engine.
+      </p>
     </Card>
   );
 }

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Deposit, Json } from "@/types/database";
-import { AppError } from "@/lib/errors";
+import { AppError, Errors } from "@/lib/errors";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
 import { InvestmentService } from "@/services/investment/investment.service";
@@ -183,6 +183,10 @@ export class DepositService {
       .single();
 
     if (fetchError) throw fetchError;
+    if (!deposit) throw Errors.notFound("Deposit");
+    if (deposit.status !== "pending") {
+      throw new AppError("Only pending deposits can be rejected.", 409, "DEPOSIT_NOT_PENDING");
+    }
 
     const { data, error } = await this.supabase
       .from("deposits")
@@ -193,12 +197,13 @@ export class DepositService {
         reviewed_at: new Date().toISOString()
       } as Database["public"]["Tables"]["deposits"]["Update"])
       .eq("id", depositId)
+      .eq("status", "pending")
       .select()
       .single();
 
     if (error) throw error;
 
-    if (deposit?.user_id) {
+    if (deposit.user_id) {
       await this.notifications.notifyEvent("deposit.rejected", deposit.user_id, {
         amount: Number(deposit.amount),
         reason: reason || "Your deposit could not be verified.",
