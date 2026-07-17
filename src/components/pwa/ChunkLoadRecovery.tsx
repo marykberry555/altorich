@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { recoverFromChunkFailure, syncStoredBuildId } from "@/lib/cache/chunk-recovery";
+import {
+  recoverFromChunkFailure,
+  stripCacheBustParam,
+  syncStoredBuildId
+} from "@/lib/cache/chunk-recovery";
 
 type Props = {
   buildId: string;
@@ -9,6 +13,7 @@ type Props = {
 
 export function ChunkLoadRecovery({ buildId }: Props) {
   useEffect(() => {
+    stripCacheBustParam();
     syncStoredBuildId(buildId);
 
     const onError = (event: ErrorEvent) => {

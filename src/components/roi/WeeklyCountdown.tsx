@@ -17,16 +17,45 @@ function splitSeconds(total: number) {
   return { days, hours, minutes, seconds };
 }
 
+const UNIT_TONES = [
+  {
+    shell:
+      "border-[var(--emerald)]/40 bg-[var(--surface-raised)] shadow-[0_10px_28px_-14px_rgba(16,185,129,0.65)]",
+    value: "bg-gradient-to-br from-[var(--emerald-light)] to-[var(--emerald)] text-white",
+    label: "text-[var(--emerald)]"
+  },
+  {
+    shell:
+      "border-teal-500/35 bg-[var(--surface-raised)] shadow-[0_10px_28px_-14px_rgba(20,184,166,0.55)]",
+    value: "bg-gradient-to-br from-teal-400 to-teal-600 text-white",
+    label: "text-teal-600"
+  },
+  {
+    shell:
+      "border-[var(--gold)]/45 bg-[var(--surface-raised)] shadow-[0_10px_28px_-14px_rgba(184,134,11,0.55)]",
+    value: "bg-gradient-to-br from-[var(--gold-light)] to-[var(--gold)] text-white",
+    label: "text-[var(--gold)]"
+  },
+  {
+    shell:
+      "border-sky-500/35 bg-[var(--surface-raised)] shadow-[0_10px_28px_-14px_rgba(14,165,233,0.5)]",
+    value: "bg-gradient-to-br from-sky-400 to-sky-600 text-white",
+    label: "text-sky-600"
+  }
+] as const;
+
 function CountdownBlock({
   value,
   label,
   compact,
-  muted
+  muted,
+  toneIndex = 0
 }: {
   value: string;
   label: string;
   compact?: boolean;
   muted?: boolean;
+  toneIndex?: number;
 }) {
   if (compact) {
     return (
@@ -50,14 +79,131 @@ function CountdownBlock({
     );
   }
 
+  const tone = UNIT_TONES[toneIndex % UNIT_TONES.length];
+
   return (
-    <div className="flex min-w-[4.25rem] flex-1 flex-col items-center rounded-xl border-2 border-[var(--emerald)]/45 bg-[var(--surface-raised)] px-2 py-2.5 shadow-sm sm:min-w-[5rem] sm:px-3">
-      <span className="flex h-10 w-full min-w-[2.75rem] items-center justify-center rounded-lg bg-[var(--emerald)] text-xl font-bold tabular-nums text-white sm:h-11 sm:text-2xl">
+    <div
+      className={cn(
+        "flex min-w-[4.25rem] flex-1 flex-col items-center rounded-2xl border px-2 py-2.5 sm:min-w-[5rem] sm:px-3",
+        tone.shell
+      )}
+    >
+      <span
+        className={cn(
+          "flex h-10 w-full min-w-[2.75rem] items-center justify-center rounded-xl text-xl font-black tabular-nums sm:h-11 sm:text-2xl",
+          tone.value
+        )}
+      >
         {value}
       </span>
-      <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+      <span className={cn("mt-1.5 text-[10px] font-bold uppercase tracking-[0.14em]", tone.label)}>
         {label}
       </span>
+    </div>
+  );
+}
+
+function ColorfulCountdown({
+  days,
+  hours,
+  minutes,
+  seconds,
+  className
+}: {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-2xl border border-[var(--emerald)]/30",
+        "bg-gradient-to-br from-[var(--emerald-soft)] via-[var(--surface-raised)] to-[var(--gold-soft)]",
+        "p-4 shadow-[var(--shadow-glow)] sm:p-5",
+        className
+      )}
+      aria-labelledby="payout-countdown-heading"
+    >
+      <div
+        className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[var(--emerald)]/15 blur-2xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-[var(--gold)]/15 blur-2xl"
+        aria-hidden
+      />
+
+      <p
+        id="payout-countdown-heading"
+        className="relative text-center text-xs font-bold uppercase tracking-[0.2em] text-[var(--emerald)] sm:text-sm"
+      >
+        Payout In
+      </p>
+      <div
+        className="relative mt-3 flex gap-2 sm:gap-3"
+        role="timer"
+        aria-live="polite"
+        suppressHydrationWarning
+      >
+        <CountdownBlock value={String(days)} label="Days" toneIndex={0} />
+        <CountdownBlock value={pad2(hours)} label="Hours" toneIndex={1} />
+        <CountdownBlock value={pad2(minutes)} label="Minutes" toneIndex={2} />
+        <CountdownBlock value={pad2(seconds)} label="Seconds" toneIndex={3} />
+      </div>
+      <p className="relative mt-3 text-center text-xs text-[var(--text-muted)] sm:text-sm">
+        Next Settlement:{" "}
+        <span className="font-bold text-[var(--heading)]">Monday · 09:00 WAT</span>
+      </p>
+    </div>
+  );
+}
+
+function MutedCountdown({
+  days,
+  hours,
+  minutes,
+  seconds,
+  className,
+  align = "center"
+}: {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  className?: string;
+  align?: "center" | "start";
+}) {
+  return (
+    <div
+      className={cn(align === "center" ? "text-center" : "text-left", className)}
+      aria-labelledby="payout-countdown-heading"
+    >
+      <p
+        id="payout-countdown-heading"
+        className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-subtle)]"
+      >
+        Payout In
+      </p>
+      <div
+        className={cn(
+          "mt-4 flex items-start gap-4 sm:gap-8",
+          align === "center" ? "justify-center" : "justify-start"
+        )}
+        role="timer"
+        aria-live="polite"
+        suppressHydrationWarning
+      >
+        <CountdownBlock value={String(days)} label="Days" muted />
+        <CountdownBlock value={pad2(hours)} label="Hours" muted />
+        <CountdownBlock value={pad2(minutes)} label="Minutes" muted />
+        <CountdownBlock value={pad2(seconds)} label="Seconds" muted />
+      </div>
+      <p className="mt-4 text-sm text-[var(--text-muted)]">
+        Next Settlement:{" "}
+        <span className="font-semibold text-[var(--heading)]">Monday · 09:00 WAT</span>
+      </p>
     </div>
   );
 }
@@ -71,8 +217,8 @@ export function WeeklyCountdown({
   className?: string;
   label?: string;
   compact?: boolean;
-  /** `section` = quieter informational band below the calculator. */
-  variant?: "hero" | "section";
+  /** `inline` = colorful hero countdown. `section` = full-width muted band. */
+  variant?: "hero" | "section" | "inline";
 }) {
   const [now, setNow] = useState(() => new Date());
 
@@ -101,34 +247,25 @@ export function WeeklyCountdown({
     );
   }
 
+  if (variant === "inline") {
+    return (
+      <ColorfulCountdown
+        days={days}
+        hours={hours}
+        minutes={minutes}
+        seconds={seconds}
+        className={className}
+      />
+    );
+  }
+
   if (variant === "section") {
     return (
       <section
         className={cn("border-b border-[var(--border)] bg-[var(--surface)] section-pad-sm", className)}
-        aria-labelledby="payout-countdown-heading"
       >
-        <div className="container-ar mx-auto max-w-2xl text-center">
-          <p
-            id="payout-countdown-heading"
-            className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-subtle)]"
-          >
-            Payout In
-          </p>
-          <div
-            className="mt-4 flex items-start justify-center gap-4 sm:gap-8"
-            role="timer"
-            aria-live="polite"
-            suppressHydrationWarning
-          >
-            <CountdownBlock value={String(days)} label="Days" muted />
-            <CountdownBlock value={pad2(hours)} label="Hours" muted />
-            <CountdownBlock value={pad2(minutes)} label="Minutes" muted />
-            <CountdownBlock value={pad2(seconds)} label="Seconds" muted />
-          </div>
-          <p className="mt-4 text-sm text-[var(--text-muted)]">
-            Next Settlement:{" "}
-            <span className="font-semibold text-[var(--heading)]">Monday · 09:00 WAT</span>
-          </p>
+        <div className="container-ar mx-auto max-w-2xl">
+          <MutedCountdown days={days} hours={hours} minutes={minutes} seconds={seconds} />
         </div>
       </section>
     );
@@ -145,10 +282,10 @@ export function WeeklyCountdown({
     >
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--emerald)] sm:text-sm">{label}</p>
       <div className="mt-3 flex gap-2 sm:gap-3" suppressHydrationWarning>
-        <CountdownBlock value={String(days)} label="Days" />
-        <CountdownBlock value={pad2(hours)} label="Hours" />
-        <CountdownBlock value={pad2(minutes)} label="Mins" />
-        <CountdownBlock value={pad2(seconds)} label="Secs" />
+        <CountdownBlock value={String(days)} label="Days" toneIndex={0} />
+        <CountdownBlock value={pad2(hours)} label="Hours" toneIndex={1} />
+        <CountdownBlock value={pad2(minutes)} label="Mins" toneIndex={2} />
+        <CountdownBlock value={pad2(seconds)} label="Secs" toneIndex={3} />
       </div>
       <p className="mt-3 text-center text-xs text-[var(--text-muted)] sm:text-left">
         Next payout: <span className="font-semibold text-[var(--heading)]">Monday 09:00 WAT</span>

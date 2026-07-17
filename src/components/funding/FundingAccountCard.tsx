@@ -49,6 +49,13 @@ export function FundingAccountCard({ account, className }: Props) {
       <dl className="mt-6 space-y-4">
         <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
           <div className="min-w-0">
+            <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Bank name</dt>
+            <dd className="mt-1 truncate font-medium text-[var(--heading)]">{account.bankName}</dd>
+          </div>
+          <CopyButton value={account.bankName} label="Copy bank" />
+        </div>
+        <div className="flex items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
+          <div className="min-w-0">
             <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Account name</dt>
             <dd className="mt-1 truncate font-medium text-[var(--heading)]">{account.accountName}</dd>
           </div>

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   proRataInterest,
   settlementInterestForInvestment,
+  weeklySettlementWindow,
   nextMondayNineAmWat,
   watToUtc
 } from "@/lib/investment/accrual-math";
@@ -47,4 +48,11 @@ test("settlement before period end returns 0", () => {
     asOf: midWeek
   });
   assert.equal(interest, 0);
+});
+
+test("weeklySettlementWindow ends on Monday 09:00 WAT", () => {
+  const startedAt = watToUtc(2026, 7, 11, 14, 0);
+  const window = weeklySettlementWindow({ startedAt });
+  assert.ok(window);
+  assert.equal(window!.periodEnd.toISOString(), watToUtc(2026, 7, 13, 9, 0).toISOString());
 });

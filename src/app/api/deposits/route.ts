@@ -14,7 +14,7 @@ const depositSchema = z.object({
   paymentReference: z.string().min(3).optional(),
   receiptNote: z.string().min(3).optional(),
   reference: z.string().optional(),
-  proofUrl: z.string().url().optional()
+  proofUrl: z.string().min(3).max(500).optional()
 });
 
 export async function GET() {

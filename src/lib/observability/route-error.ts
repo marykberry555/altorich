@@ -21,7 +21,7 @@ export function logRouteError(error: unknown, context: RouteErrorContext) {
   });
 }
 
-export function errorMessage(error: unknown, fallback = "Something went wrong.") {
-  if (error instanceof Error && error.message.trim()) return error.message;
+export function errorMessage(_error: unknown, fallback = "Something went wrong. Please try again shortly.") {
+  // Never surface raw exception text / stack traces to members.
   return fallback;
 }

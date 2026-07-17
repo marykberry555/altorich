@@ -3,14 +3,36 @@ import { formatNaira } from "@/lib/domain";
 import { getServiceRoleServices } from "@/lib/services";
 import { DashboardSection, MetricStatCard, SectionHeading, StatusBadge } from "@/components/design-system";
 import { Card } from "@/components/ui/Card";
+import { STORAGE_BUCKETS } from "@/services/storage/storage.service";
 
 export const dynamic = "force-dynamic";
+
+async function resolveProofHref(
+  services: NonNullable<Awaited<ReturnType<typeof getServiceRoleServices>>>,
+  proofUrl: string | null
+) {
+  if (!proofUrl) return null;
+  if (/^https?:\/\//i.test(proofUrl)) return proofUrl;
+  try {
+    return await services.storage.getSignedUrl(STORAGE_BUCKETS.depositProofs, proofUrl, 3600);
+  } catch {
+    return null;
+  }
+}
 
 export default async function DepositsPage() {
   const services = await getServiceRoleServices();
   const pending = services ? await services.deposits.listPending() : [];
   const stats = services ? await services.deposits.getAdminStats() : { approved: 0, pending: 0, members: 0 };
   const metrics = services ? await services.analytics.getAdminMetrics() : null;
+  const pendingWithProof = services
+    ? await Promise.all(
+        pending.map(async (deposit) => ({
+          ...deposit,
+          proofHref: await resolveProofHref(services, deposit.proof_url)
+        }))
+      )
+    : [];
 
   return (
     <div className="space-y-8">
@@ -34,12 +56,12 @@ export default async function DepositsPage() {
       </DashboardSection>
 
       <Card variant="elevated" padding="md">
-        <SectionHeading title={`Pending funding (${pending.length})`} />
+        <SectionHeading title={`Pending funding (${pendingWithProof.length})`} />
         <div className="max-h-[32rem] space-y-3 overflow-y-auto">
-          {pending.length === 0 ? (
+          {pendingWithProof.length === 0 ? (
             <p className="text-sm text-[var(--text-subtle)]">No pending funding requests</p>
           ) : (
-            pending.map((deposit) => (
+            pendingWithProof.map((deposit) => (
               <div key={deposit.id} className="rounded-[var(--radius-sm)] border border-[var(--border)] p-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
@@ -63,8 +85,8 @@ export default async function DepositsPage() {
                       <X size={14} /> Reject
                     </button>
                   </form>
-                  {deposit.proof_url ? (
-                    <a href={deposit.proof_url} target="_blank" rel="noreferrer" className="button text-xs">
+                  {deposit.proofHref ? (
+                    <a href={deposit.proofHref} target="_blank" rel="noreferrer" className="button text-xs">
                       View proof
                     </a>
                   ) : null}

@@ -143,7 +143,7 @@ export default async function PortfolioPage() {
             {!investCtx || investCtx.investments.length === 0 ? (
               <EmptyState
                 title="No investments yet"
-                description="Fund your wallet and allocate to a sector to start your first cycle."
+                description="Fund your account to begin growing your wealth."
                 action={
                   <Link href="/investments">
                     <Button>Browse packages</Button>
@@ -199,7 +199,7 @@ export default async function PortfolioPage() {
       ) : !hasRoiInvestment ? (
         <EmptyState
           title="No investments yet"
-          description="Fund your wallet and choose an investment sector to start earning."
+          description="Fund your account to begin growing your wealth."
           action={
             <Link href="/investments">
               <Button>Browse packages</Button>

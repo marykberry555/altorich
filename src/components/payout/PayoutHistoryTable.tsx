@@ -32,7 +32,10 @@ export function PayoutHistoryTable({ rows }: Props) {
                       <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--gray-100)] text-[var(--text-subtle)]">
                         <ArrowUpRight size={28} strokeWidth={1.5} aria-hidden />
                       </span>
-                      <p className="mt-4 font-semibold text-[var(--heading)]">No payout requests yet.</p>
+                      <p className="mt-4 font-semibold text-[var(--heading)]">No withdrawals yet</p>
+                      <p className="mt-1.5 max-w-xs text-sm text-[var(--text-muted)]">
+                        Your withdrawal history will appear here after you request a payout.
+                      </p>
                     </div>
                   </td>
                 </tr>

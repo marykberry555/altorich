@@ -3,6 +3,14 @@ import { faqs } from "@/content/site";
 import { PageHero } from "@/components/marketing/PageHero";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "FAQs — Common questions",
+  description:
+    "Straight answers on registration, wallet funding, returns, and Monday 09:00 WAT payouts for Alto Rich members.",
+  path: "/learn/faq"
+});
 
 export default function FaqPage() {
   return (
@@ -27,7 +35,7 @@ export default function FaqPage() {
           ))}
 
           <div className="pt-6 flex flex-wrap gap-3">
-            <Link href="/learn/faq">
+            <Link href="/contact">
               <Button variant="outline">Visit help centre</Button>
             </Link>
             <Link href="/contact">

@@ -96,7 +96,7 @@ export const DEFAULT_HOMEPAGE_STATS: HomepageStatsConfig = {
   wealthGrowthStart: 1,
   wealthGrowthTarget: 50_000_000,
   wealthGrowthSpeed: 1,
-  wealthGrowthHeadline: "Growing with Discipline",
+  wealthGrowthHeadline: "How Your Money Grows",
   wealthGrowthDescription:
     "Every great investment journey begins with a single naira. Watch how disciplined investing can grow over time.",
   wealthGrowthSupport: "Resets daily at 09:00 Africa/Lagos · Climbs ₦1 → ₦50,000,000 by 08:59 next day",

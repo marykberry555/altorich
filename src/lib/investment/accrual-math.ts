@@ -139,14 +139,11 @@ export function proRataInterest(input: {
  * Interest due for a completed weekly period ending at/before `asOf`.
  * Does not roll into the next open week (avoids ~0 interest when cron runs after Monday 09:00).
  */
-export function settlementInterestForInvestment(input: {
-  principal: number;
-  weeklyRoiBps: number;
+export function weeklySettlementWindow(input: {
   startedAt: Date;
   lastWeeklySettlementAt?: Date | null;
   endsAt?: Date | null;
-  asOf: Date;
-}): number {
+}): { periodStart: Date; periodEnd: Date } | null {
   const periodStart = new Date(input.lastWeeklySettlementAt ?? input.startedAt);
   let periodEnd = nextMondayNineAmWat(periodStart);
   if (periodEnd.getTime() <= periodStart.getTime()) {
@@ -157,8 +154,23 @@ export function settlementInterestForInvestment(input: {
     if (periodEnd > ends) periodEnd = ends;
   }
   if (periodEnd.getTime() <= periodStart.getTime()) {
-    return 0;
+    return null;
   }
+  return { periodStart, periodEnd };
+}
+
+export function settlementInterestForInvestment(input: {
+  principal: number;
+  weeklyRoiBps: number;
+  startedAt: Date;
+  lastWeeklySettlementAt?: Date | null;
+  endsAt?: Date | null;
+  asOf: Date;
+}): number {
+  const window = weeklySettlementWindow(input);
+  if (!window) return 0;
+
+  const { periodStart, periodEnd } = window;
 
   // Period not complete — nothing to settle yet.
   if (input.asOf.getTime() < periodEnd.getTime()) {

@@ -74,6 +74,8 @@ const nextConfig: NextConfig = {
       { source: "/careers", destination: "/contact", permanent: true },
       { source: "/news", destination: "/about", permanent: true },
       { source: "/blog", destination: "/learn", permanent: true },
+      { source: "/faq", destination: "/learn/faq", permanent: true },
+      { source: "/faqs", destination: "/learn/faq", permanent: true },
       { source: "/learn/investment-guide", destination: "/learn", permanent: true },
       { source: "/learn/help", destination: "/learn/faq", permanent: true },
       { source: "/partner", destination: "/contact", permanent: true },

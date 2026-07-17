@@ -35,7 +35,7 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
     const res = await fetch("/api/uploads/deposit-proof", { method: "POST", body: formData });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error ?? "Receipt upload failed.");
-    return body.signedUrl as string;
+    return body.path as string;
   }
 
   async function submitFunding(event: React.FormEvent<HTMLFormElement>) {

@@ -147,8 +147,8 @@ export class WithdrawalService {
 
     const wallet = await this.wallet.getWalletByUserId(input.userId);
     const balance = await this.wallet.getBalance(wallet.id);
-
-    if (balance < input.amount) {
+    const reserved = await this.sumOpenWithdrawalAmount(input.userId);
+    if (balance - reserved < input.amount) {
       throw new AppError("Insufficient wallet balance for payout.", 400, "INSUFFICIENT_BALANCE");
     }
 
@@ -255,15 +255,28 @@ export class WithdrawalService {
       throw new AppError("Withdrawal is not pending", 409, "INVALID_STATUS");
     }
 
-    if (withdrawal.status === "scheduled") {
-      await this.supabase
-        .from("withdrawals")
-        .update({ status: "pending" } as Database["public"]["Tables"]["withdrawals"]["Update"])
-        .eq("id", withdrawalId);
+    const wallet = await this.wallet.getWalletByUserId(withdrawal.user_id);
+    const balance = await this.wallet.getBalance(wallet.id);
+    const reservedOthers = await this.sumOpenWithdrawalAmount(withdrawal.user_id, withdrawalId);
+    if (balance - reservedOthers < Number(withdrawal.amount)) {
+      throw new AppError("Insufficient wallet balance for payout.", 400, "INSUFFICIENT_BALANCE");
     }
 
-    const wallet = await this.wallet.getWalletByUserId(withdrawal.user_id);
-    const tx = await this.wallet.debitWithdrawal(wallet.id, Number(withdrawal.amount), withdrawalId);
+    let txId: string;
+    try {
+      const tx = await this.wallet.debitWithdrawal(wallet.id, Number(withdrawal.amount), withdrawalId);
+      txId = tx.id;
+    } catch (debitError) {
+      const message = debitError instanceof Error ? debitError.message : String(debitError);
+      if (!/duplicate|unique/i.test(message)) throw debitError;
+      const { data: existing } = await this.supabase
+        .from("wallet_transactions")
+        .select("id")
+        .eq("reference", `WD-${withdrawalId}`)
+        .maybeSingle();
+      if (!existing) throw debitError;
+      txId = existing.id;
+    }
 
     const { data, error } = await this.supabase
       .from("withdrawals")
@@ -271,13 +284,19 @@ export class WithdrawalService {
         status: "paid",
         reviewed_by: reviewerId,
         reviewed_at: new Date().toISOString(),
-        wallet_transaction_id: tx.id
+        wallet_transaction_id: txId
       } as Database["public"]["Tables"]["withdrawals"]["Update"])
       .eq("id", withdrawalId)
+      .in("status", ["pending", "scheduled"])
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) {
+      const { data: current } = await this.supabase.from("withdrawals").select("*").eq("id", withdrawalId).single();
+      if (current?.status === "paid") return current;
+      throw new AppError("Withdrawal is no longer pending", 409, "INVALID_STATUS");
+    }
 
     await this.notifications.notifyEvent("withdrawal.paid", withdrawal.user_id, {
       amount: Number(withdrawal.amount),
@@ -285,6 +304,18 @@ export class WithdrawalService {
     });
 
     return data;
+  }
+
+  private async sumOpenWithdrawalAmount(userId: string, excludeId?: string) {
+    const { data, error } = await this.supabase
+      .from("withdrawals")
+      .select("id, amount")
+      .eq("user_id", userId)
+      .in("status", ["pending", "scheduled"]);
+    if (error) throw error;
+    return (data ?? [])
+      .filter((row) => row.id !== excludeId)
+      .reduce((sum, row) => sum + Number(row.amount), 0);
   }
 
   async reject(withdrawalId: string, reviewerId: string, reason: string) {
@@ -309,10 +340,14 @@ export class WithdrawalService {
         reviewed_at: new Date().toISOString()
       } as Database["public"]["Tables"]["withdrawals"]["Update"])
       .eq("id", withdrawalId)
+      .in("status", ["pending", "scheduled"])
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) {
+      throw new AppError("Withdrawal is no longer pending", 409, "INVALID_STATUS");
+    }
 
     await this.notifications.notifyEvent("withdrawal.rejected", withdrawal.user_id, {
       amount: Number(withdrawal.amount),

@@ -8,6 +8,35 @@ export function isChunkLoadFailure(message: string) {
   return CHUNK_ERROR_PATTERN.test(message);
 }
 
+/** Remove leftover recovery cache-bust params from the visible URL (no reload). */
+export function stripCacheBustParam() {
+  if (typeof window === "undefined") return;
+
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("_cb")) return;
+
+  url.searchParams.delete("_cb");
+  const search = url.searchParams.toString();
+  const next = `${url.pathname}${search ? `?${search}` : ""}${url.hash}`;
+  window.history.replaceState(null, "", next || "/");
+}
+
+function hardReloadWithoutCacheBust() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("_cb");
+  const search = url.searchParams.toString();
+  const clean = `${url.pathname}${search ? `?${search}` : ""}${url.hash}` || "/";
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}` || "/";
+
+  // Prefer a clean navigation target so the address bar never shows ?_cb=.
+  if (clean !== current) {
+    window.location.replace(clean);
+    return;
+  }
+
+  window.location.reload();
+}
+
 export async function clearRuntimeCaches() {
   if ("caches" in window) {
     const keys = await caches.keys();
@@ -33,9 +62,8 @@ export async function recoverFromChunkFailure(reason?: string) {
     // Continue to hard reload even if cache cleanup fails.
   }
 
-  const url = new URL(window.location.href);
-  url.searchParams.set("_cb", String(Date.now()));
-  window.location.replace(url.toString());
+  // SW + Cache Storage are already cleared — no need to pollute the public URL with ?_cb=.
+  hardReloadWithoutCacheBust();
   return true;
 }
 
@@ -46,9 +74,7 @@ export function syncStoredBuildId(buildId: string) {
   if (stored && stored !== buildId) {
     localStorage.setItem(BUILD_ID_STORAGE_KEY, buildId);
     void clearRuntimeCaches().finally(() => {
-      const url = new URL(window.location.href);
-      url.searchParams.set("_cb", String(Date.now()));
-      window.location.replace(url.toString());
+      hardReloadWithoutCacheBust();
     });
     return;
   }

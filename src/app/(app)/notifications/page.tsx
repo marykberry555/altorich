@@ -18,7 +18,7 @@ export default async function NotificationsPage() {
       {notifications.length === 0 ? (
         <div className="mt-8">
           <EmptyState
-            title="No notifications yet"
+            title="You're all caught up"
             description="When your funding is verified or payouts are processed, alerts will appear here."
           />
         </div>

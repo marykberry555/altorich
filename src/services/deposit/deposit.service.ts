@@ -106,15 +106,21 @@ export class DepositService {
   }
 
   async approve(depositId: string, reviewerId: string) {
-    const { data: deposit, error: fetchError } = await this.supabase
+    // Atomic claim — only one approver can move pending → approved.
+    const { data: deposit, error: claimError } = await this.supabase
       .from("deposits")
-      .select("*")
+      .update({
+        status: "approved",
+        reviewed_by: reviewerId,
+        reviewed_at: new Date().toISOString()
+      } as Database["public"]["Tables"]["deposits"]["Update"])
       .eq("id", depositId)
-      .single();
+      .eq("status", "pending")
+      .select("*")
+      .maybeSingle();
 
-    if (fetchError) throw fetchError;
-    if (!deposit) throw new AppError("Deposit not found", 404, "NOT_FOUND");
-    if (deposit.status !== "pending") {
+    if (claimError) throw claimError;
+    if (!deposit) {
       throw new AppError("Deposit is not pending", 409, "INVALID_STATUS");
     }
 
@@ -123,8 +129,20 @@ export class DepositService {
 
     if (userId) {
       const wallet = await this.wallet.getWalletByUserId(userId);
-      const tx = await this.wallet.creditDeposit(wallet.id, Number(deposit.amount), depositId);
-      walletTxId = tx.id;
+      try {
+        const tx = await this.wallet.creditDeposit(wallet.id, Number(deposit.amount), depositId);
+        walletTxId = tx.id;
+      } catch (creditError) {
+        // Unique DEP-{id} means a prior attempt already credited — treat as success.
+        const message = creditError instanceof Error ? creditError.message : String(creditError);
+        if (!/duplicate|unique/i.test(message)) throw creditError;
+        const { data: existing } = await this.supabase
+          .from("wallet_transactions")
+          .select("id")
+          .eq("reference", `DEP-${depositId}`)
+          .maybeSingle();
+        walletTxId = existing?.id ?? null;
+      }
 
       await this.notifications.notifyEvent("deposit.approved", userId, {
         amount: Number(deposit.amount),
@@ -217,7 +235,7 @@ export class DepositService {
   async getUserStats(userId: string) {
     const deposits = await this.listForUser(userId, 500);
     const approved = deposits
-      .filter((d) => d.status === "approved")
+      .filter((d) => d.status === "approved" || d.status === "completed")
       .reduce((s, d) => s + Number(d.amount), 0);
     const pending = deposits
       .filter((d) => d.status === "pending")
@@ -227,7 +245,9 @@ export class DepositService {
 
   async getAdminStats() {
     const deposits = await this.listRecent(500);
-    const approved = deposits.filter((d) => d.status === "approved").reduce((s, d) => s + Number(d.amount), 0);
+    const approved = deposits
+      .filter((d) => d.status === "approved" || d.status === "completed")
+      .reduce((s, d) => s + Number(d.amount), 0);
     const pending = deposits.filter((d) => d.status === "pending").reduce((s, d) => s + Number(d.amount), 0);
     const members = new Set(deposits.map((d) => d.phone)).size;
     return { approved, pending, members };

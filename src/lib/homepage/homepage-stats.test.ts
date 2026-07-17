@@ -21,7 +21,7 @@ describe("homepage stats config", () => {
     assert.equal(merged.memberSatisfactionPercent, 99.1);
     assert.equal(merged.wealthGrowthTarget, 50_000_000);
     assert.equal(merged.calculatorMinInvestment, 30_000);
-    assert.equal(merged.wealthGrowthHeadline, "Growing with Discipline");
+    assert.equal(merged.wealthGrowthHeadline, "How Your Money Grows");
   });
 
   it("formats naira and percents for display", () => {

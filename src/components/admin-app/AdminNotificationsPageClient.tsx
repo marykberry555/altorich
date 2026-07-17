@@ -92,7 +92,9 @@ export function AdminNotificationsPageClient() {
 
       <ul className="space-y-3">
         {items.length === 0 ? (
-          <li className="rounded-xl border border-white/10 bg-zinc-900/80 px-4 py-8 text-center text-sm text-zinc-400">No notifications yet</li>
+          <li className="rounded-xl border border-white/10 bg-zinc-900/80 px-4 py-8 text-center text-sm text-zinc-400">
+            You&apos;re all caught up — no notifications yet.
+          </li>
         ) : (
           items.map((item) => (
             <AdminNotificationFeedItem key={item.id} item={item} onMarkRead={(id) => void markRead(id)} />

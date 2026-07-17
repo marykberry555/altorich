@@ -23,7 +23,7 @@ export function RouteErrorFallback({
   component = "RouteErrorBoundary",
   dashboardHref = "/dashboard",
   homeHref = "/",
-  showDebugDetails = true
+  showDebugDetails = process.env.NODE_ENV !== "production"
 }: Props) {
   const [reported, setReported] = useState(false);
   const [reportFailed, setReportFailed] = useState(false);
@@ -92,7 +92,9 @@ export function RouteErrorFallback({
   return (
     <div className="mx-auto flex min-h-[50vh] max-w-3xl flex-col items-center justify-center gap-4 px-4 py-10 text-center">
       <h1 className="text-xl font-bold text-[var(--heading)]">Something went wrong</h1>
-      <p className="text-sm text-[var(--text-muted)]">{errorMessage(error)}</p>
+      <p className="max-w-md text-sm text-[var(--text-muted)]">
+        {errorMessage(error)} If the issue continues, contact our support team.
+      </p>
       {error.digest ? (
         <p className="text-xs text-[var(--text-subtle)]">Reference: {error.digest}</p>
       ) : null}

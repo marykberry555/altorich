@@ -82,7 +82,9 @@ export function AdminNotificationBell() {
             </div>
             <ul className="max-h-[28rem] overflow-y-auto p-2 space-y-2">
               {items.length === 0 ? (
-                <li className="px-4 py-6 text-center text-sm text-zinc-400">No notifications yet</li>
+                <li className="px-4 py-6 text-center text-sm text-zinc-400">
+                  You&apos;re all caught up — no notifications yet.
+                </li>
               ) : (
                 items.map((item) => (
                   <AdminNotificationFeedItem key={item.id} item={item} compact onMarkRead={(id) => void markRead(id)} />

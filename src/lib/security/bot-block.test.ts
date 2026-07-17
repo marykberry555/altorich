@@ -21,9 +21,11 @@ describe("isBlockedBot", () => {
     assert.equal(isBlockedBot(chrome, "/"), false);
   });
 
-  it("allows health probes", () => {
+  it("allows health probes and cron", () => {
     assert.equal(isBlockedBot("", "/api/health"), false);
     assert.equal(isBotAllowedPath("/api/health"), true);
+    assert.equal(isBotAllowedPath("/api/cron/weekly-settlements"), true);
+    assert.equal(isBlockedBot("", "/api/cron/weekly-settlements"), false);
   });
 
   it("blocks empty user agents on public pages", () => {

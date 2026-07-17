@@ -140,7 +140,9 @@ export function MemberDetailPanel({ memberId, memberName, onClose }: Props) {
               <section>
                 <h3 className="mb-2 text-sm font-semibold text-[var(--heading)]">Investments ({detail.investments.length})</h3>
                 {detail.investments.length === 0 ? (
-                  <p className="text-sm text-[var(--text-subtle)]">No investments</p>
+                  <p className="text-sm text-[var(--text-subtle)]">
+                    No investments yet — this member has not activated a sector.
+                  </p>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -170,7 +172,9 @@ export function MemberDetailPanel({ memberId, memberName, onClose }: Props) {
               <section>
                 <h3 className="mb-2 text-sm font-semibold text-[var(--heading)]">Payouts / withdrawals ({detail.withdrawals.length})</h3>
                 {detail.withdrawals.length === 0 ? (
-                  <p className="text-sm text-[var(--text-subtle)]">No withdrawals</p>
+                  <p className="text-sm text-[var(--text-subtle)]">
+                    No withdrawals yet — payout history will appear after the first request.
+                  </p>
                 ) : (
                   <Table>
                     <TableHeader>

@@ -9,7 +9,8 @@ export async function GET() {
     supabasePublic: isSupabaseConfigured(),
     supabaseService: isServiceRoleConfigured(),
     resend: Boolean(process.env.RESEND_API_KEY?.trim()),
-    siteUrl: Boolean(process.env.NEXT_PUBLIC_SITE_URL?.trim())
+    siteUrl: Boolean(process.env.NEXT_PUBLIC_SITE_URL?.trim()),
+    cronSecret: Boolean(process.env.CRON_SECRET?.trim())
   };
 
   let database = false;
@@ -37,6 +38,7 @@ export async function GET() {
     checks.supabasePublic &&
     checks.supabaseService &&
     checks.siteUrl &&
+    checks.cronSecret &&
     database &&
     authAdmin;
 

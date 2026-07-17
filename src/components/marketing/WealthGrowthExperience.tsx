@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   formatNairaCounter,
-  formatNairaWithKobo,
   projectEarnings,
-  wealthGrowthValueAt,
   type HomepageStatsConfig
 } from "@/lib/homepage/homepage-stats";
 import { Card } from "@/components/ui/Card";
@@ -18,11 +16,6 @@ type Props = {
   config: HomepageStatsConfig;
   className?: string;
 };
-
-function prefersReducedMotion() {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
 
 function digitsOnly(raw: string) {
   return raw.replace(/\D/g, "").slice(0, 12);
@@ -44,14 +37,9 @@ function formatProjection(amount: number) {
   return formatNairaCounter(amount);
 }
 
-/** Live wealth growth counter + earnings calculator — primary conversion block after hero. */
+/** Earnings calculator — sits below the hero (counter lives in the hero). */
 export function WealthGrowthExperience({ config, className }: Props) {
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [counterLabel, setCounterLabel] = useState(() =>
-    formatNairaWithKobo(wealthGrowthValueAt(config))
-  );
   const [amountDigits, setAmountDigits] = useState(() => String(CALCULATOR_DEFAULT));
-  const valueRef = useRef<HTMLSpanElement>(null);
   const amount = toAmount(amountDigits);
   const displayValue = withCommas(amountDigits);
 
@@ -63,82 +51,26 @@ export function WealthGrowthExperience({ config, className }: Props) {
 
   const belowMin = amount > 0 && amount < config.calculatorMinInvestment;
 
-  useEffect(() => {
-    setReducedMotion(prefersReducedMotion());
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReducedMotion(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  useEffect(() => {
-    let raf = 0;
-    let interval = 0;
-    let lastLabel = "";
-
-    const paint = () => {
-      const label = formatNairaWithKobo(wealthGrowthValueAt(config));
-      if (label === lastLabel) return false;
-      lastLabel = label;
-      setCounterLabel(label);
-      if (valueRef.current) valueRef.current.textContent = label;
-      return true;
-    };
-
-    paint();
-    interval = window.setInterval(paint, reducedMotion ? 200 : 50);
-
-    if (!reducedMotion) {
-      const tick = () => {
-        paint();
-        raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-    }
-
-    return () => {
-      window.clearInterval(interval);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [config, reducedMotion]);
-
   return (
     <section
       className={cn(
         "relative overflow-hidden border-b border-[var(--border)] bg-[var(--gray-50)] section-pad-sm",
         className
       )}
-      aria-labelledby="wealth-growth-heading"
+      aria-labelledby="earnings-calculator-heading"
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.12),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.08),transparent_60%)]"
         aria-hidden
       />
       <div className="container-ar relative">
-        <div className="mx-auto max-w-4xl px-2 text-center">
+        <div className="mx-auto max-w-3xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-raised)] p-5 shadow-[var(--shadow-md)] sm:p-7">
           <h2
-            id="wealth-growth-heading"
-            className="text-3xl font-bold tracking-tight text-[var(--heading)] sm:text-4xl"
+            id="earnings-calculator-heading"
+            className="text-center text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl"
           >
-            {config.wealthGrowthHeadline}
-          </h2>
-
-          <p
-            className={cn(
-              "mt-6 w-full font-extrabold tabular-nums tracking-tight text-[var(--emerald)]",
-              "text-[clamp(2.5rem,9vw,4.25rem)] leading-none",
-              "drop-shadow-[0_0_28px_rgba(16,185,129,0.35)]"
-            )}
-            aria-live="off"
-          >
-            <span ref={valueRef}>{counterLabel}</span>
-          </p>
-        </div>
-
-        <div className="mx-auto mt-8 max-w-3xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-raised)] p-5 shadow-[var(--shadow-md)] sm:p-7">
-          <h3 className="text-center text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">
             {config.calculatorTitle}
-          </h3>
+          </h2>
           <p className="mx-auto mt-2.5 max-w-lg text-center text-sm leading-relaxed text-[var(--text-muted)]">
             Enter your intended investment amount to instantly preview your projected earnings.
           </p>

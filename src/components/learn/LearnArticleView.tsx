@@ -1,19 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getLearnArticle } from "@/content/learn";
+import { getLearnArticle, LEARN_ARTICLES } from "@/content/learn";
 import { buildMetadata } from "@/lib/seo";
 import { IMAGES } from "@/lib/images";
 import Image from "next/image";
 
-type Props = { params: Promise<{ slug: string }> };
-
-export async function generateStaticParams() {
-  const { LEARN_ARTICLES } = await import("@/content/learn");
+export function generateLearnStaticParams() {
   return LEARN_ARTICLES.map((a) => ({ slug: a.slug }));
 }
 
-export async function generateMetadata({ params }: Props) {
-  const { slug } = await params;
+export function generateLearnMetadata(slug: string) {
   const article = getLearnArticle(slug);
   if (!article) return {};
   return buildMetadata({

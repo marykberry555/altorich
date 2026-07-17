@@ -4,7 +4,7 @@ import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
 import { WithdrawalService } from "@/services/withdrawal/withdrawal.service";
 import { settlementDates, type SettlementFrequency } from "@/lib/investment";
-import { settlementInterestForInvestment } from "@/lib/investment/accrual-math";
+import { settlementInterestForInvestment, weeklySettlementWindow } from "@/lib/investment/accrual-math";
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 type Client = SupabaseClient<Database>;
@@ -70,22 +70,33 @@ export class SettlementService {
     for (const investment of active ?? []) {
       const bps = PLATFORM_EARNING.weeklyRoiBps;
       const amount = Number(investment.amount);
+      const lastWeeklySettlementAt = (investment as { last_weekly_settlement_at?: string | null })
+        .last_weekly_settlement_at
+        ? new Date((investment as { last_weekly_settlement_at?: string | null }).last_weekly_settlement_at!)
+        : null;
+      const startedAt = new Date(investment.started_at);
+      const endsAt = new Date(investment.ends_at);
+      const window = weeklySettlementWindow({
+        startedAt,
+        lastWeeklySettlementAt,
+        endsAt
+      });
+      if (!window) continue;
+
       const interest = settlementInterestForInvestment({
         principal: amount,
         weeklyRoiBps: bps,
-        startedAt: new Date(investment.started_at),
-        lastWeeklySettlementAt: (investment as { last_weekly_settlement_at?: string | null }).last_weekly_settlement_at
-          ? new Date((investment as { last_weekly_settlement_at?: string | null }).last_weekly_settlement_at!)
-          : null,
-        endsAt: new Date(investment.ends_at),
+        startedAt,
+        lastWeeklySettlementAt,
+        endsAt,
         asOf
       });
       if (interest <= 0) continue;
 
-      const periodKey = asOf.toISOString().slice(0, 10);
-      const claimTs = asOf.toISOString();
+      // Claim the completed Monday period (not wall-clock asOf) so the next week starts correctly.
+      const claimTs = window.periodEnd.toISOString();
+      const periodKey = claimTs.slice(0, 10);
 
-      // Claim this settlement window before mutating money (idempotent under concurrency).
       const { data: claimed, error: claimError } = await this.supabase
         .from("investments")
         .update({

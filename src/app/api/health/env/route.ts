@@ -11,7 +11,8 @@ export async function GET() {
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
     "RESEND_API_KEY",
-    "NEXT_PUBLIC_ROI_MODE_ENABLED"
+    "NEXT_PUBLIC_ROI_MODE_ENABLED",
+    "CRON_SECRET"
   ] as const;
 
   const env = Object.fromEntries(
@@ -21,7 +22,8 @@ export async function GET() {
   const ready =
     env.NEXT_PUBLIC_SUPABASE_URL &&
     env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
-    env.SUPABASE_SERVICE_ROLE_KEY;
+    env.SUPABASE_SERVICE_ROLE_KEY &&
+    env.CRON_SECRET;
 
   return NextResponse.json({ ready, env }, { status: ready ? 200 : 503 });
 }

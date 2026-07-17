@@ -8,6 +8,7 @@ import type { HomepageStatsConfig } from "@/lib/homepage/homepage-stats";
 import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
 import { PageHero } from "@/components/marketing/PageHero";
 import { WealthGrowthExperience } from "@/components/marketing/WealthGrowthExperience";
+import { HeroWealthCounter } from "@/components/marketing/HeroWealthCounter";
 import { LiveOperationsPanel } from "@/components/marketing/LiveOperationsPanel";
 import { PlatformByTheNumbers } from "@/components/marketing/PlatformByTheNumbers";
 import { IMAGES } from "@/lib/images";
@@ -43,21 +44,28 @@ export function HomePage({ homepageStats }: Props) {
           aria-hidden
         />
         <div className="container-ar relative grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
-          <div className="animate-fade-up">
-            <Badge variant="emerald">{hero.eyebrow}</Badge>
-            <h1 className="mt-4 max-w-xl text-4xl font-bold tracking-tight text-[var(--heading)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.05]">
+          <div className="animate-fade-up text-center">
+            <div className="flex justify-center">
+              <Badge variant="emerald">{hero.eyebrow}</Badge>
+            </div>
+            <h1 className="mx-auto mt-4 max-w-xl text-4xl font-bold tracking-tight text-[var(--heading)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.05]">
               {hero.title}
             </h1>
-            <p className="mt-3 max-w-md text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
+            <p className="mx-auto mt-3 max-w-md text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
               {hero.subtitle}
             </p>
             {"guarantee" in hero && hero.guarantee ? (
-              <p className="mt-2.5 inline-flex items-center gap-2 text-sm font-semibold text-[var(--emerald)]">
+              <p className="mt-2.5 inline-flex items-center justify-center gap-2 text-sm font-semibold text-[var(--emerald)]">
                 <ShieldCheck size={16} aria-hidden />
                 {hero.guarantee}
               </p>
             ) : null}
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+
+            <HeroWealthCounter config={homepageStats} className="mx-auto mt-6" />
+
+            <WeeklyCountdown variant="inline" className="mx-auto mt-4 max-w-xl" />
+
+            <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
               <Link href="/auth/register" className="min-w-0 flex-1 sm:max-w-xs">
                 <Button size="lg" className="h-13 w-full gap-2 shadow-[var(--shadow-glow)]">
                   {hero.ctaPrimary}
@@ -105,8 +113,6 @@ export function HomePage({ homepageStats }: Props) {
       </section>
 
       <WealthGrowthExperience config={homepageStats} />
-
-      <WeeklyCountdown variant="section" />
 
       <section className="section-pad bg-section">
         <div className="container-ar">

@@ -24,7 +24,7 @@ export const X_ROBOTS_TAG =
   "noindex, nofollow, noarchive, nosnippet, noimageindex, max-image-preview:none, max-snippet:0";
 
 /** Paths that must stay reachable for deploy/health probes (not public marketing). */
-const BOT_ALLOW_PATHS = ["/api/health", "/api/health/ready", "/api/health/env"];
+const BOT_ALLOW_PATHS = ["/api/health", "/api/health/ready", "/api/health/env", "/api/cron"];
 
 /** Link-preview fetchers — must reach HTML/OG tags for shared URLs. */
 const SOCIAL_PREVIEW_UA_SUBSTRINGS = [
