@@ -32,9 +32,12 @@ export function HomepageStatsAdmin({ initial }: Props) {
           verifiedMembers: form.verifiedMembers,
           verifiedMembersSuffix: form.verifiedMembersSuffix,
           verifiedMembersLabel: form.verifiedMembersLabel,
+          verifiedMembersDailyGrowth: form.verifiedMembersDailyGrowth,
+          membersGrowthEpoch: form.membersGrowthEpoch,
           transactedTodayStart: form.transactedTodayStart,
           transactedTodayTarget: form.transactedTodayTarget,
           transactedTodayMax: form.transactedTodayMax,
+          transactedDailyFloorGrowth: form.transactedDailyFloorGrowth,
           transactedTodayLabel: form.transactedTodayLabel,
           transactedTodaySuffix: form.transactedTodaySuffix,
           memberSatisfactionPercent: form.memberSatisfactionPercent,
@@ -92,15 +95,16 @@ export function HomepageStatsAdmin({ initial }: Props) {
             onChange={(e) => update("wealthGrowthStart", Number(e.target.value))}
           />
         </Field>
-        <Field label="Ending value (₦)">
+        <Field label="Ending value (₦, max 50,000,000)">
           <input
             type="number"
+            max={50_000_000}
             className="field border-white/10 bg-zinc-950 text-white"
             value={form.wealthGrowthTarget}
-            onChange={(e) => update("wealthGrowthTarget", Number(e.target.value))}
+            onChange={(e) => update("wealthGrowthTarget", Math.min(50_000_000, Number(e.target.value)))}
           />
         </Field>
-        <Field label="Growth speed (1 = full day)">
+        <Field label="Growth speed (display only — climb is always 09:00→08:59)">
           <input
             type="number"
             step="0.1"
@@ -220,12 +224,27 @@ export function HomepageStatsAdmin({ initial }: Props) {
         Platform numbers
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Verified members">
+        <Field label="Verified members (baseline)">
           <input
             type="number"
             className="field border-white/10 bg-zinc-950 text-white"
             value={form.verifiedMembers}
             onChange={(e) => update("verifiedMembers", Number(e.target.value))}
+          />
+        </Field>
+        <Field label="Members daily growth">
+          <input
+            type="number"
+            className="field border-white/10 bg-zinc-950 text-white"
+            value={form.verifiedMembersDailyGrowth}
+            onChange={(e) => update("verifiedMembersDailyGrowth", Number(e.target.value))}
+          />
+        </Field>
+        <Field label="Growth epoch (YYYY-MM-DD)">
+          <input
+            className="field border-white/10 bg-zinc-950 text-white"
+            value={form.membersGrowthEpoch}
+            onChange={(e) => update("membersGrowthEpoch", e.target.value)}
           />
         </Field>
         <Field label="Transacted today — start (₦)">
@@ -250,6 +269,14 @@ export function HomepageStatsAdmin({ initial }: Props) {
             className="field border-white/10 bg-zinc-950 text-white"
             value={form.transactedTodayMax}
             onChange={(e) => update("transactedTodayMax", Number(e.target.value))}
+          />
+        </Field>
+        <Field label="Transacted daily floor growth (₦)">
+          <input
+            type="number"
+            className="field border-white/10 bg-zinc-950 text-white"
+            value={form.transactedDailyFloorGrowth}
+            onChange={(e) => update("transactedDailyFloorGrowth", Number(e.target.value))}
           />
         </Field>
         <Field label="Member satisfaction (%)">

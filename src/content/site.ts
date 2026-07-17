@@ -3,7 +3,7 @@ import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 export const hero = {
   eyebrow: "Verified Platform · Monday payouts",
-  title: "Earn 5% Daily | 35% weekly",
+  title: "Earn 5% Daily | 35% every Monday",
   subtitle:
     "Choose an investment sector, fund your account, and watch your investment grow through Alto Rich's guaranteed Platform Earning Model.",
   guarantee: "Guaranteed returns.",

@@ -244,6 +244,39 @@ img {
   50% { opacity: 0.6; }
 }
 
+@keyframes wealth-tick-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.85);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-36px) scale(1);
+  }
+}
+
+.animate-wealth-tick-up {
+  animation: wealth-tick-up 0.85s ease-out both;
+}
+
+@keyframes wealth-counter-flash {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.035);
+  }
+}
+
+.animate-wealth-counter-flash {
+  animation: wealth-counter-flash 0.35s ease-out;
+}
+
 @keyframes live-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35); }
   50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
@@ -309,6 +342,8 @@ img {
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-live-glow,
+  .animate-wealth-tick-up,
+  .animate-wealth-counter-flash,
   .live-dot,
   .sector-activity-bar,
   .card-lift,

@@ -34,17 +34,24 @@ export function watToUtc(year: number, month: number, day: number, hour: number,
   return new Date(Date.UTC(year, month - 1, day, hour - 1, minute, 0, 0));
 }
 
-/** Next Monday 09:00 WAT strictly after `from`. */
+/** Next Monday 09:00 WAT at or after the next 09:00 WAT slot (strictly after `from`). */
 export function nextMondayNineAmWat(from: Date): Date {
-  const start = from.getTime();
-  for (let offset = 0; offset <= 8 * MS_PER_WEEK; offset += 60 * 60 * 1000) {
-    const candidate = new Date(start + offset);
-    const p = getWatParts(candidate);
-    if (p.dayOfWeek === 1 && p.hour === 9 && p.minute === 0 && candidate.getTime() > from.getTime()) {
-      return candidate;
-    }
+  const p = getWatParts(from);
+  // Days until next Monday (1). If today is Monday, 0 unless we're at/past 09:00.
+  let addDays = (1 - p.dayOfWeek + 7) % 7;
+  const todayNine = watToUtc(p.year, p.month, p.day, 9, 0);
+  if (addDays === 0 && from.getTime() >= todayNine.getTime()) {
+    addDays = 7;
   }
-  return new Date(start + MS_PER_WEEK);
+  if (addDays === 0) {
+    return todayNine;
+  }
+
+  // Advance calendar day in WAT space.
+  const noonUtc = watToUtc(p.year, p.month, p.day, 12, 0);
+  const targetDay = new Date(noonUtc.getTime() + addDays * 86400000);
+  const tp = getWatParts(targetDay);
+  return watToUtc(tp.year, tp.month, tp.day, 9, 0);
 }
 
 export function periodDays(frequency: SettlementFrequency): number {

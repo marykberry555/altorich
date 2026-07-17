@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
 import type { HomepageStatsConfig } from "@/lib/homepage/homepage-stats";
 import { cn } from "@/lib/utils";
@@ -10,18 +10,78 @@ type Props = {
   className?: string;
 };
 
+const POINT_COUNT = 64;
+const VIEW_W = 800;
+const VIEW_H = 280;
+const PAD_X = 20;
+const PAD_Y = 36;
+
 function prefersReducedMotion() {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+/** Smooth, clearly rising operational series — visible fluctuations, not a flat line. */
+function buildSeries(baseline: number, fluctuation: number, t: number) {
+  const values: number[] = [];
+  const amp = Math.max(0.06, fluctuation * 1.8);
+  for (let i = 0; i < POINT_COUNT; i++) {
+    const progress = i / (POINT_COUNT - 1);
+    // Stronger rise so the chart reads as growth at a glance
+    const trend = 0.18 + baseline * 0.35 + progress * 0.55;
+    const wave =
+      Math.sin(progress * 8.5 + t * 1.4) * amp +
+      Math.sin(progress * 3.1 + t * 0.7 + 1.1) * amp * 0.55 +
+      Math.sin(progress * 14 + t * 2.1) * amp * 0.18;
+    values.push(Math.min(0.92, Math.max(0.08, trend + wave)));
+  }
+  return values;
+}
+
+function seriesToPath(values: number[]) {
+  const usableW = VIEW_W - PAD_X * 2;
+  const usableH = VIEW_H - PAD_Y * 2;
+
+  const coords = values.map((v, i) => ({
+    x: PAD_X + (i / (values.length - 1)) * usableW,
+    y: PAD_Y + (1 - v) * usableH
+  }));
+
+  let line = `M ${coords[0]!.x.toFixed(1)} ${coords[0]!.y.toFixed(1)}`;
+  for (let i = 1; i < coords.length; i++) {
+    const p = coords[i]!;
+    line += ` L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  }
+
+  const last = coords[coords.length - 1]!;
+  const first = coords[0]!;
+  const area = `${line} L ${last.x.toFixed(1)} ${(VIEW_H - PAD_Y).toFixed(1)} L ${first.x.toFixed(1)} ${(VIEW_H - PAD_Y).toFixed(1)} Z`;
+
+  return { line, area, tip: last };
+}
+
 /**
  * Soft operational activity visualization — upward trend with gentle fluctuations.
- * Deliberately not a candlestick / trading / crypto chart.
+ * SVG-based so it never collapses to a blank box.
  */
 export function LiveOperationsPanel({ config, className }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gradientId = useId().replace(/:/g, "");
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [path, setPath] = useState(() =>
+    seriesToPath(buildSeries(config.opsGraphBaseline ?? 0.42, config.opsGraphFluctuation ?? 0.08, 0))
+  );
+  const tRef = useRef(0);
+  const visibleRef = useRef(true);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  const baseline = config.opsGraphBaseline ?? 0.42;
+  const fluctuation = config.opsGraphFluctuation ?? 0.08;
+  const speed = config.opsGraphSpeed ?? 1;
+
+  const sectors = useMemo(
+    () => PACKAGE_CONFIG.map((pkg) => ({ id: pkg.slug, name: pkg.subtitle })),
+    []
+  );
 
   useEffect(() => {
     setReducedMotion(prefersReducedMotion());
@@ -32,126 +92,47 @@ export function LiveOperationsPanel({ config, className }: Props) {
   }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visibleRef.current = Boolean(entry?.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    setPath(seriesToPath(buildSeries(baseline, fluctuation, tRef.current)));
+    if (reducedMotion) return;
 
     let raf = 0;
-    let running = true;
-    const points = 48;
-    const history = Array.from({ length: points }, (_, i) => config.opsGraphBaseline + (i / points) * 0.28);
-
-    const resize = () => {
-      const parent = canvas.parentElement;
-      if (!parent) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const width = parent.clientWidth;
-      const height = Math.max(180, Math.min(260, Math.round(width * 0.32)));
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-
-    resize();
-    window.addEventListener("resize", resize);
-
-    const gold = getComputedStyle(document.documentElement).getPropertyValue("--gold").trim() || "#d4a853";
-    const emerald =
-      getComputedStyle(document.documentElement).getPropertyValue("--emerald-light").trim() || "#10b981";
-
-    let t = 0;
-    const draw = () => {
-      if (!running) return;
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      ctx.clearRect(0, 0, width, height);
-
-      if (!reducedMotion) {
-        t += 0.016 * config.opsGraphSpeed;
-        const trend = config.opsGraphBaseline + Math.min(0.45, t * 0.012);
-        const wave =
-          Math.sin(t * 1.1) * config.opsGraphFluctuation * 0.55 +
-          Math.sin(t * 0.37 + 1.2) * config.opsGraphFluctuation * 0.35;
-        const next = Math.min(0.92, Math.max(0.08, trend + wave));
-        history.push(next);
-        if (history.length > points) history.shift();
+    let last = 0;
+    const tick = (now: number) => {
+      if (visibleRef.current && now - last > 32) {
+        last = now;
+        tRef.current += 0.045 * speed;
+        setPath(seriesToPath(buildSeries(baseline, fluctuation, tRef.current)));
       }
-
-      const padX = 8;
-      const padY = 16;
-      const usableW = width - padX * 2;
-      const usableH = height - padY * 2;
-
-      const coords = history.map((v, i) => {
-        const x = padX + (i / (history.length - 1)) * usableW;
-        const y = padY + (1 - v) * usableH;
-        return { x, y };
-      });
-
-      // Soft fill
-      ctx.beginPath();
-      coords.forEach((p, i) => {
-        if (i === 0) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
-      });
-      ctx.lineTo(coords[coords.length - 1]!.x, height - padY);
-      ctx.lineTo(coords[0]!.x, height - padY);
-      ctx.closePath();
-      const fill = ctx.createLinearGradient(0, padY, 0, height);
-      fill.addColorStop(0, "rgba(212,168,83,0.28)");
-      fill.addColorStop(1, "rgba(212,168,83,0)");
-      ctx.fillStyle = fill;
-      ctx.fill();
-
-      // Gold line
-      ctx.beginPath();
-      coords.forEach((p, i) => {
-        if (i === 0) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
-      });
-      ctx.strokeStyle = gold;
-      ctx.lineWidth = 2.5;
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
-      ctx.stroke();
-
-      // Activity pulse at tip
-      const tip = coords[coords.length - 1]!;
-      ctx.beginPath();
-      ctx.arc(tip.x, tip.y, 4.5, 0, Math.PI * 2);
-      ctx.fillStyle = emerald;
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(tip.x, tip.y, 9 + (reducedMotion ? 0 : Math.sin(t * 3) * 2), 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(16,185,129,0.35)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      if (!reducedMotion) raf = requestAnimationFrame(draw);
+      raf = requestAnimationFrame(tick);
     };
-
-    draw();
-    return () => {
-      running = false;
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-    };
-  }, [config.opsGraphBaseline, config.opsGraphFluctuation, config.opsGraphSpeed, reducedMotion]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [baseline, fluctuation, speed, reducedMotion]);
 
   return (
-    <section className={cn("section-pad bg-section", className)} aria-labelledby="live-ops-heading">
+    <section
+      ref={sectionRef}
+      className={cn("section-pad bg-section", className)}
+      aria-labelledby="live-ops-heading"
+    >
       <div className="container-ar">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold)]">
-            <span className="live-dot" aria-hidden />
-            {config.opsHeadline}
-          </p>
           <h2
             id="live-ops-heading"
-            className="mt-3 text-3xl font-bold tracking-tight text-[var(--heading)] sm:text-4xl"
+            className="text-3xl font-bold tracking-tight text-[var(--heading)] sm:text-4xl"
           >
             {config.opsHeadline}
           </h2>
@@ -160,19 +141,59 @@ export function LiveOperationsPanel({ config, className }: Props) {
           </p>
         </div>
 
-        <div className="mx-auto mt-10 max-w-4xl overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-raised)] p-4 shadow-[var(--shadow-md)] sm:p-6">
-          <canvas
-            ref={canvasRef}
-            className="w-full"
-            role="img"
-            aria-label="Live operational activity trend across Alto Rich investment sectors"
-          />
+        <div className="mx-auto mt-10 max-w-4xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-raised)] p-4 shadow-[var(--shadow-md)] sm:p-6">
+          <div className="relative w-full overflow-hidden rounded-[var(--radius-sm)] bg-[var(--gray-50)] ring-1 ring-[var(--border)]">
+            <svg
+              viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+              className="block h-auto w-full"
+              style={{ minHeight: 200, aspectRatio: `${VIEW_W} / ${VIEW_H}` }}
+              role="img"
+              aria-label="Live operational activity trend across Alto Rich investment sectors"
+            >
+              <defs>
+                <linearGradient id={`ops-fill-${gradientId}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#d4a853" stopOpacity="0.45" />
+                  <stop offset="55%" stopColor="#d4a853" stopOpacity="0.12" />
+                  <stop offset="100%" stopColor="#d4a853" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+
+              {/* Guide lines so the chart area never reads as empty */}
+              {[0.25, 0.5, 0.75].map((ratio) => (
+                <line
+                  key={ratio}
+                  x1={PAD_X}
+                  y1={PAD_Y + (VIEW_H - PAD_Y * 2) * ratio}
+                  x2={VIEW_W - PAD_X}
+                  y2={PAD_Y + (VIEW_H - PAD_Y * 2) * ratio}
+                  stroke="currentColor"
+                  className="text-[var(--border-strong)]"
+                  strokeWidth="1"
+                  strokeDasharray="4 8"
+                  opacity="0.7"
+                />
+              ))}
+
+              <path d={path.area} fill={`url(#ops-fill-${gradientId})`} />
+              <path
+                d={path.line}
+                fill="none"
+                stroke="#d4a853"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx={path.tip.x} cy={path.tip.y} r="14" fill="#10b981" opacity="0.2" />
+              <circle cx={path.tip.x} cy={path.tip.y} r="6" fill="#10b981" />
+              <circle cx={path.tip.x} cy={path.tip.y} r="2.5" fill="#ffffff" />
+            </svg>
+          </div>
         </div>
 
         <ul className="mx-auto mt-8 grid max-w-4xl gap-3 sm:grid-cols-2">
-          {PACKAGE_CONFIG.map((pkg) => (
+          {sectors.map((sector) => (
             <li
-              key={pkg.slug}
+              key={sector.id}
               className="flex items-center justify-between gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-raised)] px-4 py-3.5 shadow-[var(--shadow-sm)]"
             >
               <div className="flex min-w-0 items-center gap-3">
@@ -180,7 +201,7 @@ export function LiveOperationsPanel({ config, className }: Props) {
                   className="live-dot shrink-0 shadow-[0_0_0_4px_color-mix(in_srgb,var(--emerald-light)_22%,transparent)]"
                   aria-hidden
                 />
-                <span className="truncate text-sm font-medium text-[var(--heading)]">{pkg.subtitle}</span>
+                <span className="truncate text-sm font-medium text-[var(--heading)]">{sector.name}</span>
               </div>
               <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-[var(--emerald)]">
                 {config.opsStatusLabel}

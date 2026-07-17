@@ -10,17 +10,18 @@ function pad2(n: number) {
 }
 
 function splitSeconds(total: number) {
-  const days = Math.floor(total / 86400);
-  const hours = Math.floor((total % 86400) / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const seconds = total % 60;
+  const safe = Math.max(0, total);
+  const days = Math.floor(safe / 86400);
+  const hours = Math.floor((safe % 86400) / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const seconds = safe % 60;
   return { days, hours, minutes, seconds };
 }
 
 function CountdownBlock({ value, label, compact }: { value: string; label: string; compact?: boolean }) {
   if (compact) {
     return (
-      <div className="flex flex-col items-center rounded-lg border border-[var(--emerald)]/30 bg-[var(--emerald-soft)]/40 px-1.5 py-1 min-w-[2.5rem]">
+      <div className="flex min-w-[2.5rem] flex-col items-center rounded-lg border border-[var(--emerald)]/30 bg-[var(--emerald-soft)]/40 px-1.5 py-1">
         <span className="text-sm font-bold tabular-nums text-[var(--emerald)]">{value}</span>
         <span className="text-[8px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
       </div>
@@ -32,7 +33,9 @@ function CountdownBlock({ value, label, compact }: { value: string; label: strin
       <span className="flex h-10 w-full min-w-[2.75rem] items-center justify-center rounded-lg bg-[var(--emerald)] text-xl font-bold tabular-nums text-white sm:h-11 sm:text-2xl">
         {value}
       </span>
-      <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">{label}</span>
+      <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+        {label}
+      </span>
     </div>
   );
 }
@@ -46,60 +49,16 @@ export function WeeklyCountdown({
   label?: string;
   compact?: boolean;
 }) {
-  const [mounted, setMounted] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    setMounted(true);
     setNow(new Date());
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
   }, []);
 
   const remaining = useMemo(() => weeklyCountdownTarget(now).secondsRemaining, [now]);
   const { days, hours, minutes, seconds } = splitSeconds(remaining);
-
-  if (!mounted) {
-    if (compact) {
-      return (
-        <div className={cn("w-full", className)} aria-hidden>
-          <div className="flex items-center gap-1.5">
-            <Clock size={14} className="shrink-0 text-[var(--emerald)]" aria-hidden />
-            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--emerald)]">{label}</p>
-          </div>
-          <div className="mt-2 flex gap-1">
-            <CountdownBlock value="0" label="D" compact />
-            <CountdownBlock value="00" label="H" compact />
-            <CountdownBlock value="00" label="M" compact />
-            <CountdownBlock value="00" label="S" compact />
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div
-        className={cn(
-          "w-full rounded-2xl border-2 border-[var(--emerald)]/35 bg-gradient-to-br from-[var(--emerald-soft)] via-[var(--surface-raised)] to-[var(--surface-raised)] p-4 shadow-[var(--shadow-glow)] sm:p-5",
-          className
-        )}
-        aria-hidden
-      >
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--emerald)] text-white">
-            <Clock size={18} aria-hidden />
-          </div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--emerald)] sm:text-sm">{label}</p>
-        </div>
-        <div className="mt-3 flex gap-2 sm:gap-3">
-          <CountdownBlock value="0" label="Days" />
-          <CountdownBlock value="00" label="Hours" />
-          <CountdownBlock value="00" label="Mins" />
-          <CountdownBlock value="00" label="Secs" />
-        </div>
-      </div>
-    );
-  }
 
   if (compact) {
     return (
@@ -108,7 +67,7 @@ export function WeeklyCountdown({
           <Clock size={14} className="shrink-0 text-[var(--emerald)]" aria-hidden />
           <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--emerald)]">{label}</p>
         </div>
-        <div className="mt-2 flex gap-1">
+        <div className="mt-2 flex gap-1" suppressHydrationWarning>
           <CountdownBlock value={String(days)} label="D" compact />
           <CountdownBlock value={pad2(hours)} label="H" compact />
           <CountdownBlock value={pad2(minutes)} label="M" compact />
@@ -134,7 +93,7 @@ export function WeeklyCountdown({
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--emerald)] sm:text-sm">{label}</p>
       </div>
 
-      <div className="mt-3 flex gap-2 sm:gap-3">
+      <div className="mt-3 flex gap-2 sm:gap-3" suppressHydrationWarning>
         <CountdownBlock value={String(days)} label="Days" />
         <CountdownBlock value={pad2(hours)} label="Hours" />
         <CountdownBlock value={pad2(minutes)} label="Mins" />

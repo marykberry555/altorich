@@ -6,8 +6,8 @@ import {
   formatMembersCount,
   formatNairaCounter,
   formatPercentDisplay,
-  getLagosDailyWindow,
-  interpolateDailyNaira,
+  transactedTodayValueAt,
+  verifiedMembersValueAt,
   type HomepageStatsConfig
 } from "@/lib/homepage/homepage-stats";
 import { Card } from "@/components/ui/Card";
@@ -50,8 +50,9 @@ function useCountUp(target: number, durationMs: number, enabled: boolean, decima
   return value;
 }
 
-/** Platform scale & reliability — admin-configurable values. */
+/** Platform scale & reliability — members + transacted climb every Lagos day. */
 export function PlatformByTheNumbers({ config, className }: Props) {
+  const membersRef = useRef<HTMLSpanElement>(null);
   const transactedRef = useRef<HTMLSpanElement>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -81,12 +82,6 @@ export function PlatformByTheNumbers({ config, className }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  const members = useCountUp(
-    config.verifiedMembers,
-    1600,
-    visible && !reducedMotion,
-    0
-  );
   const satisfaction = useCountUp(
     config.memberSatisfactionPercent,
     1400,
@@ -101,43 +96,33 @@ export function PlatformByTheNumbers({ config, className }: Props) {
   );
 
   useEffect(() => {
-    const compute = (now = Date.now()) => {
-      const { progress } = getLagosDailyWindow(config.resetHourLagos, config.resetMinuteLagos, new Date(now));
-      return interpolateDailyNaira(
-        config.transactedTodayStart,
-        config.transactedTodayTarget,
-        config.transactedTodayMax,
-        progress,
-        true
-      );
-    };
-
-    if (reducedMotion) {
+    const paint = () => {
+      const members = verifiedMembersValueAt(config);
+      const transacted = transactedTodayValueAt(config);
+      if (membersRef.current) {
+        membersRef.current.textContent = formatMembersCount(members, config.verifiedMembersSuffix);
+      }
       if (transactedRef.current) {
-        transactedRef.current.textContent = `${formatNairaCounter(compute())}${config.transactedTodaySuffix}`;
+        transactedRef.current.textContent = `${formatNairaCounter(transacted)}${config.transactedTodaySuffix}`;
       }
-      return;
-    }
-
-    let raf = 0;
-    let last = -1;
-    const tick = () => {
-      const value = compute();
-      if (value !== last && transactedRef.current) {
-        last = value;
-        transactedRef.current.textContent = `${formatNairaCounter(value)}${config.transactedTodaySuffix}`;
-      }
-      raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+
+    paint();
+    if (reducedMotion) return;
+
+    const id = window.setInterval(paint, 1000);
+    return () => window.clearInterval(id);
   }, [config, reducedMotion]);
 
   const cards = [
     {
       key: "members",
       icon: Users,
-      value: formatMembersCount(members, config.verifiedMembersSuffix),
+      valueNode: (
+        <span ref={membersRef}>
+          {formatMembersCount(verifiedMembersValueAt(config), config.verifiedMembersSuffix)}
+        </span>
+      ),
       label: config.verifiedMembersLabel,
       tone: "emerald" as const
     },
@@ -146,7 +131,7 @@ export function PlatformByTheNumbers({ config, className }: Props) {
       icon: Activity,
       valueNode: (
         <span ref={transactedRef}>
-          {formatNairaCounter(config.transactedTodayStart)}
+          {formatNairaCounter(transactedTodayValueAt(config))}
           {config.transactedTodaySuffix}
         </span>
       ),
@@ -214,7 +199,7 @@ export function PlatformByTheNumbers({ config, className }: Props) {
                 </div>
                 <p
                   className={cn(
-                    "mt-5 text-2xl font-bold tracking-tight sm:text-3xl",
+                    "mt-5 text-2xl font-bold tabular-nums tracking-tight sm:text-3xl",
                     card.tone === "gold" ? "text-[var(--gold)]" : "text-[var(--heading)]"
                   )}
                 >

@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   formatNairaCounter,
+  formatNairaWithKobo,
   projectEarnings,
   wealthGrowthValueAt,
   type HomepageStatsConfig
 } from "@/lib/homepage/homepage-stats";
-import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
+
+const CALCULATOR_DEFAULT = 1_000_000;
 
 type Props = {
   config: HomepageStatsConfig;
@@ -21,58 +23,46 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function parseInvestmentInput(raw: string) {
-  const digits = raw.replace(/[^\d]/g, "");
+/** Keep digits only (max 12). */
+function digitsOnly(raw: string) {
+  return raw.replace(/\D/g, "").slice(0, 12);
+}
+
+/** 65000 → 65,000 (locale-independent). */
+function withCommas(digits: string) {
+  if (!digits) return "";
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function toAmount(digits: string) {
   if (!digits) return 0;
-  return Number(digits);
+  const n = Number(digits);
+  return Number.isFinite(n) ? n : 0;
 }
 
-function formatInputDisplay(amount: number) {
-  if (!amount) return "";
-  return amount.toLocaleString("en-NG");
+function formatProjection(amount: number) {
+  if (!Number.isFinite(amount) || amount <= 0) return "₦0";
+  return formatNairaCounter(amount);
 }
 
-function useAnimatedNaira(target: number, reducedMotion: boolean) {
-  const [display, setDisplay] = useState(target);
-  const currentRef = useRef(target);
-
-  useEffect(() => {
-    if (reducedMotion) {
-      currentRef.current = target;
-      setDisplay(target);
-      return;
-    }
-
-    let raf = 0;
-    const tick = () => {
-      const current = currentRef.current;
-      const delta = target - current;
-      if (Math.abs(delta) < 1) {
-        currentRef.current = target;
-        setDisplay(target);
-        return;
-      }
-      const next = current + delta * 0.18;
-      currentRef.current = next;
-      setDisplay(Math.round(next));
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, reducedMotion]);
-
-  return display;
-}
-
-/** Live wealth growth counter + interactive Platform Earning Model calculator. */
+/** Live wealth growth counter + compact earnings calculator. */
 export function WealthGrowthExperience({ config, className }: Props) {
-  const valueRef = useRef<HTMLSpanElement>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [staticLabel, setStaticLabel] = useState(() =>
-    formatNairaCounter(wealthGrowthValueAt(config))
+  const [counterLabel, setCounterLabel] = useState(() =>
+    formatNairaWithKobo(wealthGrowthValueAt(config))
   );
-  const [inputRaw, setInputRaw] = useState("");
-  const principal = parseInvestmentInput(inputRaw);
+  const [amountDigits, setAmountDigits] = useState(() => String(CALCULATOR_DEFAULT));
+  const valueRef = useRef<HTMLSpanElement>(null);
+  const amount = toAmount(amountDigits);
+  const displayValue = withCommas(amountDigits);
+
+  const projection = projectEarnings(
+    amount,
+    config.calculatorDailyRatePercent,
+    config.calculatorWeeklyRatePercent
+  );
+
+  const belowMin = amount > 0 && amount < config.calculatorMinInvestment;
 
   useEffect(() => {
     setReducedMotion(prefersReducedMotion());
@@ -82,44 +72,38 @@ export function WealthGrowthExperience({ config, className }: Props) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  // Always tick — including reduced-motion (interval) and background-tab throttling.
   useEffect(() => {
-    if (reducedMotion) {
-      setStaticLabel(formatNairaCounter(wealthGrowthValueAt(config)));
-      return;
-    }
-
     let raf = 0;
-    let lastShown = -1;
+    let interval = 0;
+    let lastLabel = "";
 
-    const tick = () => {
-      const value = wealthGrowthValueAt(config);
-      if (value !== lastShown && valueRef.current) {
-        lastShown = value;
-        valueRef.current.textContent = formatNairaCounter(value);
-      }
-      raf = requestAnimationFrame(tick);
+    const paint = () => {
+      const label = formatNairaWithKobo(wealthGrowthValueAt(config));
+      if (label === lastLabel) return false;
+      lastLabel = label;
+      setCounterLabel(label);
+      if (valueRef.current) valueRef.current.textContent = label;
+      return true;
     };
 
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    paint();
+
+    interval = window.setInterval(paint, reducedMotion ? 200 : 50);
+
+    if (!reducedMotion) {
+      const tick = () => {
+        paint();
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }
+
+    return () => {
+      window.clearInterval(interval);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, [config, reducedMotion]);
-
-  const projection = useMemo(
-    () =>
-      projectEarnings(
-        principal,
-        config.calculatorDailyRatePercent,
-        config.calculatorWeeklyRatePercent
-      ),
-    [principal, config.calculatorDailyRatePercent, config.calculatorWeeklyRatePercent]
-  );
-
-  const belowMin = principal > 0 && principal < config.calculatorMinInvestment;
-  const todayAnim = useAnimatedNaira(projection.today, reducedMotion);
-  const weeklyAnim = useAnimatedNaira(projection.weekly, reducedMotion);
-  const monthlyAnim = useAnimatedNaira(projection.monthly, reducedMotion);
-  const annualAnim = useAnimatedNaira(projection.annual, reducedMotion);
-  const principalAnim = useAnimatedNaira(projection.principal, reducedMotion);
 
   return (
     <section
@@ -130,95 +114,81 @@ export function WealthGrowthExperience({ config, className }: Props) {
       aria-labelledby="wealth-growth-heading"
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,168,83,0.14),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.12),transparent_60%)]"
         aria-hidden
       />
       <div className="container-ar relative">
-        {/* Feature 1 — Live wealth growth */}
-        <div className="mx-auto max-w-3xl text-center">
+        <div className="mx-auto max-w-4xl px-2 text-center">
           <h2
             id="wealth-growth-heading"
-            className="text-3xl font-bold tracking-tight text-[var(--heading)] sm:text-4xl lg:text-[2.75rem]"
+            className="text-3xl font-bold tracking-tight text-[var(--heading)] sm:text-4xl"
           >
             {config.wealthGrowthHeadline}
           </h2>
-          <div
+
+          <p
             className={cn(
-              "relative mt-8 rounded-[var(--radius-lg)] border border-[var(--border-float)] bg-[var(--surface-raised)] px-6 py-10 shadow-[var(--shadow-md)]",
-              "sm:px-10 sm:py-12"
+              "mt-8 w-full font-extrabold tabular-nums tracking-tight text-[var(--emerald)]",
+              "text-[clamp(2.5rem,9vw,4.25rem)] leading-none tracking-tight",
+              "drop-shadow-[0_0_28px_rgba(16,185,129,0.35)]"
             )}
+            aria-live="off"
           >
-            <div
-              className="pointer-events-none absolute inset-0 rounded-[var(--radius-lg)] shadow-[0_0_60px_rgba(212,168,83,0.14)]"
-              aria-hidden
-            />
-            <p
-              className={cn(
-                "font-bold tracking-tight text-[var(--gold)]",
-                "text-[clamp(2.75rem,9vw,4.75rem)] leading-none",
-                "drop-shadow-[0_0_28px_rgba(212,168,83,0.4)]"
-              )}
-              aria-live="off"
-            >
-              <span ref={valueRef}>{staticLabel}</span>
-            </p>
-            <p className="mt-5 text-sm text-[var(--text-muted)]">{config.wealthGrowthSupport}</p>
-          </div>
+            <span ref={valueRef}>{counterLabel}</span>
+          </p>
         </div>
 
-        {/* Feature 2 — Earnings calculator */}
-        <div className="mx-auto mt-16 max-w-4xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold)]">
-              Earnings preview
-            </p>
-            <h3 className="mt-3 text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">
-              {config.calculatorTitle}
-            </h3>
-            <p className="mt-3 text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
-              {config.calculatorDescription}
-            </p>
-          </div>
+        <div className="mx-auto mt-12 max-w-3xl">
+          <h3 className="text-center text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">
+            {config.calculatorTitle}
+          </h3>
+          <p className="mx-auto mt-3 max-w-md text-center text-sm text-[var(--text-muted)]">
+            Enter your intended investment amount to see your projected numbers below.
+          </p>
 
-          <label className="mx-auto mt-8 block max-w-xl">
-            <span className="text-sm font-medium text-[var(--text)]">Investment Amount (₦)</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder={`Enter amount (Minimum ₦${config.calculatorMinInvestment.toLocaleString("en-NG")})`}
-              value={formatInputDisplay(principal)}
-              onChange={(e) => setInputRaw(e.target.value)}
+          <label className="mx-auto mt-5 block max-w-md">
+            <span className="sr-only">Investment amount in naira</span>
+            <div
               className={cn(
-                "mt-2 h-14 w-full rounded-[var(--radius)] border border-[var(--border-strong)] bg-[var(--surface-raised)]",
-                "px-4 text-lg font-semibold text-[var(--heading)] shadow-[var(--shadow-sm)]",
-                "outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/25"
+                "flex h-14 w-full items-center justify-center gap-1 rounded-[var(--radius)]",
+                "border border-[var(--border-strong)] bg-[var(--surface-raised)] px-4 shadow-[var(--shadow-sm)]",
+                "transition focus-within:border-[var(--emerald)] focus-within:ring-2 focus-within:ring-[var(--emerald)]/25"
               )}
-              aria-describedby="calculator-hint"
-            />
-            <span id="calculator-hint" className="mt-2 block text-xs text-[var(--text-subtle)]">
-              {belowMin
-                ? `Minimum investment is ₦${config.calculatorMinInvestment.toLocaleString("en-NG")}.`
-                : "Calculations update instantly as you type."}
-            </span>
+            >
+              <span className="shrink-0 select-none text-lg font-semibold text-[var(--text-muted)]" aria-hidden>
+                ₦
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={displayValue}
+                onChange={(e) => setAmountDigits(digitsOnly(e.target.value))}
+                placeholder="1,000,000"
+                style={{ width: `${Math.max((displayValue || "1,000,000").length, 1) + 1}ch` }}
+                className={cn(
+                  "max-w-[min(100%,18ch)] bg-transparent text-center text-lg font-semibold tabular-nums text-[var(--heading)]",
+                  "placeholder:text-[var(--text-subtle)] outline-none"
+                )}
+                aria-invalid={belowMin || undefined}
+              />
+            </div>
+            {belowMin ? (
+              <span className="mt-2 block text-center text-xs text-[var(--text-subtle)]">
+                Minimum ₦{withCommas(String(config.calculatorMinInvestment))}
+              </span>
+            ) : null}
           </label>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <ResultCard label="Current Investment" value={formatNairaCounter(principalAnim)} accent="heading" />
-            <ResultCard label="Today's Earnings" value={formatNairaCounter(todayAnim)} accent="gold" />
-            <ResultCard label="Weekly Earnings" value={formatNairaCounter(weeklyAnim)} accent="emerald" />
-            <ResultCard label="Monthly Projection" value={formatNairaCounter(monthlyAnim)} accent="gold" />
-            <ResultCard label="Annual Projection" value={formatNairaCounter(annualAnim)} accent="emerald" />
-            <ResultCard
-              label="Platform Earning Model"
-              value={`${config.calculatorDailyRatePercent}% daily · ${config.calculatorWeeklyRatePercent}% weekly`}
-              accent="heading"
-              small
-            />
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
+            <ResultCard label="Today" value={formatProjection(projection.today)} />
+            <ResultCard label="Weekly" value={formatProjection(projection.weekly)} />
+            <ResultCard label="Monthly" value={formatProjection(projection.monthly)} />
+            <ResultCard label="Annual" value={formatProjection(projection.annual)} />
           </div>
 
-          <p className="mx-auto mt-6 max-w-2xl text-center text-xs leading-relaxed text-[var(--text-subtle)]">
-            {config.calculatorDisclaimer} Powered by Alto Rich&apos;s {PLATFORM_EARNING.modelName}.
+          <p className="mt-4 text-center text-xs text-[var(--text-subtle)]">
+            Illustrative · {config.calculatorDailyRatePercent}% daily / {config.calculatorWeeklyRatePercent}% weekly
           </p>
         </div>
       </div>
@@ -226,30 +196,13 @@ export function WealthGrowthExperience({ config, className }: Props) {
   );
 }
 
-function ResultCard({
-  label,
-  value,
-  accent,
-  small
-}: {
-  label: string;
-  value: string;
-  accent: "gold" | "emerald" | "heading";
-  small?: boolean;
-}) {
-  const color =
-    accent === "gold"
-      ? "text-[var(--gold)]"
-      : accent === "emerald"
-        ? "text-[var(--emerald)]"
-        : "text-[var(--heading)]";
-
+function ResultCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card variant="elevated" className="card-lift h-full">
+    <Card variant="elevated" padding="sm" className="text-center">
       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-subtle)]">
         {label}
       </p>
-      <p className={cn("mt-2 font-bold tracking-tight", color, small ? "text-base leading-snug" : "text-2xl sm:text-[1.65rem]")}>
+      <p className="mt-1.5 text-xl font-bold tabular-nums tracking-tight text-[var(--emerald)] sm:text-2xl">
         {value}
       </p>
     </Card>
