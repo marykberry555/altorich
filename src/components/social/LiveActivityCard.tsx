@@ -32,13 +32,13 @@ export function LiveActivityCard({
   return (
     <div
       className={cn(
-        "pointer-events-auto w-[min(90vw,21.5rem)] rounded-[var(--radius)] border px-4 py-4 sm:w-[min(90vw,22.5rem)]",
+        "pointer-events-auto w-[min(90vw,21.5rem)] rounded-[var(--radius)] border px-4 py-4 sm:w-[min(90vw,22.5rem)] sm:px-5",
         "border-[var(--border-float)] bg-[var(--surface-float)] shadow-[var(--shadow-float)]",
         className
       )}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(12px)",
+        transform: visible ? "translateY(0)" : "translateY(14px)",
         transition: reducedMotion
           ? "opacity 160ms ease"
           : `opacity ${duration}ms var(--ease-out), transform ${duration}ms var(--ease-out)`
@@ -49,7 +49,7 @@ export function LiveActivityCard({
       aria-label={`${personLine}. ${actionLine}. ${timeLine}.`}
     >
       <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="min-w-0 flex-1 space-y-2.5">
           <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--gold)]">
             <span
               className="inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--emerald-light)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--emerald-light)_28%,transparent)]"
@@ -63,7 +63,7 @@ export function LiveActivityCard({
           <p className="text-sm font-medium leading-snug text-[var(--text-float-secondary)]">
             {actionLine}
           </p>
-          <p className="text-xs font-medium leading-none text-[var(--text-float-muted)]">{timeLine}</p>
+          <p className="pt-0.5 text-xs font-medium leading-none text-[var(--text-float-muted)]">{timeLine}</p>
         </div>
         <button
           type="button"

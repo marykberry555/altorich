@@ -4,8 +4,12 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { DownloadAppBadge } from "@/components/pwa/DownloadAppBadge";
 import { hero, howItWorks, trustIndicators, sampleTestimonials, faqs } from "@/content/site";
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
+import type { HomepageStatsConfig } from "@/lib/homepage/homepage-stats";
 import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
 import { PageHero } from "@/components/marketing/PageHero";
+import { WealthGrowthExperience } from "@/components/marketing/WealthGrowthExperience";
+import { LiveOperationsPanel } from "@/components/marketing/LiveOperationsPanel";
+import { PlatformByTheNumbers } from "@/components/marketing/PlatformByTheNumbers";
 import { IMAGES } from "@/lib/images";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -14,7 +18,11 @@ import { TestimonialsMarquee } from "@/components/marketing/TestimonialsMarquee"
 import { WeeklyCountdown } from "@/components/roi/WeeklyCountdown";
 import { StepNumber } from "@/components/ui/StepNumber";
 
-export function HomePage() {
+type Props = {
+  homepageStats: HomepageStatsConfig;
+};
+
+export function HomePage({ homepageStats }: Props) {
   const investmentCategories = PACKAGE_CONFIG.map((pkg) => ({
     slug: pkg.slug,
     title: pkg.title,
@@ -30,7 +38,10 @@ export function HomePage() {
   return (
     <>
       <section className="gradient-hero relative overflow-hidden section-pad">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.14),transparent_55%)]" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.14),transparent_55%)]"
+          aria-hidden
+        />
         <div className="container-ar relative grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
           <div className="animate-fade-up">
             <Badge variant="emerald">{hero.eyebrow}</Badge>
@@ -96,6 +107,8 @@ export function HomePage() {
         </div>
       </section>
 
+      <WealthGrowthExperience config={homepageStats} />
+
       <section className="section-pad bg-section">
         <div className="container-ar">
           <PageHero
@@ -111,9 +124,18 @@ export function HomePage() {
         </div>
       </section>
 
+      <LiveOperationsPanel config={homepageStats} />
+
+      <PlatformByTheNumbers config={homepageStats} />
+
       <section className="section-pad bg-[var(--gray-50)]">
         <div className="container-ar">
-          <PageHero eyebrow="How it works" title="Four steps to Monday earnings" align="center" className="mx-auto" />
+          <PageHero
+            eyebrow="How it works"
+            title="Four steps to Monday earnings"
+            align="center"
+            className="mx-auto"
+          />
           <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             {howItWorks.map((step) => (
               <div key={step.step} className="relative">
@@ -136,7 +158,10 @@ export function HomePage() {
           />
           <div className="grid gap-4 sm:grid-cols-2">
             {trustIndicators.map((item) => (
-              <div key={item.label} className="rounded-[var(--radius)] border border-white/10 bg-white/5 p-5 card-lift">
+              <div
+                key={item.label}
+                className="rounded-[var(--radius)] border border-white/10 bg-white/5 p-5 card-lift"
+              >
                 <p className="text-xs uppercase tracking-wider text-white/50">{item.label}</p>
                 <p className="mt-2 font-semibold">{item.value}</p>
               </div>
@@ -161,7 +186,10 @@ export function HomePage() {
           <PageHero eyebrow="FAQ" title="Common questions" align="center" className="mx-auto" />
           <div className="mt-10 space-y-4">
             {faqs.map((item) => (
-              <details key={item.q} className="group rounded-[var(--radius)] border border-[var(--border)] bg-[var(--gray-50)] p-5">
+              <details
+                key={item.q}
+                className="group rounded-[var(--radius)] border border-[var(--border)] bg-[var(--gray-50)] p-5"
+              >
                 <summary className="cursor-pointer font-semibold text-[var(--heading)]">{item.q}</summary>
                 <p className="mt-3 text-sm leading-relaxed text-[var(--text-muted)]">{item.a}</p>
               </details>

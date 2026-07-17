@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { mergeFeatureFlags, type FeatureFlags } from "@/lib/feature-flags";
+import {
+  HOMEPAGE_STATS_SETTINGS_KEY,
+  mergeHomepageStats,
+  type HomepageStatsConfig
+} from "@/lib/homepage/homepage-stats";
 
 type Client = SupabaseClient<Database>;
 
@@ -137,5 +142,23 @@ export class SettingsService {
       updated_at: new Date().toISOString()
     } as Database["public"]["Tables"]["settings"]["Insert"]);
     if (error) throw error;
+  }
+
+  async getHomepageStats() {
+    const data = await this.get<Partial<HomepageStatsConfig>>(HOMEPAGE_STATS_SETTINGS_KEY);
+    return mergeHomepageStats(data);
+  }
+
+  async updateHomepageStats(updates: Partial<HomepageStatsConfig>, updatedBy?: string) {
+    const current = await this.getHomepageStats();
+    const next = mergeHomepageStats({ ...current, ...updates });
+    const { error } = await this.supabase.from("settings").upsert({
+      key: HOMEPAGE_STATS_SETTINGS_KEY,
+      value: next,
+      updated_by: updatedBy ?? null,
+      updated_at: new Date().toISOString()
+    } as Database["public"]["Tables"]["settings"]["Insert"]);
+    if (error) throw error;
+    return next;
   }
 }

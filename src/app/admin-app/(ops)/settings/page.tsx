@@ -3,9 +3,11 @@ import { getServiceRoleServices } from "@/lib/services";
 import { Card } from "@/components/ui/Card";
 import { SectionHeading } from "@/components/design-system";
 import { AdminFeatureFlags } from "@/components/admin/AdminFeatureFlags";
+import { HomepageStatsAdmin } from "@/components/admin/HomepageStatsAdmin";
 import { getBuildId } from "@/lib/build-id";
 import { ADMIN_DOWNLOAD } from "@/lib/admin-app/constants";
 import { formatBytes, getAdminReleaseMeta } from "@/lib/admin-app/release-meta";
+import { DEFAULT_HOMEPAGE_STATS } from "@/lib/homepage/homepage-stats";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,7 @@ export default async function AdminAppSettingsPage() {
   const withdrawalWindows = services ? await services.settings.getWithdrawalWindows() : "";
   const featureFlags = services ? await services.settings.getFeatureFlags() : null;
   const authSettings = services ? await services.settings.getAuthSettings() : { trusted_device_days: 90 };
+  const homepageStats = services ? await services.settings.getHomepageStats() : DEFAULT_HOMEPAGE_STATS;
   const release = getAdminReleaseMeta();
   const buildId = getBuildId();
 
@@ -27,6 +30,8 @@ export default async function AdminAppSettingsPage() {
       </header>
 
       {featureFlags ? <AdminFeatureFlags initial={featureFlags} /> : null}
+
+      <HomepageStatsAdmin initial={homepageStats} />
 
       <Card variant="elevated" padding="md" className="border-white/10 bg-zinc-900/80">
         <SectionHeading title="Platform announcements" />

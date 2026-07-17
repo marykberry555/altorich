@@ -34,7 +34,7 @@
   /* Floating toasts / Live Activity — elevated premium notification */
   --surface-float: #ffffff;
   --border-float: rgba(28, 27, 25, 0.1);
-  --shadow-float: 0 12px 40px rgba(15, 27, 45, 0.14), 0 4px 12px rgba(15, 27, 45, 0.06);
+  --shadow-float: 0 12px 36px rgba(15, 27, 45, 0.1), 0 2px 8px rgba(15, 27, 45, 0.05);
   --text-float: var(--gray-900);
   --text-float-secondary: var(--gray-600);
   --text-float-muted: var(--gray-400);
@@ -115,7 +115,7 @@
   /* Elevated float — clearly lighter than page so Live Activity does not blend in */
   --surface-float: #273447;
   --border-float: rgba(238, 241, 245, 0.18);
-  --shadow-float: 0 16px 48px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 14px 40px rgba(0, 0, 0, 0.42), 0 4px 12px rgba(0, 0, 0, 0.28);
   --text-float: #ffffff;
   --text-float-secondary: #c5cdd8;
   --text-float-muted: #9aa5b4;
@@ -267,6 +267,28 @@ img {
   animation: live-dot 1.6s ease-in-out infinite;
 }
 
+/* Homepage sector activity — gentle width pulse via GPU transform */
+@keyframes sector-activity-pulse {
+  0%,
+  100% {
+    transform: scaleX(0.92);
+    opacity: 0.88;
+  }
+  50% {
+    transform: scaleX(1.08);
+    opacity: 1;
+  }
+}
+
+.sector-activity-bar {
+  width: var(--sector-base, 70%);
+  will-change: transform, opacity;
+  animation-name: sector-activity-pulse;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  transform-origin: left center;
+}
+
 .card-lift {
   transition:
     transform var(--motion-base) var(--ease-out),
@@ -288,6 +310,7 @@ img {
   .animate-fade-up,
   .animate-live-glow,
   .live-dot,
+  .sector-activity-bar,
   .card-lift,
   .card-lift:hover {
     animation: none !important;
