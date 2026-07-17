@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { apiErrorResponse } from "@/lib/errors";
+import { apiErrorResponse, AppError } from "@/lib/errors";
 import { getAuthService } from "@/lib/auth/service";
 import { applySessionToCookies } from "@/lib/auth/apply-session";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
@@ -14,7 +14,8 @@ const schema = z.object({
   username: z.string().min(3),
   pin: z.string().length(6),
   deviceFingerprint: z.string().min(3),
-  userAgent: z.string().optional()
+  userAgent: z.string().optional(),
+  intent: z.enum(["ops", "admin-app"]).optional()
 });
 
 export async function POST(req: Request) {
@@ -54,16 +55,21 @@ export async function POST(req: Request) {
       });
     }
 
-    await applySessionToCookies(result.session);
-
-    await captureLoginActivity(req, result.userId);
-
     const supabase = await getServiceClientOrThrow();
     const isAdmin = await userIsAdmin(supabase, result.userId);
+
+    if (body.intent && !isAdmin) {
+      throw new AppError("Administrator access required.", 403, "FORBIDDEN");
+    }
+
+    await applySessionToCookies(result.session);
+    await captureLoginActivity(req, result.userId);
+
     const redirect = resolvePostLoginRedirect({
       isAdmin,
       mustChangePin: result.mustChangePin,
-      mustChangePassword: result.mustChangePassword
+      mustChangePassword: result.mustChangePassword,
+      intent: body.intent
     });
 
     return NextResponse.json({ ok: true, redirect, isAdmin });

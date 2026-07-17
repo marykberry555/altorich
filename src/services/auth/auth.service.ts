@@ -227,11 +227,19 @@ export class AuthService {
     const { data: authUser, error: authErr } = await this.supabase.auth.admin.getUserById(profile.id);
     if (authErr || !authUser.user?.email) throw Errors.internal();
 
+    const { data: adminRole } = await this.supabase
+      .from("admin_roles")
+      .select("role")
+      .eq("user_id", profile.id)
+      .maybeSingle();
+    const isAdminAccount = Boolean(adminRole);
+
     const skipDeviceOtp =
-      process.env.NODE_ENV !== "production" &&
-      (process.env.AUTH_SKIP_DEVICE_OTP === "true" ||
-        process.env.NEXT_PUBLIC_SITE_URL?.includes("localhost") ||
-        username === "demouser");
+      isAdminAccount ||
+      (process.env.NODE_ENV !== "production" &&
+        (process.env.AUTH_SKIP_DEVICE_OTP === "true" ||
+          process.env.NEXT_PUBLIC_SITE_URL?.includes("localhost") ||
+          username === "demouser"));
 
     if (!skipDeviceOtp) {
       const ttlDays = await this.getTrustedDeviceTtlDays();

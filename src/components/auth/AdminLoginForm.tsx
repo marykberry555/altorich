@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PinField } from "@/components/ui/PinField";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Card } from "@/components/ui/Card";
+import { useDeviceFingerprint } from "@/lib/auth/use-device-fingerprint";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
 
@@ -26,8 +28,9 @@ export function AdminLoginForm({
   submitLabel = "Sign in to ops centre",
   shell = "default"
 }: Props) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const deviceFingerprint = useDeviceFingerprint();
+  const [username, setUsername] = useState("");
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,16 +45,28 @@ export function AdminLoginForm({
     setError("");
 
     try {
-      const res = await fetch("/api/auth/sign-in", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ email, password, intent })
+        body: JSON.stringify({
+          username,
+          pin,
+          deviceFingerprint,
+          userAgent: navigator.userAgent,
+          intent
+        })
       });
       const data = await res.json();
 
       if (!res.ok) {
         setError(data.error ?? "Sign in failed.");
+        setLoading(false);
+        return;
+      }
+
+      if (data.requiresDeviceOtp) {
+        setError("Device verification is required. Check your admin email for a code, then try again from the homepage login.");
         setLoading(false);
         return;
       }
@@ -77,17 +92,17 @@ export function AdminLoginForm({
       </div>
 
       <form onSubmit={handleSubmit} className="grid gap-3">
-        <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" />
         <Input
-          label="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          label="Username"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           required
-          autoComplete="current-password"
+          autoComplete="username"
         />
+        <PinField label="6-digit PIN" value={pin} onChange={setPin} required autoComplete="current-password" />
         {error ? <p className="text-xs text-red-400">{error}</p> : null}
-        <Button type="submit" disabled={loading} className="w-full">
+        <Button type="submit" disabled={loading || pin.length !== 6} className="w-full">
           {loading ? "Signing in..." : submitLabel}
         </Button>
       </form>

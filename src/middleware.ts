@@ -139,7 +139,7 @@ export async function middleware(request: NextRequest) {
           isAdminRole = false;
         }
       }
-      return withNoStore(NextResponse.redirect(buildPublicUrl(isAdminRole ? HARD_OPS_HOME : "/dashboard", request)));
+      return withNoStore(NextResponse.redirect(buildPublicUrl(isAdminRole ? ADMIN_APP_HOME : "/dashboard", request)));
     }
     return withNoStore(response);
   }

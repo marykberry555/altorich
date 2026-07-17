@@ -47,7 +47,7 @@ export function LoginForm() {
 
   function resolveRedirect(apiRedirect: string) {
     if (redirectParam && !redirectParam.startsWith("/auth")) {
-      if (apiRedirect === "/dashboard" || apiRedirect === "/hard") {
+      if (apiRedirect === "/dashboard" || apiRedirect === "/hard" || apiRedirect === "/admin-app") {
         return redirectParam;
       }
     }

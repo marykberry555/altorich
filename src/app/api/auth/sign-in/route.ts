@@ -30,11 +30,14 @@ export async function POST(req: Request) {
     const redirect =
       body.intent === "admin-app" && isAdmin
         ? "/admin-app"
-        : resolvePostLoginRedirect({
-            isAdmin,
-            mustChangePin: result.mustChangePin,
-            mustChangePassword: result.mustChangePassword
-          });
+        : body.intent === "ops" && isAdmin
+          ? "/hard"
+          : resolvePostLoginRedirect({
+              isAdmin,
+              mustChangePin: result.mustChangePin,
+              mustChangePassword: result.mustChangePassword,
+              intent: body.intent
+            });
 
     return NextResponse.json({ ok: true, redirect, isAdmin });
   } catch (error) {

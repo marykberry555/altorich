@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { HARD_OPS_HOME } from "@/lib/hard-ops";
+import { ADMIN_APP_HOME } from "@/lib/admin-app/constants";
 
 /** PWA start URL — login first, dashboard when authenticated. */
 export default async function AppStartPage() {
@@ -19,7 +19,7 @@ export default async function AppStartPage() {
 
   try {
     const { data: isAdmin } = await supabase.rpc("has_admin_role");
-    if (isAdmin) redirect(HARD_OPS_HOME);
+    if (isAdmin) redirect(ADMIN_APP_HOME);
   } catch {
     // fall through to member dashboard
   }
