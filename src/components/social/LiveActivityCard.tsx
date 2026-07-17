@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LIVE_ACTIVITY_CONFIG } from "@/lib/social/live-activity-config";
 import { activityActionLabel, formatRelativeTime } from "@/lib/social/live-activity-format";
@@ -14,7 +15,7 @@ type LiveActivityCardProps = {
   className?: string;
 };
 
-/** Compact floating card — premium fintech, no marketing chrome. */
+/** Premium fintech Live Activity notification — high theme contrast, subtle motion. */
 export function LiveActivityCard({
   activity,
   visible,
@@ -24,14 +25,15 @@ export function LiveActivityCard({
   className
 }: LiveActivityCardProps) {
   const duration = reducedMotion ? 0 : LIVE_ACTIVITY_CONFIG.animationDurationMs;
+  const personLine = `${activity.firstName} from ${activity.locationLabel}`;
+  const actionLine = activityActionLabel(activity);
+  const timeLine = formatRelativeTime(activity.occurredAt, nowMs);
 
   return (
     <div
       className={cn(
-        "pointer-events-auto w-[min(100%,20.5rem)] rounded-2xl border px-3.5 py-3 backdrop-blur-md",
-        "border-emerald-700/20 bg-[color:color-mix(in_srgb,var(--surface-raised)_92%,transparent)]",
-        "shadow-[0_10px_28px_rgba(6,78,59,0.12)]",
-        "dark:border-emerald-400/20 dark:bg-slate-950/88 dark:shadow-[0_10px_28px_rgba(0,0,0,0.4)]",
+        "pointer-events-auto w-[min(90vw,21.5rem)] rounded-[var(--radius)] border px-4 py-4 sm:w-[min(90vw,22.5rem)]",
+        "border-[var(--border-float)] bg-[var(--surface-float)] shadow-[var(--shadow-float)]",
         className
       )}
       style={{
@@ -39,38 +41,42 @@ export function LiveActivityCard({
         transform: visible ? "translateY(0)" : "translateY(12px)",
         transition: reducedMotion
           ? "opacity 160ms ease"
-          : `opacity ${duration}ms ease, transform ${duration}ms ease`
+          : `opacity ${duration}ms var(--ease-out), transform ${duration}ms var(--ease-out)`
       }}
       role="status"
       aria-live="polite"
       aria-atomic="true"
+      aria-label={`${personLine}. ${actionLine}. ${timeLine}.`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-800 dark:text-emerald-300">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1 space-y-2">
+          <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--gold)]">
             <span
-              className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600 dark:bg-emerald-400"
+              className="inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--emerald-light)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--emerald-light)_28%,transparent)]"
               aria-hidden
             />
             Live Activity
           </p>
-          <p className="mt-1.5 truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
-            {activity.firstName} from {activity.locationLabel}
+          <p className="text-[1.0625rem] font-bold leading-snug tracking-tight text-[var(--text-float)] sm:text-lg">
+            {personLine}
           </p>
-          <p className="mt-1.5 text-sm font-medium leading-snug text-slate-800 dark:text-slate-100">
-            {activityActionLabel(activity)}
+          <p className="text-sm font-medium leading-snug text-[var(--text-float-secondary)]">
+            {actionLine}
           </p>
-          <p className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-            {formatRelativeTime(activity.occurredAt, nowMs)}
-          </p>
+          <p className="text-xs font-medium leading-none text-[var(--text-float-muted)]">{timeLine}</p>
         </div>
         <button
           type="button"
           onClick={onDismiss}
-          className="shrink-0 rounded-md px-1.5 py-0.5 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          className={cn(
+            "inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)]",
+            "-mr-1.5 -mt-1.5 text-[var(--text-float-muted)]",
+            "transition-colors hover:bg-[color-mix(in_srgb,var(--text-float)_8%,transparent)] hover:text-[var(--text-float)]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold)]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-float)]"
+          )}
           aria-label="Dismiss live activity"
         >
-          ×
+          <X className="size-4" strokeWidth={2.25} aria-hidden />
         </button>
       </div>
     </div>

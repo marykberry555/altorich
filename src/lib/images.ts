@@ -11,8 +11,8 @@ export const IMAGES = {
     alt: "Lagos business district skyline at golden hour — a modern investment backdrop"
   },
   about: {
-    src: "/images/team-nigeria.webp",
-    alt: "Professionals in a modern collaborative workspace"
+    src: "/brand/about.webp",
+    alt: "Alto Rich members and operations — building wealth across Nigeria"
   },
   plans: {
     src: "/images/investment-planning.webp",

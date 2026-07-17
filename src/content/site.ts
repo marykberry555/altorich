@@ -1,12 +1,12 @@
-import { COMPANY, REGULATORY_PLACEHOLDER } from "@/lib/company";
+import { COMPANY, REGULATORY_DISCLOSURE, REGULATORY_PLACEHOLDER } from "@/lib/company";
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 export const hero = {
-  eyebrow: "Nigeria · Monday payouts · Guaranteed returns",
-  title: PLATFORM_EARNING.headlineDaily,
-    subtitle:
-    "Invest in the sector that matches your financial goals while enjoying one transparent Platform Earning Model across the Alto Rich platform.",
-  guarantee: PLATFORM_EARNING.guarantee,
+  eyebrow: "Verified Platform · Monday payouts",
+  title: "Earn 5% Daily | 35% weekly",
+  subtitle:
+    "Choose an investment sector, fund your account, and watch your investment grow through Alto Rich's guaranteed Platform Earning Model.",
+  guarantee: "Guaranteed returns.",
   ctaPrimary: "Open an account",
   ctaSecondary: "See how it works"
 };
@@ -125,12 +125,21 @@ export const vision = {
 };
 
 export const values = [
-  { title: "Transparency", description: "Every balance is ledger-derived. Every rule is published." },
-  { title: "Discipline", description: "Cooperative structures, not speculation." },
-  { title: "Accessibility", description: "Entry from ₦20,000. Mobile-first. WAT support hours." },
+  {
+    title: "Transparency",
+    description: "Every balance comes from real ledger records. What you see is what you own."
+  },
+  {
+    title: "Discipline",
+    description: "Long-term wealth beats speculation. We favour published rules over market noise."
+  },
+  {
+    title: "Accessibility",
+    description: "Built for Nigerians using everyday phones and networks — from Lagos to Kano."
+  },
   {
     title: "Integrity",
-    description: "One guaranteed platform earning model with transparent ledgers and published Monday payout windows."
+    description: "One Platform Earning Model. Published settlement windows. Verified records."
   }
 ];
 
@@ -138,14 +147,115 @@ export const leadership = [
   {
     name: COMPANY.director,
     role: "Director",
-    bio: "Leads corporate governance and strategic direction for ALTORICH LTD, ensuring the platform maintains international standards while serving Nigerian members."
+    bio: "Leads corporate governance and strategic direction for ALTORICH LTD, ensuring the platform maintains international standards while serving Nigerian members from Lagos to Abuja and beyond."
   },
   {
-    name: "Operations Team",
-    role: "Nigeria operations",
-    bio: "Member verification, deposit reconciliation, and payout processing — based in Lagos with coverage across major Nigerian cities."
+    name: "Nigeria Operations Team",
+    role: "Member operations",
+    bio: "Handles member verification, deposit reconciliation, settlement processing, and support — based in Lagos with coverage across major Nigerian cities."
   }
 ];
+
+/** About page — premium content blocks */
+export const aboutPage = {
+  hero: {
+    eyebrow: "About Alto Rich",
+    title: "Building Wealth With Trust, Not Hype.",
+    description:
+      "Alto Rich exists to help everyday Nigerians build wealth through transparent investment sectors, published rules, and technology designed for how Nigerians actually save and invest.",
+    trustItems: [
+      "Transparent Records",
+      "Verified Members",
+      "Weekly Settlements",
+      "Nigerian Focus"
+    ]
+  },
+  story: {
+    eyebrow: "Our story",
+    title: "Why Alto Rich Exists",
+    body: [
+      "Millions of Nigerians want better ways to grow wealth — without confusing financial jargon, unrealistic promises, or hidden conditions. From traders in Lagos to civil servants in Abuja, families in Port Harcourt, Enugu, Kano, Ibadan, Benin, and Kaduna deserve tools that are clear, fair, and built for local reality.",
+      "Alto Rich was created around transparency, discipline, and long-term wealth creation. One published Platform Earning Model. Verified deposits. Ledger-backed balances. Processes you can follow from your phone."
+    ]
+  },
+  trustReasons: [
+    {
+      title: "Transparent transaction records",
+      description: "Every naira movement is ledger-backed and visible in your account history."
+    },
+    {
+      title: "Published member processes",
+      description: "Deposits, investments, and payouts follow documented steps — no guesswork."
+    },
+    {
+      title: "Verified identity checks",
+      description: "Member verification protects the community and keeps the platform trustworthy."
+    },
+    {
+      title: "Secure investment workflow",
+      description: "Fund, allocate to a sector, and track earnings through a controlled member journey."
+    },
+    {
+      title: "Weekly settlement schedule",
+      description: "Settlements run every Monday at 09:00 WAT under the Platform Earning Model."
+    },
+    {
+      title: "Dedicated Nigerian operations",
+      description: "A local team handles verification, reconciliation, and support in West Africa Time."
+    },
+    {
+      title: "Responsive support",
+      description: "Reach us when you need clarity — from onboarding questions to payout status."
+    }
+  ],
+  operations: [
+    {
+      title: "UK corporate governance",
+      description: `${COMPANY.legalName} (Company No. ${COMPANY.companyNumber}) provides international corporate structure and oversight.`
+    },
+    {
+      title: "Nigerian member operations",
+      description: "Onboarding, support, and day-to-day member care are run for Nigerians, in Nigeria time."
+    },
+    {
+      title: "Verification process",
+      description: "Identity and bank details are checked before wallets and investments go live."
+    },
+    {
+      title: "Deposit reconciliation",
+      description: "Transfers are matched to real bank credits before balances are updated."
+    },
+    {
+      title: "Settlement processing",
+      description: "Weekly settlements follow the published Monday schedule — predictable and documented."
+    },
+    {
+      title: "Compliance-first approach",
+      description: REGULATORY_DISCLOSURE
+    }
+  ],
+  timeline: [
+    { label: "Founded", detail: "ALTORICH LTD established with a Nigeria-first wealth mission." },
+    { label: "Platform Development", detail: "Ledger, sectors, and the Platform Earning Model engineered for local use." },
+    { label: "Member Launch", detail: "Nigerian members begin verified funding and sector allocation." },
+    { label: "Growth", detail: "Operations expand across major cities with clearer member journeys." },
+    { label: "Future Expansion", detail: "Deeper regional coverage, tools, and wealth education for more Nigerians." }
+  ],
+  stats: [
+    { label: "Transparent Ledger", value: "Every balance" },
+    { label: "Published Rules", value: "Always visible" },
+    { label: "Investment Sectors", value: "Four paths" },
+    { label: "Weekly Settlements", value: "Monday 09:00" },
+    { label: "Verified Members", value: "Identity-checked" }
+  ],
+  cta: {
+    title: "Ready to Build Wealth With Confidence?",
+    description:
+      "Choose an investment sector, fund your account, and watch your wealth grow through Alto Rich's transparent Platform Earning Model.",
+    primary: "Create Account",
+    secondary: "Explore Investment Sectors"
+  }
+} as const;
 
 export const branches = [
   { city: "Lagos", address: "Victoria Island · By appointment", phone: COMPANY.supportEmail },

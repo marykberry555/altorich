@@ -31,6 +31,13 @@
   --text-subtle: var(--gray-400);
   --surface: #f6f4f1;
   --surface-raised: #fdfcfb;
+  /* Floating toasts / Live Activity — elevated premium notification */
+  --surface-float: #ffffff;
+  --border-float: rgba(28, 27, 25, 0.1);
+  --shadow-float: 0 12px 40px rgba(15, 27, 45, 0.14), 0 4px 12px rgba(15, 27, 45, 0.06);
+  --text-float: var(--gray-900);
+  --text-float-secondary: var(--gray-600);
+  --text-float-muted: var(--gray-400);
   --border: rgba(28, 27, 25, 0.08);
   --border-strong: rgba(28, 27, 25, 0.14);
   --header-bg: rgba(253, 252, 251, 0.92);
@@ -105,6 +112,13 @@
   --text-subtle: #8b95a5;
   --surface: #0f1419;
   --surface-raised: #161d27;
+  /* Elevated float — clearly lighter than page so Live Activity does not blend in */
+  --surface-float: #273447;
+  --border-float: rgba(238, 241, 245, 0.18);
+  --shadow-float: 0 16px 48px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.35);
+  --text-float: #ffffff;
+  --text-float-secondary: #c5cdd8;
+  --text-float-muted: #9aa5b4;
   --border: rgba(238, 241, 245, 0.08);
   --border-strong: rgba(238, 241, 245, 0.14);
   --header-bg: rgba(22, 29, 39, 0.92);

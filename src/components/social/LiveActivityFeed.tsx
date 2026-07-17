@@ -215,8 +215,9 @@ export function LiveActivityFeed({ className }: { className?: string }) {
     <div
       className={cn(
         "pointer-events-none fixed z-[80]",
-        "bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2",
-        "sm:bottom-6 sm:left-6 sm:right-auto sm:translate-x-0",
+        /* Bottom-left on all breakpoints — safe margins clear edges / home indicator */
+        "bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] left-[max(1rem,env(safe-area-inset-left,0px))]",
+        "right-auto max-w-[90vw] sm:bottom-6 sm:left-6",
         className
       )}
     >
