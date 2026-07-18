@@ -33,8 +33,8 @@ export function MathChallenge({ challenge, answer, onAnswerChange, className }: 
   const prompt = `What is ${challenge.a} + ${challenge.b}?`;
 
   return (
-    <label className={cn("grid gap-1.5", className)} htmlFor={inputId}>
-      <span className="text-sm font-medium text-[var(--text-muted)]">{prompt}</span>
+    <label className={cn("flex h-11 items-center gap-3", className)} htmlFor={inputId}>
+      <span className="min-w-0 flex-1 text-sm font-medium text-[var(--text-muted)]">{prompt}</span>
       <input
         id={inputId}
         type="text"
@@ -42,7 +42,7 @@ export function MathChallenge({ challenge, answer, onAnswerChange, className }: 
         autoComplete="off"
         value={answer}
         onChange={(e) => onAnswerChange(e.target.value.replace(/\D/g, "").slice(0, 2))}
-        className="h-11 w-24 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3 text-center text-sm text-[var(--text)] focus:border-[var(--emerald-mid)] focus:outline-none focus:ring-2 focus:ring-[var(--emerald-soft)]"
+        className="h-11 w-20 shrink-0 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3 text-center text-sm text-[var(--text)] focus:border-[var(--emerald-mid)] focus:outline-none focus:ring-2 focus:ring-[var(--emerald-soft)]"
         aria-label={prompt}
         placeholder="Answer"
       />
