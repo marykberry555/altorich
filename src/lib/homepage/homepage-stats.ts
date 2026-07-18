@@ -380,6 +380,10 @@ export type EarningsProjection = {
   today: number;
   weekly: number;
   monthly: number;
+  /** Medium-term: weekly × 13 (same engine as monthly/annual). */
+  threeMonth: number;
+  /** Medium-term: weekly × 26 (same engine as monthly/annual). */
+  sixMonth: number;
   annual: number;
 };
 
@@ -393,8 +397,10 @@ export function projectEarnings(
   const today = Math.round((safe * dailyRatePercent) / 100);
   const weekly = Math.round((safe * weeklyRatePercent) / 100);
   const monthly = weekly * 4;
+  const threeMonth = weekly * 13;
+  const sixMonth = weekly * 26;
   const annual = weekly * 52;
-  return { principal: safe, today, weekly, monthly, annual };
+  return { principal: safe, today, weekly, monthly, threeMonth, sixMonth, annual };
 }
 
 export function formatNairaCounter(amount: number) {

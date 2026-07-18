@@ -1,1 +1,7 @@
-export { default } from "@/app/hard/(ops)/audit/page";
+import { AdminAuditPageClient } from "@/components/admin-app/AdminAuditPageClient";
+
+export const dynamic = "force-dynamic";
+
+export default function AdminAppAuditPage() {
+  return <AdminAuditPageClient />;
+}

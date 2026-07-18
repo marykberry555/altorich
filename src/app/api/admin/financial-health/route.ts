@@ -42,6 +42,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    if (action === "evaluate_alerts") {
+      const { FinancialAlertService } = await import("@/services/admin/financial-alert.service");
+      const result = await new FinancialAlertService(services.supabase).evaluateAndNotify({
+        cooldownMs: Number(body.cooldownMs ?? 0)
+      });
+      return NextResponse.json({ ok: true, ...result });
+    }
+
     throw Errors.badRequest("Unknown action");
   } catch (error) {
     return apiErrorResponse(error);

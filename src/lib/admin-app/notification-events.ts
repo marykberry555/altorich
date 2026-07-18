@@ -38,7 +38,13 @@ const FILTER_EVENT_TYPES: Record<Exclude<AdminNotificationFilter, "all">, string
     "system.error",
     "cron.failed",
     "payment.failed",
-    "security.alert"
+    "security.alert",
+    "ops.reconcile_failed",
+    "ops.deposit_stuck",
+    "ops.withdrawal_stuck",
+    "ops.referral_payout_stuck",
+    "ops.duplicate_surge",
+    "ops.queue_backlog"
   ]
 };
 
@@ -66,6 +72,12 @@ export function notificationPriority(item: AdminNotificationItem): AdminNotifica
     case "cron.failed":
     case "payment.failed":
     case "security.alert":
+    case "ops.reconcile_failed":
+    case "ops.deposit_stuck":
+    case "ops.withdrawal_stuck":
+    case "ops.referral_payout_stuck":
+    case "ops.duplicate_surge":
+    case "ops.queue_backlog":
       return "high";
     default:
       return "information";
@@ -98,6 +110,13 @@ export function notificationHref(item: AdminNotificationItem): string {
     case "system.error":
     case "payment.failed":
       return adminAppPath("/notifications");
+    case "ops.reconcile_failed":
+    case "ops.deposit_stuck":
+    case "ops.withdrawal_stuck":
+    case "ops.referral_payout_stuck":
+    case "ops.duplicate_surge":
+    case "ops.queue_backlog":
+      return adminAppPath("/financial-health");
     default:
       return adminAppPath("/notifications");
   }
@@ -180,6 +199,12 @@ export function pushEligibleEventTypes() {
     "deposit.requested",
     "cron.failed",
     "payment.failed",
-    "security.alert"
+    "security.alert",
+    "ops.reconcile_failed",
+    "ops.deposit_stuck",
+    "ops.withdrawal_stuck",
+    "ops.referral_payout_stuck",
+    "ops.duplicate_surge",
+    "ops.queue_backlog"
   ] as const;
 }

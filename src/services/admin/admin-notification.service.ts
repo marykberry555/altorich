@@ -18,7 +18,13 @@ const FILTER_TYPES: Record<Exclude<AdminNotificationFilter, "all">, string[]> = 
     "system.error",
     "cron.failed",
     "payment.failed",
-    "security.alert"
+    "security.alert",
+    "ops.reconcile_failed",
+    "ops.deposit_stuck",
+    "ops.withdrawal_stuck",
+    "ops.referral_payout_stuck",
+    "ops.duplicate_surge",
+    "ops.queue_backlog"
   ]
 };
 

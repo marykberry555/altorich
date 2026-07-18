@@ -55,6 +55,8 @@ describe("homepage stats config", () => {
     assert.equal(p.today, 25_000);
     assert.equal(p.weekly, 175_000);
     assert.equal(p.monthly, 700_000);
+    assert.equal(p.threeMonth, 2_275_000);
+    assert.equal(p.sixMonth, 4_550_000);
     assert.equal(p.annual, 9_100_000);
   });
 

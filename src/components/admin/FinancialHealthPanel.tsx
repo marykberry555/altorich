@@ -102,6 +102,25 @@ export function FinancialHealthPanel() {
     await load();
   }
 
+  async function runAlerts() {
+    setBusy("alerts");
+    setMessage("");
+    const res = await fetch("/api/admin/financial-health", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "evaluate_alerts", cooldownMs: 0 })
+    });
+    const json = await res.json().catch(() => ({}));
+    setBusy(null);
+    if (!res.ok) {
+      setMessage("Alert evaluation failed.");
+    } else {
+      const notified = (json.sent ?? []).filter((s: { notificationId: string | null }) => s.notificationId).length;
+      setMessage(`Alerts evaluated · ${json.drafts ?? 0} condition(s) · ${notified} notification(s) sent.`);
+    }
+    await load();
+  }
+
   async function resolveEvent(eventId: string) {
     setBusy(eventId);
     await fetch("/api/admin/financial-health", {
@@ -142,6 +161,9 @@ export function FinancialHealthPanel() {
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="sm" variant="outline" className="gap-2" onClick={() => void load()}>
               <RefreshCw size={14} /> Refresh
+            </Button>
+            <Button type="button" size="sm" variant="outline" disabled={busy === "alerts"} onClick={() => void runAlerts()}>
+              Run alerts now
             </Button>
             <Button type="button" size="sm" disabled={busy === "recover"} onClick={() => void recover()}>
               Recover stuck deposits

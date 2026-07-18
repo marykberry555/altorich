@@ -115,6 +115,8 @@ export function WealthGrowthExperience({ config, className }: Props) {
             <ResultCard label="Today's Earnings" value={formatProjection(projection.today)} />
             <ResultCard label="Weekly Earnings" value={formatProjection(projection.weekly)} />
             <ResultCard label="Monthly Projection" value={formatProjection(projection.monthly)} />
+            <ResultCard label="3-Month Projection" value={formatProjection(projection.threeMonth)} />
+            <ResultCard label="6-Month Projection" value={formatProjection(projection.sixMonth)} />
             <ResultCard label="Annual Projection" value={formatProjection(projection.annual)} />
           </div>
 
