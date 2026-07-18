@@ -213,6 +213,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       });
     }
 
+    const { AdminNotificationService } = await import("@/services/admin/admin-notification.service");
+    const memberLabel = String(afterProfile?.full_name ?? beforeProfile.full_name ?? "Member");
+    await new AdminNotificationService(services.supabase).create({
+      eventType: "admin.profile_updated",
+      title: "Identity / profile updated by admin",
+      body: `${memberLabel}\nFields: ${fieldChanges.map((c) => c.field).join(", ")}`,
+      entityType: "profile",
+      entityId: memberId,
+      metadata: {
+        priority: "information",
+        user_id: memberId,
+        fields: fieldChanges.map((c) => c.field),
+        administrator: admin.id
+      }
+    });
+
     return NextResponse.json({
       ok: true,
       profile: afterProfile,

@@ -6,7 +6,16 @@ import { AdminNotificationService } from "@/services/admin/admin-notification.se
 import { AdminPushService } from "@/services/admin/admin-push.service";
 import type { AdminNotificationFilter } from "@/lib/admin-app/notification-events";
 
-const FILTERS = new Set<AdminNotificationFilter>(["all", "registrations", "logins", "investments", "payouts"]);
+const FILTERS = new Set<string>([
+  "all",
+  "registrations",
+  "logins",
+  "investments",
+  "withdrawals",
+  "deposits",
+  "system",
+  "payouts"
+]);
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,9 +25,8 @@ export async function GET(request: NextRequest) {
     const unreadOnly = request.nextUrl.searchParams.get("unread") === "1";
     const limit = Number(request.nextUrl.searchParams.get("limit") ?? 40);
     const filterParam = request.nextUrl.searchParams.get("filter") ?? "all";
-    const filter = FILTERS.has(filterParam as AdminNotificationFilter)
-      ? (filterParam as AdminNotificationFilter)
-      : "all";
+    const rawFilter = FILTERS.has(filterParam) ? filterParam : "all";
+    const filter = (rawFilter === "payouts" ? "withdrawals" : rawFilter) as AdminNotificationFilter;
 
     const notifications = new AdminNotificationService(services.supabase);
     const [items, unreadCount] = await Promise.all([

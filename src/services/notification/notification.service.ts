@@ -3,11 +3,9 @@ import type { Database, Json } from "@/types/database";
 import { logger } from "@/lib/logger";
 import { sendEmail } from "@/lib/email/send";
 import {
-  investmentActivatedEmailHtml,
   newDeviceLoginEmailHtml,
   payoutApprovedEmailHtml,
-  payoutSubmittedEmailHtml,
-  profileUpdatedEmailHtml,
+  payoutRejectedEmailHtml,
   walletFundedEmailHtml
 } from "@/lib/email/activity-templates";
 import { formatNaira } from "@/lib/domain";
@@ -78,19 +76,15 @@ export class NotificationService {
       case "deposit.approved":
       case "payment.received":
         return walletFundedEmailHtml(amount);
-      case "withdrawal.submitted":
-      case "withdrawal.auto_created":
-        return payoutSubmittedEmailHtml(amount);
       case "withdrawal.approved":
       case "withdrawal.paid":
         return payoutApprovedEmailHtml(amount);
-      case "investment.purchased":
-        return investmentActivatedEmailHtml(amount, String(data.reference ?? ""));
-      case "profile.updated":
-        return profileUpdatedEmailHtml();
+      case "withdrawal.rejected":
+        return payoutRejectedEmailHtml(amount, String(data.reason ?? ""));
       case "security.device_login":
         return newDeviceLoginEmailHtml();
       default:
+        // Keep emails only for critical/account events. In-app covers the rest.
         return null;
     }
   }

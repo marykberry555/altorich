@@ -12,9 +12,11 @@ import type { AdminNotificationFilter, AdminNotificationItem } from "@/lib/admin
 const FILTERS: { id: AdminNotificationFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "registrations", label: "Registrations" },
-  { id: "logins", label: "Logins" },
+  { id: "deposits", label: "Deposits" },
+  { id: "withdrawals", label: "Withdrawals" },
   { id: "investments", label: "Investments" },
-  { id: "payouts", label: "Payouts" }
+  { id: "logins", label: "Logins" },
+  { id: "system", label: "System" }
 ];
 
 export function AdminNotificationsPageClient() {

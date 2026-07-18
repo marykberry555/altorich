@@ -23,7 +23,7 @@ const navSections = [
       { href: `${HARD_OPS_HOME}/members`, label: "Members", icon: Users },
       { href: `${HARD_OPS_HOME}/funding-accounts`, label: "Funding accounts", icon: Wallet },
       { href: `${HARD_OPS_HOME}/deposits`, label: "Deposits", icon: ArrowDownLeft },
-      { href: `${HARD_OPS_HOME}/payouts`, label: "Payouts", icon: ArrowUpRight },
+      { href: `${HARD_OPS_HOME}/payouts`, label: "Withdrawals", icon: ArrowUpRight },
       { href: `${HARD_OPS_HOME}/liquidations`, label: "Liquidations", icon: ArrowUpRight },
       { href: `${HARD_OPS_HOME}/investments`, label: "Investments", icon: TrendingUp },
       { href: `${HARD_OPS_HOME}/plans`, label: "Plans", icon: Wallet },

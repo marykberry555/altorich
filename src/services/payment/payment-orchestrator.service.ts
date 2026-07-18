@@ -60,6 +60,25 @@ export class PaymentOrchestratorService {
           .eq("status", "pending");
       }
 
+      try {
+        const { AdminNotificationService } = await import("@/services/admin/admin-notification.service");
+        await new AdminNotificationService(this.supabase).create({
+          eventType: "payment.failed",
+          title: "Failed payment processing",
+          body: `Payment ${reference} marked ${verified.status}.`,
+          entityType: "payment_transactions",
+          entityId: existing.id,
+          metadata: {
+            priority: "high",
+            reference,
+            status: verified.status,
+            user_id: existing.user_id
+          }
+        });
+      } catch {
+        // non-blocking
+      }
+
       return { success: false, status: verified.status, reference };
     }
 

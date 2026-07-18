@@ -30,18 +30,27 @@ export function walletFundedEmailHtml(amount: number) {
 
 export function payoutSubmittedEmailHtml(amount: number) {
   return activityNotificationEmailHtml({
-    title: "Payout request submitted",
-    body: `We received your payout request for ${formatNaira(amount)}. You will be notified when it is reviewed.`,
-    ctaLabel: "Track payout",
+    title: "Withdrawal request submitted",
+    body: `We received your withdrawal request for ${formatNaira(amount)}. You will be notified when it is reviewed.`,
+    ctaLabel: "Track withdrawal",
     ctaHref: `${COMPANY.siteUrl}/withdrawals`
   });
 }
 
 export function payoutApprovedEmailHtml(amount: number) {
   return activityNotificationEmailHtml({
-    title: "Payout approved",
-    body: `Your payout of ${formatNaira(amount)} has been approved and is being processed to your bank account.`,
-    ctaLabel: "View payouts",
+    title: "Withdrawal approved",
+    body: `Your withdrawal of ${formatNaira(amount)} has been approved and is being processed to your bank account.`,
+    ctaLabel: "View withdrawals",
+    ctaHref: `${COMPANY.siteUrl}/withdrawals`
+  });
+}
+
+export function payoutRejectedEmailHtml(amount: number, reason?: string) {
+  return activityNotificationEmailHtml({
+    title: "Withdrawal declined",
+    body: `Your withdrawal of ${formatNaira(amount)} was not approved.${reason ? ` ${reason}` : ""}`,
+    ctaLabel: "View withdrawals",
     ctaHref: `${COMPANY.siteUrl}/withdrawals`
   });
 }

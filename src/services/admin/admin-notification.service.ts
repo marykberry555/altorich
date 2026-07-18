@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import type { Database, Json } from "@/types/database";
 import type { AdminNotificationFilter } from "@/lib/admin-app/notification-events";
 
 type Client = SupabaseClient<Database>;
@@ -10,13 +10,46 @@ const FILTER_TYPES: Record<Exclude<AdminNotificationFilter, "all">, string[]> = 
   registrations: ["member.registered"],
   logins: ["user.login"],
   investments: ["investment.created"],
-  payouts: ["withdrawal.requested"]
+  withdrawals: ["withdrawal.requested", "withdrawal.completed", "withdrawal.rejected"],
+  deposits: ["deposit.submitted", "deposit.requested", "deposit.approved", "deposit.rejected"],
+  system: [
+    "settlement.completed",
+    "admin.profile_updated",
+    "system.error",
+    "cron.failed",
+    "payment.failed",
+    "security.alert"
+  ]
 };
 
 export class AdminNotificationService {
   constructor(private readonly supabase: Client) {}
 
-  async list(limit = 40, unreadOnly = false, filter: AdminNotificationFilter = "all") {
+  async create(input: {
+    eventType: string;
+    title: string;
+    body: string;
+    entityType?: string;
+    entityId?: string;
+    metadata?: Record<string, unknown>;
+  }) {
+    const { data, error } = await this.supabase
+      .from("admin_notifications")
+      .insert({
+        event_type: input.eventType,
+        title: input.title,
+        body: input.body,
+        entity_type: input.entityType ?? null,
+        entity_id: input.entityId ?? null,
+        metadata: (input.metadata ?? {}) as Json
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async list(limit = 40, unreadOnly = false, filter: AdminNotificationFilter | "payouts" = "all") {
     let query = this.supabase
       .from("admin_notifications")
       .select("*")
@@ -24,7 +57,8 @@ export class AdminNotificationService {
       .limit(limit);
 
     if (unreadOnly) query = query.is("read_at", null);
-    if (filter !== "all") query = query.in("event_type", FILTER_TYPES[filter]);
+    const resolvedFilter = filter === "payouts" ? "withdrawals" : filter;
+    if (resolvedFilter !== "all") query = query.in("event_type", FILTER_TYPES[resolvedFilter]);
 
     const { data, error } = await query;
     if (error) throw error;

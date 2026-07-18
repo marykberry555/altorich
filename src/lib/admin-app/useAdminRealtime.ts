@@ -77,7 +77,10 @@ export function useAdminRealtime(onChange: () => void, tables: AdminRealtimeTabl
 
     channel.subscribe();
 
+    const poll = window.setInterval(() => onChangeRef.current(), 20_000);
+
     return () => {
+      window.clearInterval(poll);
       void supabase.removeChannel(channel);
     };
   }, [tableList]);
