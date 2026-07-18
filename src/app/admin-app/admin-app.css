@@ -20,6 +20,19 @@
   --admin-emerald: #34d399;
   --admin-emerald-soft: rgba(52, 211, 153, 0.12);
   --admin-emerald-text: #6ee7b7;
+  --admin-success-bg: rgba(16, 185, 129, 0.14);
+  --admin-success-text: #6ee7b7;
+  --admin-success-border: rgba(16, 185, 129, 0.35);
+  --admin-warning-bg: rgba(245, 158, 11, 0.16);
+  --admin-warning-text: #fcd34d;
+  --admin-warning-border: rgba(245, 158, 11, 0.4);
+  --admin-danger-bg: rgba(239, 68, 68, 0.16);
+  --admin-danger-text: #fca5a5;
+  --admin-danger-border: rgba(239, 68, 68, 0.4);
+  --admin-info-bg: rgba(56, 189, 248, 0.14);
+  --admin-info-text: #7dd3fc;
+  --admin-info-border: rgba(56, 189, 248, 0.35);
+  --admin-surface-card: #18181b;
 
   /* Alias into design-system CSS variables used by shared admin panels */
   --dashboard-bg: var(--admin-bg);
@@ -66,6 +79,19 @@
   --admin-emerald: #059669;
   --admin-emerald-soft: rgba(5, 150, 105, 0.12);
   --admin-emerald-text: #047857;
+  --admin-success-bg: rgba(5, 150, 105, 0.12);
+  --admin-success-text: #047857;
+  --admin-success-border: rgba(5, 150, 105, 0.28);
+  --admin-warning-bg: rgba(180, 83, 9, 0.12);
+  --admin-warning-text: #92400e;
+  --admin-warning-border: rgba(180, 83, 9, 0.28);
+  --admin-danger-bg: rgba(185, 28, 28, 0.1);
+  --admin-danger-text: #b91c1c;
+  --admin-danger-border: rgba(185, 28, 28, 0.28);
+  --admin-info-bg: rgba(3, 105, 161, 0.1);
+  --admin-info-text: #0369a1;
+  --admin-info-border: rgba(3, 105, 161, 0.28);
+  --admin-surface-card: #ffffff;
   --gray-50: #fafafa;
   --gray-100: #f4f4f5;
   --gray-200: #e4e4e7;
@@ -142,6 +168,53 @@
   color: var(--admin-text);
   background-color: var(--admin-input-bg);
   border-color: var(--admin-border);
+}
+
+.admin-app-root .admin-shell {
+  min-width: 0;
+  width: 100%;
+}
+
+.admin-app-root .admin-shell main {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-app-root .admin-touch {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.admin-app-root .admin-badge-success,
+.admin-app-root .admin-badge-warning,
+.admin-app-root .admin-badge-danger,
+.admin-app-root .admin-badge-info {
+  border-style: solid;
+  border-width: 1px;
+}
+
+.admin-app-root .admin-badge-success {
+  background: var(--admin-success-bg);
+  color: var(--admin-success-text);
+  border-color: var(--admin-success-border);
+}
+
+.admin-app-root .admin-badge-warning {
+  background: var(--admin-warning-bg);
+  color: var(--admin-warning-text);
+  border-color: var(--admin-warning-border);
+}
+
+.admin-app-root .admin-badge-danger {
+  background: var(--admin-danger-bg);
+  color: var(--admin-danger-text);
+  border-color: var(--admin-danger-border);
+}
+
+.admin-app-root .admin-badge-info {
+  background: var(--admin-info-bg);
+  color: var(--admin-info-text);
+  border-color: var(--admin-info-border);
 }
 
 .admin-app-root .button {

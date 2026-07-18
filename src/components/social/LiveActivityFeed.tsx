@@ -217,7 +217,7 @@ export function LiveActivityFeed({ className }: { className?: string }) {
         "pointer-events-none fixed z-[80]",
         /* Bottom-left on all breakpoints — safe margins clear edges / home indicator */
         "bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] left-[max(1rem,env(safe-area-inset-left,0px))]",
-        "right-auto max-w-[90vw] sm:bottom-6 sm:left-6",
+        "right-auto w-[min(22rem,calc(100%-2rem))] max-w-full sm:bottom-6 sm:left-6",
         className
       )}
     >

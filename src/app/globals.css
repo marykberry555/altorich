@@ -220,6 +220,8 @@ img {
 .container-ar {
   width: min(100% - 32px, var(--max-w));
   margin-inline: auto;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Default section rhythm */
@@ -581,8 +583,16 @@ img {
   scrollbar-width: none;
 }
 
+.ar-testimonials {
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  contain: inline-size;
+}
+
 .ar-testimonials-scroll {
   cursor: grab;
+  max-width: 100%;
 }
 .ar-testimonials-scroll:active {
   cursor: grabbing;
@@ -593,6 +603,7 @@ img {
   gap: 16px;
   padding: 4px 0;
   width: max-content;
+  max-width: none;
   will-change: transform;
   animation: ar-marquee 24s linear infinite;
 }

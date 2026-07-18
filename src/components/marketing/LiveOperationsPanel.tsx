@@ -125,10 +125,10 @@ export function LiveOperationsPanel({ config, className }: Props) {
   return (
     <section
       ref={sectionRef}
-      className={cn("section-pad bg-section", className)}
+      className={cn("section-pad bg-section min-w-0", className)}
       aria-labelledby="live-ops-heading"
     >
-      <div className="container-ar">
+      <div className="container-ar min-w-0">
         <div className="mx-auto max-w-2xl text-center">
           <h2
             id="live-ops-heading"
@@ -190,18 +190,18 @@ export function LiveOperationsPanel({ config, className }: Props) {
           </div>
         </div>
 
-        <ul className="mx-auto mt-6 grid max-w-4xl gap-2.5 sm:grid-cols-2">
+        <ul className="mx-auto mt-6 grid w-full min-w-0 max-w-4xl gap-2.5 sm:grid-cols-2">
           {sectors.map((sector) => (
             <li
               key={sector.id}
-              className="flex items-center justify-between gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-raised)] px-4 py-3.5 shadow-[var(--shadow-sm)]"
+              className="flex min-w-0 max-w-full items-center justify-between gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-raised)] px-4 py-3.5 shadow-[var(--shadow-sm)]"
             >
-              <div className="flex min-w-0 items-center gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
                 <span
                   className="live-dot shrink-0 shadow-[0_0_0_4px_color-mix(in_srgb,var(--emerald-light)_22%,transparent)]"
                   aria-hidden
                 />
-                <span className="truncate text-sm font-medium text-[var(--heading)]">{sector.name}</span>
+                <span className="min-w-0 truncate text-sm font-medium text-[var(--heading)]">{sector.name}</span>
               </div>
               <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-[var(--emerald)]">
                 {config.opsStatusLabel}

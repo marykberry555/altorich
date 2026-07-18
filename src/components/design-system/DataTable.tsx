@@ -2,7 +2,12 @@ import { cn } from "@/lib/utils";
 
 export function DataTable({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("relative w-full overflow-x-auto rounded-[var(--radius-sm)] border border-[var(--border)]", className)}>
+    <div
+      className={cn(
+        "relative w-full min-w-0 max-w-full overflow-x-auto rounded-[var(--radius-sm)] border border-[var(--border)]",
+        className
+      )}
+    >
       {children}
     </div>
   );

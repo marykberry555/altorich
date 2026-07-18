@@ -84,13 +84,13 @@ function CountdownBlock({
   return (
     <div
       className={cn(
-        "flex min-w-[4.25rem] flex-1 flex-col items-center rounded-2xl border px-2 py-2.5 sm:min-w-[5rem] sm:px-3",
+        "flex min-w-0 flex-1 flex-col items-center rounded-2xl border px-1.5 py-2 sm:min-w-[5rem] sm:px-3 sm:py-2.5",
         tone.shell
       )}
     >
       <span
         className={cn(
-          "flex h-10 w-full min-w-[2.75rem] items-center justify-center rounded-xl text-xl font-black tabular-nums sm:h-11 sm:text-2xl",
+          "flex h-9 w-full min-w-0 items-center justify-center rounded-xl text-base font-black tabular-nums sm:h-11 sm:text-2xl",
           tone.value
         )}
       >
@@ -142,7 +142,7 @@ function ColorfulCountdown({
         Settlement In
       </p>
       <div
-        className="relative mt-3 flex gap-2 sm:gap-3"
+        className="relative mt-3 flex min-w-0 gap-1.5 sm:gap-3"
         role="timer"
         aria-live="polite"
         suppressHydrationWarning

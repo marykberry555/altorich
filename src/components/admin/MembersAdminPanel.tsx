@@ -282,10 +282,10 @@ export function MembersAdminPanel({
         </Card>
       ) : null}
 
-      <Card variant="elevated" padding="md">
+      <Card variant="elevated" padding="md" className="min-w-0">
         <div className="mb-4 flex flex-wrap gap-2">
           <input
-            className="field max-w-xs"
+            className="field min-w-0 max-w-full flex-1 basis-40 sm:max-w-xs"
             placeholder="Search name, username, phone…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -296,78 +296,138 @@ export function MembersAdminPanel({
           </Button>
         </div>
 
-        <DataTable>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
-                  <input type="checkbox" checked={members.length > 0 && selected.size === members.length} onChange={toggleAll} aria-label="Select all" />
-                </TableHead>
-                <TableHead>Member</TableHead>
-                <TableHead>Username</TableHead>
-                <TableHead>Balance</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+        {/* Mobile stacked cards */}
+        <ul className="space-y-3 md:hidden">
+          {loading ? (
+            <li className="flex justify-center py-10 text-[var(--text-subtle)]">
+              <Loader2 className="animate-spin" size={20} />
+            </li>
+          ) : members.length === 0 ? (
+            <li className="py-10 text-center text-sm text-[var(--text-subtle)]">No members found</li>
+          ) : (
+            members.map((member) => (
+              <li key={member.id} className="min-w-0 rounded-[var(--radius-sm)] border border-[var(--border)] p-3">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={selected.has(member.id)}
+                    onChange={() => toggleOne(member.id)}
+                    aria-label={`Select ${member.full_name}`}
+                  />
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                    onClick={() => {
+                      if (profileBasePath) router.push(`${profileBasePath.replace(/\/$/, "")}/${member.id}`);
+                      else setDetailMember({ id: member.id, name: member.full_name || "Member" });
+                    }}
+                  >
+                    <MemberAvatar
+                      fullName={member.full_name || "Member"}
+                      avatarUrl={member.avatar_url}
+                      size="sm"
+                      href={null}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-[var(--heading)]">{member.full_name || "—"}</p>
+                      <p className="truncate text-xs text-[var(--text-muted)]">
+                        @{member.username ?? "—"} · {member.email ?? member.phone ?? member.invite_code}
+                      </p>
+                      <p className="mt-1 tabular-nums text-sm font-semibold text-[var(--emerald)]">
+                        {formatNaira(member.walletBalance)}
+                      </p>
+                      <div className="mt-2">
+                        <StatusBadge status={member.account_status ?? "active"} />
+                      </div>
+                    </span>
+                  </button>
+                  <MemberActionsMenu
+                    busy={busy === `wallet-${member.id}` || busy === `status-${member.id}`}
+                    disabled={Boolean(busy && busy !== `wallet-${member.id}` && busy !== `status-${member.id}`)}
+                    onAction={(action) => handleMemberAction(member, action)}
+                  />
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
+
+        {/* Desktop table */}
+        <div className="hidden md:block">
+          <DataTable>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-[var(--text-subtle)]">
-                    <Loader2 className="mx-auto animate-spin" size={20} />
-                  </TableCell>
+                  <TableHead className="w-10">
+                    <input type="checkbox" checked={members.length > 0 && selected.size === members.length} onChange={toggleAll} aria-label="Select all" />
+                  </TableHead>
+                  <TableHead>Member</TableHead>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Balance</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : members.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-[var(--text-subtle)]">
-                    No members found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <input type="checkbox" checked={selected.has(member.id)} onChange={() => toggleOne(member.id)} aria-label={`Select ${member.full_name}`} />
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        type="button"
-                        className="flex items-center gap-3 text-left hover:text-[var(--emerald)]"
-                        onClick={() => {
-                          if (profileBasePath) router.push(`${profileBasePath.replace(/\/$/, "")}/${member.id}`);
-                          else setDetailMember({ id: member.id, name: member.full_name || "Member" });
-                        }}
-                      >
-                        <MemberAvatar
-                          fullName={member.full_name || "Member"}
-                          avatarUrl={member.avatar_url}
-                          size="sm"
-                          href={null}
-                        />
-                        <span className="min-w-0">
-                          <p className="font-medium underline-offset-2 hover:underline">{member.full_name || "—"}</p>
-                          <p className="text-xs text-[var(--text-muted)]">{member.email ?? member.phone ?? member.invite_code}</p>
-                        </span>
-                      </button>
-                    </TableCell>
-                    <TableCell>{member.username ?? "—"}</TableCell>
-                    <TableCell className="tabular-nums">{formatNaira(member.walletBalance)}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={member.account_status ?? "active"} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <MemberActionsMenu
-                        busy={busy === `wallet-${member.id}` || busy === `status-${member.id}`}
-                        disabled={Boolean(busy && busy !== `wallet-${member.id}` && busy !== `status-${member.id}`)}
-                        onAction={(action) => handleMemberAction(member, action)}
-                      />
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-10 text-center text-[var(--text-subtle)]">
+                      <Loader2 className="mx-auto animate-spin" size={20} />
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </DataTable>
+                ) : members.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-10 text-center text-[var(--text-subtle)]">
+                      No members found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  members.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell>
+                        <input type="checkbox" checked={selected.has(member.id)} onChange={() => toggleOne(member.id)} aria-label={`Select ${member.full_name}`} />
+                      </TableCell>
+                      <TableCell>
+                        <button
+                          type="button"
+                          className="flex items-center gap-3 text-left hover:text-[var(--emerald)]"
+                          onClick={() => {
+                            if (profileBasePath) router.push(`${profileBasePath.replace(/\/$/, "")}/${member.id}`);
+                            else setDetailMember({ id: member.id, name: member.full_name || "Member" });
+                          }}
+                        >
+                          <MemberAvatar
+                            fullName={member.full_name || "Member"}
+                            avatarUrl={member.avatar_url}
+                            size="sm"
+                            href={null}
+                          />
+                          <span className="min-w-0">
+                            <p className="font-medium underline-offset-2 hover:underline">{member.full_name || "—"}</p>
+                            <p className="text-xs text-[var(--text-muted)]">{member.email ?? member.phone ?? member.invite_code}</p>
+                          </span>
+                        </button>
+                      </TableCell>
+                      <TableCell>{member.username ?? "—"}</TableCell>
+                      <TableCell className="tabular-nums">{formatNaira(member.walletBalance)}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={member.account_status ?? "active"} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <MemberActionsMenu
+                          busy={busy === `wallet-${member.id}` || busy === `status-${member.id}`}
+                          disabled={Boolean(busy && busy !== `wallet-${member.id}` && busy !== `status-${member.id}`)}
+                          onAction={(action) => handleMemberAction(member, action)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </DataTable>
+        </div>
       </Card>
 
       {detailMember && !profileBasePath ? (

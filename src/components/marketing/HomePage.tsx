@@ -84,19 +84,19 @@ export function HomePage({ homepageStats }: Props) {
             </p>
           </div>
 
-          <div className="relative animate-fade-up" style={{ animationDelay: "80ms" }}>
+          <div className="relative min-w-0 animate-fade-up" style={{ animationDelay: "80ms" }}>
             <div className="overflow-hidden rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] ring-1 ring-black/5">
               <Image
                 src={IMAGES.hero.src}
                 alt={IMAGES.hero.alt}
                 width={800}
                 height={600}
-                className="aspect-[4/3] h-auto w-full object-cover"
+                className="aspect-[4/3] h-auto w-full max-w-full object-cover"
                 priority
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             </div>
-            <div className="absolute -bottom-4 left-4 right-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)]/95 p-4 shadow-[var(--shadow-md)] backdrop-blur sm:left-auto sm:right-6 sm:w-72">
+            <div className="absolute -bottom-4 left-3 right-3 max-w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-raised)]/95 p-3 shadow-[var(--shadow-md)] backdrop-blur sm:left-auto sm:right-6 sm:w-72 sm:p-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-subtle)]">
                 {PLATFORM_EARNING.modelName}
               </p>

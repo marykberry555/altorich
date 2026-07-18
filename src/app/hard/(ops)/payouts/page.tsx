@@ -119,46 +119,71 @@ export default async function PayoutsPage() {
         </div>
       </Card>
 
-      <Card variant="elevated" padding="md">
+      <Card variant="elevated" padding="md" className="min-w-0">
         <SectionHeading title="Recent withdrawals" />
-        <DataTable>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Amount</TableHead>
-                <TableHead>Request type</TableHead>
-                <TableHead>Bank</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>When</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {withdrawals.length === 0 ? (
+
+        <ul className="space-y-3 md:hidden">
+          {withdrawals.length === 0 ? (
+            <li className="py-8 text-center text-sm text-[var(--text-subtle)]">No recent withdrawals</li>
+          ) : (
+            withdrawals.map((w) => (
+              <li key={w.id} className="min-w-0 rounded-[var(--radius-sm)] border border-[var(--border)] p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold tabular-nums text-[var(--heading)]">{formatNaira(Number(w.amount))}</p>
+                  <Badge variant={w.request_type === "automatic" ? "navy" : "outline"}>
+                    {requestTypeLabel(w.request_type)}
+                  </Badge>
+                  <StatusBadge status={w.status} />
+                </div>
+                <p className="mt-1 truncate text-sm text-[var(--text-muted)]">{w.bank_name}</p>
+                <p className="mt-1 text-xs text-[var(--text-subtle)]">
+                  {new Date(w.created_at).toLocaleString("en-NG")}
+                </p>
+              </li>
+            ))
+          )}
+        </ul>
+
+        <div className="hidden md:block">
+          <DataTable>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-[var(--text-subtle)]">
-                    No recent withdrawals
-                  </TableCell>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Request type</TableHead>
+                  <TableHead>Bank</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>When</TableHead>
                 </TableRow>
-              ) : (
-                withdrawals.map((w) => (
-                  <TableRow key={w.id}>
-                    <TableCell className="tabular-nums">{formatNaira(Number(w.amount))}</TableCell>
-                    <TableCell>
-                      <Badge variant={w.request_type === "automatic" ? "navy" : "outline"}>
-                        {requestTypeLabel(w.request_type)}
-                      </Badge>
+              </TableHeader>
+              <TableBody>
+                {withdrawals.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-8 text-center text-[var(--text-subtle)]">
+                      No recent withdrawals
                     </TableCell>
-                    <TableCell>{w.bank_name}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={w.status} />
-                    </TableCell>
-                    <TableCell>{new Date(w.created_at).toLocaleString("en-NG")}</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </DataTable>
+                ) : (
+                  withdrawals.map((w) => (
+                    <TableRow key={w.id}>
+                      <TableCell className="tabular-nums">{formatNaira(Number(w.amount))}</TableCell>
+                      <TableCell>
+                        <Badge variant={w.request_type === "automatic" ? "navy" : "outline"}>
+                          {requestTypeLabel(w.request_type)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{w.bank_name}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={w.status} />
+                      </TableCell>
+                      <TableCell>{new Date(w.created_at).toLocaleString("en-NG")}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </DataTable>
+        </div>
       </Card>
     </div>
   );

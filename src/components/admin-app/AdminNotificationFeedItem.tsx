@@ -26,30 +26,44 @@ export function AdminNotificationFeedItem({ item, compact = false, onMarkRead }:
 
   return (
     <li
-      className={cn(
-        "rounded-xl border border-white/10 bg-zinc-900/80 border-l-4",
-        styles.accent,
-        !item.read_at && "ring-1 ring-emerald-500/20"
-      )}
+      className={cn("w-full min-w-0 rounded-xl border border-l-4", styles.accent)}
+      style={{
+        background: "var(--admin-surface-card, var(--admin-panel-elevated))",
+        borderColor: "var(--admin-border)"
+      }}
     >
       <div className={cn("px-4", compact ? "py-3" : "py-4")}>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="font-medium text-white">{item.title}</p>
-              <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", styles.badge)}>
+              <p className="font-medium" style={{ color: "var(--admin-heading)" }}>
+                {item.title}
+              </p>
+              <span
+                className={cn(
+                  "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                  styles.badge
+                )}
+              >
                 {styles.label}
               </span>
             </div>
-            <div className="mt-2 space-y-0.5 text-sm text-zinc-300">
+            <div className="mt-2 space-y-0.5 text-sm" style={{ color: "var(--admin-muted)" }}>
               {lines.map((line) => (
-                <p key={line}>{line}</p>
+                <p key={line} className="break-words">
+                  {line}
+                </p>
               ))}
             </div>
-            <p className="mt-2 text-[10px] uppercase tracking-wide text-zinc-500">{formatNotificationTime(item.created_at)}</p>
+            <p className="mt-2 text-[10px] uppercase tracking-wide" style={{ color: "var(--admin-subtle)" }}>
+              {formatNotificationTime(item.created_at)}
+            </p>
           </div>
           {!item.read_at ? (
-            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+            <span
+              className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+              style={{ background: "var(--admin-emerald-soft)", color: "var(--admin-emerald-text)" }}
+            >
               Unread
             </span>
           ) : null}
@@ -59,16 +73,27 @@ export function AdminNotificationFeedItem({ item, compact = false, onMarkRead }:
           <Link
             href={action?.href ?? href}
             className={cn(
-              "inline-flex h-8 items-center justify-center rounded-lg px-3 text-xs font-medium transition",
-              priority === "high"
-                ? "bg-emerald-600 text-white hover:bg-emerald-500"
-                : "border border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10"
+              "inline-flex h-10 min-h-[44px] items-center justify-center rounded-lg px-3 text-xs font-medium transition sm:min-h-0 sm:h-8"
             )}
+            style={
+              priority === "high"
+                ? { background: "var(--admin-emerald)", color: "#fff" }
+                : {
+                    border: "1px solid var(--admin-border)",
+                    background: "var(--admin-hover)",
+                    color: "var(--admin-text)"
+                  }
+            }
           >
             {action?.label ?? "Open"}
           </Link>
           {!item.read_at && onMarkRead ? (
-            <button type="button" className="text-xs text-emerald-400 hover:underline" onClick={() => onMarkRead(item.id)}>
+            <button
+              type="button"
+              className="inline-flex h-10 min-h-[44px] items-center px-2 text-xs font-semibold sm:h-auto sm:min-h-0"
+              style={{ color: "var(--admin-emerald-text)" }}
+              onClick={() => onMarkRead(item.id)}
+            >
               Mark read
             </button>
           ) : null}

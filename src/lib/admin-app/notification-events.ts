@@ -135,27 +135,27 @@ export function priorityStyles(priority: AdminNotificationPriority) {
   switch (priority) {
     case "success":
       return {
-        badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+        badge: "admin-badge-success",
         label: "Success",
-        accent: "border-l-emerald-500"
+        accent: "border-l-[color:var(--admin-success-border)]"
       };
     case "financial":
       return {
-        badge: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+        badge: "admin-badge-warning",
         label: "Financial",
-        accent: "border-l-amber-500"
+        accent: "border-l-[color:var(--admin-warning-border)]"
       };
     case "high":
       return {
-        badge: "bg-red-500/15 text-red-300 border-red-500/30",
+        badge: "admin-badge-danger",
         label: "High priority",
-        accent: "border-l-red-500"
+        accent: "border-l-[color:var(--admin-danger-border)]"
       };
     default:
       return {
-        badge: "bg-sky-500/15 text-sky-300 border-sky-500/30",
+        badge: "admin-badge-info",
         label: "Information",
-        accent: "border-l-sky-500"
+        accent: "border-l-[color:var(--admin-info-border)]"
       };
   }
 }

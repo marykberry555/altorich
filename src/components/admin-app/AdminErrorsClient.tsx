@@ -109,7 +109,7 @@ export function AdminErrorsClient() {
             <option value="not_found">Not found</option>
           </select>
         </label>
-        <div className="min-w-[220px] flex-1">
+        <div className="min-w-[220px] flex-1 basis-full sm:basis-auto sm:min-w-[220px]">
           <Input
             label="Search"
             value={q}
@@ -125,9 +125,38 @@ export function AdminErrorsClient() {
       {error ? <p className="text-sm text-amber-300">{error}</p> : null}
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card variant="elevated" padding="none" className="overflow-hidden border-white/10 bg-zinc-950">
-          <div className="max-h-[36rem] overflow-auto">
-            <table className="w-full text-left text-sm">
+        <Card variant="elevated" padding="none" className="min-w-0 overflow-hidden border-white/10 bg-zinc-950">
+          {/* Mobile cards */}
+          <ul className="max-h-[36rem] space-y-2 overflow-y-auto p-3 md:hidden">
+            {loading ? (
+              <li className="py-10 text-center text-zinc-500">Loading…</li>
+            ) : rows.length === 0 ? (
+              <li className="py-10 text-center text-zinc-500">No errors match these filters.</li>
+            ) : (
+              rows.map((row) => (
+                <li key={row.id}>
+                  <button
+                    type="button"
+                    className={cn(
+                      "w-full min-w-0 rounded-lg border border-white/10 p-3 text-left",
+                      selectedId === row.id && "bg-emerald-500/10"
+                    )}
+                    onClick={() => setSelectedId(row.id)}
+                  >
+                    <p className="font-mono text-xs text-emerald-300">{row.reference_id}</p>
+                    <p className="mt-1 truncate text-sm text-zinc-200">{row.user_label}</p>
+                    <p className="mt-1 truncate text-xs text-zinc-400">{row.route ?? "—"}</p>
+                    <p className="mt-2 text-[10px] capitalize text-zinc-500">
+                      {row.status} · {new Date(row.created_at).toLocaleString("en-NG")}
+                    </p>
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+
+          <div className="hidden max-h-[36rem] overflow-auto md:block">
+            <table className="w-full min-w-0 text-left text-sm">
               <thead className="sticky top-0 bg-zinc-900 text-[11px] uppercase tracking-[0.12em] text-zinc-500">
                 <tr>
                   <th className="px-3 py-2.5">Error ID</th>
