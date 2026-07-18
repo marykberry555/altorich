@@ -5,6 +5,12 @@ import { ADMIN_APP_HOME, ADMIN_APP_INSTALL } from "@/lib/admin-app/constants";
 import { buildPublicUrl } from "@/lib/request-url";
 import { applyDocumentNoStoreHeaders } from "@/lib/cache/response-headers";
 import { botBlockedResponse, isBlockedBot, X_ROBOTS_TAG } from "@/lib/security/bot-block";
+import {
+  REFERRAL_COOKIE,
+  REFERRAL_TTL_SECONDS,
+  normalizeReferralCode,
+  referralCodeFromSearchParams
+} from "@/lib/referral/attribution";
 
 const protectedRoutes = [
   "/dashboard",
@@ -103,6 +109,22 @@ function withNoStore(response: NextResponse) {
   return applyDocumentNoStoreHeaders(response);
 }
 
+function withReferralAttribution(request: NextRequest, response: NextResponse) {
+  const fromQuery = referralCodeFromSearchParams(request.nextUrl.searchParams);
+  const pathMatch = request.nextUrl.pathname.match(/^\/r\/([A-Za-z0-9_-]+)/i);
+  const fromPath = normalizeReferralCode(pathMatch?.[1] ?? null);
+  const code = fromQuery ?? fromPath;
+  if (code) {
+    response.cookies.set(REFERRAL_COOKIE, code, {
+      path: "/",
+      maxAge: REFERRAL_TTL_SECONDS,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production"
+    });
+  }
+  return withNoStore(response);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const userAgent = request.headers.get("user-agent");
@@ -112,7 +134,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === "/admin") {
-    return withNoStore(NextResponse.redirect(buildPublicUrl("/admin/auth", request), 308));
+    return withReferralAttribution(request, NextResponse.redirect(buildPublicUrl("/admin/auth", request), 308));
   }
 
   // Public admin surfaces kept on /admin/* (auth + APK download). Everything else
@@ -123,7 +145,7 @@ export async function middleware(request: NextRequest) {
     !pathname.startsWith("/admin/download")
   ) {
     const target = pathname.replace(/^\/admin/, ADMIN_APP_HOME) || ADMIN_APP_HOME;
-    return withNoStore(NextResponse.redirect(buildPublicUrl(target, request), 308));
+    return withReferralAttribution(request, NextResponse.redirect(buildPublicUrl(target, request), 308));
   }
 
   const { response, user, supabase } = await updateSession(request);
@@ -139,9 +161,12 @@ export async function middleware(request: NextRequest) {
           isAdminRole = false;
         }
       }
-      return withNoStore(NextResponse.redirect(buildPublicUrl(isAdminRole ? ADMIN_APP_HOME : "/dashboard", request)));
+      return withReferralAttribution(
+        request,
+        NextResponse.redirect(buildPublicUrl(isAdminRole ? ADMIN_APP_HOME : "/dashboard", request))
+      );
     }
-    return withNoStore(response);
+    return withReferralAttribution(request, response);
   }
 
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
@@ -149,23 +174,23 @@ export async function middleware(request: NextRequest) {
   const isAdminApp = isAdminAppProtectedRoute(pathname);
 
   if (!isProtected && !isHardOps && !isAdminApp) {
-    return withNoStore(response);
+    return withReferralAttribution(request, response);
   }
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     if (process.env.NODE_ENV === "production") {
       return new NextResponse("Service unavailable", { status: 503 });
     }
-    return withNoStore(response);
+    return withReferralAttribution(request, response);
   }
 
   if (!user) {
     if (isAdminApp && pathname === ADMIN_APP_HOME) {
-      return withNoStore(NextResponse.redirect(buildPublicUrl(ADMIN_APP_INSTALL, request)));
+      return withReferralAttribution(request, NextResponse.redirect(buildPublicUrl(ADMIN_APP_INSTALL, request)));
     }
     const loginUrl = buildPublicUrl(isAdminApp ? "/admin/auth" : "/auth/login", request);
     loginUrl.searchParams.set("redirect", pathname);
-    return withNoStore(NextResponse.redirect(loginUrl));
+    return withReferralAttribution(request, NextResponse.redirect(loginUrl));
   }
 
   if (supabase && isProtected) {
@@ -176,21 +201,21 @@ export async function middleware(request: NextRequest) {
       .maybeSingle();
 
     if (profile?.must_change_pin && !pathname.startsWith("/auth/change-pin")) {
-      return withNoStore(NextResponse.redirect(buildPublicUrl("/auth/change-pin", request)));
+      return withReferralAttribution(request, NextResponse.redirect(buildPublicUrl("/auth/change-pin", request)));
     }
   }
 
   if (isHardOps && supabase) {
     const denied = await enforceAdminRoute(request, supabase, user);
-    if (denied) return denied;
+    if (denied) return withReferralAttribution(request, denied);
   }
 
   if (isAdminApp && supabase) {
     const denied = await enforceAdminRoute(request, supabase, user);
-    if (denied) return denied;
+    if (denied) return withReferralAttribution(request, denied);
   }
 
-  return withNoStore(response);
+  return withReferralAttribution(request, response);
 }
 
 export const config = {

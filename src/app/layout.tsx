@@ -24,6 +24,7 @@ import {
 } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { LiveActivityFeed } from "@/components/social/LiveActivityFeed";
+import { ReferralAttributionCapture } from "@/components/referral/ReferralAttributionCapture";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -109,6 +110,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <PwaProvider>
           <AppBootstrapLoader />
           <ThemeProvider>
+            <ReferralAttributionCapture />
             {children}
             <LiveActivityFeed />
             <OfflineIndicator />

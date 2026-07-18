@@ -22,6 +22,7 @@ import {
   DUPLICATE_IDENTITY_MESSAGE,
   normalizePhone
 } from "@/lib/validation/identity";
+import { resolveReferralCode } from "@/lib/referral/resolve";
 
 type Client = SupabaseClient<Database>;
 type OtpPurpose = Database["public"]["Enums"]["auth_otp_purpose"];
@@ -88,6 +89,19 @@ export class AuthService {
 
     await assertIdentityAvailable(this.supabase, { username, email, phone });
 
+    let referralCode: string | undefined;
+    let referrerId: string | undefined;
+    if (input.referralCode?.trim()) {
+      const resolved = await resolveReferralCode(input.referralCode);
+      const { data: referrerAuth } = await this.supabase.auth.admin.getUserById(resolved.referrerId);
+      const referrerEmail = referrerAuth.user?.email?.toLowerCase();
+      if (referrerEmail && referrerEmail === email) {
+        throw new AppError("You cannot use your own referral link.", 400, "REFERRAL_SELF");
+      }
+      referralCode = resolved.code;
+      referrerId = resolved.referrerId;
+    }
+
     const password = this.internalPassword();
     const pinHash = hashPin(input.pin);
 
@@ -99,7 +113,7 @@ export class AuthService {
         full_name: input.fullName,
         phone,
         username,
-        referral_code: input.referralCode ?? null,
+        referral_code: referralCode ?? null,
         preferred_package_slug: input.preferredPackage,
         location_state_code: input.locationStateCode,
         location_city_area: input.locationCityArea,
@@ -113,6 +127,23 @@ export class AuthService {
       throw error;
     }
     if (!created.user) throw Errors.internal();
+
+    // Defense in depth if the auth trigger missed referral metadata.
+    if (referrerId) {
+      await this.supabase
+        .from("profiles")
+        .update({ referred_by: referrerId })
+        .eq("id", created.user.id)
+        .is("referred_by", null);
+      await this.supabase.from("referrals").upsert(
+        {
+          referrer_id: referrerId,
+          referred_id: created.user.id,
+          status: "pending"
+        },
+        { onConflict: "referred_id", ignoreDuplicates: true }
+      );
+    }
 
     await this.supabase
       .from("profiles")

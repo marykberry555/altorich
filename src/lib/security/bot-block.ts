@@ -37,7 +37,15 @@ const SOCIAL_PREVIEW_UA_SUBSTRINGS = [
   "slackbot",
   "embedly",
   "pinterestbot",
-  "vkshare"
+  "vkshare",
+  "whatsapp",
+  "skypeuripreview",
+  "slack-imgproxy",
+  "discord-preview",
+  "iframely",
+  "viber",
+  "line-poker",
+  "pinterest/0."
 ];
 
 /** Known search, SEO, and AI crawlers — blocked at the edge. */

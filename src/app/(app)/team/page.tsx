@@ -53,7 +53,7 @@ export default async function TeamPage() {
     const { data: profile } = await services.supabase.from("profiles").select("invite_code, vip_level").eq("id", user.id).single();
     if (profile?.invite_code) {
       dashboard.inviteCode = profile.invite_code;
-      dashboard.inviteLink = `${COMPANY.siteUrl.replace(/\/$/, "")}/auth/register?ref=${profile.invite_code}`;
+      dashboard.inviteLink = `${COMPANY.siteUrl.replace(/\/$/, "")}/r/${profile.invite_code}`;
     }
   }
 

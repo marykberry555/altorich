@@ -1,5 +1,17 @@
 import { redirect } from "next/navigation";
 
-export default function LegacySignupRedirect() {
-  redirect("/auth/register");
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+/** Legacy /signup — preserve referral query params when forwarding to /auth/register. */
+export default async function LegacySignupRedirect({ searchParams }: Props) {
+  const params = await searchParams;
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === "string") qs.set(key, value);
+    else if (Array.isArray(value) && value[0]) qs.set(key, value[0]);
+  }
+  const suffix = qs.toString();
+  redirect(suffix ? `/auth/register?${suffix}` : "/auth/register");
 }

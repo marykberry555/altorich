@@ -18,6 +18,15 @@ import { LocationFields } from "@/components/location/LocationFields";
 import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
 import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE, WEAK_PASSWORD_MESSAGE } from "@/lib/validation/identity";
 import type { NgStateCode } from "@/lib/location/ng-locations";
+import {
+  REFERRAL_INVALID_MESSAGE,
+  normalizeReferralCode,
+  referralCodeFromSearchParams
+} from "@/lib/referral/attribution";
+import {
+  persistReferralCode,
+  readStoredReferralCode
+} from "@/components/referral/ReferralAttributionCapture";
 
 export function RegisterForm() {
   const searchParams = useSearchParams();
@@ -28,17 +37,52 @@ export function RegisterForm() {
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [referralCode, setReferralCode] = useState("");
+  const [referrerName, setReferrerName] = useState<string | null>(null);
+  const [referralLocked, setReferralLocked] = useState(false);
+  const [referralError, setReferralError] = useState("");
   const [preferredPackage, setPreferredPackage] = useState<PackageSlug | "">("");
   const [locationStateCode, setLocationStateCode] = useState<NgStateCode | "">("");
   const [locationCityArea, setLocationCityArea] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useFlashError();
+
   const [otpOpen, setOtpOpen] = useState(false);
 
   useEffect(() => {
-    const ref = searchParams.get("ref");
-    if (ref) setReferralCode(ref.toUpperCase());
+    const fromUrl = referralCodeFromSearchParams(searchParams);
+    const fromStore = readStoredReferralCode();
+    const code = fromUrl ?? fromStore;
+    if (!code) return;
+    persistReferralCode(code);
+    setReferralCode(code);
+    setReferralLocked(Boolean(fromUrl || fromStore));
+
+    let cancelled = false;
+    fetch(`/api/referrals/lookup?code=${encodeURIComponent(code)}`)
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        if (!res.ok) {
+          setReferrerName(null);
+          setReferralLocked(false);
+          setReferralError(typeof data.error === "string" ? data.error : REFERRAL_INVALID_MESSAGE);
+          return;
+        }
+        setReferralError("");
+        setReferrerName(typeof data.referrerName === "string" ? data.referrerName : null);
+        if (typeof data.code === "string") {
+          setReferralCode(data.code);
+          persistReferralCode(data.code);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setReferralError("");
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [searchParams]);
 
   async function handleRegister(event: React.FormEvent) {
@@ -61,6 +105,16 @@ export function RegisterForm() {
       return;
     }
 
+    const normalizedReferral = normalizeReferralCode(referralCode);
+    if (referralCode.trim() && !normalizedReferral) {
+      setError(REFERRAL_INVALID_MESSAGE);
+      return;
+    }
+    if (referralError && normalizedReferral) {
+      setError(referralError);
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -74,7 +128,7 @@ export function RegisterForm() {
           email,
           phone,
           pin,
-          referralCode: referralCode || undefined,
+          referralCode: normalizedReferral || undefined,
           preferredPackage,
           locationStateCode,
           locationCityArea
@@ -87,7 +141,9 @@ export function RegisterForm() {
             ? DUPLICATE_IDENTITY_MESSAGE
             : data.code === "WEAK_PASSWORD"
               ? WEAK_PASSWORD_MESSAGE
-              : (data.error ?? "Registration failed.");
+              : data.code === "REFERRAL_INVALID" || data.code === "REFERRAL_EXPIRED" || data.code === "REFERRAL_SELF"
+                ? (data.error ?? REFERRAL_INVALID_MESSAGE)
+                : (data.error ?? "Registration failed.");
         setError(msg);
         setLoading(false);
         return;
@@ -108,7 +164,6 @@ export function RegisterForm() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Verification failed.");
-    // Brief success beat, then auto-login redirect to dashboard
     window.setTimeout(() => {
       window.location.assign(data.redirect ?? "/dashboard");
     }, 1400);
@@ -130,7 +185,15 @@ export function RegisterForm() {
             required
           />
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Input label="Phone number" value={phone} onChange={(e) => setPhone(capPhoneInput(e.target.value))} required placeholder="08012345678" maxLength={11} inputMode="numeric" />
+          <Input
+            label="Phone number"
+            value={phone}
+            onChange={(e) => setPhone(capPhoneInput(e.target.value))}
+            required
+            placeholder="08012345678"
+            maxLength={11}
+            inputMode="numeric"
+          />
           <LocationFields
             stateCode={locationStateCode}
             cityArea={locationCityArea}
@@ -140,7 +203,38 @@ export function RegisterForm() {
           />
           <PackageSelectionField value={preferredPackage} onChange={setPreferredPackage} disabled={loading} />
           <PinField label="Choose 6-digit pin" value={pin} onChange={setPin} autoComplete="new-password" />
-          <Input label="Referral code (optional)" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} />
+
+          {referralLocked && referralCode && !referralError ? (
+            <div className="rounded-[var(--radius-sm)] border border-[var(--emerald)]/30 bg-[var(--emerald-soft)]/40 px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">
+                {referrerName ? "Referred by" : "Referral"}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-[var(--heading)]">
+                {referrerName ?? referralCode}
+              </p>
+              {referrerName ? (
+                <p className="mt-0.5 text-xs text-[var(--text-muted)]">Code {referralCode}</p>
+              ) : null}
+            </div>
+          ) : (
+            <div className="grid gap-1.5">
+              <Input
+                label="Referral code (optional)"
+                value={referralCode}
+                onChange={(e) => {
+                  const next = e.target.value.toUpperCase();
+                  setReferralCode(next);
+                  setReferralLocked(false);
+                  setReferralError("");
+                  setReferrerName(null);
+                  const normalized = normalizeReferralCode(next);
+                  if (normalized) persistReferralCode(normalized);
+                }}
+              />
+              {referralError ? <p className="text-xs text-red-600">{referralError}</p> : null}
+            </div>
+          )}
+
           <MathChallenge challenge={math.challenge} answer={math.answer} onAnswerChange={math.setAnswer} />
           <fieldset className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3">
             <legend className="px-1 text-sm font-medium text-[var(--heading)]">Terms of Service</legend>
@@ -157,11 +251,21 @@ export function RegisterForm() {
               />
               <span>
                 I agree to the{" "}
-                <Link href="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--emerald)] underline-offset-2 hover:underline">
+                <Link
+                  href="/legal/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[var(--emerald)] underline-offset-2 hover:underline"
+                >
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--emerald)] underline-offset-2 hover:underline">
+                <Link
+                  href="/legal/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[var(--emerald)] underline-offset-2 hover:underline"
+                >
                   Privacy Policy
                 </Link>
                 .

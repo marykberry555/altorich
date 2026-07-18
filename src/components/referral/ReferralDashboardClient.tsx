@@ -44,7 +44,7 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
   const [levelUp, setLevelUp] = useState<{ label: string; level: number; commission: number; bonus: number } | null>(null);
 
   const shareText = encodeURIComponent(
-    `Join me on Alto Rich. Use my code ${dashboard.inviteCode}: ${dashboard.inviteLink}`
+    `Join me on Alto Rich — grow your wealth with a trusted platform. ${dashboard.inviteLink}`
   );
   const shareUrl = encodeURIComponent(dashboard.inviteLink);
 

@@ -257,7 +257,7 @@ export class ReferralService {
       .single();
 
     const inviteCode = profile?.invite_code ?? "";
-    const inviteLink = `${siteUrl.replace(/\/$/, "")}/auth/register?ref=${inviteCode}`;
+    const inviteLink = `${siteUrl.replace(/\/$/, "")}/r/${inviteCode}`;
     const vipLevel = Number(profile?.vip_level ?? 0);
     const currentVip = vipLevels.find((v) => v.level === vipLevel) ?? vipLevels[0];
     const nextVip = vipLevels.find((v) => v.level === vipLevel + 1) ?? null;
