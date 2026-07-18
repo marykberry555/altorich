@@ -66,8 +66,8 @@ export default async function DepositsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{deposit.member_name}</p>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      {formatNaira(Number(deposit.amount))} · {deposit.phone}
+                    <p className="currency-ngn text-sm font-semibold tabular-nums text-[var(--emerald)]">
+                      {formatNaira(Number(deposit.amount))}
                     </p>
                     <p className="mt-1 text-[11px] text-[var(--text-subtle)]">
                       Submitted{" "}
