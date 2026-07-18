@@ -2,9 +2,9 @@ import { ImageResponse } from "next/og";
 import { COMPANY } from "@/lib/company";
 
 export const runtime = "nodejs";
-export const alt = "Join Alto Rich";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+
+const WIDTH = 1200;
+const HEIGHT = 630;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -92,6 +92,6 @@ export async function GET(request: Request) {
         </div>
       </div>
     ),
-    { ...size }
+    { width: WIDTH, height: HEIGHT }
   );
 }
