@@ -31,6 +31,7 @@ export function RegisterForm() {
   const [preferredPackage, setPreferredPackage] = useState<PackageSlug | "">("");
   const [locationStateCode, setLocationStateCode] = useState<NgStateCode | "">("");
   const [locationCityArea, setLocationCityArea] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useFlashError();
   const [otpOpen, setOtpOpen] = useState(false);
@@ -43,6 +44,10 @@ export function RegisterForm() {
   async function handleRegister(event: React.FormEvent) {
     event.preventDefault();
     if (!math.solved) return;
+    if (!acceptedTerms) {
+      setError("Please accept the Terms of Service to continue.");
+      return;
+    }
     if (!preferredPackage) {
       setError("Select a preferred investment sector.");
       return;
@@ -137,8 +142,34 @@ export function RegisterForm() {
           <PinField value={pin} onChange={setPin} autoComplete="new-password" />
           <Input label="Referral code (optional)" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} />
           <MathChallenge challenge={math.challenge} answer={math.answer} onAnswerChange={math.setAnswer} />
+          <fieldset className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3">
+            <legend className="px-1 text-sm font-medium text-[var(--heading)]">Terms of Service</legend>
+            <label className="flex cursor-pointer items-start gap-3 text-sm text-[var(--text-muted)]">
+              <input
+                type="radio"
+                name="accept-terms"
+                value="accepted"
+                checked={acceptedTerms}
+                required
+                disabled={loading}
+                onChange={() => setAcceptedTerms(true)}
+                className="mt-1 h-4 w-4 shrink-0 accent-[var(--emerald)]"
+              />
+              <span>
+                I agree to the{" "}
+                <Link href="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--emerald)] underline-offset-2 hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--emerald)] underline-offset-2 hover:underline">
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+          </fieldset>
           {error ? <FormFlashError message={error} /> : null}
-          <Button type="submit" disabled={loading || !math.solved} className="w-full">
+          <Button type="submit" disabled={loading || !math.solved || !acceptedTerms} className="w-full">
             {loading ? "Creating account…" : "Continue"}
           </Button>
         </form>
