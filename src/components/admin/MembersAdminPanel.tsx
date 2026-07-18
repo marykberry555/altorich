@@ -11,9 +11,17 @@ import { Card } from "@/components/ui/Card";
 import { DataTable, SectionHeading, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/design-system";
 import { MemberActionsMenu, type MemberAction } from "@/components/admin/MemberActionsMenu";
 import { MemberDetailPanel } from "@/components/admin/MemberDetailPanel";
-import type { AdminMemberRow } from "@/services/admin/member-admin.service";
 
-type Member = AdminMemberRow;
+type Member = {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  email: string | null;
+  phone: string | null;
+  invite_code: string | null;
+  account_status: string | null;
+  walletBalance: number;
+};
 
 const STATUS_BY_ACTION: Partial<Record<MemberAction, string>> = {
   pause: "paused",
@@ -22,10 +30,11 @@ const STATUS_BY_ACTION: Partial<Record<MemberAction, string>> = {
 };
 
 export function MembersAdminPanel({
-  profilePath,
+  profileBasePath,
   dark = false
 }: {
-  profilePath?: (id: string) => string;
+  /** When set, row click navigates to `${profileBasePath}/${id}` instead of opening the side panel. */
+  profileBasePath?: string;
   dark?: boolean;
 } = {}) {
   const router = useRouter();
@@ -323,7 +332,7 @@ export function MembersAdminPanel({
                         type="button"
                         className="text-left hover:text-[var(--emerald)]"
                         onClick={() => {
-                          if (profilePath) router.push(profilePath(member.id));
+                          if (profileBasePath) router.push(`${profileBasePath.replace(/\/$/, "")}/${member.id}`);
                           else setDetailMember({ id: member.id, name: member.full_name || "Member" });
                         }}
                       >
@@ -351,7 +360,7 @@ export function MembersAdminPanel({
         </DataTable>
       </Card>
 
-      {detailMember && !profilePath ? (
+      {detailMember && !profileBasePath ? (
         <MemberDetailPanel memberId={detailMember.id} memberName={detailMember.name} onClose={() => setDetailMember(null)} />
       ) : null}
     </div>

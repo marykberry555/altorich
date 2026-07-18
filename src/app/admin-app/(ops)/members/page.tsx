@@ -11,7 +11,7 @@ export default async function AdminAppMembersPage() {
         <h1 className="mt-2 text-2xl font-bold text-white">Members</h1>
         <p className="mt-2 text-sm text-zinc-400">Create, fund, review, and manage member accounts.</p>
       </header>
-      <MembersAdminPanel profilePath={(id) => adminAppPath(`/members/${id}`)} dark />
+      <MembersAdminPanel profileBasePath={adminAppPath("/members")} dark />
     </div>
   );
 }
