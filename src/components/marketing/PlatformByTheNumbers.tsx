@@ -177,7 +177,7 @@ export function PlatformByTheNumbers({ config, className }: Props) {
           </p>
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <div className="mt-8 grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           {cards.map((card) => {
             const Icon = card.icon;
             return (
@@ -185,11 +185,11 @@ export function PlatformByTheNumbers({ config, className }: Props) {
                 key={card.key}
                 variant="elevated"
                 padding="md"
-                className="card-lift flex h-full flex-col items-start"
+                className="card-lift flex h-full min-w-0 flex-col items-start overflow-hidden"
               >
                 <div
                   className={cn(
-                    "inline-flex size-11 items-center justify-center rounded-xl",
+                    "inline-flex size-11 shrink-0 items-center justify-center rounded-xl",
                     card.tone === "gold"
                       ? "bg-[var(--gold-soft)] text-[var(--gold)]"
                       : "bg-[var(--emerald-soft)] text-[var(--emerald)]"
@@ -199,7 +199,8 @@ export function PlatformByTheNumbers({ config, className }: Props) {
                 </div>
                 <p
                   className={cn(
-                    "mt-5 text-2xl font-bold tabular-nums tracking-tight sm:text-3xl",
+                    "mt-5 w-full min-w-0 max-w-full break-words font-bold tabular-nums tracking-tight",
+                    "text-[clamp(1.05rem,4.2vw,1.875rem)] leading-tight",
                     card.tone === "gold" ? "text-[var(--gold)]" : "text-[var(--heading)]"
                   )}
                 >

@@ -127,11 +127,11 @@ function ColorfulCountdown({
       aria-labelledby="payout-countdown-heading"
     >
       <div
-        className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-[var(--emerald)]/15 blur-2xl"
+        className="pointer-events-none absolute right-0 top-0 h-28 w-28 translate-x-1/4 -translate-y-1/4 rounded-full bg-[var(--emerald)]/15 blur-2xl"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -bottom-10 -left-6 h-24 w-24 rounded-full bg-[var(--gold)]/15 blur-2xl"
+        className="pointer-events-none absolute bottom-0 left-0 h-24 w-24 -translate-x-1/4 translate-y-1/4 rounded-full bg-[var(--gold)]/15 blur-2xl"
         aria-hidden
       />
 
