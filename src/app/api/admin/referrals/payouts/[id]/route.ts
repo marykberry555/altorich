@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getAdminServices } from "@/lib/services";
 import { requireSessionUser } from "@/lib/auth/session";
-import { apiErrorResponse, Errors } from "@/lib/errors";
+import { Errors } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 
 const actionSchema = z.object({
   action: z.enum(["approve", "reject", "paid"]),

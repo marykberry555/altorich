@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { apiErrorResponse } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 import { requireSessionUser, getServiceClientOrThrow } from "@/lib/auth/session";
 import { getAuthService } from "@/lib/auth/service";
 import { userIsAdmin } from "@/lib/auth/admin-role";

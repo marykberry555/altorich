@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
-import { apiErrorResponse, Errors } from "@/lib/errors";
+import { Errors } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 import { sanitizeFilename } from "@/lib/security/sanitize";
 
 const ALLOWED_TYPES = ["government_id", "selfie", "proof_of_address"] as const;

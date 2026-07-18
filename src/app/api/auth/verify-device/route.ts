@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { apiErrorResponse } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 import { getAuthService } from "@/lib/auth/service";
 import { applySessionToCookies } from "@/lib/auth/apply-session";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";

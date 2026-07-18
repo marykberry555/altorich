@@ -3,7 +3,8 @@ import { z } from "zod";
 import { randomBytes } from "crypto";
 import { getServiceRoleServices } from "@/lib/services";
 import { requireAdmin } from "@/lib/auth/session";
-import { apiErrorResponse, Errors } from "@/lib/errors";
+import { Errors } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 import { logAdminAction } from "@/lib/auth/admin-audit";
 import { hashPin } from "@/lib/auth/pin";
 

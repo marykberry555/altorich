@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminServices } from "@/lib/services";
-import { apiErrorResponse, Errors } from "@/lib/errors";
+import { Errors } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 import { AdminSearchService } from "@/services/admin/admin-search.service";
 
 export async function GET(request: NextRequest) {

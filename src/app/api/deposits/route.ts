@@ -4,7 +4,8 @@ import { makeReference } from "@/lib/domain";
 import { MIN_FUNDING_AMOUNT_NGN } from "@/lib/payments";
 import { getPublicServices, getServiceRoleServices } from "@/lib/services";
 import { getSessionUser, hasAdminRole, requireSessionUser } from "@/lib/auth/session";
-import { apiErrorResponse, Errors } from "@/lib/errors";
+import { Errors } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 import { logger } from "@/lib/logger";
 
 const depositSchema = z.object({

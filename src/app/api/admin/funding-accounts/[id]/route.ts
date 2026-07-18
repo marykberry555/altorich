@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { apiErrorResponse } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 import { requireAdmin } from "@/lib/auth/session";
 import { getServiceRoleServices } from "@/lib/services";
 import { accountNumberSchema } from "@/lib/validation/schemas";

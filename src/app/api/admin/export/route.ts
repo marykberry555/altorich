@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminServices } from "@/lib/services";
-import { apiErrorResponse, Errors } from "@/lib/errors";
+import { Errors } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 
 function toCsv(rows: Record<string, unknown>[], columns: string[]) {
   const header = columns.join(",");

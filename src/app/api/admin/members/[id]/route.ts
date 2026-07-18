@@ -3,7 +3,8 @@ import { z } from "zod";
 import { getServiceRoleServices } from "@/lib/services";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/lib/auth/admin-audit";
-import { apiErrorResponse, Errors } from "@/lib/errors";
+import { Errors } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 
 const statusSchema = z.object({
   accountStatus: z.enum(["active", "paused", "disabled", "deactivated"])

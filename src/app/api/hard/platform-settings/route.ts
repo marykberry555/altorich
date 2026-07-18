@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { NextRequest } from "next/server";
 import { getServiceRoleServices } from "@/lib/services";
 import { requireAdmin } from "@/lib/auth/session";
-import { apiErrorResponse, Errors } from "@/lib/errors";
+import { Errors } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 import { HARD_OPS_HOME } from "@/lib/hard-ops";
 
 export async function POST(request: NextRequest) {

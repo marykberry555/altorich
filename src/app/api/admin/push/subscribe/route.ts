@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin, getServiceClientOrThrow } from "@/lib/auth/session";
-import { apiErrorResponse } from "@/lib/errors";
+import { apiErrorResponse } from "@/lib/errors/api-response";
 import { AdminPushSubscriptionService } from "@/services/admin/admin-notification.service";
 
 const schema = z.object({
