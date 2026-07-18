@@ -1,9 +1,9 @@
-import { AppLoader } from "@/components/brand/AppLoader";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 
 export default function AppSectionLoading() {
   return (
-    <div className="min-h-[60vh] bg-[var(--surface)]">
-      <AppLoader compact />
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <DashboardSkeleton />
     </div>
   );
 }

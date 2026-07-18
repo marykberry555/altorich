@@ -93,19 +93,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Wallet funding is temporarily disabled." }, { status: 403 });
     }
 
+    // Prevent duplicate pending queue from double-taps / retries.
+    const stats = await services.deposits.getUserStats(user.id).catch(() => ({ pending: 0, approved: 0, count: 0 }));
+    const pendingCount = await services.deposits
+      .listForUser(user.id, 20)
+      .then((rows) => rows.filter((d) => d.status === "pending").length)
+      .catch(() => 0);
+    if (pendingCount >= 3) {
+      throw Errors.business(
+        "You already have pending funding requests. Wait for admin verification before submitting another.",
+        "PENDING_DEPOSIT_LIMIT",
+        { label: "View funding", href: "/deposits" }
+      );
+    }
+
+    const idempotencyKey =
+      request.headers.get("idempotency-key")?.trim() ||
+      (typeof body.idempotencyKey === "string" ? body.idempotencyKey.trim() : "") ||
+      "";
+
     // Always generate a unique internal reference (DB UNIQUE). Optional bank/POS
     // transfer refs live in receipt_note for admin verification only.
+    // When an Idempotency-Key is supplied, reuse it as the unique reference so retries return the same logical deposit attempt.
+    const reference = idempotencyKey
+      ? `IDEM-${user.id.slice(0, 8)}-${idempotencyKey}`.slice(0, 120)
+      : makeReference(phone);
+
+    if (idempotencyKey) {
+      const existing = await services.deposits
+        .listForUser(user.id, 50)
+        .then((rows) => rows.find((d) => d.reference === reference))
+        .catch(() => null);
+      if (existing) {
+        return NextResponse.json(existing, { status: 200 });
+      }
+    }
+
     const deposit = await services.deposits.create({
       memberName,
       phone,
       amount,
       receiptNote: paymentReference,
-      reference: makeReference(phone),
+      reference,
       userId: user.id,
       proofUrl
     });
 
-    logger.info("Deposit created", { depositId: deposit.id, userId: user.id, hasReference: Boolean(paymentReference) });
+    logger.info("Deposit created", {
+      depositId: deposit.id,
+      userId: user.id,
+      hasReference: Boolean(paymentReference),
+      pendingBefore: stats.pending
+    });
     return NextResponse.json(deposit, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);

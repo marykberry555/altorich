@@ -3,7 +3,6 @@ import { AutoWeeklyPayoutToggle } from "@/components/payout/AutoWeeklyPayoutTogg
 import { PayoutHistoryTable } from "@/components/payout/PayoutHistoryTable";
 import { EarningsActionChoice } from "@/components/payout/EarningsActionChoice";
 import { WithdrawalWorkspace } from "@/components/payout/WithdrawalWorkspace";
-import { formatNaira } from "@/lib/domain";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import type { Withdrawal } from "@/types/database";
@@ -43,18 +42,15 @@ export default async function WithdrawalsPage() {
       .maybeSingle();
     registeredFullName = profile?.full_name?.trim() ?? "";
     if (profile?.preferred_package_slug) {
-      preferredHref = `/packages/${profile.preferred_package_slug}`;
+      preferredHref = "/investments";
     }
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-10 pb-8">
-      <header className="space-y-2">
+    <div className="mx-auto max-w-3xl space-y-8 pb-8">
+      <header className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Withdrawal</h1>
-        <p className="text-sm text-[var(--text-muted)]">
-          Available withdrawal balance ·{" "}
-          <span className="font-semibold tabular-nums text-[var(--heading)]">{formatNaira(balance)}</span>
-        </p>
+        <p className="text-sm text-[var(--text-muted)]">Move earnings to your bank or reinvest.</p>
       </header>
 
       <EarningsActionChoice availableBalance={balance} preferredPackageHref={preferredHref} />

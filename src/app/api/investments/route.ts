@@ -38,10 +38,31 @@ export async function POST(request: NextRequest) {
       throw Errors.badRequest("Invalid investment purchase payload.");
     }
 
+    const idempotencyKey =
+      request.headers.get("idempotency-key")?.trim() ||
+      (typeof body.idempotencyKey === "string" ? body.idempotencyKey.trim() : "") ||
+      "";
+
+    if (idempotencyKey) {
+      const existing = await services.investments
+        .listUserInvestments(user.id)
+        .then((rows) =>
+          rows.find((row) => {
+            const meta = (row as { reference?: string | null }).reference;
+            return meta === `IDEM-${idempotencyKey}`.slice(0, 120);
+          })
+        )
+        .catch(() => null);
+      if (existing) {
+        return NextResponse.json(existing, { status: 200 });
+      }
+    }
+
     const investment = await services.investments.purchasePlan(
       user.id,
       parsed.data.planId,
-      parsed.data.amount
+      parsed.data.amount,
+      idempotencyKey ? `IDEM-${idempotencyKey}`.slice(0, 120) : undefined
     );
 
     await services.audit.log({
@@ -49,7 +70,7 @@ export async function POST(request: NextRequest) {
       action: "investment.purchased",
       entityType: "investment",
       entityId: investment.id,
-      metadata: { amount: parsed.data.amount, planId: parsed.data.planId }
+      metadata: { amount: parsed.data.amount, planId: parsed.data.planId, idempotencyKey: idempotencyKey || null }
     });
 
     logger.info("Investment purchased", { investmentId: investment.id, userId: user.id });

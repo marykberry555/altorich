@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { Check, Loader2, Upload } from "lucide-react";
 import { formatNaira, NAIRA_SYMBOL } from "@/lib/domain";
@@ -32,6 +32,7 @@ export function InvestmentFundingForm({ fundingEnabled }: Props) {
   const [success, setSuccess] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitted, setSubmitted] = useState<SubmittedFunding | null>(null);
+  const inFlight = useRef(false);
 
   async function uploadProofIfNeeded(): Promise<string | undefined> {
     if (!proofFile) return undefined;
@@ -46,6 +47,8 @@ export function InvestmentFundingForm({ fundingEnabled }: Props) {
 
   async function submitFunding(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (inFlight.current || isSubmitting) return;
+    inFlight.current = true;
     setIsSubmitting(true);
     setMessage("");
     setReferenceId(undefined);
@@ -57,18 +60,28 @@ export function InvestmentFundingForm({ fundingEnabled }: Props) {
     if (!parsedAmount || parsedAmount < MIN_FUNDING_AMOUNT_NGN) {
       setMessage(`Minimum funding amount is ${formatNaira(MIN_FUNDING_AMOUNT_NGN)}.`);
       setIsSubmitting(false);
+      inFlight.current = false;
       return;
     }
+
+    const idempotencyKey =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     try {
       const proofUrl = await uploadProofIfNeeded();
       await fetchJson("/api/deposits", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey
+        },
         body: JSON.stringify({
           amount: parsedAmount,
           paymentReference: reference || undefined,
-          proofUrl
+          proofUrl,
+          idempotencyKey
         })
       });
 
@@ -88,6 +101,7 @@ export function InvestmentFundingForm({ fundingEnabled }: Props) {
       if (err instanceof ApiRequestError) setReferenceId(err.referenceId);
     } finally {
       setIsSubmitting(false);
+      inFlight.current = false;
     }
   }
 

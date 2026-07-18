@@ -2,7 +2,6 @@ import { getSessionUser } from "@/lib/auth/session";
 import { getUserServices } from "@/lib/services";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { SessionInactivityGuard } from "@/components/auth/SessionInactivityGuard";
-import { LiveNowProvider } from "@/lib/hooks/use-live-now";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
@@ -37,11 +36,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <LiveNowProvider>
-      <DashboardShell fullName={fullName} username={username} avatarUrl={avatarUrl}>
-        <SessionInactivityGuard />
-        {children}
-      </DashboardShell>
-    </LiveNowProvider>
+    <DashboardShell fullName={fullName} username={username} avatarUrl={avatarUrl}>
+      <SessionInactivityGuard />
+      {children}
+    </DashboardShell>
   );
 }

@@ -16,17 +16,15 @@ type Props = {
 
 export function WithdrawalWorkspace({ availableBalance, registeredFullName, initialBank }: Props) {
   const [bank, setBank] = useState<WithdrawalBankAccount | null>(initialBank);
-  const [loading, setLoading] = useState(!initialBank);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setBank(initialBank);
   }, [initialBank]);
 
   useEffect(() => {
-    if (initialBank) {
-      setLoading(false);
-      return;
-    }
+    if (initialBank) return;
+    setLoading(true);
     fetch("/api/bank-accounts")
       .then((r) => r.json())
       .then((data) => {

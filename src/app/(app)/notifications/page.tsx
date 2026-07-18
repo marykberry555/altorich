@@ -1,4 +1,3 @@
-import { PageHero } from "@/components/marketing/PageHero";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -11,19 +10,27 @@ export default async function NotificationsPage() {
   const notifications =
     user && services ? await services.notifications.listForUser(user.id, 50).catch(() => []) : [];
 
+  if (user && services) {
+    const unread = notifications.filter((n) => !n.read_at);
+    await Promise.all(
+      unread.map((n) => services.notifications.markRead(n.id, user.id).catch(() => undefined))
+    );
+  }
+
   return (
-    <div className="mx-auto max-w-3xl">
-      <PageHero eyebrow="Notifications" title="Alerts & updates" description="Funding approvals, withdrawal status, and platform announcements." />
+    <div className="mx-auto max-w-3xl space-y-6 pb-8">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Notifications</h1>
+        <p className="text-sm text-[var(--text-muted)]">Funding, withdrawals, and account updates.</p>
+      </header>
 
       {notifications.length === 0 ? (
-        <div className="mt-8">
-          <EmptyState
-            title="You're all caught up"
-            description="When your funding is verified or withdrawals are processed, alerts will appear here."
-          />
-        </div>
+        <EmptyState
+          title="You're all caught up"
+          description="When funding is verified or withdrawals are processed, alerts appear here."
+        />
       ) : (
-        <div className="mt-8 space-y-3">
+        <div className="space-y-3">
           {notifications.map((n) => (
             <Card key={n.id} variant="elevated">
               <div className="flex items-start justify-between gap-4">

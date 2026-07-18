@@ -148,13 +148,18 @@ export class InvestmentService {
     return this.purchasePlan(userId, plan.id, investAmount);
   }
 
-  async purchasePlan(userId: string, planId: string, amount: number): Promise<Investment> {
+  async purchasePlan(
+    userId: string,
+    planId: string,
+    amount: number,
+    referenceOverride?: string
+  ): Promise<Investment> {
     const plan = await this.getPlanById(planId);
     if (!plan) throw Errors.notFound("Investment sector");
 
     this.validatePurchaseAmount(plan, amount);
 
-    const reference = makeInvestmentReference(userId);
+    const reference = referenceOverride?.trim() || makeInvestmentReference(userId);
     const wallet = await this.wallet.getWalletByUserId(userId);
     const balance = await this.wallet.getBalance(wallet.id);
 

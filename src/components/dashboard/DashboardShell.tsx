@@ -227,7 +227,7 @@ export function DashboardShell({ fullName, username, avatarUrl, children }: Prop
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] font-semibold transition",
+                  "flex min-h-[var(--tap-min,44px)] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-semibold transition",
                   active ? "text-[var(--emerald)]" : "text-[var(--text-muted)]"
                 )}
               >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Send } from "lucide-react";
 import { formatNaira, NAIRA_SYMBOL } from "@/lib/domain";
@@ -26,9 +26,12 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
   const [referenceId, setReferenceId] = useState<string | undefined>();
   const [nextHref, setNextHref] = useState<string | undefined>();
   const [success, setSuccess] = useState(false);
+  const inFlight = useRef(false);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (inFlight.current || isSubmitting) return;
+    inFlight.current = true;
     setIsSubmitting(true);
     setMessage("");
     setReferenceId(undefined);
@@ -39,17 +42,20 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
     if (!parsedAmount || parsedAmount <= 0) {
       setMessage("Enter a valid withdrawal amount.");
       setIsSubmitting(false);
+      inFlight.current = false;
       return;
     }
     if (parsedAmount > availableBalance) {
       setMessage("Insufficient available balance.");
       setNextHref("/deposits");
       setIsSubmitting(false);
+      inFlight.current = false;
       return;
     }
     if (!bank) {
       setMessage("Please add your bank account first.");
       setIsSubmitting(false);
+      inFlight.current = false;
       return;
     }
 
@@ -79,6 +85,7 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
       }
     } finally {
       setIsSubmitting(false);
+      inFlight.current = false;
     }
   }
 
@@ -96,7 +103,7 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
               Available withdrawal balance
             </p>
-            <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-[var(--heading)] sm:text-4xl">
+            <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-[var(--heading)] sm:text-3xl">
               {formatNaira(availableBalance)}
             </p>
           </div>

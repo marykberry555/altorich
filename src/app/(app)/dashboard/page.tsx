@@ -5,7 +5,6 @@ import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import { formatNaira } from "@/lib/domain";
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
-import type { AllocationPoint, ChartPoint } from "@/lib/dashboard/chart-data";
 import { COMPANY } from "@/lib/company";
 import { DEFAULT_REFERRAL_PROGRAM } from "@/lib/referral/config";
 import { buildActionHints, toConversionState } from "@/lib/dashboard/conversion-hints";
@@ -14,16 +13,12 @@ import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { DashboardCyclePanel } from "@/components/dashboard/DashboardCyclePanel";
 import { DashboardWealthHero, DashboardWealthHeroStatic } from "@/components/dashboard/DashboardWealthHero";
 import { DashboardProgressJourney } from "@/components/dashboard/DashboardProgressJourney";
-import { DashboardNextStepCard } from "@/components/dashboard/DashboardNextStepCard";
-import { DashboardEarningsPreview } from "@/components/dashboard/DashboardEarningsPreview";
-import { DashboardQuickActions } from "@/components/dashboard/DashboardQuickActions";
 import { DashboardPortfolioSection } from "@/components/dashboard/DashboardPortfolioSection";
 import { DashboardReferralStrip } from "@/components/dashboard/DashboardReferralStrip";
 import { DashboardNotificationsPreview, filterActionableNotifications } from "@/components/dashboard/DashboardNotificationsPreview";
 import { LedgerTable } from "@/components/dashboard/LedgerTable";
 import { BalanceHistoryChart, AllocationChart } from "@/components/dashboard/DashboardCharts";
 import { DashboardPanelCard, DashboardSection } from "@/components/design-system";
-import type { PackageSlug } from "@/content/packages";
 
 import { fetchInvestmentContext } from "@/lib/investment/mappers";
 
@@ -32,13 +27,25 @@ async function DashboardContent() {
   const services = await getUserServices();
   const env = getPublicEnv();
   const roiEnabled = Boolean(env.NEXT_PUBLIC_ROI_MODE_ENABLED);
+
   const dashboard =
     user && services
       ? await services.dashboard.getMemberDashboard(user.id).catch(() => null)
       : null;
-  const roiState =
-    roiEnabled && user && services ? await services.roi.getState(user.id).catch(() => null) : null;
-  const investCtx = user && services ? await fetchInvestmentContext(services, user.id) : null;
+
+  const [roiState, investCtx, analytics, referralBundle, dbNotifications] = await Promise.all([
+    roiEnabled && user && services ? services.roi.getState(user.id).catch(() => null) : Promise.resolve(null),
+    user && services ? fetchInvestmentContext(services, user.id) : Promise.resolve(null),
+    user && services ? services.analytics.getMemberAnalytics(user.id).catch(() => null) : Promise.resolve(null),
+    user && services
+      ? Promise.all([
+          services.referrals.getDashboard(user.id, COMPANY.siteUrl),
+          services.referrals.listVipLevels()
+        ]).catch(() => null)
+      : Promise.resolve(null),
+    user && services ? services.notifications.listForUser(user.id, 8).catch(() => []) : Promise.resolve([])
+  ]);
+
   const hasActivePlanInvestments =
     investCtx?.rows.some((r) => r.status === "active" || r.status === "stopping") ?? false;
   const showPlanInvestmentUi = Boolean(investCtx) && (!roiEnabled || !roiState?.activeInvestment || hasActivePlanInvestments);
@@ -61,18 +68,9 @@ async function DashboardContent() {
   const nextAction = resolveNextAction(conversionState);
   const primaryCta = { href: nextAction.href, label: nextAction.cta };
 
-  let balanceHistory: ChartPoint[] = [];
-  let earningsTrend: ChartPoint[] = [];
-  let allocation: AllocationPoint[] = [];
-
-  if (user && services) {
-    const analytics = await services.analytics.getMemberAnalytics(user.id).catch(() => null);
-    if (analytics) {
-      balanceHistory = analytics.balanceHistory;
-      earningsTrend = analytics.earningsTrend;
-      allocation = analytics.allocation;
-    }
-  }
+  const balanceHistory = analytics?.balanceHistory ?? [];
+  const earningsTrend = analytics?.earningsTrend ?? [];
+  const allocation = analytics?.allocation ?? [];
 
   let referralStrip = {
     vipLabel: "Starter",
@@ -82,28 +80,18 @@ async function DashboardContent() {
     nextTier: null as import("@/lib/referral/types").VipLevelConfig | null
   };
 
-  if (user && services) {
-    try {
-      const [refDashboard, vipLevels] = await Promise.all([
-        services.referrals.getDashboard(user.id, COMPANY.siteUrl),
-        services.referrals.listVipLevels()
-      ]);
-      referralStrip = {
-        vipLabel: refDashboard.vipLabel,
-        commissionRate: refDashboard.currentCommissionRate,
-        verifiedCount: refDashboard.verifiedInvestors,
-        referralCount: refDashboard.totalReferrals,
-        nextTier: refDashboard.nextVipLevel ?? vipLevels.find((v) => v.level === refDashboard.vipLevel + 1) ?? null
-      };
-    } catch {
-      // Referral module may be unavailable before migration
-    }
+  if (referralBundle) {
+    const [refDashboard, vipLevels] = referralBundle;
+    referralStrip = {
+      vipLabel: refDashboard.vipLabel,
+      commissionRate: refDashboard.currentCommissionRate,
+      verifiedCount: refDashboard.verifiedInvestors,
+      referralCount: refDashboard.totalReferrals,
+      nextTier: refDashboard.nextVipLevel ?? vipLevels.find((v) => v.level === refDashboard.vipLevel + 1) ?? null
+    };
   }
 
-  const dbNotifications =
-    user && services ? await services.notifications.listForUser(user.id, 8).catch(() => []) : [];
-
-  const mappedNotifications = dbNotifications.map((n) => ({
+  const mappedNotifications = (dbNotifications ?? []).map((n) => ({
     id: n.id,
     title: n.title,
     body: n.body,
@@ -125,7 +113,7 @@ async function DashboardContent() {
         </div>
       ) : null}
 
-      <DashboardSection className="space-y-5">
+      <DashboardSection className="space-y-4">
         {showPlanInvestmentUi && investCtx ? (
           <DashboardWealthHero
             fullName={fullName}
@@ -152,15 +140,8 @@ async function DashboardContent() {
           />
         )}
 
-        <DashboardNextStepCard action={nextAction} />
         <DashboardProgressJourney state={conversionState} />
       </DashboardSection>
-
-      {!hasActiveInvestment ? (
-        <DashboardSection>
-          <DashboardEarningsPreview preferredPackageSlug={preferredPackage as PackageSlug | null} />
-        </DashboardSection>
-      ) : null}
 
       {roiEnabled && roiState?.activeInvestment ? (
         <DashboardCyclePanel
@@ -177,10 +158,6 @@ async function DashboardContent() {
           }}
         />
       ) : null}
-
-      <DashboardSection title="Quick actions">
-        <DashboardQuickActions nextHref={nextAction.href} />
-      </DashboardSection>
 
       {showPlanInvestmentUi && investCtx ? (
         <DashboardPortfolioSection

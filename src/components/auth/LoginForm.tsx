@@ -79,12 +79,7 @@ export function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(
-          data.error ??
-            (res.status === 401 || res.status === 403
-              ? "Your session has expired. Please sign in again."
-              : "Sign in failed.")
-        );
+        setError(data.error ?? "Incorrect username or pin. Please try again.");
         setPhase("idle");
         return;
       }
