@@ -487,6 +487,60 @@ export type Database = {
         Update: never;
         Relationships: TableRelationships;
       };
+      application_errors: {
+        Row: {
+          id: string;
+          reference_id: string;
+          category: string;
+          status: "open" | "investigating" | "resolved" | "ignored";
+          message: string;
+          user_message: string | null;
+          code: string | null;
+          user_id: string | null;
+          route: string | null;
+          action: string | null;
+          request_id: string | null;
+          correlation_id: string | null;
+          environment: string | null;
+          browser: string | null;
+          device: string | null;
+          user_agent: string | null;
+          stack: string | null;
+          metadata: Json;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          reference_id: string;
+          category?: string;
+          status?: "open" | "investigating" | "resolved" | "ignored";
+          message: string;
+          user_message?: string | null;
+          code?: string | null;
+          user_id?: string | null;
+          route?: string | null;
+          action?: string | null;
+          request_id?: string | null;
+          correlation_id?: string | null;
+          environment?: string | null;
+          browser?: string | null;
+          device?: string | null;
+          user_agent?: string | null;
+          stack?: string | null;
+          metadata?: Json;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+        };
+        Update: {
+          status?: "open" | "investigating" | "resolved" | "ignored";
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          metadata?: Json;
+        };
+        Relationships: TableRelationships;
+      };
       activity_logs: TableStub;
       admin_roles: TableStub;
       investment_settlements: {

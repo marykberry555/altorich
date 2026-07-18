@@ -19,15 +19,8 @@ export default async function DepositsPage() {
   let balance = 0;
   let pendingFunding = 0;
   let fundingHistory: Deposit[] = [];
-  let fullName = "";
 
   if (user && services) {
-    const { data: profile } = await services.supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", user.id)
-      .maybeSingle();
-    fullName = profile?.full_name ?? "";
     const wallet = await services.wallet.getWalletByUserId(user.id).catch(() => null);
     if (wallet) {
       balance = await services.wallet.getBalance(wallet.id).catch(() => 0);
@@ -66,7 +59,7 @@ export default async function DepositsPage() {
         <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
           Enter funding amount
         </h2>
-        <InvestmentFundingForm fundingEnabled={fundingEnabled} defaultFullName={fullName} />
+        <InvestmentFundingForm fundingEnabled={fundingEnabled} />
       </section>
 
       <FundingHistoryTable rows={fundingHistory} />

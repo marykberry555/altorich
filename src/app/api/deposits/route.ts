@@ -11,9 +11,9 @@ const depositSchema = z.object({
   memberName: z.string().min(2).optional(),
   phone: z.string().min(10).optional(),
   amount: z.number(),
-  paymentReference: z.string().min(3).optional(),
-  receiptNote: z.string().min(3).optional(),
-  reference: z.string().optional(),
+  paymentReference: z.string().max(120).optional(),
+  receiptNote: z.string().max(120).optional(),
+  reference: z.string().max(120).optional(),
   proofUrl: z.string().min(3).max(500).optional()
 });
 
@@ -40,10 +40,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const services = await getPublicServices();
-    if (!services) throw Errors.notConfigured();
-
+    // Service role: deposit insert must work even when client RLS is locked down.
     const user = await requireSessionUser();
+    const services = await getServiceRoleServices();
+    if (!services) throw Errors.notConfigured();
 
     const body = await request.json();
     const parsed = depositSchema.safeParse({
@@ -56,12 +56,13 @@ export async function POST(request: NextRequest) {
     }
 
     const profile = await services.profile.getProfile(user.id).catch(() => null);
-    const memberName = profile?.full_name?.trim();
-    if (!memberName) {
-      throw Errors.badRequest(
-        "Your registered full name is missing. Please contact Alto Rich Support before funding."
-      );
-    }
+
+    // Member identity for admin review (who submitted) — not the bank sender name.
+    const memberName =
+      profile?.full_name?.trim() ||
+      user.user_metadata?.full_name?.trim() ||
+      user.email?.split("@")[0] ||
+      "Member";
 
     const phone =
       parsed.data.phone?.trim() ||
@@ -73,15 +74,12 @@ export async function POST(request: NextRequest) {
       throw Errors.badRequest("Add your phone number in Settings before funding your wallet.");
     }
 
+    // Transfer reference is optional (POS / cash deposits may not have one).
     const paymentReference =
       parsed.data.paymentReference?.trim() ||
       parsed.data.reference?.trim() ||
       parsed.data.receiptNote?.trim() ||
       "";
-
-    if (paymentReference.length < 3) {
-      throw Errors.badRequest("Payment reference is required.");
-    }
 
     const { amount, proofUrl } = parsed.data;
 
@@ -91,23 +89,22 @@ export async function POST(request: NextRequest) {
 
     const bank = await services.settings.getBankSwitchboard();
     if (!bank.contributions_enabled) {
-      return NextResponse.json(
-        { error: "Wallet funding is temporarily disabled." },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Wallet funding is temporarily disabled." }, { status: 403 });
     }
 
+    // Always generate a unique internal reference (DB UNIQUE). Optional bank/POS
+    // transfer refs live in receipt_note for admin verification only.
     const deposit = await services.deposits.create({
       memberName,
       phone,
       amount,
       receiptNote: paymentReference,
-      reference: paymentReference || makeReference(phone),
+      reference: makeReference(phone),
       userId: user.id,
       proofUrl
     });
 
-    logger.info("Deposit created", { depositId: deposit.id, userId: user.id });
+    logger.info("Deposit created", { depositId: deposit.id, userId: user.id, hasReference: Boolean(paymentReference) });
     return NextResponse.json(deposit, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);

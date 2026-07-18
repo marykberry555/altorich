@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
-import { logRouteError, errorMessage } from "@/lib/observability/route-error";
+import { logRouteError } from "@/lib/observability/route-error";
 import { isChunkLoadFailure, recoverFromChunkFailure } from "@/lib/cache/chunk-recovery";
+import {
+  classifyThrownError,
+  memberCopyForCategory,
+  type ErrorCategory
+} from "@/lib/errors/taxonomy";
+import { COMPANY } from "@/lib/company";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -17,6 +23,8 @@ type Props = {
   showDebugDetails?: boolean;
   /** Use on dark admin surfaces so copy stays readable without relying on theme CSS vars. */
   tone?: "default" | "dark";
+  /** Force a category when the boundary knows the failure mode. */
+  category?: ErrorCategory;
 };
 
 export function RouteErrorFallback({
@@ -27,11 +35,15 @@ export function RouteErrorFallback({
   dashboardHref = "/dashboard",
   homeHref = "/",
   showDebugDetails = process.env.NODE_ENV !== "production",
-  tone = "default"
+  tone = "default",
+  category: categoryOverride
 }: Props) {
+  const [referenceId, setReferenceId] = useState<string | null>(null);
   const [reported, setReported] = useState(false);
-  const [reportFailed, setReportFailed] = useState(false);
   const dark = tone === "dark" || route.startsWith("/admin") || route.startsWith("/hard");
+
+  const category = categoryOverride ?? classifyThrownError(error);
+  const copy = memberCopyForCategory(category);
 
   useEffect(() => {
     logRouteError(error, { route, component, digest: error.digest });
@@ -51,6 +63,7 @@ export function RouteErrorFallback({
         message: error.message,
         digest: error.digest,
         stack: error.stack,
+        category,
         at: new Date().toISOString(),
         device: {
           userAgent: navigator.userAgent,
@@ -64,35 +77,57 @@ export function RouteErrorFallback({
         }
       })
     })
-      .then((res) => {
+      .then(async (res) => {
+        const body = (await res.json().catch(() => ({}))) as { referenceId?: string; ok?: boolean };
+        if (body.referenceId) setReferenceId(body.referenceId);
         if (res.ok) setReported(true);
-        else setReportFailed(true);
       })
-      .catch(() => setReportFailed(true));
-  }, [error, route, component]);
+      .catch(() => {
+        /* reporting must never break the fallback UI */
+      });
+  }, [error, route, component, category]);
 
-  const reportIssue = () => {
-    void fetch("/api/client-error", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        kind: route.startsWith("/admin") || route.startsWith("/hard") ? "admin-route" : "route-error",
-        route,
-        component,
-        message: error.message,
-        digest: error.digest,
-        stack: error.stack,
-        at: new Date().toISOString()
-      })
-    })
-      .then((res) => {
-        if (res.ok) {
-          setReported(true);
-          setReportFailed(false);
-        }
-      })
-      .catch(() => setReportFailed(true));
-  };
+  const actions = copy.nextActions.map((action) => {
+    if (action.action === "retry") {
+      return (
+        <Button key="retry" type="button" onClick={() => reset()}>
+          {action.label}
+        </Button>
+      );
+    }
+    if (action.action === "signin" || action.href === "/login") {
+      return (
+        <Link key="signin" href="/login">
+          <Button type="button">{action.label}</Button>
+        </Link>
+      );
+    }
+    if (action.action === "support" || action.href === "/contact") {
+      return (
+        <a key="support" href={`mailto:${COMPANY.supportEmail}`}>
+          <Button
+            type="button"
+            variant="outline"
+            className={dark ? "border-white/15 bg-white/5 text-zinc-100 hover:border-emerald-400/40 hover:text-white" : undefined}
+          >
+            {action.label}
+          </Button>
+        </a>
+      );
+    }
+    const href = action.href === "/dashboard" ? dashboardHref : action.href || homeHref;
+    return (
+      <Link key={href} href={href}>
+        <Button
+          type="button"
+          variant="outline"
+          className={dark ? "border-white/15 bg-white/5 text-zinc-100 hover:border-emerald-400/40 hover:text-white" : undefined}
+        >
+          {action.label}
+        </Button>
+      </Link>
+    );
+  });
 
   return (
     <div
@@ -101,17 +136,17 @@ export function RouteErrorFallback({
         dark && "rounded-2xl border border-white/10 bg-zinc-950"
       )}
     >
-      <h1 className={cn("text-xl font-bold", dark ? "text-white" : "text-[var(--heading)]")}>
-        Something went wrong
-      </h1>
-      <p className={cn("max-w-md text-sm", dark ? "text-zinc-300" : "text-[var(--text-muted)]")}>
-        {errorMessage(error)} If the issue continues, contact our support team.
+      <h1 className={cn("text-xl font-bold", dark ? "text-white" : "text-[var(--heading)]")}>{copy.title}</h1>
+      <p className={cn("max-w-md text-sm leading-relaxed", dark ? "text-zinc-300" : "text-[var(--text-muted)]")}>
+        {copy.body}
       </p>
-      {error.digest ? (
-        <p className={cn("text-xs", dark ? "text-zinc-500" : "text-[var(--text-subtle)]")}>
-          Reference: {error.digest}
+      {referenceId || error.digest ? (
+        <p className={cn("font-mono text-xs", dark ? "text-zinc-500" : "text-[var(--text-subtle)]")}>
+          Reference ID: {referenceId ?? `AR-${String(error.digest).slice(0, 6).toUpperCase()}`}
         </p>
-      ) : null}
+      ) : reported ? null : (
+        <p className={cn("text-xs", dark ? "text-zinc-500" : "text-[var(--text-subtle)]")}>Logging this issue…</p>
+      )}
       {showDebugDetails && error.stack ? (
         <pre
           className={cn(
@@ -124,38 +159,7 @@ export function RouteErrorFallback({
           {error.stack}
         </pre>
       ) : null}
-      <div className="flex flex-wrap justify-center gap-2">
-        <Button type="button" onClick={() => reset()}>
-          Retry
-        </Button>
-        <Link href={dashboardHref}>
-          <Button
-            type="button"
-            variant="outline"
-            className={dark ? "border-white/15 bg-white/5 text-zinc-100 hover:border-emerald-400/40 hover:text-white" : undefined}
-          >
-            Go to Dashboard
-          </Button>
-        </Link>
-        <Link href={homeHref}>
-          <Button
-            type="button"
-            variant="outline"
-            className={dark ? "border-white/15 bg-white/5 text-zinc-100 hover:border-emerald-400/40 hover:text-white" : undefined}
-          >
-            Go Home
-          </Button>
-        </Link>
-        <Button
-          type="button"
-          variant="ghost"
-          disabled={reported}
-          onClick={reportIssue}
-          className={dark ? "text-zinc-300 hover:bg-white/5 hover:text-white" : undefined}
-        >
-          {reported ? "Issue reported" : reportFailed ? "Report issue" : "Reporting…"}
-        </Button>
-      </div>
+      <div className="flex flex-wrap justify-center gap-2">{actions}</div>
     </div>
   );
 }

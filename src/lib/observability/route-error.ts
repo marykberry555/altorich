@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { classifyThrownError, memberCopyForCategory } from "@/lib/errors/taxonomy";
 
 export type RouteErrorContext = {
   route: string;
@@ -17,11 +18,14 @@ export function logRouteError(error: unknown, context: RouteErrorContext) {
     userId: context.userId ?? undefined,
     digest: context.digest,
     message: err.message,
-    stack: err.stack
+    stack: err.stack,
+    category: classifyThrownError(err)
   });
 }
 
-export function errorMessage(_error: unknown, fallback = "Something went wrong. Please try again shortly.") {
-  // Never surface raw exception text / stack traces to members.
-  return fallback;
+/** Safe member-facing copy for route boundaries (never raw exception text). */
+export function errorMessage(error: unknown, fallback?: string) {
+  const category = classifyThrownError(error);
+  if (fallback) return fallback;
+  return memberCopyForCategory(category).body;
 }

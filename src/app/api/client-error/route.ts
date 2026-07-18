@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
-import { logger } from "@/lib/logger";
+import { persistApplicationError } from "@/lib/observability/error-log";
+import { classifyThrownError, type ErrorCategory } from "@/lib/errors/taxonomy";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ type ClientErrorBody = {
   status?: number;
   url?: string;
   at?: string;
+  category?: ErrorCategory;
+  action?: string;
   device?: {
     userAgent?: string;
     language?: string;
@@ -28,26 +31,49 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as ClientErrorBody;
     const user = await getSessionUser().catch(() => null);
+    const message = body.message?.trim() || "Client-reported error";
+    const category = body.category ?? classifyThrownError(new Error(message));
 
-    logger.error("Client crash report", {
-      kind: body.kind ?? "route-error",
-      route: body.route,
-      component: body.component,
-      adminId: user?.id,
-      message: body.message,
-      digest: body.digest,
-      status: body.status,
-      url: body.url,
-      at: body.at,
-      device: body.device,
-      stack: body.stack?.slice(0, 4000)
+    const browser = body.device?.userAgent
+      ? body.device.userAgent.slice(0, 200)
+      : undefined;
+    const device = body.device
+      ? [body.device.platform, body.device.viewport, body.device.online === false ? "offline" : "online"]
+          .filter(Boolean)
+          .join(" · ")
+      : undefined;
+
+    const persisted = await persistApplicationError({
+      category,
+      message,
+      code: body.kind ?? "CLIENT",
+      userId: user?.id,
+      route: body.route ?? body.url,
+      action: body.action ?? body.component,
+      requestId: body.digest,
+      correlationId: body.digest,
+      browser,
+      device,
+      userAgent: body.device?.userAgent,
+      stack: body.stack,
+      metadata: {
+        kind: body.kind,
+        status: body.status,
+        at: body.at,
+        language: body.device?.language,
+        standalone: body.device?.standalone,
+        online: body.device?.online
+      }
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, referenceId: persisted.referenceId });
   } catch (error) {
-    logger.error("Failed to record client error report", {
-      message: error instanceof Error ? error.message : String(error)
+    const persisted = await persistApplicationError({
+      category: "server",
+      message: error instanceof Error ? error.message : String(error),
+      code: "CLIENT_ERROR_INGEST",
+      stack: error instanceof Error ? error.stack : undefined
     });
-    return NextResponse.json({ ok: false }, { status: 500 });
+    return NextResponse.json({ ok: false, referenceId: persisted.referenceId }, { status: 500 });
   }
 }

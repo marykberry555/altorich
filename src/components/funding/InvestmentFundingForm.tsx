@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Check, Loader2, Upload } from "lucide-react";
 import { formatNaira, NAIRA_SYMBOL } from "@/lib/domain";
@@ -9,59 +9,50 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
+import { InlineErrorNotice } from "@/components/errors/InlineErrorNotice";
+import { ApiRequestError, fetchJson, formatMemberApiError } from "@/lib/api/fetch-json";
 
 type Props = {
   fundingEnabled: boolean;
-  defaultFullName?: string;
 };
 
 type SubmittedFunding = {
   amount: number;
   reference: string;
-  memberName: string;
   hasProof: boolean;
 };
 
-export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: Props) {
-  const [fullName, setFullName] = useState(defaultFullName);
+export function InvestmentFundingForm({ fundingEnabled }: Props) {
   const [amountRaw, setAmountRaw] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [referenceId, setReferenceId] = useState<string | undefined>();
   const [success, setSuccess] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitted, setSubmitted] = useState<SubmittedFunding | null>(null);
-
-  useEffect(() => {
-    if (defaultFullName) setFullName(defaultFullName);
-  }, [defaultFullName]);
 
   async function uploadProofIfNeeded(): Promise<string | undefined> {
     if (!proofFile) return undefined;
     const formData = new FormData();
     formData.append("file", proofFile);
-    const res = await fetch("/api/uploads/deposit-proof", { method: "POST", body: formData });
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.error ?? "Receipt upload failed.");
-    return body.path as string;
+    const body = await fetchJson<{ path: string }>("/api/uploads/deposit-proof", {
+      method: "POST",
+      body: formData
+    });
+    return body.path;
   }
 
   async function submitFunding(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
     setMessage("");
+    setReferenceId(undefined);
     setSuccess(false);
 
     const parsedAmount = parseCurrencyInput(amountRaw);
     const reference = paymentReference.trim();
-    const name = fullName.trim();
-
-    if (!name) {
-      setMessage("Your registered full name is missing. Contact Alto Rich Support.");
-      setIsSubmitting(false);
-      return;
-    }
 
     if (!parsedAmount || parsedAmount < MIN_FUNDING_AMOUNT_NGN) {
       setMessage(`Minimum funding amount is ${formatNaira(MIN_FUNDING_AMOUNT_NGN)}.`);
@@ -69,36 +60,21 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
       return;
     }
 
-    if (reference.length < 3) {
-      setMessage("Enter your bank payment reference.");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
       const proofUrl = await uploadProofIfNeeded();
-      const response = await fetch("/api/deposits", {
+      await fetchJson("/api/deposits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: parsedAmount,
-          paymentReference: reference,
-          memberName: name,
+          paymentReference: reference || undefined,
           proofUrl
         })
       });
 
-      if (!response.ok) {
-        const body = await response.json();
-        setMessage(body.error ?? "Unable to submit funding request.");
-        setIsSubmitting(false);
-        return;
-      }
-
       setSubmitted({
         amount: parsedAmount,
-        reference,
-        memberName: name,
+        reference: reference || "Not provided",
         hasProof: Boolean(proofUrl)
       });
       setSuccess(true);
@@ -107,7 +83,9 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
       setPaymentReference("");
       setProofFile(null);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Unable to submit funding request.");
+      // Preserve amount, reference, and receipt on failure.
+      setMessage(formatMemberApiError(err));
+      if (err instanceof ApiRequestError) setReferenceId(err.referenceId);
     } finally {
       setIsSubmitting(false);
     }
@@ -140,16 +118,8 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
       ) : (
         <Card variant="elevated" className="p-6 sm:p-8" id="fund">
           <form onSubmit={submitFunding} className="space-y-5">
-            <Input
-              label="Registered full name"
-              value={fullName}
-              readOnly
-              disabled
-              hint="Locked to your verified registered name."
-            />
-
             <CurrencyInput
-              label={`Transfer amount (${NAIRA_SYMBOL})`}
+              label={`Funding amount (${NAIRA_SYMBOL})`}
               prefix="₦"
               value={amountRaw}
               onChange={setAmountRaw}
@@ -158,18 +128,20 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
             />
 
             <Input
-              label="Transfer reference"
+              label="Transfer reference (optional)"
               value={paymentReference}
               onChange={(e) => setPaymentReference(e.target.value)}
-              required
-              placeholder="Bank transfer reference"
+              placeholder="Bank / POS reference if available"
+              hint="Optional. Useful when you have a transfer or POS receipt number."
             />
 
             <div className="grid gap-1.5">
-              <span className="text-sm font-medium text-[var(--text-muted)]">Receipt upload (optional)</span>
+              <span className="text-sm font-medium text-[var(--text-muted)]">
+                Receipt / proof of payment (optional but recommended)
+              </span>
               <label className="flex min-h-[var(--tap-min)] cursor-pointer items-center gap-3 rounded-[var(--radius-sm)] border border-dashed border-[var(--border-strong)] bg-[var(--gray-50)] px-4 py-3 text-sm text-[var(--text-muted)] transition hover:border-[var(--emerald)]/40">
                 <Upload size={16} aria-hidden />
-                <span className="truncate">{proofFile ? proofFile.name : "Upload transfer receipt"}</span>
+                <span className="truncate">{proofFile ? proofFile.name : "Upload receipt or proof"}</span>
                 <input
                   type="file"
                   accept="image/*,.pdf"
@@ -187,7 +159,17 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
               {!fundingEnabled ? (
                 <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">Wallet funding is temporarily paused.</p>
               ) : null}
-              {message ? <p className="mt-3 text-sm text-[var(--text-muted)]">{message}</p> : null}
+              {message ? (
+                <InlineErrorNotice
+                  className="mt-3"
+                  message={message}
+                  referenceId={referenceId}
+                  onRetry={() => {
+                    const form = document.getElementById("fund")?.querySelector("form");
+                    form?.requestSubmit();
+                  }}
+                />
+              ) : null}
             </div>
           </form>
         </Card>
@@ -218,10 +200,6 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Amount</dt>
                 <dd className="text-sm font-semibold tabular-nums text-[var(--heading)]">{formatNaira(submitted.amount)}</dd>
-              </div>
-              <div className="flex items-start justify-between gap-3">
-                <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Name on transfer</dt>
-                <dd className="max-w-[60%] text-right text-sm font-medium text-[var(--text)]">{submitted.memberName}</dd>
               </div>
               <div className="flex items-start justify-between gap-3">
                 <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Reference</dt>

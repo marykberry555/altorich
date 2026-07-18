@@ -9,6 +9,7 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Bell,
+  Bug,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -65,6 +66,7 @@ const navSections = [
       { href: adminAppPath("/activity"), label: "Login activity", icon: Activity },
       { href: adminAppPath("/security"), label: "Security", icon: Shield },
       { href: adminAppPath("/audit"), label: "Audit logs", icon: ScrollText },
+      { href: adminAppPath("/errors"), label: "Error log", icon: Bug },
       { href: adminAppPath("/reports"), label: "Reports", icon: FileText },
       { href: adminAppPath("/support"), label: "Support", icon: Headphones }
     ]

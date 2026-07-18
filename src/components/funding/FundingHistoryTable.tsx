@@ -57,7 +57,9 @@ export function FundingHistoryTable({ rows }: Props) {
                         year: "numeric"
                       })}
                     </td>
-                    <td className="max-w-[200px] truncate px-5 py-4 font-mono text-xs text-[var(--heading)]">{row.reference}</td>
+                    <td className="max-w-[200px] truncate px-5 py-4 font-mono text-xs text-[var(--heading)]">
+                      {row.receipt_note?.trim() || row.reference}
+                    </td>
                     <td className="px-5 py-4 tabular-nums font-semibold text-[var(--heading)]">
                       {formatNaira(Number(row.amount))}
                     </td>

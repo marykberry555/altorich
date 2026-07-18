@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Card } from "@/components/ui/Card";
-import { COMPANY } from "@/lib/company";
+import { InlineErrorNotice } from "@/components/errors/InlineErrorNotice";
+import { ApiRequestError, fetchJson, formatMemberApiError } from "@/lib/api/fetch-json";
 import type { WithdrawalBankAccount } from "@/components/payout/PayoutBankAccountSection";
 
 type Props = {
@@ -22,12 +23,16 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [referenceId, setReferenceId] = useState<string | undefined>();
+  const [nextHref, setNextHref] = useState<string | undefined>();
   const [success, setSuccess] = useState(false);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
     setMessage("");
+    setReferenceId(undefined);
+    setNextHref(undefined);
     setSuccess(false);
 
     const parsedAmount = parseCurrencyInput(amount);
@@ -38,6 +43,7 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
     }
     if (parsedAmount > availableBalance) {
       setMessage("Insufficient available balance.");
+      setNextHref("/deposits");
       setIsSubmitting(false);
       return;
     }
@@ -48,7 +54,7 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
     }
 
     try {
-      const response = await fetch("/api/withdrawals", {
+      const body = await fetchJson<{ scheduleMessage?: string }>("/api/withdrawals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -59,27 +65,20 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
         })
       });
 
-      const body = await response.json().catch(() => ({}));
-      setIsSubmitting(false);
-
-      if (!response.ok) {
-        setMessage(
-          body.error ??
-            `Unable to create withdrawal request. Please contact support at ${COMPANY.supportEmail} if the problem continues.`
-        );
-        return;
-      }
-
       setSuccess(true);
       setMessage(body.scheduleMessage ?? "Your withdrawal request has been queued for the next cycle.");
       setAmount("");
       setNote("");
       router.refresh();
-    } catch {
+    } catch (err) {
+      // Preserve amount and note on failure.
+      setMessage(formatMemberApiError(err));
+      if (err instanceof ApiRequestError) {
+        setReferenceId(err.referenceId);
+        setNextHref(err.nextAction?.href);
+      }
+    } finally {
       setIsSubmitting(false);
-      setMessage(
-        `Unable to create withdrawal request. Please contact support at ${COMPANY.supportEmail} if the problem continues.`
-      );
     }
   }
 
@@ -133,7 +132,17 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
             Request withdrawal
           </Button>
 
-          {message && !success ? <p className="text-sm text-red-600 dark:text-red-400">{message}</p> : null}
+          {message && !success ? (
+            <InlineErrorNotice
+              message={message}
+              referenceId={referenceId}
+              nextAction={nextHref ? { label: "Fund wallet", href: nextHref } : undefined}
+              onRetry={() => {
+                const form = document.querySelector<HTMLFormElement>("#request form");
+                form?.requestSubmit();
+              }}
+            />
+          ) : null}
         </form>
       )}
     </Card>

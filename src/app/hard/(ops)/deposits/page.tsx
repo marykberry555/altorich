@@ -69,9 +69,35 @@ export default async function DepositsPage() {
                     <p className="text-sm text-[var(--text-muted)]">
                       {formatNaira(Number(deposit.amount))} · {deposit.phone}
                     </p>
+                    <p className="mt-1 text-[11px] text-[var(--text-subtle)]">
+                      Submitted{" "}
+                      {new Date(deposit.created_at).toLocaleString("en-NG", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                      })}
+                    </p>
                   </div>
                   <StatusBadge status="pending" />
                 </div>
+                <dl className="mt-2 space-y-1 text-[11px] text-[var(--text-subtle)]">
+                  <div className="flex flex-wrap gap-x-2">
+                    <dt>Transfer ref:</dt>
+                    <dd className="font-mono text-[var(--text-muted)]">
+                      {deposit.receipt_note?.trim() ? deposit.receipt_note : "Not provided"}
+                    </dd>
+                  </div>
+                  <div className="flex flex-wrap gap-x-2">
+                    <dt>Internal ref:</dt>
+                    <dd className="font-mono text-[var(--text-muted)]">{deposit.reference}</dd>
+                  </div>
+                  <div className="flex flex-wrap gap-x-2">
+                    <dt>Receipt:</dt>
+                    <dd>{deposit.proofHref ? "Uploaded" : "Not attached"}</dd>
+                  </div>
+                </dl>
                 <div className="mt-3 flex gap-2">
                   <form action={`/api/deposits/${deposit.id}`} method="post">
                     <input name="status" value="approved" type="hidden" />
@@ -91,9 +117,6 @@ export default async function DepositsPage() {
                     </a>
                   ) : null}
                 </div>
-                {deposit.reference ? (
-                  <p className="mt-2 text-[11px] text-[var(--text-subtle)]">Ref: {deposit.reference}</p>
-                ) : null}
               </div>
             ))
           )}

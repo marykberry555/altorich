@@ -79,7 +79,12 @@ export function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "Sign in failed.");
+        setError(
+          data.error ??
+            (res.status === 401 || res.status === 403
+              ? "Your session has expired. Please sign in again."
+              : "Sign in failed.")
+        );
         setPhase("idle");
         return;
       }
@@ -94,7 +99,7 @@ export function LoginForm() {
       setPhase("redirecting");
       completeSignIn(resolveRedirect(data.redirect ?? "/dashboard"));
     } catch {
-      setError("Network error. Please try again.");
+      setError("We couldn't reach Alto Rich right now. Please check your internet connection or try again in a moment.");
       setPhase("idle");
     }
   }
