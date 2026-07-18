@@ -383,7 +383,7 @@ export type EarningsProjection = {
   annual: number;
 };
 
-/** Illustrative projections from the Platform Earning Model rates. */
+/** Illustrative projections from the Platform Earning Model rates (5% daily / 35% weekly). */
 export function projectEarnings(
   principal: number,
   dailyRatePercent: number,
@@ -392,8 +392,8 @@ export function projectEarnings(
   const safe = Math.max(0, principal);
   const today = Math.round((safe * dailyRatePercent) / 100);
   const weekly = Math.round((safe * weeklyRatePercent) / 100);
-  const monthly = today * 30;
-  const annual = today * 365;
+  const monthly = weekly * 4;
+  const annual = weekly * 52;
   return { principal: safe, today, weekly, monthly, annual };
 }
 

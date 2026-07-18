@@ -54,8 +54,8 @@ describe("homepage stats config", () => {
     const p = projectEarnings(500_000, 5, 35);
     assert.equal(p.today, 25_000);
     assert.equal(p.weekly, 175_000);
-    assert.equal(p.monthly, 750_000);
-    assert.equal(p.annual, 9_125_000);
+    assert.equal(p.monthly, 700_000);
+    assert.equal(p.annual, 9_100_000);
   });
 
   it("resets wealth growth near the Lagos start of day", () => {

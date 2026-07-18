@@ -30,19 +30,19 @@ export const PLATFORM_EARNING = {
 
 export type PlatformEarning = typeof PLATFORM_EARNING;
 
-/** Weekly interest for a principal using the platform engine. */
+/** Weekly interest for a principal using the platform engine (35%). */
 export function platformWeeklyInterest(principalNgn: number): number {
-  return Math.round((Math.abs(principalNgn) * PLATFORM_EARNING.weeklyRoiBps) / 10_000);
+  return Math.round((Math.abs(principalNgn) * PLATFORM_EARNING.weeklyReturnPercent) / 100);
 }
 
-/** Daily interest equivalent (weekly ÷ 7). */
+/** Daily interest using the platform engine (5%). */
 export function platformDailyInterest(principalNgn: number): number {
-  return platformWeeklyInterest(principalNgn) / 7;
+  return Math.round((Math.abs(principalNgn) * PLATFORM_EARNING.dailyReturnPercent) / 100);
 }
 
 /** projected_daily column helper for settlement schedules. */
 export function platformProjectedDaily(principalNgn: number): number {
-  return Math.round(platformDailyInterest(principalNgn) * 100) / 100;
+  return platformDailyInterest(principalNgn);
 }
 
 export function formatPlatformDailyLabel(): string {

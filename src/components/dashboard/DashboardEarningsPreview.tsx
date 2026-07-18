@@ -3,9 +3,8 @@
 import { useState } from "react";
 import type { PackageSlug } from "@/content/packages";
 import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
-import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
+import { PLATFORM_EARNING, platformDailyInterest, platformWeeklyInterest } from "@/lib/earning/platform-earning";
 import { formatNaira } from "@/lib/domain";
-import { weeklyEarningEstimate } from "@/lib/dashboard/conversion";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
@@ -23,16 +22,17 @@ export function DashboardEarningsPreview({ preferredPackageSlug, className }: Pr
 
   const selected = packages.find((p) => p.slug === packageSlug) ?? packages[0];
   const amount = parseCurrencyInput(amountRaw) || selected.minNgn;
-  const weekly = weeklyEarningEstimate(amount, PLATFORM_EARNING.weeklyRoiBps);
-  const daily = weekly / 7;
+  // Platform Earning Model: 5% daily / 35% weekly (monthly = 4 weeks).
+  const daily = platformDailyInterest(amount);
+  const weekly = platformWeeklyInterest(amount);
   const monthly = weekly * 4;
 
   return (
     <Card variant="elevated" padding="md" className={className}>
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Estimated earnings</p>
       <p className="mt-2 text-sm text-[var(--text-muted)]">
-        Choose an investment sector and amount. All sectors use the same Platform Earning Model — up to{" "}
-        {PLATFORM_EARNING.dailyReturnPercent}% daily.
+        Choose an investment sector and amount. All sectors use the same Platform Earning Model —{" "}
+        {PLATFORM_EARNING.dailyReturnPercent}% daily / {PLATFORM_EARNING.weeklyReturnPercent}% weekly.
       </p>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">

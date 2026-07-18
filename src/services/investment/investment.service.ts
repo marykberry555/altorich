@@ -60,16 +60,22 @@ export class InvestmentService {
   }
 
   async getPlanBySlug(slug: string) {
-    const { data, error } = await this.supabase
-      .from("investment_plans")
-      .select("*")
-      .eq("slug", slug)
-      .eq("is_active", true)
-      .eq("plan_status", "active")
-      .single();
+    const normalized = slug.trim().toLowerCase();
+    const candidates = normalized.startsWith("alto-")
+      ? [normalized]
+      : [`alto-${normalized}`, normalized];
 
-    if (error) return null;
-    return data;
+    for (const candidate of candidates) {
+      const { data, error } = await this.supabase
+        .from("investment_plans")
+        .select("*")
+        .eq("slug", candidate)
+        .eq("is_active", true)
+        .eq("plan_status", "active")
+        .maybeSingle();
+      if (!error && data) return data;
+    }
+    return null;
   }
 
   async getPlanById(planId: string) {

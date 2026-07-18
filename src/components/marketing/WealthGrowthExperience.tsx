@@ -9,8 +9,8 @@ import {
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
-/** Matches the brief’s live example (₦45,000 → Today ₦2,250). */
-const CALCULATOR_DEFAULT = 45_000;
+/** Matches ₦100,000 → ₦5,000 daily / ₦35,000 weekly under the Platform Earning Model. */
+const CALCULATOR_DEFAULT = 100_000;
 
 type Props = {
   config: HomepageStatsConfig;
@@ -95,8 +95,8 @@ export function WealthGrowthExperience({ config, className }: Props) {
                 autoComplete="off"
                 value={displayValue}
                 onChange={(e) => setAmountDigits(digitsOnly(e.target.value))}
-                placeholder="45,000"
-                style={{ width: `${Math.max((displayValue || "45,000").length, 1) + 1}ch` }}
+                placeholder="100,000"
+                style={{ width: `${Math.max((displayValue || "100,000").length, 1) + 1}ch` }}
                 className={cn(
                   "max-w-[min(100%,18ch)] bg-transparent text-center text-lg font-semibold tabular-nums text-[var(--heading)]",
                   "placeholder:text-[var(--text-subtle)] outline-none"
