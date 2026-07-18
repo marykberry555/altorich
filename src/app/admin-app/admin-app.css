@@ -1,17 +1,40 @@
+/* Admin console tokens follow the global html[data-theme] set by ThemeProvider. */
+
 .admin-app-root {
-  --dashboard-bg: #09090b;
-  --surface: #09090b;
-  --surface-raised: #18181b;
-  --heading: #fafafa;
-  --text: #f4f4f5;
-  --text-muted: #a1a1aa;
-  --text-subtle: #71717a;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --emerald: #34d399;
+  min-height: 100dvh;
+  color: var(--admin-text);
+  background: var(--admin-bg);
+  color-scheme: dark;
+  --admin-bg: #09090b;
+  --admin-panel: #18181b;
+  --admin-panel-elevated: #27272a;
+  --admin-heading: #fafafa;
+  --admin-text: #f4f4f5;
+  --admin-muted: #a1a1aa;
+  --admin-subtle: #71717a;
+  --admin-border: rgba(255, 255, 255, 0.1);
+  --admin-border-strong: rgba(255, 255, 255, 0.16);
+  --admin-hover: rgba(255, 255, 255, 0.05);
+  --admin-overlay: rgba(0, 0, 0, 0.6);
+  --admin-input-bg: rgba(255, 255, 255, 0.05);
+  --admin-emerald: #34d399;
+  --admin-emerald-soft: rgba(52, 211, 153, 0.12);
+  --admin-emerald-text: #6ee7b7;
+
+  /* Alias into design-system CSS variables used by shared admin panels */
+  --dashboard-bg: var(--admin-bg);
+  --surface: var(--admin-bg);
+  --surface-raised: var(--admin-panel);
+  --heading: var(--admin-heading);
+  --text: var(--admin-text);
+  --text-muted: var(--admin-muted);
+  --text-subtle: var(--admin-subtle);
+  --border: var(--admin-border);
+  --border-strong: var(--admin-border-strong);
+  --emerald: var(--admin-emerald);
   --emerald-mid: #10b981;
-  --emerald-light: #6ee7b7;
-  --emerald-soft: rgba(52, 211, 153, 0.12);
+  --emerald-light: var(--admin-emerald-text);
+  --emerald-soft: var(--admin-emerald-soft);
   --gold: #fbbf24;
   --gold-light: #fcd34d;
   --gold-soft: rgba(251, 191, 36, 0.12);
@@ -24,8 +47,101 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-glow: 0 0 0 1px rgba(52, 211, 153, 0.15);
-  color: var(--text);
-  color-scheme: dark;
+}
+
+[data-theme="light"] .admin-app-root {
+  color-scheme: light;
+  --admin-bg: #f4f4f5;
+  --admin-panel: #ffffff;
+  --admin-panel-elevated: #fafafa;
+  --admin-heading: #18181b;
+  --admin-text: #27272a;
+  --admin-muted: #52525b;
+  --admin-subtle: #71717a;
+  --admin-border: rgba(24, 24, 27, 0.12);
+  --admin-border-strong: rgba(24, 24, 27, 0.2);
+  --admin-hover: rgba(24, 24, 27, 0.05);
+  --admin-overlay: rgba(24, 24, 27, 0.45);
+  --admin-input-bg: #ffffff;
+  --admin-emerald: #059669;
+  --admin-emerald-soft: rgba(5, 150, 105, 0.12);
+  --admin-emerald-text: #047857;
+  --gray-50: #fafafa;
+  --gray-100: #f4f4f5;
+  --gray-200: #e4e4e7;
+  --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.06);
+  --shadow-md: 0 8px 24px rgba(24, 24, 27, 0.08);
+  --shadow-glow: 0 0 0 1px rgba(5, 150, 105, 0.12);
+}
+
+/* Remap hardcoded dark Tailwind utilities so existing admin pages follow the toggle. */
+[data-theme="light"] .admin-app-root .bg-zinc-950 {
+  background-color: var(--admin-bg) !important;
+}
+
+[data-theme="light"] .admin-app-root .bg-zinc-900 {
+  background-color: var(--admin-panel) !important;
+}
+
+[data-theme="light"] .admin-app-root .bg-zinc-950\/90 {
+  background-color: color-mix(in srgb, var(--admin-panel) 92%, transparent) !important;
+}
+
+[data-theme="light"] .admin-app-root .bg-black {
+  background-color: var(--admin-overlay) !important;
+}
+
+[data-theme="light"] .admin-app-root .bg-white\/5 {
+  background-color: var(--admin-hover) !important;
+}
+
+[data-theme="light"] .admin-app-root .bg-black\/40,
+[data-theme="light"] .admin-app-root .bg-black\/60 {
+  background-color: var(--admin-overlay) !important;
+}
+
+[data-theme="light"] .admin-app-root :is(.text-white, .text-zinc-100, .text-zinc-200) {
+  color: var(--admin-heading) !important;
+}
+
+[data-theme="light"] .admin-app-root :is(.text-zinc-300, .text-zinc-400) {
+  color: var(--admin-muted) !important;
+}
+
+[data-theme="light"] .admin-app-root :is(.text-zinc-500, .text-zinc-600) {
+  color: var(--admin-subtle) !important;
+}
+
+[data-theme="light"] .admin-app-root .text-emerald-300,
+[data-theme="light"] .admin-app-root .text-emerald-400 {
+  color: var(--admin-emerald-text) !important;
+}
+
+[data-theme="light"] .admin-app-root .border-white\/5,
+[data-theme="light"] .admin-app-root .border-white\/10,
+[data-theme="light"] .admin-app-root .border-white\/15 {
+  border-color: var(--admin-border) !important;
+}
+
+[data-theme="light"] .admin-app-root .hover\:bg-white\/5:hover,
+[data-theme="light"] .admin-app-root .hover\:bg-white\/\[0\.03\]:hover {
+  background-color: var(--admin-hover) !important;
+}
+
+[data-theme="light"] .admin-app-root .hover\:text-white:hover {
+  color: var(--admin-heading) !important;
+}
+
+[data-theme="light"] .admin-app-root .placeholder\:text-zinc-500::placeholder {
+  color: var(--admin-subtle) !important;
+}
+
+[data-theme="light"] .admin-app-root input,
+[data-theme="light"] .admin-app-root select,
+[data-theme="light"] .admin-app-root textarea {
+  color: var(--admin-text);
+  background-color: var(--admin-input-bg);
+  border-color: var(--admin-border);
 }
 
 .admin-app-root .button {
@@ -33,20 +149,25 @@
   align-items: center;
   justify-content: center;
   border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-hover);
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
-  color: #f4f4f5;
+  color: var(--admin-text);
   transition: background 0.15s ease;
 }
 
 .admin-app-root .button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--admin-border);
 }
 
 .admin-app-root .button.warn {
   border-color: rgba(239, 68, 68, 0.3);
   background: rgba(239, 68, 68, 0.1);
   color: #fecaca;
+}
+
+[data-theme="light"] .admin-app-root .button.warn {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
 }

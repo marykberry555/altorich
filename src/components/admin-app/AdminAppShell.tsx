@@ -85,7 +85,12 @@ function AdminAppNav({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="flex-1 space-y-6 overflow-y-auto p-3" aria-label="Admin app navigation">
       {navSections.map((section) => (
         <div key={section.label}>
-          <p className="mb-2 px-2.5 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-500">{section.label}</p>
+          <p
+            className="mb-2 px-2.5 text-[10px] font-medium uppercase tracking-[0.12em]"
+            style={{ color: "var(--admin-subtle)" }}
+          >
+            {section.label}
+          </p>
           <div className="space-y-0.5">
             {section.items.map((item) => {
               const active = "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href);
@@ -97,10 +102,13 @@ function AdminAppNav({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={onNavigate}
                   className={cn(
                     "flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-sm transition touch-manipulation",
-                    active
-                      ? "bg-emerald-500/15 font-medium text-emerald-300"
-                      : "text-zinc-300 hover:bg-white/5 hover:text-white"
+                    active ? "font-medium" : ""
                   )}
+                  style={
+                    active
+                      ? { background: "var(--admin-emerald-soft)", color: "var(--admin-emerald-text)" }
+                      : { color: "var(--admin-muted)" }
+                  }
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   {item.label}
@@ -118,14 +126,21 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-dvh bg-zinc-950 text-zinc-100 lg:flex">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-white/10 bg-zinc-900 lg:flex">
-        <div className="border-b border-white/10 px-4 py-5">
+    <div className="admin-shell min-h-dvh lg:flex" style={{ background: "var(--admin-bg)", color: "var(--admin-text)" }}>
+      <aside
+        className="hidden w-60 shrink-0 flex-col border-r lg:flex"
+        style={{ background: "var(--admin-panel)", borderColor: "var(--admin-border)" }}
+      >
+        <div className="border-b px-4 py-5" style={{ borderColor: "var(--admin-border)" }}>
           <Link href={ADMIN_APP_HOME} className="flex items-center gap-3">
             <Image src="/admin-app/icon-192.png" alt="" width={40} height={40} className="rounded-xl" />
             <div>
-              <p className="text-sm font-semibold text-white">{COMPANY.brand} Admin</p>
-              <p className="text-[10px] text-zinc-400">Operations console</p>
+              <p className="text-sm font-semibold" style={{ color: "var(--admin-heading)" }}>
+                {COMPANY.brand} Admin
+              </p>
+              <p className="text-[10px]" style={{ color: "var(--admin-muted)" }}>
+                Operations console
+              </p>
             </div>
           </Link>
         </div>
@@ -133,13 +148,20 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/10 bg-zinc-950/90 px-4 py-3 backdrop-blur-md lg:px-8">
+        <header
+          className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b px-4 py-3 backdrop-blur-md lg:px-8"
+          style={{
+            background: "color-mix(in srgb, var(--admin-bg) 92%, transparent)",
+            borderColor: "var(--admin-border)"
+          }}
+        >
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="h-10 w-10 border-white/10 bg-white/5 p-0 lg:hidden"
+              className="h-10 w-10 p-0 lg:hidden"
+              style={{ borderColor: "var(--admin-border)", background: "var(--admin-hover)", color: "var(--admin-text)" }}
               onClick={() => setMobileOpen(true)}
               aria-label="Open admin menu"
             >
@@ -147,18 +169,25 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
             </Button>
             <AdminGlobalSearch />
             <div className="hidden lg:block">
-              <p className="text-sm font-semibold text-white">Alto Rich Operations</p>
-              <p className="text-xs text-zinc-400">{COMPANY.legalName}</p>
+              <p className="text-sm font-semibold" style={{ color: "var(--admin-heading)" }}>
+                Alto Rich Operations
+              </p>
+              <p className="text-xs" style={{ color: "var(--admin-muted)" }}>
+                {COMPANY.legalName}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <ThemeToggle
-              compact
-              className="border-white/10 bg-white/5 text-zinc-100 hover:border-emerald-400/40 hover:text-emerald-300"
-            />
+            <ThemeToggle compact />
             <AdminNotificationBell />
             <form action="/api/auth/logout" method="post">
-              <Button type="submit" variant="outline" size="sm" className="gap-2 border-white/10 bg-white/5 text-zinc-100">
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                style={{ borderColor: "var(--admin-border)", background: "var(--admin-hover)", color: "var(--admin-text)" }}
+              >
                 <LogOut size={16} />
                 <span className="hidden sm:inline">Sign out</span>
               </Button>
@@ -168,11 +197,19 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
 
         {mobileOpen ? (
           <div className="fixed inset-0 z-50 lg:hidden">
-            <button type="button" className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} aria-label="Close" />
-            <aside className="absolute left-0 top-0 flex h-full w-72 flex-col bg-zinc-900 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-white/10 p-4">
-                <span className="text-sm font-semibold text-white">Admin menu</span>
-                <button type="button" onClick={() => setMobileOpen(false)} aria-label="Close">
+            <button
+              type="button"
+              className="absolute inset-0"
+              style={{ background: "var(--admin-overlay)" }}
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close"
+            />
+            <aside className="absolute left-0 top-0 flex h-full w-72 flex-col shadow-2xl" style={{ background: "var(--admin-panel)" }}>
+              <div className="flex items-center justify-between border-b p-4" style={{ borderColor: "var(--admin-border)" }}>
+                <span className="text-sm font-semibold" style={{ color: "var(--admin-heading)" }}>
+                  Admin menu
+                </span>
+                <button type="button" onClick={() => setMobileOpen(false)} aria-label="Close" style={{ color: "var(--admin-text)" }}>
                   <X size={20} />
                 </button>
               </div>
