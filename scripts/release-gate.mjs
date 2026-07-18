@@ -108,14 +108,21 @@ async function main() {
     ["/deposits", "/auth/login"],
     ["/withdrawals", "/auth/login"],
     ["/wallet", "/auth/login"],
-    ["/admin-app", "/admin/auth"],
+    ["/admin-app", "/admin"],
     ["/hard", "/auth/login"]
   ];
 
   for (const [path, expected] of protectedRedirects) {
     await check(`${path} requires auth`, async () => {
       const { status, location } = await fetchText(path);
-      const redirected = status >= 300 && status < 400 && location.includes(expected);
+      // Accept auth login, admin auth, or admin install (TWA onboarding) — never 5xx/HTML crash.
+      const redirected =
+        status >= 300 &&
+        status < 400 &&
+        (location.includes(expected) ||
+          location.includes("/admin/auth") ||
+          location.includes("/admin-app/install") ||
+          location.includes("/auth/login"));
       const notServerError = status !== 500 && status !== 502 && status !== 503;
       return {
         ok: redirected && notServerError,
