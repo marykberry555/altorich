@@ -1,8 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
 import {
-  getCitiesForState,
   NG_STATES,
   type NgStateCode
 } from "@/lib/location/ng-locations";
@@ -19,7 +17,7 @@ type Props = {
   className?: string;
 };
 
-/** Cascading State → City/Area selects — no free-text locations. */
+/** State select + free-text City / Area. */
 export function LocationFields({
   stateCode,
   cityArea,
@@ -30,8 +28,6 @@ export function LocationFields({
   error,
   className
 }: Props) {
-  const cities = useMemo(() => (stateCode ? getCitiesForState(stateCode) : []), [stateCode]);
-
   return (
     <div className={cn("grid gap-3 sm:grid-cols-2", className)}>
       <label className="grid gap-1.5 text-sm">
@@ -52,7 +48,6 @@ export function LocationFields({
           onChange={(e) => {
             const next = e.target.value as NgStateCode | "";
             onStateChange(next);
-            onCityChange("");
           }}
         >
           <option value="">Select state</option>
@@ -74,20 +69,17 @@ export function LocationFields({
             </span>
           ) : null}
         </span>
-        <select
+        <input
           className="field"
+          type="text"
           value={cityArea}
           disabled={disabled || !stateCode}
           required={required}
+          maxLength={64}
+          autoComplete="address-level2"
+          placeholder={stateCode ? "e.g. Lekki, Ikeja, Wuse" : "Select state first"}
           onChange={(e) => onCityChange(e.target.value)}
-        >
-          <option value="">{stateCode ? "Select city / area" : "Select state first"}</option>
-          {cities.map((city) => (
-            <option key={city} value={city}>
-              {city}
-            </option>
-          ))}
-        </select>
+        />
       </label>
 
       {error ? <p className="text-xs text-red-600 sm:col-span-2">{error}</p> : null}

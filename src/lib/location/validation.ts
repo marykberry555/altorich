@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isNgStateCode, isValidCityForState, NG_STATE_CODES } from "@/lib/location/ng-locations";
+import { isNgStateCode, NG_STATE_CODES } from "@/lib/location/ng-locations";
 
 export const locationStateCodeSchema = z
   .string()
@@ -7,19 +7,13 @@ export const locationStateCodeSchema = z
     message: "Select a valid Nigerian state."
   });
 
-export const memberLocationSchema = z
-  .object({
-    locationStateCode: locationStateCodeSchema,
-    locationCityArea: z.string().min(2).max(64)
-  })
-  .superRefine((data, ctx) => {
-    if (!isValidCityForState(data.locationStateCode, data.locationCityArea)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["locationCityArea"],
-        message: "Select a city / area that matches the selected state."
-      });
-    }
-  });
+export const memberLocationSchema = z.object({
+  locationStateCode: locationStateCodeSchema,
+  locationCityArea: z
+    .string()
+    .trim()
+    .min(2, "Enter your city or area.")
+    .max(64, "City / area must be 64 characters or fewer.")
+});
 
 export type MemberLocationInput = z.infer<typeof memberLocationSchema>;

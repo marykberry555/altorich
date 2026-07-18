@@ -1,13 +1,30 @@
 .admin-app-root {
   --dashboard-bg: #09090b;
+  --surface: #09090b;
   --surface-raised: #18181b;
   --heading: #fafafa;
+  --text: #f4f4f5;
   --text-muted: #a1a1aa;
   --text-subtle: #71717a;
   --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
   --emerald: #34d399;
+  --emerald-mid: #10b981;
+  --emerald-light: #6ee7b7;
   --emerald-soft: rgba(52, 211, 153, 0.12);
+  --gold: #fbbf24;
+  --gold-light: #fcd34d;
+  --gold-soft: rgba(251, 191, 36, 0.12);
+  --navy: #1e293b;
+  --navy-mid: #334155;
+  --navy-soft: rgba(148, 163, 184, 0.12);
+  --gray-50: rgba(255, 255, 255, 0.04);
   --gray-100: rgba(255, 255, 255, 0.06);
+  --gray-200: rgba(255, 255, 255, 0.1);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 0 1px rgba(52, 211, 153, 0.15);
+  color: var(--text);
   color-scheme: dark;
 }
 

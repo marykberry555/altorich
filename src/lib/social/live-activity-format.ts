@@ -4,7 +4,6 @@ import {
   formatLocationLabel,
   formatPersonFromLocation,
   isNgStateCode,
-  isValidCityForState,
   locationFromSeed,
   type NgStateCode
 } from "@/lib/location/ng-locations";
@@ -54,12 +53,12 @@ export function resolveVerifiedLocation(
   stateCode: string | null | undefined,
   cityArea: string | null | undefined
 ): { stateCode: NgStateCode; cityArea: string; locationLabel: string } | null {
-  if (!stateCode || !cityArea || !isNgStateCode(stateCode)) return null;
-  if (!isValidCityForState(stateCode, cityArea)) return null;
+  const city = cityArea?.trim() ?? "";
+  if (!stateCode || city.length < 2 || !isNgStateCode(stateCode)) return null;
   return {
     stateCode,
-    cityArea,
-    locationLabel: formatLocationLabel(stateCode, cityArea)
+    cityArea: city,
+    locationLabel: formatLocationLabel(stateCode, city)
   };
 }
 

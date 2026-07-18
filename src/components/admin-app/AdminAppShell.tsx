@@ -115,7 +115,7 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="admin-app-root min-h-dvh bg-zinc-950 text-zinc-100 lg:flex">
+    <div className="min-h-dvh bg-zinc-950 text-zinc-100 lg:flex">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-white/10 bg-zinc-900 lg:flex">
         <div className="border-b border-white/10 px-4 py-5">
           <Link href={ADMIN_APP_HOME} className="flex items-center gap-3">

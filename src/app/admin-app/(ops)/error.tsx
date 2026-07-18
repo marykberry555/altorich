@@ -17,6 +17,7 @@ export default function AdminAppError({
       component="AdminAppErrorBoundary"
       dashboardHref="/admin-app"
       homeHref="/admin/auth"
+      tone="dark"
     />
   );
 }

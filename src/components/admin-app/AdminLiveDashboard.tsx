@@ -56,17 +56,26 @@ export function AdminLiveDashboard() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   const refresh = useCallback(async () => {
-    const [metricsRes, activityRes, notificationsRes] = await Promise.all([
-      fetch("/api/admin/live-metrics", { cache: "no-store" }),
-      fetch("/api/admin/login-activity?limit=8", { cache: "no-store" }),
-      fetch("/api/admin/notifications?limit=8", { cache: "no-store" })
-    ]);
+    try {
+      const [metricsRes, activityRes, notificationsRes] = await Promise.all([
+        fetch("/api/admin/live-metrics", { cache: "no-store" }),
+        fetch("/api/admin/login-activity?limit=8", { cache: "no-store" }),
+        fetch("/api/admin/notifications?limit=8", { cache: "no-store" })
+      ]);
 
-    if (metricsRes.ok) setMetrics(await metricsRes.json());
-    if (activityRes.ok) setActivity(await activityRes.json());
-    if (notificationsRes.ok) {
-      const data = await notificationsRes.json();
-      setNotifications(data.items ?? []);
+      if (metricsRes.ok) {
+        setMetrics((await metricsRes.json()) as LiveMetrics);
+      }
+      if (activityRes.ok) {
+        const data = await activityRes.json();
+        setActivity(Array.isArray(data) ? data : []);
+      }
+      if (notificationsRes.ok) {
+        const data = await notificationsRes.json();
+        setNotifications(data.items ?? []);
+      }
+    } catch {
+      // Keep last good snapshot — never crash the admin shell on a metrics fetch failure.
     }
   }, []);
 

@@ -18,6 +18,7 @@ export default function HardOpsError({
       component="HardOpsErrorBoundary"
       dashboardHref={HARD_OPS_HOME}
       homeHref={HARD_OPS_HOME}
+      tone="dark"
     />
   );
 }

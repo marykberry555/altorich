@@ -15,12 +15,16 @@ export function AdminNotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/notifications?limit=12", { cache: "no-store" });
-    if (!res.ok) return;
-    const data = (await res.json()) as { items: AdminNotificationItem[]; unreadCount: number };
-    setItems(data.items);
-    setUnreadCount(data.unreadCount);
-    setAdminAppBadge(data.unreadCount);
+    try {
+      const res = await fetch("/api/admin/notifications?limit=12", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = (await res.json()) as { items: AdminNotificationItem[]; unreadCount: number };
+      setItems(Array.isArray(data.items) ? data.items : []);
+      setUnreadCount(Number(data.unreadCount) || 0);
+      setAdminAppBadge(Number(data.unreadCount) || 0);
+    } catch {
+      // Non-fatal — keep last known feed.
+    }
   }, []);
 
   useEffect(() => {
