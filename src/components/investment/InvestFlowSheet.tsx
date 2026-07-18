@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, X } from "lucide-react";
@@ -10,6 +10,8 @@ import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { Button } from "@/components/ui/Button";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Card } from "@/components/ui/Card";
+import { InlineErrorNotice } from "@/components/errors/InlineErrorNotice";
+import { ApiRequestError, fetchJson, formatMemberApiError } from "@/lib/api/fetch-json";
 import { cn } from "@/lib/utils";
 
 type Step = "amount" | "review" | "success";
@@ -83,13 +85,19 @@ export function InvestFlowSheet({
   const [amount, setAmount] = useState(String(minAmount));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [referenceId, setReferenceId] = useState<string | undefined>();
+  const [nextHref, setNextHref] = useState<string | undefined>();
+  const inFlight = useRef(false);
 
   useEffect(() => {
     if (open) {
       setStep("amount");
       setAmount(String(minAmount));
       setError("");
+      setReferenceId(undefined);
+      setNextHref(undefined);
       setLoading(false);
+      inFlight.current = false;
     }
   }, [open, minAmount]);
 
@@ -98,33 +106,44 @@ export function InvestFlowSheet({
   const sufficientBalance = walletBalance >= parsedAmount;
 
   async function confirmInvest() {
-    if (loading) return;
+    if (inFlight.current || loading) return;
+    inFlight.current = true;
     setLoading(true);
     setError("");
+    setReferenceId(undefined);
+    setNextHref(undefined);
+
+    const idempotencyKey =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     try {
-      const response = await fetch("/api/investments", {
+      await fetchJson("/api/investments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, amount: parsedAmount })
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey
+        },
+        body: JSON.stringify({ planId, amount: parsedAmount, idempotencyKey })
       });
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.error ?? "Investment could not be completed.");
-        setLoading(false);
-        return;
-      }
 
       setStep("success");
       setLoading(false);
+      inFlight.current = false;
       setTimeout(() => {
         onClose();
         router.push("/dashboard");
         router.refresh();
       }, 2200);
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      setError(formatMemberApiError(err));
+      if (err instanceof ApiRequestError) {
+        setReferenceId(err.referenceId);
+        setNextHref(err.nextAction?.href);
+      }
       setLoading(false);
+      inFlight.current = false;
     }
   }
 
@@ -256,7 +275,13 @@ export function InvestFlowSheet({
               </div>
             </dl>
 
-            {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+            {error ? (
+              <InlineErrorNotice
+                message={error}
+                referenceId={referenceId}
+                nextAction={nextHref ? { label: "Continue", href: nextHref } : undefined}
+              />
+            ) : null}
 
             <div className="flex gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setStep("amount")} className="gap-2" disabled={loading}>

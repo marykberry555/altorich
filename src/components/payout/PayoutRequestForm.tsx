@@ -165,4 +165,3 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
   );
 }
 
-export const WithdrawalForm = PayoutRequestForm;

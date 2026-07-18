@@ -19,11 +19,3 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
 export function mergeFeatureFlags(partial: Partial<FeatureFlags> | null | undefined): FeatureFlags {
   return { ...DEFAULT_FEATURE_FLAGS, ...partial };
 }
-
-export function isAnyCryptoFundingEnabled(flags: FeatureFlags) {
-  return flags.enable_crypto_funding && (flags.enable_usdt || flags.enable_usdc || flags.enable_bitcoin);
-}
-
-export function isAnyCryptoPayoutEnabled(flags: FeatureFlags) {
-  return flags.enable_crypto_payouts && (flags.enable_usdt || flags.enable_usdc || flags.enable_bitcoin);
-}
