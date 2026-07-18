@@ -123,7 +123,7 @@ export function DashboardShell({ fullName, username, avatarUrl, children }: Prop
     <div className="min-h-dvh bg-[var(--dashboard-bg)] lg:flex">
       <aside className="dashboard-sidebar sidebar-surface hidden lg:flex">
         <div className="mb-4 px-2">
-          <BrandLogo variant="full" href={MARKETING_HOME} priority />
+          <BrandLogo variant="full" href="/dashboard" priority />
         </div>
         <NavPanel fullName={fullName} username={username} avatarUrl={avatarUrl} variant="sidebar" />
         <div className="mt-auto flex flex-col gap-2 border-t border-white/10 p-3">
