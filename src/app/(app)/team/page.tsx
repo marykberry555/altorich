@@ -46,6 +46,11 @@ export default async function TeamPage() {
       minPayoutThreshold: DEFAULT_REFERRAL_PROGRAM.min_payout_threshold,
       canRequestPayout: false,
       payoutGap: DEFAULT_REFERRAL_PROGRAM.min_payout_threshold,
+      nextSettlementAt: new Date().toISOString(),
+      settlementWindowOpen: false,
+      meetsPayoutThreshold: false,
+      eligibilityStatus: "below_minimum",
+      eligibilityMessage: `You need ₦${DEFAULT_REFERRAL_PROGRAM.min_payout_threshold.toLocaleString("en-NG")} more in referral rewards to qualify for Monday settlement.`,
       recentReferrals: [],
       recentRewards: [],
       programEnabled: DEFAULT_REFERRAL_PROGRAM.enabled

@@ -9,16 +9,15 @@ import {
   MessageCircle,
   Send,
   Share2,
-  TrendingUp,
   Users,
   Wallet
 } from "lucide-react";
-import type { ReferralDashboard, VipLevelConfig } from "@/lib/referral/types";
+import type { ReferralActivityRow, ReferralDashboard, VipLevelConfig } from "@/lib/referral/types";
 import { formatNaira } from "@/lib/domain";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { MetricStatCard } from "@/components/design-system";
+import { MemberAvatar } from "@/components/profile/MemberAvatar";
 import { ReferralPayoutPanel } from "@/components/referral/ReferralPayoutPanel";
 import { VipLevelUpCelebration } from "@/components/referral/VipLevelUpCelebration";
 import { VipLevelCardGrid } from "@/components/referral/VipLevelCardGrid";
@@ -36,6 +35,54 @@ function XIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
+  );
+}
+
+function isVerifiedStatus(status: string) {
+  return ["verified", "qualified", "paid"].includes(status);
+}
+
+function formatJoinedDate(iso: string) {
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
+function ReferralMemberCard({ row }: { row: ReferralActivityRow }) {
+  const verified = isVerifiedStatus(row.status);
+
+  return (
+    <li className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-raised)] p-4 shadow-[var(--shadow-sm)]">
+      <div className="flex items-start gap-3">
+        <MemberAvatar fullName={row.referredName} avatarUrl={row.avatarUrl} size="md" href={null} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-base font-bold text-[var(--heading)]">{row.referredName}</p>
+          {row.username ? (
+            <p className="mt-0.5 truncate text-sm text-[var(--text-muted)]">@{row.username}</p>
+          ) : null}
+          <p className="mt-1 text-xs text-[var(--text-subtle)]">Joined {formatJoinedDate(row.createdAt)}</p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {verified ? (
+              <Badge variant="emerald">Verified Investor</Badge>
+            ) : (
+              <Badge variant="gold">Pending Investment</Badge>
+            )}
+            {row.commissionAmount > 0 ? (
+              <span className="currency-ngn text-sm font-semibold tabular-nums text-[var(--emerald)]">
+                Earned {formatNaira(row.commissionAmount)}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </li>
   );
 }
 
@@ -95,10 +142,10 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
         <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[var(--emerald)]/20 blur-3xl" aria-hidden />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">What&apos;s next</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">Referral programme</p>
             <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Invite friends</h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/80">
-              Share your code. Earn when they invest.
+              Share your link. Earn when they invest.
             </p>
           </div>
           <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
@@ -112,17 +159,43 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
         </div>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricStatCard title="Total referrals" value={String(dashboard.totalReferrals)} icon={<Users />} accent="navy" />
-        <MetricStatCard title="Verified investors" value={String(dashboard.verifiedInvestors)} icon={<TrendingUp />} accent="emerald" />
-        <MetricStatCard title="Pending referrals" value={String(dashboard.pendingReferrals)} icon={<Users />} accent="amber" />
-        <MetricStatCard
-          title="Investment generated"
-          value={formatNaira(dashboard.totalInvestmentGenerated)}
-          icon={<Wallet />}
-          accent="gold"
-        />
-      </div>
+      <section aria-labelledby="your-network-heading">
+        <Card variant="elevated" padding="lg">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Your Network</p>
+              <h2 id="your-network-heading" className="mt-1 text-2xl font-bold text-[var(--heading)]">
+                {dashboard.totalReferrals} {dashboard.totalReferrals === 1 ? "Referral" : "Referrals"}
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[var(--text-subtle)]">Verified Investors</p>
+                <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--emerald)]">{dashboard.verifiedInvestors}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[var(--text-subtle)]">Pending</p>
+                <p className="mt-0.5 text-lg font-bold tabular-nums text-[var(--gold)]">{dashboard.pendingReferrals}</p>
+              </div>
+            </div>
+          </div>
+
+          <h3 className="mt-6 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-[var(--text-subtle)]">
+            <Users size={14} aria-hidden />
+            Who joined with your link
+          </h3>
+
+          {dashboard.recentReferrals.length === 0 ? (
+            <p className="mt-4 text-sm text-[var(--text-muted)]">No referrals yet — share your link to get started.</p>
+          ) : (
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {dashboard.recentReferrals.map((row) => (
+                <ReferralMemberCard key={row.id} row={row} />
+              ))}
+            </ul>
+          )}
+        </Card>
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-5">
         <Card variant="elevated" className="lg:col-span-3">
@@ -162,7 +235,7 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
               href={`https://wa.me/?text=${shareText}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--heading)] transition hover:bg-[var(--gray-50)]"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--heading)] transition hover:bg-[var(--gray-50)]"
             >
               <MessageCircle size={14} /> WhatsApp
             </a>
@@ -170,7 +243,7 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
               href={`https://t.me/share/url?url=${shareUrl}&text=${shareText}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--heading)] transition hover:bg-[var(--gray-50)]"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--heading)] transition hover:bg-[var(--gray-50)]"
             >
               <Send size={14} /> Telegram
             </a>
@@ -178,7 +251,7 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
               href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--heading)] transition hover:bg-[var(--gray-50)]"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--heading)] transition hover:bg-[var(--gray-50)]"
             >
               <Share2 size={14} /> Facebook
             </a>
@@ -186,13 +259,13 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
               href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--heading)] transition hover:bg-[var(--gray-50)]"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--heading)] transition hover:bg-[var(--gray-50)]"
             >
               <XIcon className="h-3.5 w-3.5" /> X
             </a>
             <a
               href={`mailto:?subject=${encodeURIComponent("Join Alto Rich")}&body=${shareText}`}
-              className="inline-flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--heading)] transition hover:bg-[var(--gray-50)]"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--heading)] transition hover:bg-[var(--gray-50)]"
             >
               <Mail size={14} /> Email
             </a>
@@ -205,13 +278,33 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
         </Card>
 
         <Card variant="elevated" className="lg:col-span-2">
-          <h2 className="text-lg font-bold text-[var(--heading)]">Referral wallet</h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Separate from your investment wallet</p>
+          <h2 className="flex items-center gap-2 text-lg font-bold text-[var(--heading)]">
+            <Wallet size={18} className="text-[var(--emerald)]" />
+            Referral wallet
+          </h2>
 
           <dl className="mt-5 space-y-3 text-sm">
             <div className="flex justify-between gap-3">
               <dt className="text-[var(--text-muted)]">Available rewards</dt>
               <dd className="currency-ngn font-bold tabular-nums text-[var(--emerald)]">{formatNaira(dashboard.referralWalletBalance)}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-[var(--text-muted)]">Minimum required</dt>
+              <dd className="currency-ngn font-semibold tabular-nums">{formatNaira(dashboard.minPayoutThreshold)}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-[var(--text-muted)]">Next settlement</dt>
+              <dd className="text-right font-semibold text-[var(--heading)]">Monday 09:00 WAT</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-[var(--text-muted)]">Withdrawal status</dt>
+              <dd className="text-right font-semibold text-[var(--heading)]">
+                {dashboard.canRequestPayout
+                  ? "Open"
+                  : dashboard.meetsPayoutThreshold
+                    ? "Awaiting Monday"
+                    : "Below minimum"}
+              </dd>
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-[var(--text-muted)]">Lifetime rewards</dt>
@@ -224,6 +317,10 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
             <div className="flex justify-between gap-3 border-t border-[var(--border)] pt-3">
               <dt className="text-[var(--text-muted)]">Commission rate</dt>
               <dd className="font-bold text-[var(--heading)]">{dashboard.currentCommissionRate}%</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-[var(--text-muted)]">Investment generated</dt>
+              <dd className="currency-ngn font-semibold tabular-nums">{formatNaira(dashboard.totalInvestmentGenerated)}</dd>
             </div>
           </dl>
         </Card>
@@ -239,63 +336,27 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
 
       <ReferralPayoutPanel dashboard={dashboard} onSuccess={() => window.location.reload()} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card variant="elevated">
-          <h2 className="text-lg font-bold text-[var(--heading)]">Recent referrals</h2>
-          {dashboard.recentReferrals.length === 0 ? (
-            <p className="mt-4 text-sm text-[var(--text-muted)]">No referrals yet — share your link to get started.</p>
-          ) : (
-            <ul className="mt-4 divide-y divide-[var(--border)]">
-              {dashboard.recentReferrals.map((row) => (
-                <li key={row.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-[var(--heading)]">{row.referredName}</p>
-                    <p className="text-xs text-[var(--text-subtle)]">{new Date(row.createdAt).toLocaleDateString("en-NG")}</p>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant={row.status === "pending" ? "outline" : "emerald"}>{row.status === "pending" ? "Pending" : "Verified"}</Badge>
-                    {row.commissionAmount > 0 ? (
-                      <p className="currency-ngn mt-1 text-xs font-semibold tabular-nums text-[var(--emerald)]">+{formatNaira(row.commissionAmount)}</p>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
+      {dashboard.recentRewards.length > 0 ? (
         <Card variant="elevated">
           <h2 className="text-lg font-bold text-[var(--heading)]">Recent rewards</h2>
-          {dashboard.recentRewards.length === 0 ? (
-            <p className="mt-4 text-sm text-[var(--text-muted)]">Rewards appear here as your network grows.</p>
-          ) : (
-            <ul className="mt-4 divide-y divide-[var(--border)]">
-              {dashboard.recentRewards.map((row) => (
-                <li key={row.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <div>
-                    <p className="font-medium capitalize text-[var(--heading)]">{row.rewardType}</p>
-                    <p className="text-xs text-[var(--text-subtle)]">{new Date(row.createdAt).toLocaleDateString("en-NG")}</p>
-                  </div>
-                  <p className="currency-ngn font-bold tabular-nums text-[var(--emerald)]">+{formatNaira(row.amount)}</p>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ul className="mt-4 divide-y divide-[var(--border)]">
+            {dashboard.recentRewards.map((row) => (
+              <li key={row.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                <div>
+                  <p className="font-medium capitalize text-[var(--heading)]">{row.rewardType}</p>
+                  <p className="text-xs text-[var(--text-subtle)]">{formatJoinedDate(row.createdAt)}</p>
+                </div>
+                <p className="currency-ngn font-bold tabular-nums text-[var(--emerald)]">+{formatNaira(row.amount)}</p>
+              </li>
+            ))}
+          </ul>
         </Card>
-      </div>
+      ) : null}
 
       <div>
         <h2 className="text-lg font-bold text-[var(--heading)]">VIP levels</h2>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
-          Commission rates and milestone bonuses reflect your current platform configuration.
-        </p>
         <VipLevelCardGrid tiers={vipLevels} currentLevel={dashboard.vipLevel} className="mt-5" />
       </div>
-
-      <p className="text-xs leading-relaxed text-[var(--text-subtle)]">
-        Referral rewards are appreciation for growing the Alto Rich community. They are not guaranteed income and do not
-        constitute investment advice.
-      </p>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { ReferralProgramConfig } from "@/lib/referral/config";
 import type { VipLevelConfig } from "@/lib/referral/types";
@@ -8,6 +8,22 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { formatNaira } from "@/lib/domain";
+import { referralSettlementBatchId } from "@/lib/referral/settlement";
+
+type PayoutRow = {
+  id: string;
+  amount: number;
+  status: string;
+  bank_name: string;
+  account_name: string;
+  account_number: string;
+  created_at: string;
+  settlement_batch?: string;
+  settlement_reference?: string | null;
+  queue_number?: number | null;
+  estimated_processing_at?: string | null;
+  profiles?: { full_name?: string; phone?: string };
+};
 
 type Props = {
   initialConfig: ReferralProgramConfig;
@@ -17,23 +33,31 @@ type Props = {
     verifiedReferrals: number;
     topReferrers: { referrerId: string; name: string; inviteCode: string; total: number }[];
   };
-  pendingPayouts: Array<{
-    id: string;
-    amount: number;
-    status: string;
-    bank_name: string;
-    account_name: string;
-    account_number: string;
-    created_at: string;
-    profiles?: { full_name?: string; phone?: string };
-  }>;
+  pendingPayouts: PayoutRow[];
+  allPayouts?: PayoutRow[];
 };
 
-export function AdminReferralManagement({ initialConfig, initialVipLevels, analytics, pendingPayouts }: Props) {
+const STATUS_TABS = ["pending", "approved", "rejected", "paid"] as const;
+
+export function AdminReferralManagement({
+  initialConfig,
+  initialVipLevels,
+  analytics,
+  pendingPayouts,
+  allPayouts
+}: Props) {
   const [config, setConfig] = useState(initialConfig);
   const [vipLevels, setVipLevels] = useState(initialVipLevels);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [statusTab, setStatusTab] = useState<(typeof STATUS_TABS)[number]>("pending");
+
+  const payouts = allPayouts?.length ? allPayouts : pendingPayouts;
+  const filtered = useMemo(
+    () => payouts.filter((p) => String(p.status) === statusTab || (statusTab === "pending" && p.status === "processing")),
+    [payouts, statusTab]
+  );
+  const currentBatch = referralSettlementBatchId();
 
   async function save() {
     setSaving(true);
@@ -61,7 +85,9 @@ export function AdminReferralManagement({ initialConfig, initialVipLevels, analy
     <div className="space-y-8">
       <Card variant="elevated" padding="md" id="referrals">
         <h2 className="text-lg font-bold text-[var(--heading)]">Referral programme</h2>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">Configure commissions, VIP tiers, and withdrawal rules</p>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          Configure commissions, VIP tiers, and Monday settlement withdrawal rules
+        </p>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="flex items-center gap-2 text-sm">
@@ -91,6 +117,12 @@ export function AdminReferralManagement({ initialConfig, initialVipLevels, analy
             onChange={(e) => setConfig({ ...config, min_payout_threshold: Number(e.target.value) })}
           />
         </div>
+
+        <p className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
+          Members can request referral withdrawals only on <strong className="text-[var(--heading)]">Monday from 09:00 WAT</strong>{" "}
+          when available rewards meet the minimum. Current settlement batch:{" "}
+          <strong className="text-[var(--heading)]">{currentBatch}</strong>
+        </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {(["starter", "growth", "elite", "premium"] as const).map((tier) => (
@@ -161,11 +193,34 @@ export function AdminReferralManagement({ initialConfig, initialVipLevels, analy
         </ul>
       </Card>
 
-      {pendingPayouts.length > 0 ? (
-        <Card variant="elevated" padding="md" id="referral-payouts">
-          <h3 className="font-semibold text-[var(--heading)]">Pending referral withdrawals ({pendingPayouts.length})</h3>
+      <Card variant="elevated" padding="md" id="referral-payouts">
+        <h3 className="font-semibold text-[var(--heading)]">Referral withdrawals</h3>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          Pending · Approved · Rejected · Paid · Settlement batch
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setStatusTab(tab)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition ${
+                statusTab === tab
+                  ? "bg-[var(--emerald)] text-white"
+                  : "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--gray-50)]"
+              }`}
+            >
+              {tab === "pending" ? "Pending" : tab}
+            </button>
+          ))}
+        </div>
+
+        {filtered.length === 0 ? (
+          <p className="mt-4 text-sm text-[var(--text-muted)]">No {statusTab} referral withdrawals.</p>
+        ) : (
           <ul className="mt-4 space-y-4">
-            {pendingPayouts.map((p) => (
+            {filtered.map((p) => (
               <li key={p.id} className="rounded-xl border border-[var(--border)] p-4 text-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -174,24 +229,37 @@ export function AdminReferralManagement({ initialConfig, initialVipLevels, analy
                     <p className="text-[var(--text-muted)]">
                       {p.bank_name} · {p.account_name} · {p.account_number}
                     </p>
+                    <p className="mt-1 text-xs text-[var(--text-subtle)]">
+                      Status: <span className="capitalize">{p.status}</span>
+                      {" · "}
+                      Settlement batch: {p.settlement_batch ?? "—"}
+                      {p.settlement_reference ? ` · Ref: ${p.settlement_reference}` : ""}
+                      {p.queue_number != null ? ` · Queue #${p.queue_number}` : ""}
+                    </p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" size="sm" onClick={() => payoutAction(p.id, "approve")}>
-                      Approve
-                    </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => payoutAction(p.id, "paid")}>
+                  {statusTab === "pending" || p.status === "processing" ? (
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" onClick={() => payoutAction(p.id, "approve")}>
+                        Approve
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => payoutAction(p.id, "paid")}>
+                        Mark paid
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => payoutAction(p.id, "reject")}>
+                        Reject
+                      </Button>
+                    </div>
+                  ) : p.status === "approved" ? (
+                    <Button type="button" size="sm" onClick={() => payoutAction(p.id, "paid")}>
                       Mark paid
                     </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => payoutAction(p.id, "reject")}>
-                      Reject
-                    </Button>
-                  </div>
+                  ) : null}
                 </div>
               </li>
             ))}
           </ul>
-        </Card>
-      ) : null}
+        )}
+      </Card>
     </div>
   );
 

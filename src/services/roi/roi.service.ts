@@ -60,9 +60,10 @@ export class RoiService {
 
   validateTierAmount(tier: RoiTier, principalNgn: number) {
     const min = Number(tier.min_ngn);
-    const max = Number(tier.max_ngn);
-    if (principalNgn < min) throw new AppError(`Minimum for ${tier.name} is ₦${min.toLocaleString("en-NG")}.`, 400, "BELOW_MIN");
-    if (principalNgn > max) throw new AppError(`Maximum for ${tier.name} is ₦${max.toLocaleString("en-NG")}.`, 400, "ABOVE_MAX");
+    if (principalNgn < min) {
+      throw new AppError(`Minimum for ${tier.name} is ₦${min.toLocaleString("en-NG")}.`, 400, "BELOW_MIN");
+    }
+    // Legacy max_ngn ignored — sectors have minimum entry only (unlimited principal).
   }
 
   async createInvestment(input: {

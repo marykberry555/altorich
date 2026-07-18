@@ -14,14 +14,21 @@ export type PackageIcon = "piggy" | "leaf" | "home" | "briefcase";
 /**
  * Investment sector configuration.
  * Earnings always come from PLATFORM_EARNING — never from per-sector ROI.
+ * Sectors qualify by minimum entry only — principal is unlimited (NULL max).
  */
+
 export type PackageConfig = {
   slug: PackageSlug;
   title: string;
   subtitle: string;
   displayOrder: number;
+  /** Minimum qualification / entry amount for this sector. */
   minNgn: number;
-  maxNgn: number;
+  /**
+   * @deprecated Always null — sectors have no investment ceiling.
+   * Kept optional only for gradual call-site cleanup.
+   */
+  maxNgn?: null;
   referralPercent: number;
   payoutTiming: typeof PLATFORM_EARNING.payoutTiming;
   image: ImageAsset;
@@ -50,7 +57,7 @@ export const PACKAGE_CONFIG: PackageConfig[] = [
     subtitle: "High-Yield Savings & Fintech Lock Plans",
     displayOrder: 1,
     minNgn: 20_000,
-    maxNgn: 100_000,
+    maxNgn: null,
     weeklyRoiPercent: PLATFORM_PCT,
     weeklyRoiBps: PLATFORM_BPS,
     referralPercent: 3,
@@ -71,7 +78,7 @@ export const PACKAGE_CONFIG: PackageConfig[] = [
     subtitle: "Agricultural Crowdfunding & Processing",
     displayOrder: 2,
     minNgn: 101_000,
-    maxNgn: 500_000,
+    maxNgn: null,
     weeklyRoiPercent: PLATFORM_PCT,
     weeklyRoiBps: PLATFORM_BPS,
     referralPercent: 4,
@@ -92,7 +99,7 @@ export const PACKAGE_CONFIG: PackageConfig[] = [
     subtitle: "Land Banking & Rental Property Cooperatives",
     displayOrder: 3,
     minNgn: 501_000,
-    maxNgn: 5_000_000,
+    maxNgn: null,
     weeklyRoiPercent: PLATFORM_PCT,
     weeklyRoiBps: PLATFORM_BPS,
     referralPercent: 6,
@@ -113,7 +120,7 @@ export const PACKAGE_CONFIG: PackageConfig[] = [
     subtitle: "Foreign Exchange & Hard Currency Assets",
     displayOrder: 4,
     minNgn: 5_001_000,
-    maxNgn: 50_000_000,
+    maxNgn: null,
     weeklyRoiPercent: PLATFORM_PCT,
     weeklyRoiBps: PLATFORM_BPS,
     referralPercent: 5,

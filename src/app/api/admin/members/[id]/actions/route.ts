@@ -133,7 +133,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     if (body.withdrawalId && body.withdrawalStatus) {
       if (body.withdrawalStatus === "approved") {
-        await services.withdrawals.approve(body.withdrawalId, admin.id);
+        await services.withdrawals.markPaid(body.withdrawalId, admin.id);
       } else {
         await services.withdrawals.reject(body.withdrawalId, admin.id, body.rejectionReason ?? "Not approved");
       }

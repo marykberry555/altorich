@@ -6,6 +6,11 @@ import {
   mergeHomepageStats,
   type HomepageStatsConfig
 } from "@/lib/homepage/homepage-stats";
+import {
+  mergeSettlementQueueConfig,
+  SETTLEMENT_QUEUE_SETTINGS_KEY,
+  type SettlementQueueConfig
+} from "@/lib/payout/settlement-queue";
 
 type Client = SupabaseClient<Database>;
 
@@ -154,6 +159,24 @@ export class SettingsService {
     const next = mergeHomepageStats({ ...current, ...updates });
     const { error } = await this.supabase.from("settings").upsert({
       key: HOMEPAGE_STATS_SETTINGS_KEY,
+      value: next,
+      updated_by: updatedBy ?? null,
+      updated_at: new Date().toISOString()
+    } as Database["public"]["Tables"]["settings"]["Insert"]);
+    if (error) throw error;
+    return next;
+  }
+
+  async getSettlementQueueConfig() {
+    const data = await this.get<Partial<SettlementQueueConfig>>(SETTLEMENT_QUEUE_SETTINGS_KEY);
+    return mergeSettlementQueueConfig(data);
+  }
+
+  async updateSettlementQueueConfig(updates: Partial<SettlementQueueConfig>, updatedBy?: string) {
+    const current = await this.getSettlementQueueConfig();
+    const next = mergeSettlementQueueConfig({ ...current, ...updates });
+    const { error } = await this.supabase.from("settings").upsert({
+      key: SETTLEMENT_QUEUE_SETTINGS_KEY,
       value: next,
       updated_by: updatedBy ?? null,
       updated_at: new Date().toISOString()

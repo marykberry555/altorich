@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { SectionHeading } from "@/components/design-system";
 import { AdminFeatureFlags } from "@/components/admin/AdminFeatureFlags";
 import { HomepageStatsAdmin } from "@/components/admin/HomepageStatsAdmin";
+import { AdminInstallCta } from "@/components/admin-app/AdminInstallCta";
 import { getBuildId } from "@/lib/build-id";
 import { ADMIN_DOWNLOAD } from "@/lib/admin-app/constants";
 import { formatBytes, getAdminReleaseMeta } from "@/lib/admin-app/release-meta";
@@ -34,6 +35,8 @@ export default async function AdminAppSettingsPage() {
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-white">Platform settings</h1>
         <p className="mt-2 text-sm text-zinc-400">Feature flags, announcements, withdrawal windows, and release info.</p>
       </header>
+
+      <AdminInstallCta />
 
       {featureFlags ? <AdminFeatureFlags initial={featureFlags} /> : null}
 

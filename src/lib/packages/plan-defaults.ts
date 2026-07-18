@@ -12,7 +12,8 @@ export type CreatePlanInput = {
   name?: string;
   tier: PackageSlug;
   min_investment: number;
-  max_investment?: number;
+  /** @deprecated Ignored — sectors have unlimited principal (NULL in DB). */
+  max_investment?: number | null;
 };
 
 export function slugifyPlanName(name: string) {
@@ -31,9 +32,8 @@ export function buildPlanDefaults(input: CreatePlanInput) {
   }
 
   const minInvestment = input.min_investment;
-  const maxInvestment = input.max_investment ?? tier.maxNgn;
-  if (maxInvestment < minInvestment) {
-    throw new AppError("Maximum investment must be at least the minimum.", 400, "INVALID_RANGE");
+  if (!(minInvestment > 0)) {
+    throw new AppError("Minimum entry must be greater than zero.", 400, "INVALID_MINIMUM");
   }
 
   const name = (input.name?.trim() || tier.title).slice(0, 120);
@@ -47,7 +47,8 @@ export function buildPlanDefaults(input: CreatePlanInput) {
     category: input.tier,
     price: minInvestment,
     min_investment: minInvestment,
-    max_investment: maxInvestment,
+    // NULL = unlimited. Application must never enforce a ceiling.
+    max_investment: null as null,
     currency: "NGN" as const,
     cycle_days: PLAN_CYCLE_DAYS,
     projected_daily: projectedDailyForPrincipal(minInvestment),

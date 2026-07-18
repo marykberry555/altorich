@@ -29,6 +29,7 @@ export type NotificationEvent =
   | "withdrawal.auto_scheduled"
   | "withdrawal.auto_skipped"
   | "withdrawal.approved"
+  | "withdrawal.processing"
   | "withdrawal.rejected"
   | "withdrawal.paid"
   | "kyc.approved"
@@ -193,12 +194,18 @@ export class NotificationService {
         body: String(data.reason ?? "Add a withdrawal bank account to receive automatic withdrawals.")
       },
       "withdrawal.approved": {
-        title: "Withdrawal approved",
-        body: `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been approved.`
+        title: "Withdrawal under review",
+        body: `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} is under review.`
+      },
+      "withdrawal.processing": {
+        title: "Withdrawal processing",
+        body: `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} is now being processed.`
       },
       "withdrawal.paid": {
         title: "Withdrawal completed",
-        body: `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been processed.`
+        body: data.settlement_reference
+          ? `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} (${String(data.settlement_reference)}) has been processed.`
+          : `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been processed.`
       },
       "withdrawal.rejected": {
         title: "Withdrawal declined",
@@ -222,11 +229,18 @@ export class NotificationService {
       },
       "referral.payout_requested": {
         title: "Referral withdrawal submitted",
-        body: `Your referral reward withdrawal of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
+        body: String(
+          data.schedule_message ??
+            (data.settlement_reference
+              ? `Your referral reward withdrawal of ${formatNaira(Number(data.amount ?? 0))} is queued (${String(data.settlement_reference)}).`
+              : `Your referral reward withdrawal of ${formatNaira(Number(data.amount ?? 0))} is pending review.`)
+        )
       },
       "referral.payout_approved": {
         title: "Referral withdrawal approved",
-        body: `Your referral withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been approved.`
+        body: data.settlement_reference
+          ? `Your referral withdrawal of ${formatNaira(Number(data.amount ?? 0))} (${String(data.settlement_reference)}) has been approved.`
+          : `Your referral withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been approved.`
       },
       "referral.payout_rejected": {
         title: "Referral withdrawal declined",

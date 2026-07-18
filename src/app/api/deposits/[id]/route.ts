@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { logger } from "@/lib/logger";
+import { logFinancialAction } from "@/lib/finance/financial-audit";
 import { HARD_OPS_HOME } from "@/lib/hard-ops";
 
 type Context = {
@@ -22,28 +23,40 @@ export async function PATCH(request: NextRequest, context: Context) {
     const status = body.status as string;
 
     if (status === "approved") {
+      const { data: prior } = await services.supabase.from("deposits").select("*").eq("id", id).maybeSingle();
       const deposit = await services.deposits.approve(id, reviewer.id);
-      await services.audit.log({
+      await logFinancialAction(services.audit, {
         actorId: reviewer.id,
         action: "deposit.approved",
         entityType: "deposit",
         entityId: id,
-        metadata: { amount: deposit.amount }
+        reference: `DEP-${id}`,
+        previousState: { status: prior?.status ?? null, amount: prior?.amount ?? null },
+        newState: {
+          status: deposit.status,
+          amount: Number(deposit.amount),
+          wallet_transaction_id: deposit.wallet_transaction_id
+        },
+        metadata: { amount: deposit.amount, idempotent: prior?.status !== "pending" }
       });
       return NextResponse.json(deposit);
     }
 
     if (status === "rejected") {
+      const { data: prior } = await services.supabase.from("deposits").select("status, amount").eq("id", id).maybeSingle();
       const deposit = await services.deposits.reject(
         id,
         reviewer.id,
         String(body.rejectionReason ?? "Not approved")
       );
-      await services.audit.log({
+      await logFinancialAction(services.audit, {
         actorId: reviewer.id,
         action: "deposit.rejected",
         entityType: "deposit",
-        entityId: id
+        entityId: id,
+        reference: id,
+        previousState: { status: prior?.status ?? null, amount: prior?.amount ?? null },
+        newState: { status: deposit.status, amount: Number(deposit.amount) }
       });
       return NextResponse.json(deposit);
     }
@@ -65,24 +78,36 @@ export async function POST(request: NextRequest, context: Context) {
     const status = String(formData.get("status"));
 
     if (status === "approved") {
-      await services.deposits.approve(id, reviewer.id);
-      await services.audit.log({
+      const { data: prior } = await services.supabase.from("deposits").select("*").eq("id", id).maybeSingle();
+      const deposit = await services.deposits.approve(id, reviewer.id);
+      await logFinancialAction(services.audit, {
         actorId: reviewer.id,
         action: "deposit.approved",
         entityType: "deposit",
-        entityId: id
+        entityId: id,
+        reference: `DEP-${id}`,
+        previousState: { status: prior?.status ?? null, amount: prior?.amount ?? null },
+        newState: {
+          status: deposit.status,
+          amount: Number(deposit.amount),
+          wallet_transaction_id: deposit.wallet_transaction_id
+        }
       });
     } else if (status === "rejected") {
-      await services.deposits.reject(
+      const { data: prior } = await services.supabase.from("deposits").select("status, amount").eq("id", id).maybeSingle();
+      const deposit = await services.deposits.reject(
         id,
         reviewer.id,
         String(formData.get("rejectionReason") || "Not approved")
       );
-      await services.audit.log({
+      await logFinancialAction(services.audit, {
         actorId: reviewer.id,
         action: "deposit.rejected",
         entityType: "deposit",
-        entityId: id
+        entityId: id,
+        reference: id,
+        previousState: { status: prior?.status ?? null, amount: prior?.amount ?? null },
+        newState: { status: deposit.status, amount: Number(deposit.amount) }
       });
     }
 

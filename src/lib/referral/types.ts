@@ -18,6 +18,12 @@ export type ReferralDashboard = {
   minPayoutThreshold: number;
   canRequestPayout: boolean;
   payoutGap: number;
+  /** ISO timestamp of next Monday 09:00 WAT settlement. */
+  nextSettlementAt: string;
+  settlementWindowOpen: boolean;
+  meetsPayoutThreshold: boolean;
+  eligibilityStatus: "eligible" | "below_minimum" | "awaiting_settlement" | "program_disabled";
+  eligibilityMessage: string;
   recentReferrals: ReferralActivityRow[];
   recentRewards: ReferralRewardRow[];
   programEnabled: boolean;
@@ -26,6 +32,8 @@ export type ReferralDashboard = {
 export type ReferralActivityRow = {
   id: string;
   referredName: string;
+  username: string | null;
+  avatarUrl: string | null;
   status: string;
   investmentAmount: number | null;
   packageTier: string | null;

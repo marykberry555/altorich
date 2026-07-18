@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { ADMIN_APP_HOME, ADMIN_AUTH } from "@/lib/admin-app/constants";
+import { ADMIN_APP_HOME, ADMIN_APP_INSTALL } from "@/lib/admin-app/constants";
 
 export async function GET() {
   const manifest = {
     name: "Alto Rich Admin",
     short_name: "Admin",
     description: "Alto Rich operations console for administrators.",
-    start_url: ADMIN_AUTH,
+    // Must stay inside scope (/admin-app/) or Chrome never fires beforeinstallprompt.
+    start_url: ADMIN_APP_INSTALL,
     scope: `${ADMIN_APP_HOME}/`,
     id: ADMIN_APP_HOME,
     display: "standalone",
@@ -21,7 +22,7 @@ export async function GET() {
       { src: "/admin-app/icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
     ],
     shortcuts: [
-      { name: "Dashboard", url: ADMIN_APP_HOME },
+      { name: "Dashboard", url: `${ADMIN_APP_HOME}/`, short_name: "Home" },
       { name: "Deposits", url: `${ADMIN_APP_HOME}/deposits` },
       { name: "Withdrawals", url: `${ADMIN_APP_HOME}/payouts` },
       { name: "Members", url: `${ADMIN_APP_HOME}/members` }

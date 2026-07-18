@@ -8,6 +8,7 @@ import { DashboardSection, MetricStatCard, SectionHeading, StatusBadge } from "@
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { DataTable, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/design-system";
+import { SettlementQueueAdmin } from "@/components/admin/SettlementQueueAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -57,8 +58,12 @@ export default async function PayoutsPage() {
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Operations</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--heading)]">Withdrawals</h1>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">Review manual and automatic withdrawal requests.</p>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">
+          Monday settlement queue — requests are processed FIFO with estimated payout times.
+        </p>
       </header>
+
+      <SettlementQueueAdmin />
 
       {loadError ? (
         <Card variant="elevated" padding="md" className="border-red-200 bg-red-50/80 dark:border-red-500/30 dark:bg-red-500/10">
@@ -101,9 +106,9 @@ export default async function PayoutsPage() {
                 </div>
                 <div className="flex gap-2">
                   <form action={`/api/admin/withdrawals/${w.id}`} method="post">
-                    <input name="status" value="approved" type="hidden" />
+                    <input name="status" value="paid" type="hidden" />
                     <button type="submit" className="button text-xs">
-                      <Check size={14} /> Approve
+                      <Check size={14} /> Mark paid
                     </button>
                   </form>
                   <form action={`/api/admin/withdrawals/${w.id}`} method="post">

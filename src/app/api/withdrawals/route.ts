@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { formatPayoutScheduleMessage, resolvePayoutQueue } from "@/lib/payout/schedule";
 import { getPublicServices, getServiceRoleServices } from "@/lib/services";
 import { getSessionUser, hasAdminRole, requireSessionUser } from "@/lib/auth/session";
 import { AppError, Errors, isAppError } from "@/lib/errors";
@@ -95,16 +94,18 @@ export async function POST(request: NextRequest) {
         .then((rows) =>
           rows.find((row) => {
             const note = row.note?.trim() ?? "";
-            return note === marker || note.startsWith(`${marker}|`);
+            const key = (row as { idempotency_key?: string | null }).idempotency_key;
+            return key === idempotencyKey || note === marker || note.startsWith(`${marker}|`);
           })
         )
         .catch(() => null);
       if (existing) {
-        const scheduledAt = existing.scheduled_at ? new Date(existing.scheduled_at) : resolvePayoutQueue().scheduledAt;
+        const queueView = await services.withdrawals.buildQueueView(existing);
         return NextResponse.json(
           {
             ...existing,
-            scheduleMessage: formatPayoutScheduleMessage(scheduledAt)
+            queueView,
+            scheduleMessage: queueView.scheduleMessage
           },
           { status: 200 }
         );
@@ -134,6 +135,7 @@ export async function POST(request: NextRequest) {
         accountName,
         accountNumber: parsed.data.accountNumber,
         note,
+        idempotencyKey: idempotencyKey || null,
         requestType: "manual"
       });
     } catch (error) {
@@ -144,17 +146,23 @@ export async function POST(request: NextRequest) {
       throw Errors.badRequest("Unable to create withdrawal request.");
     }
 
-    const queue = resolvePayoutQueue();
+    const queueView =
+      "queueView" in withdrawal && withdrawal.queueView
+        ? withdrawal.queueView
+        : await services.withdrawals.buildQueueView(withdrawal);
+
     logger.info("Withdrawal created", {
       withdrawalId: withdrawal.id,
       userId: user.id,
-      idempotencyKey: idempotencyKey || null
+      idempotencyKey: idempotencyKey || null,
+      queuePosition: queueView.queuePosition
     });
 
     return NextResponse.json(
       {
         ...withdrawal,
-        scheduleMessage: formatPayoutScheduleMessage(queue.scheduledAt)
+        queueView,
+        scheduleMessage: queueView.scheduleMessage
       },
       { status: 201 }
     );

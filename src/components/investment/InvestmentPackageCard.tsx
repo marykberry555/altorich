@@ -56,12 +56,10 @@ export function InvestmentPackageCard({ card, walletBalance, featured }: Props) 
             <div className="flex items-center justify-between gap-3">
               <dt className="flex items-center gap-2 text-[var(--text-muted)]">
                 <Wallet size={15} aria-hidden />
-                Range
+                Minimum Entry
               </dt>
               <dd className="currency-ngn text-right text-xs font-semibold tabular-nums text-[var(--heading)]">
-                {card.available
-                  ? `${formatNaira(card.minInvestment)} – ${formatNaira(card.maxInvestment)}`
-                  : "—"}
+                {card.available ? formatNaira(card.minInvestment) : "—"}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3">
@@ -109,7 +107,6 @@ export function InvestmentPackageCard({ card, walletBalance, featured }: Props) 
           planId={card.planId}
           packageTitle={card.title}
           minAmount={card.minInvestment}
-          maxAmount={card.maxInvestment}
           payoutTiming={card.payoutTiming}
           walletBalance={walletBalance}
         />

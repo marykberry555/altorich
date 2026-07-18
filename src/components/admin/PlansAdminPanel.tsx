@@ -19,7 +19,6 @@ type FormState = {
   name: string;
   tier: PackageSlug;
   minInvestment: string;
-  maxInvestment: string;
 };
 
 function formForTier(tier: PackageSlug): FormState {
@@ -27,8 +26,7 @@ function formForTier(tier: PackageSlug): FormState {
   return {
     name: "",
     tier,
-    minInvestment: String(config.minNgn),
-    maxInvestment: String(config.maxNgn)
+    minInvestment: String(config.minNgn)
   };
 }
 
@@ -62,8 +60,7 @@ export function PlansAdminPanel({ initialPlans }: Props) {
         body: JSON.stringify({
           name: form.name.trim() || undefined,
           tier: form.tier,
-          min_investment: parseCurrencyInput(form.minInvestment),
-          max_investment: parseCurrencyInput(form.maxInvestment)
+          min_investment: parseCurrencyInput(form.minInvestment)
         })
       });
       const data = await res.json();
@@ -116,7 +113,7 @@ export function PlansAdminPanel({ initialPlans }: Props) {
         <Card variant="elevated" padding="md">
           <form onSubmit={createPlan} className="space-y-4">
             <p className="text-sm text-[var(--text-muted)]">
-              Sector name, description, limits, and visibility are editable. Earnings use the global Platform Earning
+              Sectors define minimum entry only — principal is unlimited. Earnings use the global Platform Earning
               Model (up to 5% daily) and cannot be set per sector.
             </p>
 
@@ -141,17 +138,10 @@ export function PlansAdminPanel({ initialPlans }: Props) {
                 </select>
               </label>
               <CurrencyInput
-                label="Min investment (₦)"
+                label="Minimum Entry (₦)"
                 prefix="₦"
                 value={form.minInvestment}
                 onChange={(v) => setForm((f) => ({ ...f, minInvestment: v }))}
-                required
-              />
-              <CurrencyInput
-                label="Max investment (₦)"
-                prefix="₦"
-                value={form.maxInvestment}
-                onChange={(v) => setForm((f) => ({ ...f, maxInvestment: v }))}
                 required
               />
             </div>
@@ -181,7 +171,7 @@ export function PlansAdminPanel({ initialPlans }: Props) {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Investment Sector</TableHead>
-              <TableHead>Min–Max</TableHead>
+              <TableHead>Minimum Entry</TableHead>
               <TableHead>Platform Earning Model</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -192,9 +182,7 @@ export function PlansAdminPanel({ initialPlans }: Props) {
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell className="capitalize">{p.tier}</TableCell>
-                <TableCell className="tabular-nums">
-                  {formatNaira(Number(p.min_investment ?? p.price))} – {formatNaira(Number(p.max_investment ?? p.price))}
-                </TableCell>
+                <TableCell className="tabular-nums">{formatNaira(Number(p.min_investment ?? p.price))}</TableCell>
                 <TableCell>Up to 5% daily</TableCell>
                 <TableCell>
                   <StatusBadge status={p.plan_status ?? "active"} />

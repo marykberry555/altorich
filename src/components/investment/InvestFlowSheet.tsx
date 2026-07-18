@@ -21,7 +21,6 @@ type Props = {
   planId: string;
   packageTitle: string;
   minAmount: number;
-  maxAmount: number;
   payoutTiming: string;
   walletBalance: number;
 };
@@ -74,7 +73,6 @@ export function InvestFlowSheet({
   planId,
   packageTitle,
   minAmount,
-  maxAmount,
   payoutTiming,
   walletBalance
 }: Props) {
@@ -100,7 +98,7 @@ export function InvestFlowSheet({
   }, [open, minAmount]);
 
   const parsedAmount = parseCurrencyInput(amount);
-  const validAmount = parsedAmount >= minAmount && parsedAmount <= maxAmount;
+  const validAmount = parsedAmount >= minAmount;
   const sufficientBalance = walletBalance >= parsedAmount;
 
   async function confirmInvest() {
@@ -206,7 +204,7 @@ export function InvestFlowSheet({
             </div>
 
             <CurrencyInput
-              label={`Amount (${formatNaira(minAmount)} – ${formatNaira(maxAmount)})`}
+              label={`Amount (min ${formatNaira(minAmount)})`}
               prefix="₦"
               value={amount}
               onChange={setAmount}

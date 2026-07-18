@@ -1,25 +1,14 @@
 import type { Withdrawal } from "@/types/database";
+import { memberQueueStatusLabel, type MemberQueueStatus } from "@/lib/payout/settlement-queue";
 
-export type PayoutStatusLabel =
-  | "Scheduled"
-  | "Pending"
-  | "Processing"
-  | "Approved"
-  | "Paid"
-  | "Rejected"
-  | "Cancelled";
+export type PayoutStatusLabel = MemberQueueStatus | "Pending" | "Approved";
 
-export function payoutStatusLabel(row: Pick<Withdrawal, "status" | "scheduled_at">): PayoutStatusLabel {
-  if (row.status === "scheduled") return "Scheduled";
-  if (row.status === "pending") {
-    if (row.scheduled_at && new Date(row.scheduled_at) > new Date()) return "Scheduled";
-    return "Pending";
+export function payoutStatusLabel(
+  row: Pick<Withdrawal, "status" | "scheduled_at"> & {
+    processing_started_at?: string | null;
   }
-  if (row.status === "approved") return "Processing";
-  if (row.status === "paid") return "Paid";
-  if (row.status === "rejected") return "Rejected";
-  if (row.status === "cancelled") return "Cancelled";
-  return "Pending";
+): PayoutStatusLabel {
+  return memberQueueStatusLabel(row);
 }
 
 export function payoutStatusVariant(
@@ -27,6 +16,6 @@ export function payoutStatusVariant(
 ): "emerald" | "gold" | "outline" | "navy" {
   if (label === "Paid") return "emerald";
   if (label === "Rejected" || label === "Cancelled") return "outline";
-  if (label === "Processing" || label === "Approved") return "navy";
+  if (label === "Processing" || label === "Under Review" || label === "Approved") return "navy";
   return "gold";
 }

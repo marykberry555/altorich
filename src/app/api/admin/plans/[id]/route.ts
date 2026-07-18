@@ -7,6 +7,7 @@ import { apiErrorResponse } from "@/lib/errors/api-response";
 import { sanitizeText } from "@/lib/security/sanitize";
 import type { Database } from "@/types/database";
 import { PLATFORM_EARNING, platformProjectedDaily } from "@/lib/earning/platform-earning";
+import { assertNoMaxInvestmentInBody, toPublicInvestmentPlan } from "@/lib/packages/public-plan";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -16,12 +17,11 @@ const updateSchema = z.object({
   is_active: z.boolean().optional(),
   sort_order: z.number().int().optional(),
   min_investment: z.number().positive().optional(),
-  max_investment: z.number().positive().optional(),
   projected_daily: z.number().nonnegative().optional(),
   cycle_days: z.number().int().positive().optional(),
   description: z.string().min(10).optional(),
   visibility: z.enum(["public", "members", "hidden"]).optional()
-  // weekly_roi_bps intentionally omitted — platform earning engine is the sole ROI source
+  // max_investment / weekly_roi_bps intentionally omitted — unlimited principal + platform earning engine
 });
 
 export async function PATCH(request: NextRequest, context: Context) {
@@ -32,11 +32,12 @@ export async function PATCH(request: NextRequest, context: Context) {
 
     const { id } = await context.params;
     const body = await request.json();
+    assertNoMaxInvestmentInBody(body);
+
     const parsed = updateSchema.safeParse({
       ...body,
       sort_order: body.sort_order !== undefined ? Number(body.sort_order) : undefined,
       min_investment: body.min_investment !== undefined ? Number(body.min_investment) : undefined,
-      max_investment: body.max_investment !== undefined ? Number(body.max_investment) : undefined,
       projected_daily: body.projected_daily !== undefined ? Number(body.projected_daily) : undefined,
       cycle_days: body.cycle_days !== undefined ? Number(body.cycle_days) : undefined
     });
@@ -49,13 +50,13 @@ export async function PATCH(request: NextRequest, context: Context) {
     if (parsed.data.is_active !== undefined) update.is_active = parsed.data.is_active;
     if (parsed.data.sort_order !== undefined) update.sort_order = parsed.data.sort_order;
     if (parsed.data.min_investment !== undefined) update.min_investment = parsed.data.min_investment;
-    if (parsed.data.max_investment !== undefined) update.max_investment = parsed.data.max_investment;
+    // Always keep max_investment NULL (unlimited) — never accept client ceilings.
+    update.max_investment = null;
     // Always sync ROI fields to the platform engine — never accept product-specific rates.
     update.weekly_roi_bps = PLATFORM_EARNING.weeklyRoiBps;
     if (parsed.data.min_investment !== undefined) {
       update.projected_daily = platformProjectedDaily(parsed.data.min_investment);
     } else if (parsed.data.projected_daily !== undefined) {
-      // Ignore client projected_daily overrides that imply a different ROI; recompute from min if provided later.
       update.projected_daily = parsed.data.projected_daily;
     }
     if (parsed.data.cycle_days !== undefined) update.cycle_days = parsed.data.cycle_days;
@@ -79,7 +80,7 @@ export async function PATCH(request: NextRequest, context: Context) {
       metadata: parsed.data as Record<string, unknown>
     });
 
-    return NextResponse.json(data);
+    return NextResponse.json(toPublicInvestmentPlan(data));
   } catch (error) {
     return apiErrorResponse(error);
   }

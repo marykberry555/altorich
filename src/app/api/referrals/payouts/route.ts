@@ -29,12 +29,16 @@ export async function POST(request: NextRequest) {
       accountName: await services.profile.getRegisteredFullName(user.id)
     });
 
+    const payoutId = String((payout as { id?: string }).id ?? "");
     await services.audit.log({
       actorId: user.id,
       action: "referral.payout_requested",
       entityType: "referral_payout",
-      entityId: String((payout as { id: string }).id),
-      metadata: { amount: parsed.data.amount }
+      entityId: payoutId,
+      metadata: {
+        amount: parsed.data.amount,
+        settlement_reference: (payout as { settlementReference?: string }).settlementReference ?? null
+      }
     });
 
     return NextResponse.json(payout, { status: 201 });

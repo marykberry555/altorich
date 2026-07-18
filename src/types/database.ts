@@ -129,7 +129,7 @@ export type Database = {
           category: string;
           price: number;
           min_investment: number;
-          max_investment: number;
+          max_investment: number | null;
           currency: string;
           cycle_days: number;
           projected_daily: number;
@@ -168,6 +168,7 @@ export type Database = {
           matured_at: string | null;
           closed_at: string | null;
           wallet_transaction_id: string | null;
+          source_deposit_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -226,7 +227,7 @@ export type Database = {
           bank_name: string;
           account_name: string;
           account_number: string;
-          status: "scheduled" | "pending" | "approved" | "paid" | "rejected" | "cancelled";
+          status: "scheduled" | "pending" | "approved" | "processing" | "paid" | "rejected" | "cancelled";
           rejection_reason: string | null;
           reviewed_by: string | null;
           wallet_transaction_id: string | null;
@@ -235,6 +236,14 @@ export type Database = {
           note: string | null;
           created_at: string;
           reviewed_at: string | null;
+          queue_number: number | null;
+          batch_number: number | null;
+          estimated_processing_at: string | null;
+          queued_at: string | null;
+          processing_started_at: string | null;
+          paid_at: string | null;
+          settlement_reference: string | null;
+          idempotency_key: string | null;
         };
         Insert: {
           user_id: string;
@@ -243,13 +252,25 @@ export type Database = {
           account_name: string;
           account_number: string;
           bank_account_id?: string | null;
-          status?: "scheduled" | "pending" | "approved" | "paid" | "rejected" | "cancelled";
+          status?: "scheduled" | "pending" | "approved" | "processing" | "paid" | "rejected" | "cancelled";
           request_type?: "manual" | "automatic";
           scheduled_at?: string | null;
           note?: string | null;
+          queue_number?: number | null;
+          batch_number?: number | null;
+          estimated_processing_at?: string | null;
+          queued_at?: string | null;
+          processing_started_at?: string | null;
+          paid_at?: string | null;
+          settlement_reference?: string | null;
+          idempotency_key?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["withdrawals"]["Insert"]> & {
-          status?: "pending" | "approved" | "paid" | "rejected" | "cancelled";
+          status?: "scheduled" | "pending" | "approved" | "processing" | "paid" | "rejected" | "cancelled";
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          rejection_reason?: string | null;
+          wallet_transaction_id?: string | null;
         };
         Relationships: TableRelationships;
       };
@@ -661,7 +682,7 @@ export type Database = {
           id: string;
           name: string;
           min_ngn: number;
-          max_ngn: number;
+          max_ngn: number | null;
           weekly_roi_bps: number;
           payout_weekday: number;
           payout_time: string;
@@ -672,7 +693,7 @@ export type Database = {
           id?: string;
           name: string;
           min_ngn: number;
-          max_ngn: number;
+          max_ngn: number | null;
           weekly_roi_bps: number;
           payout_weekday?: number;
           payout_time?: string;
@@ -827,6 +848,19 @@ export type Database = {
     Functions: {
       wallet_balance: { Args: { p_wallet_id: string }; Returns: number };
       has_admin_role: { Args: { check_role?: string }; Returns: boolean };
+      next_settlement_reference: { Args: { p_day?: string }; Returns: string };
+      claim_deposit_for_approval: {
+        Args: { p_deposit_id: string; p_reviewer_id: string };
+        Returns: Json;
+      };
+      claim_withdrawal_for_paid: {
+        Args: { p_withdrawal_id: string; p_reviewer_id: string };
+        Returns: Json;
+      };
+      claim_referral_for_commission: {
+        Args: { p_referral_id: string };
+        Returns: Json;
+      };
     };
   };
 };

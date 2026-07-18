@@ -13,8 +13,8 @@ export type PackagePlanCard = {
   subtitle: string;
   description: string;
   planId: string | null;
+  /** Minimum qualification / entry amount — no maximum. */
   minInvestment: number;
-  maxInvestment: number;
   weeklyRoiPercent: number;
   dailyReturnPercent: number;
   cycleDays: number;
@@ -52,7 +52,6 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
         description: tierDefaults.cardDescription,
         planId: null,
         minInvestment: tierDefaults.minNgn,
-        maxInvestment: tierDefaults.maxNgn,
         weeklyRoiPercent,
         dailyReturnPercent,
         cycleDays: 365,
@@ -68,7 +67,6 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
     }
 
     const minInvestment = Math.min(...tierPlans.map((p) => Number(p.min_investment ?? p.price)));
-    const maxInvestment = Math.max(...tierPlans.map((p) => Number(p.max_investment ?? p.price)));
 
     return {
       slug,
@@ -77,7 +75,6 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
       description: primary.description || content.heroHeadline,
       planId: primary.id,
       minInvestment,
-      maxInvestment,
       weeklyRoiPercent,
       dailyReturnPercent,
       cycleDays: primary.cycle_days,

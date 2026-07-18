@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatNaira } from "@/lib/domain";
 import { adminAppPath } from "@/lib/admin-app/constants";
 import { useAdminRealtime } from "@/lib/admin-app/useAdminRealtime";
+import { AdminInstallCta } from "@/components/admin-app/AdminInstallCta";
 
 type SecuritySnapshot = {
   failedLoginAttempts: Array<{ id: string; ip_address: string | null; metadata: Record<string, unknown>; created_at: string }>;
@@ -53,6 +54,11 @@ export function AdminSecurityPageClient() {
         <h1 className="mt-2 text-2xl font-bold text-white">Security center</h1>
         <p className="mt-2 text-sm text-zinc-400">Failed logins, locked accounts, credential changes, and funding activity.</p>
       </header>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-white">Admin profile · Install</h2>
+        <AdminInstallCta />
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Section title="Failed login attempts">

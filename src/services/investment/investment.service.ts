@@ -8,6 +8,12 @@ import { ReferralService } from "@/services/referral/referral.service";
 import { addDays, makeInvestmentReference, type SettlementFrequency } from "@/lib/investment";
 import { buildPlanDefaults, type CreatePlanInput } from "@/lib/packages/plan-defaults";
 import { PLATFORM_EARNING, platformProjectedDaily } from "@/lib/earning/platform-earning";
+import {
+  assertDepositInvestReconciliation,
+  isLegacyCapHealing,
+  LEGACY_CAP_HEALING_MESSAGE
+} from "@/lib/finance/reconciliation";
+import { logger } from "@/lib/logger";
 
 type Client = SupabaseClient<Database>;
 type InvestmentPlan = Database["public"]["Tables"]["investment_plans"]["Row"];
@@ -97,27 +103,28 @@ export class InvestmentService {
 
   validatePurchaseAmount(plan: InvestmentPlan, amount: number) {
     const min = Number(plan.min_investment ?? plan.price);
-    const max = Number(plan.max_investment ?? plan.price);
 
     if (amount < min) {
       throw new AppError(`Minimum investment is ₦${min.toLocaleString("en-NG")}.`, 400, "BELOW_MINIMUM");
     }
-    if (amount > max) {
-      throw new AppError(`Maximum investment is ₦${max.toLocaleString("en-NG")}.`, 400, "ABOVE_MAXIMUM");
-    }
+    // Sectors have minimum entry only — principal is unlimited (legacy max_investment ignored).
     if (!plan.is_active || plan.plan_status !== "active") {
       throw Errors.badRequest("This investment sector is not available.");
     }
   }
 
   /**
-   * After funding approval: invest credited amount into the member's preferred package.
-   * Skips quietly when no package is set or amount is below the plan minimum.
+   * After funding approval: invest the member's full wallet balance into their preferred sector.
+   * Skips when no sector is set or balance is below the sector minimum entry.
+   * Never caps principal — legacy plan max_investment is ignored (NULL = unlimited).
+   *
+   * When `walletBefore` is provided, runs financial integrity checks and rolls back
+   * the investment (not the deposit credit) if reconciliation fails by ≥ ₦0.01.
    */
   async autoInvestFromPreferredPackage(
     userId: string,
-    amount: number,
-    context?: { depositId?: string }
+    creditedAmount: number,
+    context?: { depositId?: string; walletBefore?: number }
   ): Promise<Investment | null> {
     const { data: profile } = await this.supabase
       .from("profiles")
@@ -126,14 +133,35 @@ export class InvestmentService {
       .maybeSingle();
 
     const slug = profile?.preferred_package_slug?.trim();
-    if (!slug) return null;
+    if (!slug) {
+      if (context?.walletBefore != null) {
+        const wallet = await this.wallet.getWalletByUserId(userId);
+        const walletAfter = await this.wallet.getBalance(wallet.id);
+        assertDepositInvestReconciliation({
+          walletBefore: context.walletBefore,
+          depositAmount: creditedAmount,
+          investedAmount: 0,
+          walletAfter
+        });
+      }
+      return null;
+    }
 
     const plan = await this.getPlanBySlug(slug);
     if (!plan) return null;
 
     const min = Number(plan.min_investment ?? plan.price);
-    const max = Number(plan.max_investment ?? plan.price);
-    if (amount < min) {
+    const wallet = await this.wallet.getWalletByUserId(userId);
+    const balance = await this.wallet.getBalance(wallet.id);
+    const walletBefore = context?.walletBefore ?? Math.max(0, balance - creditedAmount);
+
+    if (balance < min) {
+      assertDepositInvestReconciliation({
+        walletBefore,
+        depositAmount: creditedAmount,
+        investedAmount: 0,
+        walletAfter: balance
+      });
       await this.notifications.dispatch({
         userId,
         title: "Wallet funded — top up to invest",
@@ -144,20 +172,116 @@ export class InvestmentService {
       return null;
     }
 
-    const investAmount = Math.min(amount, max);
-    return this.purchasePlan(userId, plan.id, investAmount);
+    // Consume entire available wallet balance — no partial invest, no leftover cash.
+    let created: Investment;
+    try {
+      created = await this.purchasePlan(userId, plan.id, balance, undefined, context?.depositId);
+    } catch (err) {
+      // Exactly-once: unique source_deposit_id → return existing investment for this deposit.
+      if (err instanceof AppError && err.code === "DUPLICATE_DEPOSIT_INVESTMENT" && context?.depositId) {
+        const { data: existing } = await this.supabase
+          .from("investments")
+          .select("*")
+          .eq("source_deposit_id", context.depositId)
+          .neq("status", "cancelled")
+          .maybeSingle();
+        if (existing) return existing;
+      }
+      logger.error("Auto-invest purchase failed; no partial investment retained", {
+        userId,
+        depositId: context?.depositId,
+        error: err instanceof Error ? err.message : String(err)
+      });
+      throw err;
+    }
+
+    const walletAfter = await this.wallet.getBalance(wallet.id);
+    const investedAmount = Number(created.amount);
+
+    try {
+      assertDepositInvestReconciliation({
+        walletBefore,
+        depositAmount: creditedAmount,
+        investedAmount,
+        walletAfter
+      });
+    } catch (reconcileError) {
+      logger.error("Deposit/auto-invest ledger reconciliation failed — rolling back investment", {
+        userId,
+        depositId: context?.depositId,
+        investmentId: created.id,
+        walletBefore,
+        creditedAmount,
+        investedAmount,
+        walletAfter,
+        error: reconcileError instanceof Error ? reconcileError.message : String(reconcileError)
+      });
+      await this.rollbackInvestmentPurchase(created);
+      throw reconcileError;
+    }
+
+    if (isLegacyCapHealing(walletBefore, creditedAmount, investedAmount)) {
+      await this.notifications.dispatch({
+        userId,
+        title: "Previous leftover funds invested",
+        body: LEGACY_CAP_HEALING_MESSAGE,
+        channel: "in_app",
+        metadata: {
+          deposit_id: context?.depositId ?? null,
+          investment_id: created.id,
+          healing: true,
+          one_time: true
+        }
+      });
+    }
+
+    return created;
+  }
+
+  /** Reverse wallet debit and cancel investment so no partial position remains. */
+  async rollbackInvestmentPurchase(investment: Investment) {
+    const txId = investment.wallet_transaction_id;
+    if (txId) {
+      try {
+        await this.wallet.reverseTransaction(txId);
+      } catch (reverseErr) {
+        logger.error("Failed to reverse investment debit during rollback", {
+          investmentId: investment.id,
+          transactionId: txId,
+          error: reverseErr instanceof Error ? reverseErr.message : String(reverseErr)
+        });
+      }
+    }
+
+    await this.supabase.from("investment_settlements").delete().eq("investment_id", investment.id);
+
+    await this.supabase
+      .from("investments")
+      .update({ status: "cancelled" } as Database["public"]["Tables"]["investments"]["Update"])
+      .eq("id", investment.id);
   }
 
   async purchasePlan(
     userId: string,
     planId: string,
     amount: number,
-    referenceOverride?: string
+    referenceOverride?: string,
+    sourceDepositId?: string
   ): Promise<Investment> {
     const plan = await this.getPlanById(planId);
     if (!plan) throw Errors.notFound("Investment sector");
 
     this.validatePurchaseAmount(plan, amount);
+
+    if (sourceDepositId) {
+      const { data: existingForDeposit } = await this.supabase
+        .from("investments")
+        .select("*")
+        .eq("source_deposit_id", sourceDepositId)
+        .neq("status", "cancelled")
+        .maybeSingle();
+      if (existingForDeposit) return existingForDeposit;
+    }
 
     const reference = referenceOverride?.trim() || makeInvestmentReference(userId);
     const wallet = await this.wallet.getWalletByUserId(userId);
@@ -186,20 +310,33 @@ export class InvestmentService {
         started_at: startedAt.toISOString(),
         ends_at: endsAt.toISOString(),
         auto_reinvest: true,
-        weekly_roi_bps: weeklyRoiBps
+        weekly_roi_bps: weeklyRoiBps,
+        source_deposit_id: sourceDepositId ?? null
       } as Database["public"]["Tables"]["investments"]["Insert"])
       .select()
       .single();
 
     if (invError) {
       if (invError.code === "23505") {
+        if (sourceDepositId) {
+          const { data: existingForDeposit } = await this.supabase
+            .from("investments")
+            .select("*")
+            .eq("source_deposit_id", sourceDepositId)
+            .neq("status", "cancelled")
+            .maybeSingle();
+          if (existingForDeposit) return existingForDeposit;
+          throw new AppError("Duplicate investment for this deposit.", 409, "DUPLICATE_DEPOSIT_INVESTMENT");
+        }
         throw new AppError("Duplicate purchase detected.", 409, "DUPLICATE");
       }
       throw invError;
     }
 
+    let walletTxId: string | null = null;
     try {
       const tx = await this.wallet.debitInvestmentPurchase(wallet.id, amount, investment.id, reference);
+      walletTxId = tx.id;
 
       await this.supabase
         .from("investments")
@@ -247,6 +384,9 @@ export class InvestmentService {
 
       return active!;
     } catch (err) {
+      if (walletTxId) {
+        await this.wallet.reverseTransaction(walletTxId).catch(() => null);
+      }
       await this.supabase
         .from("investments")
         .update({ status: "cancelled" } as Database["public"]["Tables"]["investments"]["Update"])

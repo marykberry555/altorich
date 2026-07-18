@@ -21,7 +21,15 @@ export function normalizeWithdrawalRow(row: WithdrawalRow): WithdrawalRow {
     ...row,
     request_type: row.request_type ?? "manual",
     scheduled_at: row.scheduled_at ?? null,
-    note: row.note ?? null
+    note: row.note ?? null,
+    queue_number: row.queue_number ?? null,
+    batch_number: row.batch_number ?? null,
+    estimated_processing_at: row.estimated_processing_at ?? null,
+    queued_at: row.queued_at ?? null,
+    processing_started_at: row.processing_started_at ?? null,
+    paid_at: row.paid_at ?? null,
+    settlement_reference: row.settlement_reference ?? null,
+    idempotency_key: row.idempotency_key ?? null
   };
 }
 

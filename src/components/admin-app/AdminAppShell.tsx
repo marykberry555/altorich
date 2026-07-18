@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { AdminNotificationBell } from "@/components/admin-app/AdminNotificationBell";
 import { AdminInstallBanner } from "@/components/admin-app/AdminInstallBanner";
+import { AdminInstallCta } from "@/components/admin-app/AdminInstallCta";
 import { AdminGlobalSearch } from "@/components/admin-app/AdminGlobalSearch";
 
 const navSections = [
@@ -128,7 +129,7 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="admin-shell min-h-dvh min-w-0 w-full lg:flex" style={{ background: "var(--admin-bg)", color: "var(--admin-text)" }}>
       <aside
-        className="hidden w-60 shrink-0 flex-col border-r lg:flex"
+        className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r lg:flex"
         style={{ background: "var(--admin-panel)", borderColor: "var(--admin-border)" }}
       >
         <div className="border-b px-4 py-5" style={{ borderColor: "var(--admin-border)" }}>
@@ -145,6 +146,7 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
         <AdminAppNav />
+        <AdminInstallCta variant="footer" />
       </aside>
 
       <div className="min-w-0 flex-1">
@@ -228,6 +230,7 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
               <AdminAppNav onNavigate={() => setMobileOpen(false)} />
+              <AdminInstallCta variant="footer" />
             </aside>
           </div>
         ) : null}

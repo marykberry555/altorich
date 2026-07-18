@@ -106,34 +106,78 @@ export class DepositService {
   }
 
   async approve(depositId: string, reviewerId: string) {
-    // Atomic claim — only one approver can move pending → approved.
-    const { data: deposit, error: claimError } = await this.supabase
-      .from("deposits")
-      .update({
-        status: "approved",
-        reviewed_by: reviewerId,
-        reviewed_at: new Date().toISOString()
-      } as Database["public"]["Tables"]["deposits"]["Update"])
-      .eq("id", depositId)
-      .eq("status", "pending")
-      .select("*")
-      .maybeSingle();
+    // Prefer row-locked claim RPC; fall back to conditional UPDATE if RPC unavailable.
+    let deposit: Deposit | null = null;
+    let claimed = false;
+    let previousStatus = "pending";
 
-    if (claimError) throw claimError;
+    const { data: claimPayload, error: rpcError } = await this.supabase.rpc(
+      "claim_deposit_for_approval" as never,
+      { p_deposit_id: depositId, p_reviewer_id: reviewerId } as never
+    );
+
+    if (!rpcError && claimPayload && typeof claimPayload === "object") {
+      const payload = claimPayload as {
+        claimed?: boolean;
+        previous_status?: string;
+        deposit?: Deposit;
+      };
+      claimed = Boolean(payload.claimed);
+      previousStatus = String(payload.previous_status ?? "unknown");
+      deposit = payload.deposit ?? null;
+    } else {
+      const { data: claimedRow, error: claimError } = await this.supabase
+        .from("deposits")
+        .update({
+          status: "approved",
+          reviewed_by: reviewerId,
+          reviewed_at: new Date().toISOString()
+        } as Database["public"]["Tables"]["deposits"]["Update"])
+        .eq("id", depositId)
+        .eq("status", "pending")
+        .select("*")
+        .maybeSingle();
+
+      if (claimError) throw claimError;
+      if (claimedRow) {
+        deposit = claimedRow;
+        claimed = true;
+        previousStatus = "pending";
+      } else {
+        const { data: existing, error: existingError } = await this.supabase
+          .from("deposits")
+          .select("*")
+          .eq("id", depositId)
+          .maybeSingle();
+        if (existingError) throw existingError;
+        deposit = existing;
+        previousStatus = String(existing?.status ?? "unknown");
+      }
+    }
+
     if (!deposit) {
+      throw Errors.notFound("Deposit");
+    }
+
+    // Idempotent re-approval: return existing terminal/approved result without re-crediting.
+    if (!claimed) {
+      if (deposit.status === "approved" || deposit.status === "completed") {
+        logger.info("Deposit approval idempotent hit", { depositId, status: deposit.status });
+        return deposit;
+      }
       throw new AppError("Deposit is not pending", 409, "INVALID_STATUS");
     }
 
     const userId = await this.resolveUserId(deposit);
-    let walletTxId: string | null = null;
+    let walletTxId: string | null = deposit.wallet_transaction_id;
 
     if (userId) {
       const wallet = await this.wallet.getWalletByUserId(userId);
+      const walletBefore = await this.wallet.getBalance(wallet.id);
       try {
         const tx = await this.wallet.creditDeposit(wallet.id, Number(deposit.amount), depositId);
         walletTxId = tx.id;
       } catch (creditError) {
-        // Unique DEP-{id} means a prior attempt already credited — treat as success.
         const message = creditError instanceof Error ? creditError.message : String(creditError);
         if (!/duplicate|unique/i.test(message)) throw creditError;
         const { data: existing } = await this.supabase
@@ -157,22 +201,35 @@ export class DepositService {
       try {
         const investments = new InvestmentService(this.supabase);
         const created = await investments.autoInvestFromPreferredPackage(userId, Number(deposit.amount), {
-          depositId
+          depositId,
+          walletBefore
         });
         if (created) {
           logger.info("Auto-invested preferred package after deposit approval", {
             userId,
             depositId,
             investmentId: created.id,
-            amount: Number(deposit.amount)
+            amount: Number(created.amount)
           });
         }
       } catch (autoInvestError) {
-        logger.warn("Auto-invest after deposit approval skipped", {
-          userId,
-          depositId,
-          error: autoInvestError instanceof Error ? autoInvestError.message : String(autoInvestError)
-        });
+        const code =
+          autoInvestError && typeof autoInvestError === "object" && "code" in autoInvestError
+            ? String((autoInvestError as { code?: string }).code)
+            : "";
+        if (code === "LEDGER_RECONCILIATION_FAILED") {
+          logger.error("Auto-invest rolled back after ledger reconciliation failure", {
+            userId,
+            depositId,
+            error: autoInvestError instanceof Error ? autoInvestError.message : String(autoInvestError)
+          });
+        } else {
+          logger.warn("Auto-invest after deposit approval skipped", {
+            userId,
+            depositId,
+            error: autoInvestError instanceof Error ? autoInvestError.message : String(autoInvestError)
+          });
+        }
       }
     }
 
@@ -190,6 +247,15 @@ export class DepositService {
       .single();
 
     if (error) throw error;
+
+    logger.info("Deposit approved", {
+      depositId,
+      previousStatus,
+      newStatus: data.status,
+      walletTxId,
+      reviewerId
+    });
+
     return data;
   }
 

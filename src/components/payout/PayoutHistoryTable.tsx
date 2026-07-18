@@ -47,7 +47,9 @@ export function PayoutHistoryTable({ rows }: Props) {
                   <li key={row.id} className="flex items-start justify-between gap-3 px-4 py-4">
                     <div className="min-w-0 space-y-1.5">
                       <p className="text-sm text-[var(--text-muted)]">{formatDate(row.created_at)}</p>
-                      <p className="font-mono text-xs text-[var(--heading)]">{row.id.slice(0, 8).toUpperCase()}</p>
+                      <p className="font-mono text-xs text-[var(--heading)]">
+                        {row.settlement_reference ?? row.id.slice(0, 8).toUpperCase()}
+                      </p>
                       <Badge variant={payoutStatusVariant(label)}>{label}</Badge>
                     </div>
                     <p className="shrink-0 text-base font-semibold tabular-nums text-[var(--heading)]">
@@ -75,7 +77,7 @@ export function PayoutHistoryTable({ rows }: Props) {
                       <tr key={row.id} className="border-b border-[var(--border)] last:border-0">
                         <td className="px-5 py-4 text-[var(--text-muted)]">{formatDate(row.created_at)}</td>
                         <td className="max-w-[180px] truncate px-5 py-4 font-mono text-xs text-[var(--heading)]">
-                          {row.id.slice(0, 8).toUpperCase()}
+                          {row.settlement_reference ?? row.id.slice(0, 8).toUpperCase()}
                         </td>
                         <td className="px-5 py-4 tabular-nums font-semibold text-[var(--heading)]">
                           {formatNaira(Number(row.amount))}

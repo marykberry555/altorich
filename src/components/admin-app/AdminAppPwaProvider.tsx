@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
+  isIosDevice,
   isStandaloneDisplay,
   type BeforeInstallPromptEvent
 } from "@/lib/pwa/runtime";
@@ -9,7 +10,13 @@ import { ADMIN_APP_HOME, ADMIN_APP_SW } from "@/lib/admin-app/constants";
 
 type AdminPwaContextValue = {
   isStandalone: boolean;
+  isIos: boolean;
+  /** Native Chromium install prompt is available. */
   canInstall: boolean;
+  /** Show Share → Add to Home Screen (iOS Safari / no beforeinstallprompt). */
+  showIosHelp: boolean;
+  /** Show generic manual install help when native prompt is unavailable. */
+  showManualHelp: boolean;
   promptInstall: () => Promise<boolean>;
   pushReady: boolean;
   subscribePush: () => Promise<boolean>;
@@ -19,24 +26,38 @@ const AdminPwaContext = createContext<AdminPwaContextValue | null>(null);
 
 export function AdminAppPwaProvider({ children }: { children: React.ReactNode }) {
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isIos, setIsIos] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [pushReady, setPushReady] = useState(false);
   const [vapidKey, setVapidKey] = useState<string | null>(null);
 
   useEffect(() => {
     setIsStandalone(isStandaloneDisplay());
+    setIsIos(isIosDevice());
 
     const onBeforeInstall = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
     };
 
+    const onInstalled = () => {
+      setInstallPrompt(null);
+      setIsStandalone(true);
+    };
+
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register(ADMIN_APP_SW, { scope: `${ADMIN_APP_HOME}/` }).catch(() => {
-        // SW optional until push is fully configured.
-      });
+      navigator.serviceWorker
+        .register(ADMIN_APP_SW, { scope: `${ADMIN_APP_HOME}/` })
+        .then((registration) => {
+          // Ensure the page is controlled so Chromium can mark the app installable.
+          if (!navigator.serviceWorker.controller) {
+            registration.update().catch(() => undefined);
+          }
+        })
+        .catch(() => undefined);
     }
 
     fetch("/api/admin/push/subscribe")
@@ -47,7 +68,10 @@ export function AdminAppPwaProvider({ children }: { children: React.ReactNode })
       })
       .catch(() => undefined);
 
-    return () => window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
   }, []);
 
   const promptInstall = useCallback(async () => {
@@ -87,15 +111,31 @@ export function AdminAppPwaProvider({ children }: { children: React.ReactNode })
     return res.ok;
   }, [pushReady, vapidKey]);
 
+  const canInstall = Boolean(installPrompt) && !isStandalone;
+  const showIosHelp = isIos && !isStandalone && !canInstall;
+  const showManualHelp = !isStandalone && !canInstall && !isIos;
+
   const value = useMemo(
     () => ({
       isStandalone,
-      canInstall: Boolean(installPrompt) && !isStandalone,
+      isIos,
+      canInstall,
+      showIosHelp,
+      showManualHelp,
       promptInstall,
       pushReady,
       subscribePush
     }),
-    [isStandalone, installPrompt, promptInstall, pushReady, subscribePush]
+    [
+      isStandalone,
+      isIos,
+      canInstall,
+      showIosHelp,
+      showManualHelp,
+      promptInstall,
+      pushReady,
+      subscribePush
+    ]
   );
 
   return <AdminPwaContext.Provider value={value}>{children}</AdminPwaContext.Provider>;
@@ -105,4 +145,8 @@ export function useAdminPwa() {
   const ctx = useContext(AdminPwaContext);
   if (!ctx) throw new Error("useAdminPwa must be used within AdminAppPwaProvider");
   return ctx;
+}
+
+export function useAdminPwaOptional() {
+  return useContext(AdminPwaContext);
 }

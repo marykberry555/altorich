@@ -142,20 +142,17 @@ export function InvestmentFundingForm({ fundingEnabled }: Props) {
             />
 
             <Input
-              label="Transfer reference (optional)"
+              label="Transfer Reference (Optional)"
               value={paymentReference}
               onChange={(e) => setPaymentReference(e.target.value)}
-              placeholder="Bank / POS reference if available"
-              hint="Optional. Useful when you have a transfer or POS receipt number."
+              placeholder="Enter transfer reference"
             />
 
             <div className="grid gap-1.5">
-              <span className="text-sm font-medium text-[var(--text-muted)]">
-                Receipt / proof of payment (optional but recommended)
-              </span>
+              <span className="text-sm font-medium text-[var(--text-muted)]">Payment Receipt (Optional)</span>
               <label className="flex min-h-[var(--tap-min)] cursor-pointer items-center gap-3 rounded-[var(--radius-sm)] border border-dashed border-[var(--border-strong)] bg-[var(--gray-50)] px-4 py-3 text-sm text-[var(--text-muted)] transition hover:border-[var(--emerald)]/40">
                 <Upload size={16} aria-hidden />
-                <span className="truncate">{proofFile ? proofFile.name : "Upload receipt or proof"}</span>
+                <span className="truncate">{proofFile ? proofFile.name : "Upload receipt"}</span>
                 <input
                   type="file"
                   accept="image/*,.pdf"

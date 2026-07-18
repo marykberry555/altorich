@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       throw Errors.badRequest("Add your phone number in Settings before funding your wallet.");
     }
 
-    // Transfer reference is optional (POS / cash deposits may not have one).
+    // Transfer reference is optional.
     const paymentReference =
       parsed.data.paymentReference?.trim() ||
       parsed.data.reference?.trim() ||
@@ -112,8 +112,8 @@ export async function POST(request: NextRequest) {
       (typeof body.idempotencyKey === "string" ? body.idempotencyKey.trim() : "") ||
       "";
 
-    // Always generate a unique internal reference (DB UNIQUE). Optional bank/POS
-    // transfer refs live in receipt_note for admin verification only.
+    // Always generate a unique internal reference (DB UNIQUE). Optional transfer
+    // refs live in receipt_note for admin verification only.
     // When an Idempotency-Key is supplied, reuse it as the unique reference so retries return the same logical deposit attempt.
     const reference = idempotencyKey
       ? `IDEM-${user.id.slice(0, 8)}-${idempotencyKey}`.slice(0, 120)

@@ -5,12 +5,13 @@ import { requireAdmin } from "@/lib/auth/session";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { sanitizeText } from "@/lib/security/sanitize";
+import { assertNoMaxInvestmentInBody, toPublicInvestmentPlans, toPublicInvestmentPlan } from "@/lib/packages/public-plan";
 
 const createPlanSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   tier: z.enum(["starter", "growth", "premium", "elite"]),
-  min_investment: z.number().positive(),
-  max_investment: z.number().positive().optional()
+  min_investment: z.number().positive()
+  // max_investment intentionally omitted — sectors have unlimited principal
 });
 
 export async function GET() {
@@ -18,7 +19,7 @@ export async function GET() {
     const services = await getAdminServices();
     if (!services) throw Errors.forbidden();
     const plans = await services.investments.listAllPlans();
-    return NextResponse.json(plans);
+    return NextResponse.json(toPublicInvestmentPlans(plans));
   } catch (error) {
     return apiErrorResponse(error);
   }
@@ -31,14 +32,15 @@ export async function POST(request: NextRequest) {
     if (!services) throw Errors.forbidden();
 
     const body = await request.json();
+    assertNoMaxInvestmentInBody(body);
+
     const parsed = createPlanSchema.safeParse({
       ...body,
       name: typeof body.name === "string" ? sanitizeText(body.name, 120) : undefined,
-      min_investment: Number(body.min_investment),
-      max_investment: body.max_investment !== undefined && body.max_investment !== "" ? Number(body.max_investment) : undefined
+      min_investment: Number(body.min_investment)
     });
 
-    if (!parsed.success) throw Errors.badRequest("Enter a tier and valid investment amounts.");
+    if (!parsed.success) throw Errors.badRequest("Enter a sector and valid minimum entry amount.");
 
     const plan = await services.investments.createPlan(parsed.data);
 
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
       metadata: { slug: plan.slug, name: plan.name, tier: plan.tier }
     });
 
-    return NextResponse.json(plan, { status: 201 });
+    return NextResponse.json(toPublicInvestmentPlan(plan), { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);
   }

@@ -86,7 +86,12 @@ export class WalletService {
     });
   }
 
-  async debitWithdrawal(walletId: string, amount: number, withdrawalId: string) {
+  async debitWithdrawal(
+    walletId: string,
+    amount: number,
+    withdrawalId: string,
+    settlementReference?: string | null
+  ) {
     const balance = await this.getBalance(walletId);
     if (balance < amount) {
       throw new AppError("Insufficient wallet balance.", 400, "INSUFFICIENT_BALANCE");
@@ -96,9 +101,13 @@ export class WalletService {
       walletId,
       type: "debit",
       amount,
-      reference: `WD-${withdrawalId}`,
+      reference: settlementReference?.trim() || `WD-${withdrawalId}`,
       reason: "withdrawal",
-      metadata: { withdrawal_id: withdrawalId }
+      metadata: {
+        withdrawal_id: withdrawalId,
+        settlement_reference: settlementReference ?? null,
+        ledger_label: "Withdrawal Paid"
+      }
     });
   }
 
@@ -140,14 +149,33 @@ export class WalletService {
     referralRef: string,
     metadata?: Record<string, unknown>
   ) {
-    return this.postTransaction({
-      walletId,
-      type: "credit",
-      amount,
-      reference: `REF-CR-${referralRef}-${Date.now()}`,
-      reason: "referral_commission",
-      metadata: { ...metadata, wallet_purpose: "referral" }
-    });
+    // Stable reference — never append timestamps (exactly-once on retries).
+    const reference = `REF-CR-${referralRef}`;
+    try {
+      return await this.postTransaction({
+        walletId,
+        type: "credit",
+        amount,
+        reference,
+        reason: "referral_commission",
+        metadata: {
+          ...metadata,
+          wallet_purpose: "referral",
+          ledger_event: "referral_commission_earned",
+          ledger_label: "Referral Commission Earned"
+        }
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/duplicate|unique/i.test(message)) throw error;
+      const { data: existing } = await this.supabase
+        .from("wallet_transactions")
+        .select("*")
+        .eq("reference", reference)
+        .maybeSingle();
+      if (!existing) throw error;
+      return existing;
+    }
   }
 
   async debitReferralPayout(walletId: string, amount: number, payoutId: string) {
@@ -163,14 +191,32 @@ export class WalletService {
       reference: `REF-PAYOUT-${payoutId}`,
       reason: "withdrawal",
       status: "pending",
-      metadata: { referral_payout_id: payoutId, wallet_purpose: "referral" }
+      metadata: {
+        referral_payout_id: payoutId,
+        wallet_purpose: "referral",
+        ledger_event: "referral_withdrawal_requested",
+        ledger_label: "Referral Withdrawal Requested"
+      }
     });
   }
 
-  async completeReferralPayoutDebit(transactionId: string) {
+  async completeReferralPayoutDebit(transactionId: string, extraMetadata?: Record<string, unknown>) {
+    const { data: existing } = await this.supabase
+      .from("wallet_transactions")
+      .select("metadata")
+      .eq("id", transactionId)
+      .maybeSingle();
+
+    const metadata = {
+      ...((existing?.metadata as Record<string, unknown> | null) ?? {}),
+      ...extraMetadata,
+      ledger_event: "referral_withdrawal_paid",
+      ledger_label: "Referral Withdrawal Paid"
+    };
+
     const { error } = await this.supabase
       .from("wallet_transactions")
-      .update({ status: "completed" })
+      .update({ status: "completed", metadata })
       .eq("id", transactionId);
     if (error) throw error;
   }

@@ -5,10 +5,22 @@ import { assertValidAccountNumber, normalizeAccountNumber } from "@/lib/validati
 import { WalletService, REFERRAL_WALLET_CURRENCY } from "@/services/wallet/wallet.service";
 import { SettingsService } from "@/services/admin/settings.service";
 import { NotificationService } from "@/services/notification/notification.service";
+import { evaluateReferralPayoutEligibility, referralSettlementBatchForCreatedAt } from "@/lib/referral/settlement";
+import {
+  batchNumberForPosition,
+  buildQueuedScheduleMessage,
+  estimateSettlementProcessingAt,
+  formatSettlementEtaShort,
+  memberQueueStatusLabel,
+  mergeSettlementQueueConfig,
+  SETTLEMENT_QUEUE_SETTINGS_KEY,
+  type SettlementQueueConfig
+} from "@/lib/payout/settlement-queue";
+import { nextSettlementReference } from "@/lib/payout/settlement-reference";
+import type { ReferralProgramConfig } from "@/lib/referral/config";
 import {
   mergeReferralProgramConfig,
-  resolvePackageCommissionRate,
-  type ReferralProgramConfig
+  resolvePackageCommissionRate
 } from "@/lib/referral/config";
 import type {
   ReferralActivityRow,
@@ -36,6 +48,50 @@ export class ReferralService {
   async getProgramConfig(): Promise<ReferralProgramConfig> {
     const raw = await this.settings.get<Partial<ReferralProgramConfig>>("referral_program");
     return mergeReferralProgramConfig(raw);
+  }
+
+  private async getSettlementQueueConfig(): Promise<SettlementQueueConfig> {
+    const raw = await this.settings.get<Partial<SettlementQueueConfig>>(SETTLEMENT_QUEUE_SETTINGS_KEY);
+    return mergeSettlementQueueConfig(raw);
+  }
+
+  private async countOpenReferralPayouts() {
+    const { count, error } = await this.supabase
+      .from("referral_payouts")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["pending", "processing", "approved"]);
+    if (error) throw error;
+    return count ?? 0;
+  }
+
+  buildReferralQueueView(payout: {
+    id: string;
+    status: string;
+    queue_number?: number | null;
+    settlement_reference?: string | null;
+    estimated_processing_at?: string | null;
+    created_at?: string;
+  }, config: SettlementQueueConfig, position: number) {
+    const estimatedAt = payout.estimated_processing_at
+      ? new Date(payout.estimated_processing_at)
+      : estimateSettlementProcessingAt({ queuePosition: position, config });
+    return {
+      payoutId: payout.id,
+      settlementReference: payout.settlement_reference ?? null,
+      queuePosition: position,
+      queueNumber: payout.queue_number ?? position,
+      batchNumber: batchNumberForPosition(position, config.batch_size),
+      estimatedProcessingAt: estimatedAt.toISOString(),
+      estimatedProcessingLabel: formatSettlementEtaShort(estimatedAt),
+      status: payout.status,
+      statusLabel: memberQueueStatusLabel({ status: payout.status }),
+      paused: config.paused,
+      scheduleMessage: buildQueuedScheduleMessage({
+        queuePosition: position,
+        estimatedAt,
+        settlementReference: payout.settlement_reference
+      })
+    };
   }
 
   async updateProgramConfig(updates: Partial<ReferralProgramConfig>, updatedBy?: string) {
@@ -131,10 +187,23 @@ export class ReferralService {
       .maybeSingle();
 
     if (refError) throw refError;
-    if (!referral || String(referral.status) !== "pending") return null;
+    // Early exit if still pending without claim RPC (RPC unavailable) — keep old guard.
+    if (!referral || !["pending", "qualified"].includes(String(referral.status))) return null;
 
     const referrerId = String(referral.referrer_id);
     const referralId = String(referral.id);
+
+    // Row lock + pending→qualified claim (exactly-once commission).
+    const { data: claimPayload } = await this.supabase.rpc(
+      "claim_referral_for_commission" as never,
+      { p_referral_id: referralId } as never
+    );
+    if (claimPayload && typeof claimPayload === "object") {
+      const payload = claimPayload as { claimed?: boolean; already_processed?: boolean };
+      if (payload.already_processed) return null;
+      if (payload.claimed === false) return null;
+    }
+
     const vipLevels = await this.listVipLevels();
     const { data: referrerProfile } = await this.supabase
       .from("profiles")
@@ -150,6 +219,7 @@ export class ReferralService {
     if (commission <= 0) return null;
 
     const refWallet = await this.ensureReferralWallet(referrerId);
+    // Stable ledger ref REF-CR-{referralId} — duplicate jobs reuse the same credit.
     const tx = await this.wallet.creditReferralCommission(refWallet.id, commission, referralId, {
       investment_id: investmentId,
       referred_user_id: referredUserId,
@@ -157,7 +227,7 @@ export class ReferralService {
       commission_rate: rate
     });
 
-    await this.supabase
+    const { data: claimedReferral } = await this.supabase
       .from("referrals")
       .update({
         status: "verified",
@@ -170,9 +240,15 @@ export class ReferralService {
         verified_at: new Date().toISOString(),
         qualified_at: new Date().toISOString()
       } as Database["public"]["Tables"]["referrals"]["Update"])
-      .eq("id", referralId);
+      .eq("id", referralId)
+      .in("status", ["pending", "qualified"])
+      .select("id")
+      .maybeSingle();
 
-    await this.supabase.from("referral_rewards").insert({
+    // If another worker already verified, unique reward index still prevents duplicates.
+    if (!claimedReferral) return { referralId, commission, rate };
+
+    const { error: rewardError } = await this.supabase.from("referral_rewards").insert({
       referrer_id: referrerId,
       referral_id: referralId,
       reward_type: "commission",
@@ -185,6 +261,8 @@ export class ReferralService {
         commission_rate: rate
       } as Json
     });
+
+    if (rewardError && rewardError.code !== "23505") throw rewardError;
 
     await this.notifications.notifyEvent("referral.verified", referrerId, {
       amount: commission,
@@ -211,12 +289,13 @@ export class ReferralService {
 
     if (config.milestone_bonuses_enabled && earned.milestone_bonus > 0) {
       const refWallet = await this.ensureReferralWallet(referrerId);
-      const tx = await this.wallet.creditReferralCommission(refWallet.id, earned.milestone_bonus, `milestone-${earned.level}`, {
+      const milestoneRef = `milestone-${referrerId}-L${earned.level}`;
+      const tx = await this.wallet.creditReferralCommission(refWallet.id, earned.milestone_bonus, milestoneRef, {
         milestone_level: earned.level,
         reward_type: "milestone"
       });
 
-      await this.supabase.from("referral_rewards").insert({
+      const { error: milestoneErr } = await this.supabase.from("referral_rewards").insert({
         referrer_id: referrerId,
         referral_id: null,
         reward_type: "milestone",
@@ -225,6 +304,7 @@ export class ReferralService {
         wallet_transaction_id: tx.id,
         metadata: { vip_level: earned.level, label: earned.label } as Json
       });
+      if (milestoneErr && milestoneErr.code !== "23505") throw milestoneErr;
     }
 
     await this.notifications.notifyEvent("vip.level_up", referrerId, {
@@ -271,10 +351,19 @@ export class ReferralService {
 
     const referredIds = (referrals ?? []).map((r) => r.referred_id as string);
     const { data: referredProfiles } = referredIds.length
-      ? await this.supabase.from("profiles").select("id, full_name").in("id", referredIds)
+      ? await this.supabase.from("profiles").select("id, full_name, username, avatar_url").in("id", referredIds)
       : { data: [] };
 
-    const nameById = new Map((referredProfiles ?? []).map((p) => [p.id, p.full_name]));
+    const profileById = new Map(
+      (referredProfiles ?? []).map((p) => [
+        p.id,
+        {
+          fullName: p.full_name,
+          username: p.username as string | null,
+          avatarUrl: p.avatar_url as string | null
+        }
+      ])
+    );
 
     const verified = (referrals ?? []).filter((r) => ["verified", "qualified", "paid"].includes(String(r.status)));
     const pending = (referrals ?? []).filter((r) => r.status === "pending");
@@ -309,7 +398,11 @@ export class ReferralService {
     const totalInvestmentGenerated = verified.reduce((s, r) => s + Number(r.investment_amount ?? 0), 0);
 
     const requiredForNext = nextVip?.min_members ?? verifiedCount;
-    const payoutGap = Math.max(0, config.min_payout_threshold - availableBalance);
+    const eligibility = evaluateReferralPayoutEligibility({
+      availableBalance,
+      minPayoutThreshold: config.min_payout_threshold,
+      programEnabled: config.enabled
+    });
 
     return {
       inviteCode,
@@ -329,18 +422,28 @@ export class ReferralService {
       lifetimeRewards,
       alreadyPaid,
       minPayoutThreshold: config.min_payout_threshold,
-      canRequestPayout: config.enabled && availableBalance >= config.min_payout_threshold,
-      payoutGap,
-      recentReferrals: (referrals ?? []).slice(0, 10).map((r) => ({
-        id: r.id as string,
-        referredName: nameById.get(r.referred_id as string) ?? "Member",
-        status: String(r.status),
-        investmentAmount: r.investment_amount != null ? Number(r.investment_amount) : null,
-        packageTier: r.package_tier as string | null,
-        commissionAmount: Number(r.commission_amount ?? 0),
-        createdAt: r.created_at as string,
-        verifiedAt: r.verified_at as string | null
-      })),
+      canRequestPayout: eligibility.canRequestPayout,
+      payoutGap: eligibility.payoutGap,
+      nextSettlementAt: eligibility.nextSettlementAt.toISOString(),
+      settlementWindowOpen: eligibility.settlementWindowOpen,
+      meetsPayoutThreshold: eligibility.meetsThreshold,
+      eligibilityStatus: eligibility.eligibilityStatus,
+      eligibilityMessage: eligibility.eligibilityMessage,
+      recentReferrals: (referrals ?? []).slice(0, 10).map((r) => {
+        const profile = profileById.get(r.referred_id as string);
+        return {
+          id: r.id as string,
+          referredName: profile?.fullName ?? "Member",
+          username: profile?.username ?? null,
+          avatarUrl: profile?.avatarUrl ?? null,
+          status: String(r.status),
+          investmentAmount: r.investment_amount != null ? Number(r.investment_amount) : null,
+          packageTier: r.package_tier as string | null,
+          commissionAmount: Number(r.commission_amount ?? 0),
+          createdAt: r.created_at as string,
+          verifiedAt: r.verified_at as string | null
+        };
+      }),
       recentRewards: (rewards ?? []).slice(0, 10).map((r) => ({
         id: r.id as string,
         rewardType: String(r.reward_type),
@@ -382,6 +485,35 @@ export class ReferralService {
       throw new AppError(`Minimum referral withdrawal is ₦${config.min_payout_threshold.toLocaleString("en-NG")}.`, 400, "BELOW_MINIMUM");
     }
 
+    const eligibility = evaluateReferralPayoutEligibility({
+      availableBalance,
+      minPayoutThreshold: config.min_payout_threshold,
+      programEnabled: config.enabled
+    });
+
+    if (!eligibility.settlementWindowOpen) {
+      throw new AppError(
+        "Referral withdrawals open every Monday from 09:00 WAT. Your rewards remain available until then.",
+        403,
+        "SETTLEMENT_WINDOW_CLOSED"
+      );
+    }
+
+    if (!eligibility.meetsThreshold) {
+      throw new AppError(eligibility.eligibilityMessage, 400, "BELOW_MINIMUM");
+    }
+
+    const configQueue = await this.getSettlementQueueConfig();
+    const openAhead = await this.countOpenReferralPayouts();
+    const queuePosition = openAhead + 1;
+    const estimatedAt = estimateSettlementProcessingAt({
+      queuePosition,
+      config: configQueue
+    });
+    const batchNumber = batchNumberForPosition(queuePosition, configQueue.batch_size);
+    const settlementReference = await nextSettlementReference(this.supabase);
+    const queuedAt = new Date().toISOString();
+
     const { data: payout, error } = await this.supabase
       .from("referral_payouts")
       .insert({
@@ -391,7 +523,12 @@ export class ReferralService {
         bank_name: input.bankName,
         account_name: input.accountName,
         account_number: accountNumber,
-        bank_account_id: input.bankAccountId ?? null
+        bank_account_id: input.bankAccountId ?? null,
+        settlement_reference: settlementReference,
+        queue_number: queuePosition,
+        batch_number: batchNumber,
+        estimated_processing_at: estimatedAt.toISOString(),
+        queued_at: queuedAt
       })
       .select()
       .single();
@@ -403,20 +540,41 @@ export class ReferralService {
 
     await this.supabase.from("referral_payouts").update({ wallet_transaction_id: tx.id }).eq("id", payoutId);
 
+    const queueView = this.buildReferralQueueView(
+      {
+        id: payoutId,
+        status: String(payout.status),
+        queue_number: queuePosition,
+        settlement_reference: settlementReference,
+        estimated_processing_at: estimatedAt.toISOString()
+      },
+      configQueue,
+      queuePosition
+    );
+
     await this.notifications.notifyEvent("referral.payout_requested", userId, {
       amount: input.amount,
-      payout_id: payoutId
+      payout_id: payoutId,
+      settlement_reference: settlementReference,
+      schedule_message: queueView.scheduleMessage,
+      queue_position: queuePosition
     });
 
-    return payout;
+    return { ...payout, queueView, settlementReference, scheduleMessage: queueView.scheduleMessage };
   }
 
   async listPendingPayouts() {
-    const { data, error } = await this.supabase
-      .from("referral_payouts")
-      .select("*")
-      .in("status", ["pending", "processing"])
-      .order("created_at", { ascending: true });
+    return this.listPayouts(["pending", "processing"]);
+  }
+
+  async listPayouts(statuses?: string[]) {
+    let query = this.supabase.from("referral_payouts").select("*").order("created_at", { ascending: false }).limit(100);
+
+    if (statuses?.length) {
+      query = query.in("status", statuses);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     const rows = data ?? [];
@@ -429,7 +587,11 @@ export class ReferralService {
 
     return rows.map((row) => ({
       ...row,
-      profiles: profileMap.get(String(row.user_id)) ?? undefined
+      profiles: profileMap.get(String(row.user_id)) ?? undefined,
+      settlement_batch: referralSettlementBatchForCreatedAt(String(row.created_at)),
+      settlement_reference: (row as { settlement_reference?: string | null }).settlement_reference ?? null,
+      queue_number: (row as { queue_number?: number | null }).queue_number ?? null,
+      estimated_processing_at: (row as { estimated_processing_at?: string | null }).estimated_processing_at ?? null
     }));
   }
 
@@ -451,12 +613,36 @@ export class ReferralService {
         refWallet.id,
         Number(payout.amount),
         `ref-payout-reversal-${payoutId}`,
-        { reversal_of: payoutId, reason: rejectionReason ?? "rejected" }
+        {
+          reversal_of: payoutId,
+          reason: rejectionReason ?? "rejected",
+          ledger_event: "referral_withdrawal_rejected",
+          ledger_label: "Referral Withdrawal Rejected"
+        }
       );
     }
 
+    if (action === "approve" && payout.wallet_transaction_id) {
+      const { data: existing } = await this.supabase
+        .from("wallet_transactions")
+        .select("metadata")
+        .eq("id", payout.wallet_transaction_id as string)
+        .maybeSingle();
+      const metadata = {
+        ...((existing?.metadata as Record<string, unknown> | null) ?? {}),
+        ledger_event: "referral_withdrawal_approved",
+        ledger_label: "Referral Withdrawal Approved"
+      };
+      await this.supabase
+        .from("wallet_transactions")
+        .update({ metadata })
+        .eq("id", payout.wallet_transaction_id as string);
+    }
+
     if (action === "paid" && payout.wallet_transaction_id) {
-      await this.wallet.completeReferralPayoutDebit(payout.wallet_transaction_id as string);
+      await this.wallet.completeReferralPayoutDebit(payout.wallet_transaction_id as string, {
+        reviewed_by: reviewerId
+      });
     }
 
     const { data: updated, error: updateError } = await this.supabase
@@ -476,7 +662,12 @@ export class ReferralService {
     await this.notifications.notifyEvent(
       action === "reject" ? "referral.payout_rejected" : "referral.payout_approved",
       payout.user_id as string,
-      { amount: payout.amount, payout_id: payoutId, reason: rejectionReason }
+      {
+        amount: payout.amount,
+        payout_id: payoutId,
+        reason: rejectionReason,
+        settlement_reference: (payout as { settlement_reference?: string | null }).settlement_reference ?? null
+      }
     );
 
     return updated;
