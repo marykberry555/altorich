@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { COMPANY } from "@/lib/company";
 import { ADMIN_APP_HOME, adminAppPath } from "@/lib/admin-app/constants";
 import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { AdminNotificationBell } from "@/components/admin-app/AdminNotificationBell";
 import { AdminInstallBanner } from "@/components/admin-app/AdminInstallBanner";
 import { AdminGlobalSearch } from "@/components/admin-app/AdminGlobalSearch";
@@ -151,6 +152,10 @@ export function AdminAppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle
+              compact
+              className="border-white/10 bg-white/5 text-zinc-100 hover:border-emerald-400/40 hover:text-emerald-300"
+            />
             <AdminNotificationBell />
             <form action="/api/auth/logout" method="post">
               <Button type="submit" variant="outline" size="sm" className="gap-2 border-white/10 bg-white/5 text-zinc-100">
