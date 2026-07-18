@@ -16,9 +16,13 @@ const schema = z.object({
     "suspend",
     "unsuspend",
     "change_package",
-    "assign_package"
+    "assign_package",
+    "update_full_name"
   ]),
   packageSlug: z.string().optional(),
+  fullName: z.string().min(2).max(120).optional(),
+  identityVerifiedConfirm: z.boolean().optional(),
+  reason: z.string().max(500).optional(),
   depositId: z.string().uuid().optional(),
   withdrawalId: z.string().uuid().optional(),
   depositStatus: z.enum(["approved", "rejected"]).optional(),
@@ -84,6 +88,34 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         result = { preferredPackageSlug: body.packageSlug };
         break;
       }
+      case "update_full_name": {
+        if (!body.identityVerifiedConfirm) {
+          throw Errors.badRequest(
+            "Changing a member's name requires prior identity verification. Ensure valid identification has been reviewed before continuing."
+          );
+        }
+        const newName = body.fullName?.trim() ?? "";
+        if (newName.length < 2) throw Errors.badRequest("Full name is required.");
+        const oldName = beforeProfile.full_name ?? "";
+        const { error: nameError } = await services.supabase
+          .from("profiles")
+          .update({ full_name: newName })
+          .eq("id", memberId);
+        if (nameError) throw nameError;
+        await services.supabase
+          .from("bank_accounts")
+          .update({ account_name: newName })
+          .eq("user_id", memberId);
+        result = {
+          administratorId: admin.id,
+          memberId,
+          oldName,
+          newName,
+          reason: body.reason?.trim() || null,
+          timestamp: new Date().toISOString()
+        };
+        break;
+      }
       default:
         throw Errors.badRequest("Unsupported action.");
     }
@@ -112,12 +144,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     await logAdminAction(services.audit, request, {
       actorId: admin.id,
-      action: `member.${body.action}`,
+      action: body.action === "update_full_name" ? "member.full_name_updated" : `member.${body.action}`,
       entityType: "profile",
       entityId: memberId,
       before: beforeProfile as Record<string, unknown>,
       after: (afterProfile ?? {}) as Record<string, unknown>,
-      metadata: result
+      metadata:
+        body.action === "update_full_name"
+          ? {
+              administrator: admin.id,
+              member: memberId,
+              oldName: (result as { oldName?: string }).oldName,
+              newName: (result as { newName?: string }).newName,
+              timestamp: (result as { timestamp?: string }).timestamp,
+              reason: (result as { reason?: string | null }).reason ?? null,
+              ...result
+            }
+          : result
     });
 
     return NextResponse.json({ ok: true, result });

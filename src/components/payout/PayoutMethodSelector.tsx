@@ -19,7 +19,7 @@ const OPTIONS: { id: PayoutMethod; label: string; symbol: string; description: s
 export function PayoutMethodSelector({ value, onChange, disabled }: Props) {
   return (
     <fieldset className="space-y-2" disabled={disabled}>
-      <legend className="text-xs font-medium text-[var(--text-muted)]">Payout method</legend>
+      <legend className="text-xs font-medium text-[var(--text-muted)]">Withdrawal method</legend>
       <div className="grid gap-2 sm:grid-cols-2">
         {OPTIONS.map((option) => {
           const selected = value === option.id;

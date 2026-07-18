@@ -193,7 +193,7 @@ export function DashboardShell({ fullName, username, avatarUrl, children }: Prop
             <button type="button" className="absolute inset-0 bg-black/50" aria-label="Close menu" onClick={() => setMobileOpen(false)} />
             <aside className="absolute left-0 top-0 flex h-full w-[min(100vw-1rem,20rem)] flex-col bg-[var(--surface-raised)] shadow-[var(--shadow-lg)]">
               <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-                <BrandLogo variant="full" href={MARKETING_HOME} />
+                <BrandLogo variant="full" href="/dashboard" />
                 <button type="button" onClick={() => setMobileOpen(false)} aria-label="Close navigation" className="text-[var(--text-muted)]">
                   <X size={22} />
                 </button>

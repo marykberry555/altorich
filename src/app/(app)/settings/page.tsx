@@ -28,7 +28,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHero eyebrow="Settings" title="Account & security" description="Manage your profile, payout details, and preferences." />
+      <PageHero eyebrow="Settings" title="Account & security" description="Manage your profile, withdrawal details, and preferences." />
 
       <Card variant="elevated" className="mt-8">
         <h2 className="font-semibold text-[var(--heading)]">Profile & investment sector</h2>
@@ -51,7 +51,7 @@ export default async function SettingsPage() {
         <h2 className="font-semibold text-[var(--heading)]">Bank accounts</h2>
         <BankAccountsManager initialAccounts={bankAccounts} />
         <Link href="/withdrawals" className="mt-4 inline-block">
-          <Button size="sm">Manage payouts</Button>
+          <Button size="sm">Manage withdrawals</Button>
         </Link>
       </Card>
 

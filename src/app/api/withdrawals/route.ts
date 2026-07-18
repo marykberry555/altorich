@@ -3,17 +3,45 @@ import { z } from "zod";
 import { formatPayoutScheduleMessage, resolvePayoutQueue } from "@/lib/payout/schedule";
 import { getPublicServices, getServiceRoleServices } from "@/lib/services";
 import { getSessionUser, hasAdminRole, requireSessionUser } from "@/lib/auth/session";
-import { apiErrorResponse, Errors } from "@/lib/errors";
+import { AppError, apiErrorResponse, Errors, isAppError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { accountNumberSchema } from "@/lib/validation/schemas";
+import { COMPANY } from "@/lib/company";
 
 const withdrawalSchema = z.object({
   amount: z.number().positive(),
   bankName: z.string().min(2),
-  accountName: z.string().min(2),
+  accountName: z.string().min(2).optional(),
   accountNumber: accountNumberSchema,
   note: z.string().max(500).optional()
 });
+
+function mapWithdrawalError(error: unknown): never {
+  if (isAppError(error)) throw error;
+
+  const message = error instanceof Error ? error.message : String(error);
+  logger.error("Withdrawal create failed", { message });
+
+  if (/row-level security|permission denied|42501/i.test(message)) {
+    throw new AppError(
+      "Unable to create withdrawal request due to a permissions error. Please contact support.",
+      500,
+      "WITHDRAWAL_PERMISSION",
+      "Unable to create withdrawal request. Please contact support if the problem continues."
+    );
+  }
+
+  if (/insufficient/i.test(message)) {
+    throw Errors.badRequest("Insufficient available balance.");
+  }
+
+  throw new AppError(
+    message,
+    500,
+    "WITHDRAWAL_FAILED",
+    `Unable to create withdrawal request. Please contact support at ${COMPANY.supportEmail} if the problem continues.`
+  );
+}
 
 export async function GET() {
   try {
@@ -36,35 +64,50 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const services = await getPublicServices();
+    // Service role required: member INSERT on withdrawals was removed for security.
+    // Authenticated members create withdrawals only through this API.
+    const user = await requireSessionUser();
+    const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 
     const body = await request.json();
     const parsed = withdrawalSchema.safeParse({ ...body, amount: Number(body.amount) });
     if (!parsed.success) {
-      throw Errors.badRequest("Complete payout destination details are required.");
+      throw Errors.badRequest("Please add your bank account first and enter a valid withdrawal amount.");
     }
 
-    const user = await requireSessionUser();
+    if (!Number.isFinite(parsed.data.amount) || parsed.data.amount <= 0) {
+      throw Errors.badRequest("Enter a valid withdrawal amount.");
+    }
 
-    await services.profile.upsertPayoutBankAccount(user.id, {
-      bankName: parsed.data.bankName,
-      accountName: parsed.data.accountName,
-      accountNumber: parsed.data.accountNumber
-    });
+    const accountName = await services.profile.getRegisteredFullName(user.id);
 
-    const withdrawal = await services.withdrawals.create({
-      userId: user.id,
-      amount: parsed.data.amount,
-      bankName: parsed.data.bankName,
-      accountName: parsed.data.accountName,
-      accountNumber: parsed.data.accountNumber,
-      note: parsed.data.note ?? null,
-      requestType: "manual"
-    });
+    try {
+      await services.profile.upsertPayoutBankAccount(user.id, {
+        bankName: parsed.data.bankName,
+        accountNumber: parsed.data.accountNumber
+      });
+    } catch (error) {
+      mapWithdrawalError(error);
+    }
+
+    let withdrawal;
+    try {
+      withdrawal = await services.withdrawals.create({
+        userId: user.id,
+        amount: parsed.data.amount,
+        bankName: parsed.data.bankName,
+        accountName,
+        accountNumber: parsed.data.accountNumber,
+        note: parsed.data.note ?? null,
+        requestType: "manual"
+      });
+    } catch (error) {
+      mapWithdrawalError(error);
+    }
 
     if (!withdrawal) {
-      throw Errors.badRequest("Unable to create payout request.");
+      throw Errors.badRequest("Unable to create withdrawal request.");
     }
 
     const queue = resolvePayoutQueue();

@@ -12,7 +12,7 @@ type Props = {
 export function PayoutHistoryTable({ rows }: Props) {
   return (
     <section className="space-y-4">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Payout history</h2>
+      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Withdrawal history</h2>
       <Card variant="elevated" padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -34,7 +34,7 @@ export function PayoutHistoryTable({ rows }: Props) {
                       </span>
                       <p className="mt-4 font-semibold text-[var(--heading)]">No withdrawals yet</p>
                       <p className="mt-1.5 max-w-xs text-sm text-[var(--text-muted)]">
-                        Your withdrawal history will appear here after you request a payout.
+                        Your withdrawal history will appear here after you request a withdrawal.
                       </p>
                     </div>
                   </td>

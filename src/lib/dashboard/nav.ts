@@ -26,7 +26,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
   { href: "/portfolio", label: "Portfolio", icon: TrendingUp },
   { href: "/investments", label: "Invest", icon: Layers },
   { href: "/deposits", label: "Wallet funding", icon: Landmark },
-  { href: "/withdrawals", label: "Payout", icon: Landmark },
+  { href: "/withdrawals", label: "Withdrawal", icon: Landmark },
   { href: "/profile", label: "Profile", icon: User },
   { href: "/team", label: "Referrals", icon: Users },
   { href: "/vip", label: "VIP", icon: Crown },

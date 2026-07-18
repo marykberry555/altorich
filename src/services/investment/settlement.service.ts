@@ -150,12 +150,17 @@ export class SettlementService {
 
           const bank = bankAccounts?.[0];
           if (bank) {
+            const { data: nameProfile } = await this.supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", userId)
+              .maybeSingle();
             const withdrawals = new WithdrawalService(this.supabase);
             await withdrawals.createAutomaticFromSettlement({
               userId,
               amount: interest,
               bankName: bank.bank_name,
-              accountName: bank.account_name,
+              accountName: nameProfile?.full_name?.trim() || bank.account_name,
               accountNumber: bank.account_number,
               bankAccountId: bank.id,
               asOf
@@ -163,7 +168,7 @@ export class SettlementService {
           } else {
             await this.notifications.notifyEvent("withdrawal.auto_skipped", userId, {
               amount: interest,
-              reason: "Add a payout bank account to receive automatic withdrawals."
+              reason: "Add a withdrawal bank account to receive automatic withdrawals."
             });
           }
 

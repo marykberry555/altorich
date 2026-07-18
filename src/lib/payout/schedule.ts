@@ -49,11 +49,11 @@ export function formatPayoutScheduleMessage(scheduledAt: Date) {
     hour12: true
   });
 
-  return `Your payout request has been received successfully. It is scheduled for processing on ${label}.`;
+  return `Your withdrawal request has been received successfully. It is scheduled for processing on ${label}.`;
 }
 
 export function formatPayoutQueuedMessage() {
-  return "Your payout request has been queued. Funds will be processed during the next payout cycle.";
+  return "Your withdrawal request has been queued. Funds will be processed during the next withdrawal cycle.";
 }
 
 export function formatNextPayoutDate(at: Date) {

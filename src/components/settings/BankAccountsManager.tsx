@@ -39,7 +39,7 @@ export function BankAccountsManager({ initialAccounts }: { initialAccounts: Bank
   }
 
   if (accounts.length === 0) {
-    return <p className="mt-2 text-sm text-[var(--text-muted)]">No saved accounts. Add one when requesting a payout.</p>;
+    return <p className="mt-2 text-sm text-[var(--text-muted)]">No saved accounts. Add one when requesting a withdrawal.</p>;
   }
 
   return (

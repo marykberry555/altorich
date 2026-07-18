@@ -36,16 +36,21 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    fetch("/api/bank-accounts")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((rows: BankAccount[]) => {
+    Promise.all([
+      fetch("/api/bank-accounts").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/profile").then((r) => (r.ok ? r.json() : null))
+    ])
+      .then(([rows, profilePayload]: [BankAccount[], { profile?: { full_name?: string } } | null]) => {
+        const registeredName = profilePayload?.profile?.full_name?.trim() ?? "";
         setAccounts(rows);
         const def = rows.find((a) => a.is_default) ?? rows[0];
         if (def) {
           setSelectedId(def.id);
           setBankName(def.bank_name);
-          setAccountName(def.account_name);
+          setAccountName(registeredName || def.account_name);
           setAccountNumber(def.account_number);
+        } else if (registeredName) {
+          setAccountName(registeredName);
         }
       })
       .catch(() => undefined);
@@ -56,7 +61,6 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
     const acc = accounts.find((a) => a.id === id);
     if (acc) {
       setBankName(acc.bank_name);
-      setAccountName(acc.account_name);
       setAccountNumber(acc.account_number);
     }
   }
@@ -84,23 +88,23 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Payout request failed.");
+      setError(data.error ?? "Withdrawal request failed.");
       return;
     }
 
-    setMessage("Payout request submitted. Track status in your notifications.");
+    setMessage("Withdrawal request submitted. Track status in your notifications.");
     onSuccess?.();
   }
 
   const disabledReason = !dashboard.canRequestPayout
     ? dashboard.payoutGap > 0
-      ? `You need ${formatNaira(dashboard.payoutGap)} more in referral rewards before requesting a payout.`
-      : `Minimum payout threshold is ${formatNaira(dashboard.minPayoutThreshold)}.`
+      ? `You need ${formatNaira(dashboard.payoutGap)} more in referral rewards before requesting a withdrawal.`
+      : `Minimum withdrawal threshold is ${formatNaira(dashboard.minPayoutThreshold)}.`
     : "";
 
   return (
     <Card variant="elevated" padding="md">
-      <h2 className="text-lg font-bold text-[var(--heading)]">Request payout</h2>
+      <h2 className="text-lg font-bold text-[var(--heading)]">Request withdrawal</h2>
       <p className="mt-1 text-sm text-[var(--text-muted)]">Transfer referral rewards to your Nigerian bank account</p>
 
       {disabledReason ? (
@@ -138,7 +142,13 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
         ) : null}
 
         <Input label="Bank" value={bankName} onChange={(e) => setBankName(e.target.value)} required disabled={!dashboard.canRequestPayout} />
-        <Input label="Account name" value={accountName} onChange={(e) => setAccountName(e.target.value)} required disabled={!dashboard.canRequestPayout} />
+        <Input
+          label="Account name"
+          value={accountName}
+          readOnly
+          disabled
+          hint="Locked to your registered full name."
+        />
         <Input label="Account number" value={accountNumber} onChange={(e) => setAccountNumber(capAccountNumberInput(e.target.value))} required disabled={!dashboard.canRequestPayout} maxLength={10} inputMode="numeric" />
 
         {error ? <FormFlashError message={error} /> : null}

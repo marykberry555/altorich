@@ -139,7 +139,7 @@ function ColorfulCountdown({
         id="payout-countdown-heading"
         className="relative text-center text-xs font-bold uppercase tracking-[0.2em] text-[var(--emerald)] sm:text-sm"
       >
-        Payout In
+        Settlement In
       </p>
       <div
         className="relative mt-3 flex gap-2 sm:gap-3"
@@ -184,7 +184,7 @@ function MutedCountdown({
         id="payout-countdown-heading"
         className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-subtle)]"
       >
-        Payout In
+        Settlement In
       </p>
       <div
         className={cn(
@@ -210,7 +210,7 @@ function MutedCountdown({
 
 export function WeeklyCountdown({
   className,
-  label = "Payout in",
+  label = "Settlement in",
   compact = false,
   variant = "hero"
 }: {
@@ -288,7 +288,7 @@ export function WeeklyCountdown({
         <CountdownBlock value={pad2(seconds)} label="Secs" toneIndex={3} />
       </div>
       <p className="mt-3 text-center text-xs text-[var(--text-muted)] sm:text-left">
-        Next payout: <span className="font-semibold text-[var(--heading)]">Monday 09:00 WAT</span>
+        Next Settlement: <span className="font-semibold text-[var(--heading)]">Monday 09:00 WAT</span>
       </p>
     </div>
   );

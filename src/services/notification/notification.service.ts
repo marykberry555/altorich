@@ -173,42 +173,42 @@ export class NotificationService {
       },
       "investment.purchased": {
         title: "Investment active",
-        body: `Your investment of ${formatNaira(Number(data.amount ?? 0))} is live. Earnings accrue toward Monday payout.`
+        body: `Your investment of ${formatNaira(Number(data.amount ?? 0))} is live. Earnings accrue toward Monday settlement.`
       },
       "settlement.completed": {
         title: "Settlement posted",
         body: `${formatNaira(Number(data.amount ?? 0))} settlement credited to your wallet.`
       },
       "withdrawal.submitted": {
-        title: "Payout submitted",
+        title: "Withdrawal submitted",
         body: String(
           data.schedule_message ??
-            `Your payout request of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
+            `Your withdrawal request of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
         )
       },
       "withdrawal.auto_created": {
-        title: "Automatic payout created",
-        body: `Your automatic weekly payout of ${formatNaira(Number(data.amount ?? 0))} has been queued for processing.`
+        title: "Automatic withdrawal created",
+        body: `Your automatic weekly withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been queued for processing.`
       },
       "withdrawal.auto_scheduled": {
-        title: "Automatic payout scheduled",
-        body: "Automatic weekly payout is enabled. Accrued earnings will be withdrawn every Monday."
+        title: "Automatic withdrawal scheduled",
+        body: "Automatic weekly withdrawal is enabled. Accrued earnings will be withdrawn every Monday settlement."
       },
       "withdrawal.auto_skipped": {
-        title: "Automatic payout skipped",
-        body: String(data.reason ?? "Add a payout bank account to receive automatic withdrawals.")
+        title: "Automatic withdrawal skipped",
+        body: String(data.reason ?? "Add a withdrawal bank account to receive automatic withdrawals.")
       },
       "withdrawal.approved": {
-        title: "Payout approved",
-        body: `Your payout of ${formatNaira(Number(data.amount ?? 0))} has been approved.`
+        title: "Withdrawal approved",
+        body: `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been approved.`
       },
       "withdrawal.paid": {
-        title: "Payout completed",
-        body: `Your payout of ${formatNaira(Number(data.amount ?? 0))} has been processed.`
+        title: "Withdrawal completed",
+        body: `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been processed.`
       },
       "withdrawal.rejected": {
-        title: "Payout declined",
-        body: String(data.reason ?? "Your payout request was not approved.")
+        title: "Withdrawal declined",
+        body: String(data.reason ?? "Your withdrawal request was not approved.")
       },
       "kyc.approved": {
         title: "KYC approved",
@@ -227,16 +227,16 @@ export class NotificationService {
         body: `You earned ${formatNaira(Number(data.amount ?? 0))} — your referral activated their first investment.`
       },
       "referral.payout_requested": {
-        title: "Referral payout submitted",
-        body: `Your referral reward payout of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
+        title: "Referral withdrawal submitted",
+        body: `Your referral reward withdrawal of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
       },
       "referral.payout_approved": {
-        title: "Referral payout approved",
-        body: `Your referral payout of ${formatNaira(Number(data.amount ?? 0))} has been approved.`
+        title: "Referral withdrawal approved",
+        body: `Your referral withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been approved.`
       },
       "referral.payout_rejected": {
-        title: "Referral payout declined",
-        body: String(data.reason ?? "Your referral payout request was not approved. Funds returned to your referral wallet.")
+        title: "Referral withdrawal declined",
+        body: String(data.reason ?? "Your referral withdrawal request was not approved. Funds returned to your referral wallet.")
       },
       "vip.level_up": {
         title: "VIP level unlocked",

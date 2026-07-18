@@ -56,13 +56,12 @@ export async function POST(request: NextRequest) {
     }
 
     const profile = await services.profile.getProfile(user.id).catch(() => null);
-
-    const memberName =
-      parsed.data.memberName?.trim() ||
-      profile?.full_name?.trim() ||
-      user.user_metadata?.full_name?.trim() ||
-      user.email?.split("@")[0] ||
-      "Member";
+    const memberName = profile?.full_name?.trim();
+    if (!memberName) {
+      throw Errors.badRequest(
+        "Your registered full name is missing. Please contact Alto Rich Support before funding."
+      );
+    }
 
     const phone =
       parsed.data.phone?.trim() ||

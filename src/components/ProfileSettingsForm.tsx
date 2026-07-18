@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import type { PackageSlug } from "@/content/packages";
 import { PackageSelectionField } from "@/components/auth/PackageSelectionField";
 import { LocationFields } from "@/components/location/LocationFields";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
+import { COMPANY } from "@/lib/company";
 import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE } from "@/lib/validation/identity";
 import type { NgStateCode } from "@/lib/location/ng-locations";
 import { isNgStateCode } from "@/lib/location/ng-locations";
@@ -26,7 +28,6 @@ export function ProfileSettingsForm({
   initialCityArea?: string | null;
   prefs: { in_app: boolean; email: boolean; sms: boolean };
 }) {
-  const [fullName, setFullName] = useState(initialName);
   const [phone, setPhone] = useState(initialPhone);
   const [preferredPackage, setPreferredPackage] = useState<PackageSlug | "">(initialPreferredPackage ?? "");
   const [locationStateCode, setLocationStateCode] = useState<NgStateCode | "">(
@@ -58,7 +59,6 @@ export function ProfileSettingsForm({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        fullName,
         phone,
         preferredPackageSlug: preferredPackage,
         locationStateCode,
@@ -82,7 +82,25 @@ export function ProfileSettingsForm({
 
   return (
     <form onSubmit={handleSave} className="grid gap-4">
-      <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+      <div className="grid gap-1.5">
+        <span className="text-sm font-medium text-[var(--text-muted)]">Registered Full Name</span>
+        <div
+          className="flex h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] px-4 text-sm text-[var(--heading)]"
+          aria-readonly="true"
+        >
+          <Lock size={14} className="shrink-0 text-[var(--text-subtle)]" aria-hidden />
+          <span className="truncate font-medium">{initialName || "—"}</span>
+        </div>
+        <p className="text-xs leading-relaxed text-[var(--text-subtle)]">
+          For your security, your registered name cannot be changed from your account.
+          <br />
+          If your legal name has changed or your details are incorrect, please contact Alto Rich Support at{" "}
+          <a className="underline underline-offset-2" href={`mailto:${COMPANY.supportEmail}`}>
+            {COMPANY.supportEmail}
+          </a>
+          . Identity verification is required before any name update can be approved.
+        </p>
+      </div>
       <Input
         label="Phone"
         value={phone}

@@ -41,7 +41,7 @@ export function PremiumPayoutCountdown({ className, variant = "hero" }: Props) {
         aria-live="polite"
       >
         <CalendarClock size={14} className="text-[var(--emerald)]" aria-hidden />
-        <span className="font-medium text-[var(--text-muted)]">Next payout</span>
+        <span className="font-medium text-[var(--text-muted)]">Next Settlement</span>
         <span className="font-semibold tabular-nums text-[var(--heading)]">
           {days}d {pad2(hours)}h {pad2(minutes)}m
         </span>
@@ -57,7 +57,7 @@ export function PremiumPayoutCountdown({ className, variant = "hero" }: Props) {
       )}
       role="timer"
       aria-live="polite"
-      aria-label={`Next weekly payout in ${days} days, ${hours} hours, ${minutes} minutes`}
+      aria-label={`Next Weekly Settlement in ${days} days, ${hours} hours, ${minutes} minutes`}
     >
       <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden />
       <div className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-teal-300/10 blur-3xl" aria-hidden />
@@ -66,9 +66,9 @@ export function PremiumPayoutCountdown({ className, variant = "hero" }: Props) {
         <div className="max-w-md">
           <div className="flex items-center gap-2 text-emerald-200/90">
             <Sparkles size={16} aria-hidden />
-            <p className="text-xs font-semibold uppercase tracking-[0.2em]">Weekly payout cycle</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em]">Weekly Settlement</p>
           </div>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Your next payout lands Monday</h2>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Your next settlement lands Monday</h2>
           <p className="mt-2 text-sm leading-relaxed text-white/75">
             Settlements are processed 09:00 WAT. Track your cycle below — built for Nigerian investors who value clarity.
           </p>

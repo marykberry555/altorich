@@ -59,7 +59,7 @@ export default async function WalletPage() {
           </Link>
           <Link href={balance > 0 ? "/deposits" : "/withdrawals"}>
             <Button variant="outline" size="md" className="border-white/30 bg-transparent text-white hover:bg-white/10">
-              {balance > 0 ? "Fund wallet" : "Request payout"}
+              {balance > 0 ? "Fund wallet" : "Request withdrawal"}
             </Button>
           </Link>
         </div>

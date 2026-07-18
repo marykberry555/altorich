@@ -132,7 +132,7 @@ export function DashboardCyclePanel({
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="mt-2 text-xs text-white/65">Payout Monday · 09:00 WAT</p>
+              <p className="mt-2 text-xs text-white/65">Settlement Monday · 09:00 WAT</p>
             </div>
           </div>
 

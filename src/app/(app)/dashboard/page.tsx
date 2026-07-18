@@ -207,7 +207,7 @@ async function DashboardContent() {
           {(dashboard?.recentTransactions.length ?? 0) === 0 ? (
             <div className="py-8 text-center">
               <p className="text-sm font-medium text-[var(--heading)]">Your account activity will appear here once you begin investing.</p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">Funding, investments, and payouts will show in this feed.</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">Funding, investments, and withdrawals will show in this feed.</p>
             </div>
           ) : (
             <LedgerTable
@@ -239,7 +239,7 @@ async function DashboardContent() {
           <DashboardPanelCard title="Next maturities" href="/portfolio" viewLabel="Open portfolio" accent="gold">
             {(dashboard?.upcomingMaturities.length ?? 0) === 0 ? (
               <div className="py-8 text-center">
-                <p className="text-sm font-medium text-[var(--heading)]">Settlement history becomes available after your first payout.</p>
+                <p className="text-sm font-medium text-[var(--heading)]">Settlement history becomes available after your first settlement.</p>
                 <p className="mt-1 text-xs text-[var(--text-muted)]">Maturity dates for active investments will appear here.</p>
               </div>
             ) : (

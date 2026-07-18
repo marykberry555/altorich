@@ -55,8 +55,8 @@ export class KycService {
         status === "rejected"
           ? "Identity verification was rejected. Contact support for assistance."
           : status === "requires_update"
-            ? "Additional verification is required before payouts."
-            : "Identity verification is required before requesting payouts."
+            ? "Additional verification is required before withdrawals."
+            : "Identity verification is required before requesting a withdrawal."
     };
   }
 

@@ -4,10 +4,14 @@ import { getServiceRoleServices } from "@/lib/services";
 import { requireSessionUser } from "@/lib/auth/session";
 import { apiErrorResponse, Errors } from "@/lib/errors";
 import { accountNumberSchema } from "@/lib/validation/schemas";
+import {
+  accountNamesMatch,
+  ACCOUNT_NAME_MISMATCH_MESSAGE
+} from "@/lib/validation/account-name";
 
 const bankSchema = z.object({
   bankName: z.string().min(2),
-  accountName: z.string().min(2),
+  accountName: z.string().min(2).optional(),
   accountNumber: accountNumberSchema
 });
 
@@ -34,9 +38,13 @@ export async function POST(request: NextRequest) {
     const parsed = bankSchema.safeParse(body);
     if (!parsed.success) throw Errors.badRequest("Invalid bank account details.");
 
+    const registeredName = await services.profile.getRegisteredFullName(user.id);
+    if (parsed.data.accountName && !accountNamesMatch(registeredName, parsed.data.accountName)) {
+      throw Errors.badRequest(ACCOUNT_NAME_MISMATCH_MESSAGE);
+    }
+
     const account = await services.profile.upsertPayoutBankAccount(user.id, {
       bankName: parsed.data.bankName,
-      accountName: parsed.data.accountName,
       accountNumber: parsed.data.accountNumber
     });
 

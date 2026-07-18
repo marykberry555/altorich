@@ -43,12 +43,12 @@ export function PayoutScheduleCard({ className }: { className?: string }) {
         <div>
           <div className="flex items-center gap-2 text-white/70">
             <CalendarClock size={16} aria-hidden />
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em]">Next payout</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em]">Next processing window</p>
           </div>
           <p className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Monday</p>
           <p className="mt-1 text-lg font-medium text-emerald-200">9:00 AM WAT</p>
           <p className="mt-3 max-w-sm text-sm text-white/75">
-            Submit a payout anytime — requests are queued and processed on the next cycle.
+            Submit a withdrawal anytime — requests are queued and processed on the next cycle.
           </p>
         </div>
 

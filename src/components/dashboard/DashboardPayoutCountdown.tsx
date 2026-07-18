@@ -44,7 +44,7 @@ export function DashboardPayoutCountdown({ active = true, className }: Props) {
       >
         <div className="flex items-center gap-2 text-white/65">
           <CalendarClock size={15} aria-hidden />
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Next payout</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Next Settlement</p>
         </div>
         <p className="mt-2 text-lg font-semibold text-white/90">Not scheduled</p>
       </div>
@@ -59,13 +59,13 @@ export function DashboardPayoutCountdown({ active = true, className }: Props) {
       )}
       role="timer"
       aria-live="polite"
-      aria-label={`Next payout Monday 9 AM. ${days} days, ${hours} hours remaining`}
+      aria-label={`Next Settlement Monday 9 AM. ${days} days, ${hours} hours remaining`}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-white/65">
             <CalendarClock size={15} aria-hidden />
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Next payout</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Next Settlement</p>
           </div>
           <p className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
             Monday <span className="font-medium text-white/75">· {payoutDate}</span>

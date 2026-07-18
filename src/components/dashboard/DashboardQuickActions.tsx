@@ -31,8 +31,8 @@ const catalog = [
   },
   {
     href: "/withdrawals",
-    label: "Request Payout",
-    description: "Cash out",
+    label: "Request Withdrawal",
+    description: "Withdraw funds",
     icon: ArrowUpRight
   }
 ] as const;

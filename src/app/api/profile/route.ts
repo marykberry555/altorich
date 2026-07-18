@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getServiceRoleServices } from "@/lib/services";
 import { requireSessionUser } from "@/lib/auth/session";
-import { apiErrorResponse, Errors } from "@/lib/errors";
+import { AppError, apiErrorResponse, Errors } from "@/lib/errors";
 import { phoneSchema } from "@/lib/validation/schemas";
 import { memberLocationSchema } from "@/lib/location/validation";
+import {
+  bodyContainsLockedNameFields,
+  MEMBER_NAME_LOCKED_MESSAGE
+} from "@/lib/validation/locked-identity";
 
 const profileSchema = z
   .object({
-    fullName: z.string().min(2).optional(),
     phone: phoneSchema.optional(),
     preferredPackageSlug: z.enum(["starter", "growth", "premium", "elite"]).optional(),
     locationStateCode: z.string().min(2).max(8).optional(),
@@ -66,17 +69,18 @@ export async function PATCH(request: NextRequest) {
     if (!services) throw Errors.notConfigured();
 
     const body = await request.json();
+    if (bodyContainsLockedNameFields(body)) {
+      throw new AppError(MEMBER_NAME_LOCKED_MESSAGE, 403, "NAME_LOCKED", MEMBER_NAME_LOCKED_MESSAGE);
+    }
     const parsed = profileSchema.safeParse(body);
     if (!parsed.success) throw Errors.badRequest("Invalid profile data.");
 
     let profile = await services.profile.updateProfile(user.id, {
-      fullName: parsed.data.fullName,
       phone: parsed.data.phone,
       preferredPackageSlug: parsed.data.preferredPackageSlug,
       locationStateCode: parsed.data.locationStateCode,
       locationCityArea: parsed.data.locationCityArea
     });
-
     if (parsed.data.notificationPreferences) {
       profile = await services.profile.updateNotificationPreferences(
         user.id,

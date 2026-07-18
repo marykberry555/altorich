@@ -23,7 +23,7 @@ export default async function ProfilePage() {
     { href: "/portfolio", label: "Portfolio" },
     { href: "/deposits", label: "Fund wallet" },
     { href: "/investments", label: "Invest" },
-    { href: "/withdrawals", label: "Payouts" },
+    { href: "/withdrawals", label: "Withdrawals" },
     { href: "/settings", label: "Settings" }
   ];
 

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Withdrawal } from "@/types/database";
 import { AppError } from "@/lib/errors";
 import { assertValidAccountNumber, normalizeAccountNumber } from "@/lib/validation/identity";
+import { accountNamesMatch, ACCOUNT_NAME_MISMATCH_MESSAGE } from "@/lib/validation/account-name";
 import { formatPayoutScheduleMessage, resolvePayoutQueue } from "@/lib/payout/schedule";
 import {
   isPayoutSchemaCompatError,
@@ -140,16 +141,26 @@ export class WithdrawalService {
     const accountNumber = normalizeAccountNumber(input.accountNumber);
     assertValidAccountNumber(accountNumber);
 
+    const { data: profile } = await this.supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", input.userId)
+      .maybeSingle();
+    const registeredName = profile?.full_name?.trim() ?? "";
+    if (!registeredName || !accountNamesMatch(registeredName, input.accountName)) {
+      throw new AppError(ACCOUNT_NAME_MISMATCH_MESSAGE, 400, "ACCOUNT_NAME_MISMATCH");
+    }
+
     const kycCheck = await this.kyc.isWithdrawalAllowed(input.userId);
     if (!kycCheck.allowed) {
-      throw new AppError(kycCheck.reason ?? "KYC verification required.", 403, "KYC_REQUIRED");
+      throw new AppError(kycCheck.reason ?? "Identity verification is required before requesting a withdrawal.", 403, "KYC_REQUIRED");
     }
 
     const wallet = await this.wallet.getWalletByUserId(input.userId);
     const balance = await this.wallet.getBalance(wallet.id);
     const reserved = await this.sumOpenWithdrawalAmount(input.userId);
     if (balance - reserved < input.amount) {
-      throw new AppError("Insufficient wallet balance for payout.", 400, "INSUFFICIENT_BALANCE");
+      throw new AppError("Insufficient available balance.", 400, "INSUFFICIENT_BALANCE");
     }
 
     const requestType = input.requestType ?? "manual";
@@ -157,7 +168,7 @@ export class WithdrawalService {
     if (requestType === "manual") {
       const pendingCount = await this.countOpenWithdrawals({ userId: input.userId });
       if (pendingCount > 0) {
-        throw new AppError("You already have an open payout request.", 409, "PENDING_EXISTS");
+        throw new AppError("You already have an open withdrawal request.", 409, "PENDING_EXISTS");
       }
     } else {
       try {
@@ -211,7 +222,7 @@ export class WithdrawalService {
     return this.create({
       ...input,
       requestType: "automatic",
-      note: "Automatic weekly earnings payout"
+      note: "Automatic weekly earnings withdrawal"
     });
   }
 
@@ -259,7 +270,7 @@ export class WithdrawalService {
     const balance = await this.wallet.getBalance(wallet.id);
     const reservedOthers = await this.sumOpenWithdrawalAmount(withdrawal.user_id, withdrawalId);
     if (balance - reservedOthers < Number(withdrawal.amount)) {
-      throw new AppError("Insufficient wallet balance for payout.", 400, "INSUFFICIENT_BALANCE");
+      throw new AppError("Insufficient available balance.", 400, "INSUFFICIENT_BALANCE");
     }
 
     let txId: string;
@@ -369,7 +380,7 @@ export class WithdrawalService {
     if (fetchError) throw fetchError;
     if (!withdrawal) throw new AppError("Withdrawal not found", 404, "NOT_FOUND");
     if (!["pending", "scheduled"].includes(withdrawal.status)) {
-      throw new AppError("Only open payout requests can be cancelled.", 409, "INVALID_STATUS");
+      throw new AppError("Only open withdrawal requests can be cancelled.", 409, "INVALID_STATUS");
     }
 
     const { data, error } = await this.supabase

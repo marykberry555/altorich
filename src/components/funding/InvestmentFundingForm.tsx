@@ -58,7 +58,7 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
     const name = fullName.trim();
 
     if (!name) {
-      setMessage("Enter your full name.");
+      setMessage("Your registered full name is missing. Contact Alto Rich Support.");
       setIsSubmitting(false);
       return;
     }
@@ -140,7 +140,13 @@ export function InvestmentFundingForm({ fundingEnabled, defaultFullName = "" }: 
       ) : (
         <Card variant="elevated" className="p-6 sm:p-8" id="fund">
           <form onSubmit={submitFunding} className="space-y-5">
-            <Input label="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+            <Input
+              label="Registered full name"
+              value={fullName}
+              readOnly
+              disabled
+              hint="Locked to your verified registered name."
+            />
 
             <CurrencyInput
               label={`Transfer amount (${NAIRA_SYMBOL})`}

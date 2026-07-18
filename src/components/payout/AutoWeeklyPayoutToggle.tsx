@@ -32,15 +32,15 @@ export function AutoWeeklyPayoutToggle() {
     setSaving(false);
     const body = await response.json();
     if (!response.ok) {
-      setMessage(body.error ?? "Could not update automatic payout.");
+      setMessage(body.error ?? "Could not update automatic withdrawal.");
       return;
     }
 
     setEnabled(Boolean(body.enabled));
     setMessage(
       body.enabled
-        ? "Automatic weekly payout enabled. Only accrued earnings will be withdrawn."
-        : "Automatic weekly payout disabled."
+        ? "Automatic weekly withdrawal enabled. Only accrued earnings will be withdrawn."
+        : "Automatic weekly withdrawal disabled."
     );
   }
 
@@ -48,9 +48,10 @@ export function AutoWeeklyPayoutToggle() {
     <Card variant="elevated" className="p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="max-w-lg">
-          <h3 className="font-semibold text-[var(--heading)]">Automatic weekly payout</h3>
+          <h3 className="font-semibold text-[var(--heading)]">Automatic weekly withdrawal</h3>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Automatically withdraw accrued investment earnings every Monday. Your investment capital stays invested.
+            Automatically withdraw accrued investment earnings every Monday settlement. Your investment capital stays
+            invested.
           </p>
         </div>
         <button

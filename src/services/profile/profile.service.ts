@@ -32,10 +32,21 @@ export class ProfileService {
     return data;
   }
 
+  /** Registered legal name — members cannot change this via self-service. */
+  async getRegisteredFullName(userId: string): Promise<string> {
+    const profile = await this.getProfile(userId);
+    const name = profile.full_name?.trim() ?? "";
+    if (!name) {
+      throw Errors.badRequest(
+        "Your registered full name is missing. Please contact Alto Rich Support before continuing."
+      );
+    }
+    return name;
+  }
+
   async updateProfile(
     userId: string,
     input: {
-      fullName?: string;
       phone?: string;
       avatarUrl?: string;
       preferredPackageSlug?: string;
@@ -44,7 +55,6 @@ export class ProfileService {
     }
   ) {
     const updates: Database["public"]["Tables"]["profiles"]["Update"] = {};
-    if (input.fullName !== undefined) updates.full_name = input.fullName;
     if (input.phone !== undefined) {
       const phone = normalizePhone(input.phone);
       assertValidPhone(phone);
@@ -102,10 +112,11 @@ export class ProfileService {
 
   async addBankAccount(
     userId: string,
-    input: { bankName: string; accountName: string; accountNumber: string; isDefault?: boolean }
+    input: { bankName: string; accountNumber: string; isDefault?: boolean; accountName?: string }
   ) {
     const accountNumber = normalizeAccountNumber(input.accountNumber);
     assertValidAccountNumber(accountNumber);
+    const accountName = await this.getRegisteredFullName(userId);
 
     if (input.isDefault) {
       await this.supabase.from("bank_accounts").update({ is_default: false }).eq("user_id", userId);
@@ -116,7 +127,7 @@ export class ProfileService {
       .insert({
         user_id: userId,
         bank_name: input.bankName,
-        account_name: input.accountName,
+        account_name: accountName,
         account_number: accountNumber,
         is_default: input.isDefault ?? false
       })
@@ -129,24 +140,28 @@ export class ProfileService {
 
   async upsertPayoutBankAccount(
     userId: string,
-    input: { bankName: string; accountName: string; accountNumber: string }
+    input: { bankName: string; accountNumber: string; accountName?: string }
   ) {
     const accountNumber = normalizeAccountNumber(input.accountNumber);
     assertValidAccountNumber(accountNumber);
-    const normalized = { ...input, accountNumber };
+    const accountName = await this.getRegisteredFullName(userId);
 
     const accounts = await this.listBankAccounts(userId);
     const primary = accounts.find((a) => a.is_default) ?? accounts[0];
 
     if (!primary) {
-      return this.addBankAccount(userId, { ...normalized, isDefault: true });
+      return this.addBankAccount(userId, {
+        bankName: input.bankName,
+        accountNumber,
+        isDefault: true
+      });
     }
 
     const { data, error } = await this.supabase
       .from("bank_accounts")
       .update({
-        bank_name: normalized.bankName,
-        account_name: normalized.accountName,
+        bank_name: input.bankName,
+        account_name: accountName,
         account_number: accountNumber,
         is_default: true
       })

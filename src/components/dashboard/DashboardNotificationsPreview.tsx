@@ -36,7 +36,7 @@ export function DashboardNotificationsPreview({
             <Bell className="h-5 w-5 text-[var(--text-subtle)]" aria-hidden />
           </div>
           <p className="text-sm font-medium text-[var(--heading)]">Nothing needs your attention right now.</p>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">Funding, investment, and payout updates will appear here.</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Funding, investment, and withdrawal updates will appear here.</p>
         </div>
       ) : (
         <ul className="space-y-3">

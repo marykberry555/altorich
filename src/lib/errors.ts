@@ -42,6 +42,16 @@ export function apiErrorResponse(error: unknown, fallback = "Something went wron
     );
   }
 
+  if (/row-level security|permission denied|42501/i.test(message)) {
+    return NextResponse.json(
+      {
+        error: "Unable to complete this request. Please contact support if the problem continues.",
+        code: "PERMISSION_DENIED"
+      },
+      { status: 500 }
+    );
+  }
+
   return NextResponse.json({ error: fallback }, { status: 500 });
 }
 
