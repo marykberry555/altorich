@@ -168,7 +168,14 @@ export class WithdrawalService {
     if (requestType === "manual") {
       const pendingCount = await this.countOpenWithdrawals({ userId: input.userId });
       if (pendingCount > 0) {
-        throw new AppError("You already have an open withdrawal request.", 409, "PENDING_EXISTS");
+        throw new AppError(
+          "You already have an open withdrawal request. Wait for it to complete or cancel it before requesting another.",
+          409,
+          "PENDING_EXISTS",
+          "You already have an open withdrawal request. Check Withdrawal history below.",
+          "business",
+          { label: "View withdrawals", href: "/withdrawals" }
+        );
       }
     } else {
       try {

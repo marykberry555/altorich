@@ -59,15 +59,24 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
       return;
     }
 
+    const idempotencyKey =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
     try {
       const body = await fetchJson<{ scheduleMessage?: string }>("/api/withdrawals", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey
+        },
         body: JSON.stringify({
           amount: parsedAmount,
           bankName: bank.bank_name,
           accountNumber: bank.account_number,
-          note: note.trim() || undefined
+          note: note.trim() || undefined,
+          idempotencyKey
         })
       });
 

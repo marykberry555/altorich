@@ -151,24 +151,57 @@ export default async function PortfolioPage() {
                 }
               />
             ) : (
-              <Card variant="elevated">
-                <div className="overflow-x-auto">
+              <Card variant="elevated" padding="none" className="overflow-hidden">
+                <ul className="divide-y divide-[var(--border)] md:hidden">
+                  {investCtx.investments.map((inv) => {
+                    const plan = (inv as { investment_plans?: { name?: string } | null }).investment_plans;
+                    return (
+                      <li key={inv.id} className="px-4 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 space-y-1">
+                            <p className="truncate font-medium text-[var(--heading)]">
+                              {inv.reference ?? inv.id.slice(0, 8)}
+                            </p>
+                            <p className="text-xs text-[var(--text-subtle)]">{plan?.name ?? "Sector"}</p>
+                            <StatusBadge status={inv.status} />
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="font-semibold tabular-nums text-[var(--heading)]">
+                              {formatNaira(Number(inv.amount))}
+                            </p>
+                            <p className="mt-0.5 text-xs tabular-nums text-[var(--emerald)]">
+                              +{formatNaira(Number(inv.total_earned ?? 0))}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
+                          <span>Matures {new Date(inv.ends_at).toLocaleDateString("en-NG")}</span>
+                          <Link href={`/investments/${inv.id}`} className="font-semibold text-[var(--emerald)]">
+                            View
+                          </Link>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                <div className="hidden overflow-x-auto md:block">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-[var(--border)] text-left text-xs uppercase text-[var(--text-subtle)]">
-                        <th className="px-4 pb-3">Reference</th>
-                        <th className="pb-3">Status</th>
-                        <th className="pb-3">Amount</th>
-                        <th className="pb-3">Earned</th>
-                        <th className="pb-3">Maturity</th>
-                        <th className="pb-3" />
+                        <th className="px-4 py-3">Reference</th>
+                        <th className="py-3">Status</th>
+                        <th className="py-3">Amount</th>
+                        <th className="py-3">Earned</th>
+                        <th className="py-3">Maturity</th>
+                        <th className="py-3" />
                       </tr>
                     </thead>
                     <tbody>
                       {investCtx.investments.map((inv) => {
                         const plan = (inv as { investment_plans?: { name?: string } | null }).investment_plans;
                         return (
-                          <tr key={inv.id} className="border-b border-[var(--border)]">
+                          <tr key={inv.id} className="border-b border-[var(--border)] last:border-0">
                             <td className="px-4 py-3">
                               <p className="font-medium">{inv.reference ?? inv.id.slice(0, 8)}</p>
                               <p className="text-xs text-[var(--text-subtle)]">{plan?.name ?? "Sector"}</p>

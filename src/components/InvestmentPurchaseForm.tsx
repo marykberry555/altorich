@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatNaira } from "@/lib/domain";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
+import { InlineErrorNotice } from "@/components/errors/InlineErrorNotice";
+import { ApiRequestError, fetchJson, formatMemberApiError } from "@/lib/api/fetch-json";
 
 type Props = {
   planId: string;
@@ -19,33 +21,52 @@ export function InvestmentPurchaseForm({ planId, planName, minAmount, maxAmount,
   const [amountRaw, setAmountRaw] = useState(String(defaultAmount));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [referenceId, setReferenceId] = useState<string | undefined>();
+  const [nextHref, setNextHref] = useState<string | undefined>();
+  const inFlight = useRef(false);
 
   async function handlePurchase(event: React.FormEvent) {
     event.preventDefault();
+    if (inFlight.current || loading) return;
+    inFlight.current = true;
     setLoading(true);
     setError("");
+    setReferenceId(undefined);
+    setNextHref(undefined);
 
     const amount = parseCurrencyInput(amountRaw);
+    if (!amount || amount < minAmount || amount > maxAmount) {
+      setError(`Enter an amount between ${formatNaira(minAmount)} and ${formatNaira(maxAmount)}.`);
+      setLoading(false);
+      inFlight.current = false;
+      return;
+    }
+
+    const idempotencyKey =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     try {
-      const response = await fetch("/api/investments", {
+      await fetchJson("/api/investments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, amount })
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey
+        },
+        body: JSON.stringify({ planId, amount, idempotencyKey })
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.error ?? "Purchase failed.");
-        setLoading(false);
-        return;
-      }
 
       router.push("/portfolio");
       router.refresh();
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      setError(formatMemberApiError(err));
+      if (err instanceof ApiRequestError) {
+        setReferenceId(err.referenceId);
+        setNextHref(err.nextAction?.href);
+      }
       setLoading(false);
+      inFlight.current = false;
     }
   }
 
@@ -61,7 +82,13 @@ export function InvestmentPurchaseForm({ planId, planName, minAmount, maxAmount,
         onChange={setAmountRaw}
         required
       />
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
+      {error ? (
+        <InlineErrorNotice
+          message={error}
+          referenceId={referenceId}
+          nextAction={nextHref ? { label: "Continue", href: nextHref } : undefined}
+        />
+      ) : null}
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? "Processing…" : "Confirm purchase"}
       </Button>

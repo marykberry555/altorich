@@ -83,6 +83,34 @@ export async function POST(request: NextRequest) {
 
     const accountName = await services.profile.getRegisteredFullName(user.id);
 
+    const idempotencyKey =
+      request.headers.get("idempotency-key")?.trim() ||
+      (typeof body.idempotencyKey === "string" ? body.idempotencyKey.trim() : "") ||
+      "";
+
+    if (idempotencyKey) {
+      const marker = `IDEM-${idempotencyKey}`.slice(0, 80);
+      const existing = await services.withdrawals
+        .listForUser(user.id, 30)
+        .then((rows) =>
+          rows.find((row) => {
+            const note = row.note?.trim() ?? "";
+            return note === marker || note.startsWith(`${marker}|`);
+          })
+        )
+        .catch(() => null);
+      if (existing) {
+        const scheduledAt = existing.scheduled_at ? new Date(existing.scheduled_at) : resolvePayoutQueue().scheduledAt;
+        return NextResponse.json(
+          {
+            ...existing,
+            scheduleMessage: formatPayoutScheduleMessage(scheduledAt)
+          },
+          { status: 200 }
+        );
+      }
+    }
+
     try {
       await services.profile.upsertPayoutBankAccount(user.id, {
         bankName: parsed.data.bankName,
@@ -92,6 +120,11 @@ export async function POST(request: NextRequest) {
       mapWithdrawalError(error);
     }
 
+    const userNote = parsed.data.note?.trim() || "";
+    const note = idempotencyKey
+      ? `${`IDEM-${idempotencyKey}`.slice(0, 80)}${userNote ? `|${userNote}` : ""}`.slice(0, 500)
+      : userNote || null;
+
     let withdrawal;
     try {
       withdrawal = await services.withdrawals.create({
@@ -100,7 +133,7 @@ export async function POST(request: NextRequest) {
         bankName: parsed.data.bankName,
         accountName,
         accountNumber: parsed.data.accountNumber,
-        note: parsed.data.note ?? null,
+        note,
         requestType: "manual"
       });
     } catch (error) {
@@ -112,7 +145,11 @@ export async function POST(request: NextRequest) {
     }
 
     const queue = resolvePayoutQueue();
-    logger.info("Withdrawal created", { withdrawalId: withdrawal.id, userId: user.id });
+    logger.info("Withdrawal created", {
+      withdrawalId: withdrawal.id,
+      userId: user.id,
+      idempotencyKey: idempotencyKey || null
+    });
 
     return NextResponse.json(
       {
