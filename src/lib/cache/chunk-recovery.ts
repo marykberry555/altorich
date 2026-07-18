@@ -4,6 +4,9 @@ export const CHUNK_RECOVERY_FLAG = "altorich:chunk-recovery-attempted";
 const CHUNK_ERROR_PATTERN =
   /Loading chunk [\d]+ failed|ChunkLoadError|Failed to fetch dynamically imported module|Importing a module script failed/i;
 
+/** Legacy cache prefixes from earlier SW strategies that cached HTML / Next runtime. */
+const LEGACY_CACHE_PREFIXES = ["altorich-html-", "altorich-pages-", "altorich-runtime-", "workbox-precache"];
+
 export function isChunkLoadFailure(message: string) {
   return CHUNK_ERROR_PATTERN.test(message);
 }
@@ -28,7 +31,6 @@ function hardReloadWithoutCacheBust() {
   const clean = `${url.pathname}${search ? `?${search}` : ""}${url.hash}` || "/";
   const current = `${window.location.pathname}${window.location.search}${window.location.hash}` || "/";
 
-  // Prefer a clean navigation target so the address bar never shows ?_cb=.
   if (clean !== current) {
     window.location.replace(clean);
     return;
@@ -37,6 +39,10 @@ function hardReloadWithoutCacheBust() {
   window.location.reload();
 }
 
+/**
+ * Nuclear clear — only for confirmed chunk-load / BUILD_ID mismatch recovery.
+ * Do NOT call on every page load (that races admin/member SW registration).
+ */
 export async function clearRuntimeCaches() {
   if ("caches" in window) {
     const keys = await caches.keys();
@@ -46,6 +52,21 @@ export async function clearRuntimeCaches() {
   if ("serviceWorker" in navigator) {
     const registrations = await navigator.serviceWorker.getRegistrations();
     await Promise.all(registrations.map((registration) => registration.unregister()));
+  }
+}
+
+/**
+ * Safe boot cleanup: remove known-legacy caches only.
+ * Leaves current `altorich-static-*` and admin-app SWs intact.
+ */
+export async function clearLegacyRuntimeArtifacts() {
+  if ("caches" in window) {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys
+        .filter((key) => LEGACY_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix)))
+        .map((key) => caches.delete(key))
+    );
   }
 }
 
@@ -62,7 +83,6 @@ export async function recoverFromChunkFailure(reason?: string) {
     // Continue to hard reload even if cache cleanup fails.
   }
 
-  // SW + Cache Storage are already cleared — no need to pollute the public URL with ?_cb=.
   hardReloadWithoutCacheBust();
   return true;
 }

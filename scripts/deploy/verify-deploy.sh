@@ -159,4 +159,12 @@ check_homepage_chunks "$PUBLIC_BASE" "public"
 check_login_chunk "$PUBLIC_BASE" "public"
 check_route "$PUBLIC_BASE" "public" "/download"
 check_route "$PUBLIC_BASE" "public" "/"
+
+# Fail the deploy if critical public/auth routes render error boundaries or 5xx.
+deploy_log "Running release gate against ${PUBLIC_BASE}..."
+if ! (cd "${APP_ROOT}" && RELEASE_GATE_BASE_URL="${PUBLIC_BASE}" node scripts/release-gate.mjs); then
+  deploy_log "FAIL: release gate"
+  exit 1
+fi
+
 deploy_log "=== verify-deploy complete ==="

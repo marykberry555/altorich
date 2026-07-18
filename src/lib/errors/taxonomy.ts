@@ -84,10 +84,10 @@ export function memberCopyForCategory(category: ErrorCategory, detail?: string):
     default:
       return {
         category: "server",
-        title: "Unexpected error",
+        title: "Couldn't load this page",
         body:
           detail?.trim() ||
-          "We're sorry — an unexpected error occurred. Our team has automatically been notified. Your request has not been processed.",
+          "Something interrupted this screen. Your money and account are safe — tap Retry, or open the Dashboard.",
         nextActions: [
           { label: "Retry", action: "retry" },
           { label: "Dashboard", href: DASHBOARD_HREF },
@@ -110,6 +110,10 @@ export function classifyHttpStatus(status: number): ErrorCategory {
 export function classifyThrownError(error: unknown): ErrorCategory {
   const message = error instanceof Error ? error.message : String(error ?? "");
   const lower = message.toLowerCase();
+  const digest =
+    error && typeof error === "object" && "digest" in error
+      ? String((error as { digest?: string }).digest ?? "")
+      : "";
 
   if (
     /failed to fetch|networkerror|load failed|timeout|timed out|offline|err_network|chunkloaderror|loading chunk/i.test(
@@ -117,6 +121,10 @@ export function classifyThrownError(error: unknown): ErrorCategory {
     )
   ) {
     return "network";
+  }
+  // Opaque Next.js RSC digests are often transient render failures — treat as recoverable network/server.
+  if (!message.trim() && digest) {
+    return "server";
   }
   if (/unauthorized|session|jwt|auth|sign in|forbidden|not authenticated/i.test(lower)) {
     return "authentication";

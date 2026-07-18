@@ -13,11 +13,17 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminAppSettingsPage() {
   const services = await getServiceRoleServices();
-  const announcement = services ? await services.settings.getAnnouncement() : "";
-  const withdrawalWindows = services ? await services.settings.getWithdrawalWindows() : "";
-  const featureFlags = services ? await services.settings.getFeatureFlags() : null;
-  const authSettings = services ? await services.settings.getAuthSettings() : { trusted_device_days: 90 };
-  const homepageStats = services ? await services.settings.getHomepageStats() : DEFAULT_HOMEPAGE_STATS;
+  const [announcement, withdrawalWindows, featureFlags, authSettings, homepageStats] = await Promise.all([
+    services ? services.settings.getAnnouncement().catch(() => "") : Promise.resolve(""),
+    services ? services.settings.getWithdrawalWindows().catch(() => "") : Promise.resolve(""),
+    services ? services.settings.getFeatureFlags().catch(() => null) : Promise.resolve(null),
+    services
+      ? services.settings.getAuthSettings().catch(() => ({ trusted_device_days: 90 }))
+      : Promise.resolve({ trusted_device_days: 90 }),
+    services
+      ? services.settings.getHomepageStats().catch(() => DEFAULT_HOMEPAGE_STATS)
+      : Promise.resolve(DEFAULT_HOMEPAGE_STATS)
+  ]);
   const release = getAdminReleaseMeta();
   const buildId = getBuildId();
 
