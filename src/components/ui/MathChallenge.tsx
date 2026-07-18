@@ -30,11 +30,11 @@ type Props = {
 export function MathChallenge({ challenge, answer, onAnswerChange, className }: Props) {
   const inputId = useId();
 
+  const prompt = `What is ${challenge.a} + ${challenge.b}?`;
+
   return (
-    <div className={cn("flex items-center gap-2", className)}>
-      <span className="text-sm font-medium tabular-nums text-[var(--text)]">
-        {challenge.a} + {challenge.b}
-      </span>
+    <label className={cn("grid gap-1.5", className)} htmlFor={inputId}>
+      <span className="text-sm font-medium text-[var(--text-muted)]">{prompt}</span>
       <input
         id={inputId}
         type="text"
@@ -42,9 +42,10 @@ export function MathChallenge({ challenge, answer, onAnswerChange, className }: 
         autoComplete="off"
         value={answer}
         onChange={(e) => onAnswerChange(e.target.value.replace(/\D/g, "").slice(0, 2))}
-        className="h-11 w-16 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3 text-center text-sm text-[var(--text)] focus:border-[var(--emerald-mid)] focus:outline-none focus:ring-2 focus:ring-[var(--emerald-soft)]"
-        aria-label="Answer"
+        className="h-11 w-24 rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3 text-center text-sm text-[var(--text)] focus:border-[var(--emerald-mid)] focus:outline-none focus:ring-2 focus:ring-[var(--emerald-soft)]"
+        aria-label={prompt}
+        placeholder="Answer"
       />
-    </div>
+    </label>
   );
 }

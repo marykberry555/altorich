@@ -139,7 +139,7 @@ export function RegisterForm() {
             disabled={loading}
           />
           <PackageSelectionField value={preferredPackage} onChange={setPreferredPackage} disabled={loading} />
-          <PinField value={pin} onChange={setPin} autoComplete="new-password" />
+          <PinField label="Choose 6-digit pin" value={pin} onChange={setPin} autoComplete="new-password" />
           <Input label="Referral code (optional)" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} />
           <MathChallenge challenge={math.challenge} answer={math.answer} onAnswerChange={math.setAnswer} />
           <fieldset className="rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] px-3 py-3">
