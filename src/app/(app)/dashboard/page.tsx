@@ -13,6 +13,7 @@ import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { DashboardCyclePanel } from "@/components/dashboard/DashboardCyclePanel";
 import { DashboardWealthHero, DashboardWealthHeroStatic } from "@/components/dashboard/DashboardWealthHero";
 import { DashboardProgressJourney } from "@/components/dashboard/DashboardProgressJourney";
+import { DashboardNextStepCard } from "@/components/dashboard/DashboardNextStepCard";
 import { DashboardPortfolioSection } from "@/components/dashboard/DashboardPortfolioSection";
 import { DashboardReferralStrip } from "@/components/dashboard/DashboardReferralStrip";
 import { DashboardNotificationsPreview, filterActionableNotifications } from "@/components/dashboard/DashboardNotificationsPreview";
@@ -55,6 +56,7 @@ async function DashboardContent() {
   const preferredPackage = dashboard?.profile?.preferred_package_slug ?? null;
   const hasActiveInvestment = (dashboard?.activeInvestments ?? 0) > 0 || Boolean(roiState?.activeInvestment);
   const fullName = dashboard?.profile?.full_name ?? user?.email ?? "Member";
+  const username = dashboard?.profile?.username ?? null;
   const avatarUrl = dashboard?.profile?.avatar_url;
 
   const conversionState = toConversionState({
@@ -117,6 +119,7 @@ async function DashboardContent() {
         {showPlanInvestmentUi && investCtx ? (
           <DashboardWealthHero
             fullName={fullName}
+            username={username}
             avatarUrl={avatarUrl}
             preferredPackageSlug={preferredPackage}
             hasActiveInvestment={hasActiveInvestment}
@@ -129,6 +132,7 @@ async function DashboardContent() {
         ) : (
           <DashboardWealthHeroStatic
             fullName={fullName}
+            username={username}
             avatarUrl={avatarUrl}
             preferredPackageSlug={preferredPackage}
             hasActiveInvestment={hasActiveInvestment}
@@ -140,7 +144,9 @@ async function DashboardContent() {
           />
         )}
 
-        <DashboardProgressJourney state={conversionState} />
+        <DashboardNextStepCard action={nextAction} />
+
+        {!hasActiveInvestment ? <DashboardProgressJourney state={conversionState} /> : null}
       </DashboardSection>
 
       {roiEnabled && roiState?.activeInvestment ? (

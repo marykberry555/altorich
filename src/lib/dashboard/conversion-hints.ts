@@ -14,6 +14,17 @@ export function buildActionHints(state: DashboardConversionState): NotificationR
   const hints: NotificationRow[] = [];
   const now = new Date().toISOString();
 
+  if (state.hasActiveInvestment) {
+    hints.push({
+      id: "hint-track",
+      title: "Your investment is active",
+      body: "Track live earnings in your portfolio. Payouts follow the Monday schedule.",
+      created_at: now,
+      read_at: null
+    });
+    return hints;
+  }
+
   if (state.pendingDeposits > 0) {
     hints.push({
       id: "hint-deposit",
@@ -30,19 +41,11 @@ export function buildActionHints(state: DashboardConversionState): NotificationR
       created_at: now,
       read_at: null
     });
-  } else if (!state.hasActiveInvestment) {
+  } else {
     hints.push({
       id: "hint-invest",
       title: "Complete your first investment",
       body: "Your wallet is ready. Choose a package and activate your investment.",
-      created_at: now,
-      read_at: null
-    });
-  } else if (state.hasActiveInvestment) {
-    hints.push({
-      id: "hint-track",
-      title: "Your investment is active",
-      body: "Track live earnings in your portfolio. Payouts follow the Monday schedule.",
       created_at: now,
       read_at: null
     });

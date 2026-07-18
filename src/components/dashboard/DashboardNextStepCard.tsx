@@ -17,6 +17,8 @@ const toneStyles = {
 };
 
 export function DashboardNextStepCard({ action, className }: Props) {
+  const eyebrow = action.eyebrow ?? "Your next step";
+
   return (
     <Card
       variant="elevated"
@@ -25,16 +27,29 @@ export function DashboardNextStepCard({ action, className }: Props) {
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Your next step</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">{eyebrow}</p>
           <h2 className="mt-1 text-lg font-bold text-[var(--heading)]">{action.title}</h2>
           <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--text-muted)]">{action.description}</p>
         </div>
-        <Link href={action.href} className="shrink-0">
-          <Button variant={action.tone === "gold" ? "gold" : "primary"} size="md" className="gap-2 whitespace-nowrap">
-            {action.cta}
-            <ArrowRight size={16} aria-hidden />
-          </Button>
-        </Link>
+        <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+          <Link href={action.href}>
+            <Button
+              variant={action.tone === "gold" ? "gold" : "primary"}
+              size="md"
+              className="w-full gap-2 whitespace-nowrap sm:w-auto"
+            >
+              {action.cta}
+              <ArrowRight size={16} aria-hidden />
+            </Button>
+          </Link>
+          {action.secondaryCta ? (
+            <Link href={action.secondaryCta.href}>
+              <Button variant="outline" size="md" className="w-full whitespace-nowrap sm:w-auto">
+                {action.secondaryCta.label}
+              </Button>
+            </Link>
+          ) : null}
+        </div>
       </div>
     </Card>
   );

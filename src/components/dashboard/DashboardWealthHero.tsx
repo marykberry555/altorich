@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   fullName: string;
+  username?: string | null;
   avatarUrl?: string | null;
   preferredPackageSlug?: string | null;
   hasActiveInvestment: boolean;
@@ -28,6 +29,11 @@ type Props = {
   totalEarned: number;
   primaryCta?: { href: string; label: string };
 };
+
+function formatUsername(username?: string | null) {
+  const handle = username?.trim().replace(/^@+/, "") ?? "";
+  return handle ? `@${handle}` : null;
+}
 
 function toAccrualInputs(inputs: LiveInvestmentInput[]): LiveAccrualInput[] {
   return inputs
@@ -48,6 +54,7 @@ function toAccrualInputs(inputs: LiveInvestmentInput[]): LiveAccrualInput[] {
 
 export function DashboardWealthHero({
   fullName,
+  username,
   avatarUrl,
   preferredPackageSlug,
   hasActiveInvestment,
@@ -59,6 +66,7 @@ export function DashboardWealthHero({
 }: Props) {
   const now = useLiveNow();
   const name = fullName.trim() || "Member";
+  const handle = formatUsername(username);
   const sectorLabel = getPackageLabel(preferredPackageSlug);
 
   const aggregate = useMemo(
@@ -75,9 +83,11 @@ export function DashboardWealthHero({
 
   const cta =
     primaryCta ??
-    (walletBalance > 0
-      ? { href: "/investments", label: "Invest now" }
-      : { href: "/deposits", label: "Fund wallet" });
+    (hasActiveInvestment || isLive
+      ? { href: "/portfolio", label: "View Portfolio" }
+      : walletBalance > 0
+        ? { href: "/investments", label: "Invest now" }
+        : { href: "/deposits", label: "Fund wallet" });
 
   return (
     <Card variant="elevated" padding="none" className="relative overflow-hidden">
@@ -94,12 +104,12 @@ export function DashboardWealthHero({
             <div>
               <p className="text-sm font-medium text-white/70">{getGreeting()},</p>
               <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{name}</h1>
-              <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200/90">
-                My Investment
-              </p>
+              {handle ? (
+                <p className="mt-1 text-sm font-medium text-emerald-200/90">{handle}</p>
+              ) : null}
             </div>
           </div>
-          {isLive ? (
+          {isLive && !hasActiveInvestment ? (
             <Link href={cta.href} className="hidden shrink-0 sm:block">
               <Button variant="gold" size="sm" className="gap-1.5">
                 {cta.label}
@@ -183,7 +193,7 @@ export function DashboardWealthHero({
           </div>
         </dl>
 
-        {isLive ? (
+        {isLive && !hasActiveInvestment ? (
           <div className="mt-5 sm:hidden">
             <Link href={cta.href} className="block">
               <Button variant="gold" size="md" className="w-full gap-2">
@@ -200,6 +210,7 @@ export function DashboardWealthHero({
 
 export function DashboardWealthHeroStatic({
   fullName,
+  username,
   avatarUrl,
   preferredPackageSlug,
   hasActiveInvestment,
@@ -210,12 +221,15 @@ export function DashboardWealthHeroStatic({
   primaryCta
 }: Omit<Props, "liveInputs"> & { portfolioValue: number }) {
   const name = fullName.trim() || "Member";
+  const handle = formatUsername(username);
   const sectorLabel = getPackageLabel(preferredPackageSlug);
   const cta =
     primaryCta ??
-    (walletBalance > 0
-      ? { href: "/investments", label: "Invest now" }
-      : { href: "/deposits", label: "Fund wallet" });
+    (hasActiveInvestment
+      ? { href: "/portfolio", label: "View Portfolio" }
+      : walletBalance > 0
+        ? { href: "/investments", label: "Invest now" }
+        : { href: "/deposits", label: "Fund wallet" });
 
   return (
     <Card variant="elevated" padding="none" className="relative overflow-hidden">
@@ -226,9 +240,9 @@ export function DashboardWealthHeroStatic({
           <div>
             <p className="text-sm font-medium text-white/70">{getGreeting()},</p>
             <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{name}</h1>
-            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200/90">
-              My Investment
-            </p>
+            {handle ? (
+              <p className="mt-1 text-sm font-medium text-emerald-200/90">{handle}</p>
+            ) : null}
           </div>
         </div>
 

@@ -22,6 +22,58 @@ type Props = {
   onAccountChange: (account: WithdrawalBankAccount | null) => void;
 };
 
+const CHANGE_NAME_SUBJECT = "Change Account Name";
+const CHANGE_NAME_BODY = [
+  "Hello Alto Rich Support,",
+  "",
+  "I would like to request a change to my registered account name used for withdrawals.",
+  "",
+  "Please let me know the identity verification requirements and the next steps.",
+  "",
+  "Thank you."
+].join("\n");
+
+function changeAccountNameMailto() {
+  const subject = encodeURIComponent(CHANGE_NAME_SUBJECT);
+  const body = encodeURIComponent(CHANGE_NAME_BODY);
+  return `mailto:${COMPANY.supportEmail}?subject=${subject}&body=${body}`;
+}
+
+function ChangeAccountNameCta() {
+  const [showFallback, setShowFallback] = useState(false);
+  const mailtoHref = changeAccountNameMailto();
+
+  function handleClick() {
+    // mailto may open nothing when no mail client is installed — surface the fallback.
+    window.setTimeout(() => {
+      if (typeof document !== "undefined" && document.hasFocus()) {
+        setShowFallback(true);
+      }
+    }, 900);
+  }
+
+  return (
+    <div className="mt-2 space-y-2">
+      <p className="text-sm font-medium text-red-600/90 dark:text-red-400/90">
+        <span aria-hidden>🔴 </span>
+        Want to change account name?
+      </p>
+      <a
+        href={mailtoHref}
+        onClick={handleClick}
+        className="inline-flex min-h-[var(--tap-min)] h-9 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-red-200 bg-[var(--surface-raised)] px-4 text-sm font-semibold text-red-700 transition-all duration-[var(--motion-base)] ease-[var(--ease-out)] hover:border-red-300 hover:text-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 active:scale-[0.98] dark:border-red-500/40 dark:text-red-300 dark:hover:border-red-400/60 dark:hover:text-red-200"
+      >
+        Contact Admin to Change
+      </a>
+      {showFallback ? (
+        <p className="text-xs leading-relaxed text-[var(--text-muted)]">
+          Please email {COMPANY.supportEmail} with the subject &apos;Change Account Name&apos;.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function PayoutBankAccountSection({ registeredFullName, account, onAccountChange }: Props) {
   const [editing, setEditing] = useState(!account);
   const [saving, setSaving] = useState(false);
@@ -141,6 +193,7 @@ export function PayoutBankAccountSection({ registeredFullName, account, onAccoun
                   <Lock size={12} className="shrink-0 text-[var(--text-subtle)]" aria-hidden />
                   <span className="truncate">{account.account_name || registeredFullName}</span>
                 </p>
+                <ChangeAccountNameCta />
               </div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
@@ -191,17 +244,7 @@ export function PayoutBankAccountSection({ registeredFullName, account, onAccoun
               {resolving ? "Resolving…" : resolvedName || registeredFullName || "—"}
             </span>
           </div>
-          <p className="text-xs leading-relaxed text-[var(--text-subtle)]">
-            Locked to your registered full name. After you enter your account number, we confirm the account name
-            matches your verified identity.
-          </p>
-          <p className="text-xs leading-relaxed text-[var(--text-subtle)]">
-            Need to update your registered name? Please contact our support team by email at{" "}
-            <a className="underline underline-offset-2" href={`mailto:${COMPANY.supportEmail}`}>
-              {COMPANY.supportEmail}
-            </a>
-            . For your protection, identity verification is required before any name change can be approved.
-          </p>
+          <ChangeAccountNameCta />
         </div>
         {error ? <FormFlashError message={error} /> : null}
         <div className="flex flex-wrap gap-2 pt-1">

@@ -18,6 +18,9 @@ export type NextAction = {
   href: string;
   cta: string;
   tone: "emerald" | "gold" | "navy";
+  /** When set, replaces the default "Your next step" eyebrow. */
+  eyebrow?: string;
+  secondaryCta?: { href: string; label: string };
 };
 
 const JOURNEY_STEPS: { id: JourneyStepId; label: string }[] = [
@@ -50,6 +53,32 @@ export function resolveJourneySteps(state: DashboardConversionState) {
 }
 
 export function resolveNextAction(state: DashboardConversionState): NextAction {
+  // Active investors always get investment-focused status — never onboarding "Fund your wallet".
+  if (state.hasActiveInvestment) {
+    if (state.pendingWithdrawals > 0) {
+      return {
+        eyebrow: "Status",
+        title: "Payout in progress",
+        description: "Your investment remains active. Track your withdrawal request and Monday settlement schedule.",
+        href: "/withdrawals",
+        cta: "View payout",
+        tone: "navy",
+        secondaryCta: { href: "/portfolio", label: "View Portfolio" }
+      };
+    }
+
+    return {
+      eyebrow: "Status",
+      title: "Investment Active",
+      description:
+        "Your capital is working for you. Daily earnings accrue automatically and are settled every Monday at 9:00 AM WAT.",
+      href: "/portfolio",
+      cta: "View Portfolio",
+      tone: "emerald",
+      secondaryCta: { href: "/deposits", label: "Fund Wallet" }
+    };
+  }
+
   if (state.pendingDeposits > 0) {
     return {
       title: "Funding awaiting verification",
@@ -70,42 +99,12 @@ export function resolveNextAction(state: DashboardConversionState): NextAction {
     };
   }
 
-  if (!state.hasActiveInvestment) {
-    return {
-      title: "Start investing",
-      description: "Your wallet is funded. Choose a package and activate your first investment.",
-      href: "/investments",
-      cta: "Explore packages",
-      tone: "gold"
-    };
-  }
-
-  if (state.pendingWithdrawals > 0) {
-    return {
-      title: "Payout in progress",
-      description: "Track your withdrawal request and Monday settlement schedule.",
-      href: "/withdrawals",
-      cta: "View payout",
-      tone: "navy"
-    };
-  }
-
-  if (state.totalEarned > 0) {
-    return {
-      title: "Request payout",
-      description: "Earnings are building. Request a withdrawal on the next Monday payout window.",
-      href: "/withdrawals",
-      cta: "Request payout",
-      tone: "emerald"
-    };
-  }
-
   return {
-    title: "Track your earnings",
-    description: "Your investment is active. Watch live earnings grow in your portfolio.",
-    href: "/portfolio",
-    cta: "Open portfolio",
-    tone: "navy"
+    title: "Start investing",
+    description: "Your wallet is funded. Choose a package and activate your first investment.",
+    href: "/investments",
+    cta: "Explore packages",
+    tone: "gold"
   };
 }
 
