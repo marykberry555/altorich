@@ -11,6 +11,7 @@ import {
   Bell,
   Bug,
   FileText,
+  HeartPulse,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -65,6 +66,7 @@ const navSections = [
     label: "Monitoring",
     items: [
       { href: adminAppPath("/notifications"), label: "Notifications", icon: Bell },
+      { href: adminAppPath("/financial-health"), label: "Financial health", icon: HeartPulse },
       { href: adminAppPath("/activity"), label: "Login activity", icon: Activity },
       { href: adminAppPath("/security"), label: "Security", icon: Shield },
       { href: adminAppPath("/audit"), label: "Audit logs", icon: ScrollText },

@@ -195,6 +195,16 @@ export type Database = {
           provider_reference: string | null;
           created_at: string;
           reviewed_at: string | null;
+          workflow_phase:
+            | "pending"
+            | "claimed"
+            | "wallet_credited"
+            | "investment_created"
+            | "reconciled"
+            | "completed"
+            | "failed";
+          workflow_updated_at: string;
+          workflow_error: string | null;
         };
         Insert: {
           id?: string;
@@ -215,6 +225,16 @@ export type Database = {
           rejection_reason?: string | null;
           payment_transaction_id?: string | null;
           provider_reference?: string | null;
+          workflow_phase?:
+            | "pending"
+            | "claimed"
+            | "wallet_credited"
+            | "investment_created"
+            | "reconciled"
+            | "completed"
+            | "failed";
+          workflow_updated_at?: string;
+          workflow_error?: string | null;
         };
         Relationships: TableRelationships;
       };
@@ -859,6 +879,10 @@ export type Database = {
       };
       claim_referral_for_commission: {
         Args: { p_referral_id: string };
+        Returns: Json;
+      };
+      claim_referral_payout_for_paid: {
+        Args: { p_payout_id: string; p_reviewer_id: string };
         Returns: Json;
       };
     };

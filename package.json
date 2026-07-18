@@ -34,6 +34,7 @@
     "test:e2e:production": "PLAYWRIGHT_BASE_URL=https://altorich.com playwright test",
     "auth:hibp": "node scripts/enable-auth-hibp.mjs",
     "test": "tsx --test \"src/**/*.test.ts\"",
+    "test:concurrency": "node scripts/test-financial-concurrency.mjs",
     "seed:auth": "node scripts/seed-auth-accounts.mjs",
     "deploy:checklist": "bash scripts/deploy/cpanel-checklist.sh",
     "deploy:setup-remote": "bash scripts/deploy/setup-remote.sh",

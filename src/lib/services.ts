@@ -21,6 +21,7 @@ import { ReferralService } from "@/services/referral/referral.service";
 import { FundingAccountService } from "@/services/funding/funding-account.service";
 import { MemberAdminService } from "@/services/admin/member-admin.service";
 import { CapitalLiquidationService } from "@/services/investment/capital-liquidation.service";
+import { FinancialOpsService } from "@/services/admin/financial-ops.service";
 import { requireAdmin } from "@/lib/auth/session";
 
 export type ServiceBundle = {
@@ -44,6 +45,7 @@ export type ServiceBundle = {
   fundingAccounts: FundingAccountService;
   members: MemberAdminService;
   liquidations: CapitalLiquidationService;
+  financialOps: FinancialOpsService;
 };
 
 async function getBankConfig(settings: SettingsService) {
@@ -83,7 +85,8 @@ function buildBundle(supabase: SupabaseClient<Database>, bankConfig?: {
     referrals: new ReferralService(supabase),
     fundingAccounts: new FundingAccountService(supabase),
     members: new MemberAdminService(supabase),
-    liquidations: new CapitalLiquidationService(supabase)
+    liquidations: new CapitalLiquidationService(supabase),
+    financialOps: new FinancialOpsService(supabase)
   };
 }
 

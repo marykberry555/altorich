@@ -607,6 +607,65 @@ export class ReferralService {
     const statusMap = { approve: "approved", reject: "rejected", paid: "paid" } as const;
     const nextStatus = statusMap[action];
 
+    if (action === "paid") {
+      const { data: claimPayload, error: rpcError } = await this.supabase.rpc(
+        "claim_referral_payout_for_paid" as never,
+        { p_payout_id: payoutId, p_reviewer_id: reviewerId } as never
+      );
+
+      let claimed = true;
+      if (!rpcError && claimPayload && typeof claimPayload === "object") {
+        const payload = claimPayload as { claimed?: boolean; payout?: Record<string, unknown> };
+        claimed = Boolean(payload.claimed);
+        if (payload.payout) {
+          Object.assign(payout, payload.payout);
+        }
+        if (!claimed && String(payout.status) === "paid") {
+          return payout;
+        }
+      } else if (String(payout.status) === "paid") {
+        return payout;
+      }
+
+      if (!claimed && String(payout.status) !== "processing") {
+        throw new AppError("Referral withdrawal is not payable", 409, "INVALID_STATUS");
+      }
+
+      if (payout.wallet_transaction_id) {
+        await this.wallet.completeReferralPayoutDebit(payout.wallet_transaction_id as string, {
+          reviewed_by: reviewerId,
+          settlement_reference: (payout as { settlement_reference?: string | null }).settlement_reference ?? null
+        });
+      }
+
+      const { data: updated, error: updateError } = await this.supabase
+        .from("referral_payouts")
+        .update({
+          status: "paid",
+          reviewed_by: reviewerId,
+          reviewed_at: new Date().toISOString()
+        })
+        .eq("id", payoutId)
+        .in("status", ["pending", "processing", "approved"])
+        .select()
+        .maybeSingle();
+
+      if (updateError) throw updateError;
+      if (!updated) {
+        const { data: current } = await this.supabase.from("referral_payouts").select("*").eq("id", payoutId).single();
+        if (current?.status === "paid") return current;
+        throw new AppError("Referral withdrawal is no longer payable", 409, "INVALID_STATUS");
+      }
+
+      await this.notifications.notifyEvent("referral.payout_approved", payout.user_id as string, {
+        amount: payout.amount,
+        payout_id: payoutId,
+        settlement_reference: (payout as { settlement_reference?: string | null }).settlement_reference ?? null
+      });
+
+      return updated;
+    }
+
     if (action === "reject") {
       const refWallet = await this.getReferralWallet(payout.user_id as string);
       await this.wallet.creditReferralCommission(
@@ -637,12 +696,6 @@ export class ReferralService {
         .from("wallet_transactions")
         .update({ metadata })
         .eq("id", payout.wallet_transaction_id as string);
-    }
-
-    if (action === "paid" && payout.wallet_transaction_id) {
-      await this.wallet.completeReferralPayoutDebit(payout.wallet_transaction_id as string, {
-        reviewed_by: reviewerId
-      });
     }
 
     const { data: updated, error: updateError } = await this.supabase
