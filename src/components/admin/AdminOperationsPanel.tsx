@@ -117,7 +117,7 @@ export async function AdminOperationsPanel({ metrics, pendingReferralPayouts, re
           href={`${HARD_OPS_HOME}/deposits`}
         />
         <MetricStatCard
-          title="Pending payouts"
+          title="Pending withdrawals"
           value={String((metrics?.pendingWithdrawals ?? 0) + pendingReferralPayouts)}
           accent="gold"
           href={`${HARD_OPS_HOME}/payouts`}

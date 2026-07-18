@@ -75,8 +75,8 @@ export function RoiAdminControls(props: {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Weekly ROI controls</p>
-          <h2 className="mt-2 text-lg font-semibold text-[var(--heading)]">Exchange rate & payout toggles</h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">These settings control dual-currency display and payout options.</p>
+          <h2 className="mt-2 text-lg font-semibold text-[var(--heading)]">Exchange rate & withdrawal toggles</h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">These settings control dual-currency display and withdrawal options.</p>
         </div>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={runSettle} disabled={saving}>
@@ -96,12 +96,12 @@ export function RoiAdminControls(props: {
 
         <label className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm">
           <input type="checkbox" checked={bankEnabled} onChange={(e) => setBankEnabled(e.target.checked)} />
-          <span className="text-[var(--heading)]">Bank payouts enabled</span>
+          <span className="text-[var(--heading)]">Bank withdrawals enabled</span>
         </label>
 
         <label className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm">
           <input type="checkbox" checked={cryptoEnabled} onChange={(e) => setCryptoEnabled(e.target.checked)} />
-          <span className="text-[var(--heading)]">Crypto payouts enabled</span>
+          <span className="text-[var(--heading)]">Crypto withdrawals enabled</span>
         </label>
 
         <label className="grid gap-1 text-sm sm:col-span-2 lg:col-span-1">

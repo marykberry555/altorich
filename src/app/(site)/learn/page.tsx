@@ -17,13 +17,13 @@ const platformGuides = [
   {
     href: "/learn/how-it-works",
     title: "How it works",
-    description: "From registration to wallet funding, package selection, and payout cycles.",
+    description: "From registration to wallet funding, package selection, and withdrawal cycles.",
     icon: ListChecks
   },
   {
     href: "/learn/faq",
     title: "FAQs",
-    description: "Answers on verification, wallet funding, payout windows, and account security.",
+    description: "Answers on verification, wallet funding, withdrawal windows, and account security.",
     icon: BookOpen
   },
   {

@@ -29,7 +29,7 @@ const JOURNEY_STEPS: { id: JourneyStepId; label: string }[] = [
   { id: "choose", label: "Choose package" },
   { id: "active", label: "Investment active" },
   { id: "earning", label: "Start earning" },
-  { id: "payout", label: "Monday payout" }
+  { id: "payout", label: "Monday withdrawal" }
 ];
 
 export function resolveCurrentJourneyStep(state: DashboardConversionState): JourneyStepId {
@@ -58,10 +58,10 @@ export function resolveNextAction(state: DashboardConversionState): NextAction {
     if (state.pendingWithdrawals > 0) {
       return {
         eyebrow: "Status",
-        title: "Payout in progress",
+        title: "Withdrawal in progress",
         description: "Your investment remains active. Track your withdrawal request and Monday settlement schedule.",
         href: "/withdrawals",
-        cta: "View payout",
+        cta: "View withdrawal",
         tone: "navy",
         secondaryCta: { href: "/portfolio", label: "View Portfolio" }
       };

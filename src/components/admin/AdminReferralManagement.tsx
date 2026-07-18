@@ -61,7 +61,7 @@ export function AdminReferralManagement({ initialConfig, initialVipLevels, analy
     <div className="space-y-8">
       <Card variant="elevated" padding="md" id="referrals">
         <h2 className="text-lg font-bold text-[var(--heading)]">Referral programme</h2>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">Configure commissions, VIP tiers, and payout rules</p>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">Configure commissions, VIP tiers, and withdrawal rules</p>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="flex items-center gap-2 text-sm">
@@ -85,7 +85,7 @@ export function AdminReferralManagement({ initialConfig, initialVipLevels, analy
             Recurring commissions (disabled by default)
           </label>
           <Input
-            label="Minimum payout threshold"
+            label="Minimum withdrawal threshold"
             type="number"
             value={config.min_payout_threshold}
             onChange={(e) => setConfig({ ...config, min_payout_threshold: Number(e.target.value) })}
@@ -163,7 +163,7 @@ export function AdminReferralManagement({ initialConfig, initialVipLevels, analy
 
       {pendingPayouts.length > 0 ? (
         <Card variant="elevated" padding="md" id="referral-payouts">
-          <h3 className="font-semibold text-[var(--heading)]">Pending referral payouts ({pendingPayouts.length})</h3>
+          <h3 className="font-semibold text-[var(--heading)]">Pending referral withdrawals ({pendingPayouts.length})</h3>
           <ul className="mt-4 space-y-4">
             {pendingPayouts.map((p) => (
               <li key={p.id} className="rounded-xl border border-[var(--border)] p-4 text-sm">

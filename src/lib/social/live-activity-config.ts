@@ -43,7 +43,7 @@ export type LiveActivityType = "joined" | "invested" | "payout" | "reinvested";
 export const LIVE_ACTIVITY_LABELS: Record<LiveActivityType, (amountLabel?: string) => string> = {
   joined: () => "Joined Alto Rich",
   invested: (amount) => (amount ? `Invested ${amount}` : "Invested"),
-  payout: (amount) => (amount ? `Received ${amount} payout` : "Received a payout"),
+  payout: (amount) => (amount ? `Received ${amount} withdrawal` : "Received a withdrawal"),
   reinvested: (amount) => (amount ? `Reinvested ${amount}` : "Reinvested")
 };
 

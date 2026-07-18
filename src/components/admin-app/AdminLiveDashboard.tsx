@@ -104,7 +104,7 @@ export function AdminLiveDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricStatCard title="Today's withdrawals" value={String(metrics?.todayWithdrawals ?? "—")} accent="gold" icon={<ArrowUpRight size={16} aria-hidden />} href={adminAppPath("/payouts")} />
         <MetricStatCard title="Withdrawal volume today" value={formatNaira(metrics?.todayWithdrawalsAmount ?? 0)} accent="gold" icon={<ArrowUpRight size={16} aria-hidden />} href={adminAppPath("/payouts")} />
-        <MetricStatCard title="Today's payouts" value={formatNaira(metrics?.payoutsToday ?? 0)} accent="sky" icon={<ArrowUpRight size={16} aria-hidden />} href={adminAppPath("/payouts")} />
+        <MetricStatCard title="Today's withdrawals settled" value={formatNaira(metrics?.payoutsToday ?? 0)} accent="sky" icon={<ArrowUpRight size={16} aria-hidden />} href={adminAppPath("/payouts")} />
         <MetricStatCard title="Today's revenue" value={formatNaira(metrics?.revenueToday ?? 0)} accent="sky" icon={<Activity size={16} aria-hidden />} href={adminAppPath("/settlements")} />
       </div>
 

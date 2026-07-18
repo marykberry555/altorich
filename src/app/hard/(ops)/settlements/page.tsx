@@ -20,7 +20,7 @@ export default async function SettlementsPage() {
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Operations</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--heading)]">Settlements & ROI</h1>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">Run settlement cycles and manage ROI payout controls.</p>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">Run settlement cycles and manage ROI withdrawal controls.</p>
       </header>
 
       <Card variant="elevated" padding="md">

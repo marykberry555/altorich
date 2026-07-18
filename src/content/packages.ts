@@ -23,7 +23,7 @@ const PACKAGE_PAGE_CONTENT: Record<
   starter: {
     heroHeadline: "Shield your capital from inflation with disciplined digital lock plans.",
     heroDescription:
-      "Alto Starter is your entry point into structured wealth preservation — fixed-term cooperative savings pools that keep your money working while life stays predictable. Lock funds securely, track performance in your dashboard, and receive consistent payouts on published cycles once you are verified.",
+      "Alto Starter is your entry point into structured wealth preservation — fixed-term cooperative savings pools that keep your money working while life stays predictable. Lock funds securely, track performance in your dashboard, and receive consistent withdrawals on published cycles once you are verified.",
     howItWorks: [
       {
         step: "01",
@@ -41,13 +41,13 @@ const PACKAGE_PAGE_CONTENT: Record<
         step: "03",
         title: "Earn through structured cycles",
         description:
-          "Your pool accrues yield across the cooperative cycle. Payouts and running balances are visible only inside your authenticated dashboard — never on public pages."
+          "Your pool accrues yield across the cooperative cycle. Withdrawals and running balances are visible only inside your authenticated dashboard — never on public pages."
       },
       {
         step: "04",
         title: "Reinvest or withdraw on schedule",
         description:
-          "At cycle completion, choose to roll into the next pool, move funds to your available balance, or follow published withdrawal windows for bank payout."
+          "At cycle completion, choose to roll into the next pool, move funds to your available balance, or follow published withdrawal windows for bank transfer."
       }
     ],
     benefits: [
@@ -61,7 +61,7 @@ const PACKAGE_PAGE_CONTENT: Record<
       },
       {
         title: "Transparent ledger",
-        description: "Every deposit, allocation, and payout is traceable in your member dashboard with timestamps and references."
+        description: "Every deposit, allocation, and withdrawal is traceable in your member dashboard with timestamps and references."
       },
       {
         title: "Low complexity",
@@ -89,7 +89,7 @@ const PACKAGE_PAGE_CONTENT: Record<
   growth: {
     heroHeadline: "Grow wealth in step with real harvest cycles and local food production.",
     heroDescription:
-      "Alto Growth connects your capital to seasonal crop production, poultry programmes, and agro-processing operations across verified partner networks. Payouts align with harvest and processing milestones — so your returns follow tangible agricultural output, not abstract promises.",
+      "Alto Growth connects your capital to seasonal crop production, poultry programmes, and agro-processing operations across verified partner networks. Withdrawals align with harvest and processing milestones — so your returns follow tangible agricultural output, not abstract promises.",
     howItWorks: [
       {
         step: "01",
@@ -245,7 +245,7 @@ const PACKAGE_PAGE_CONTENT: Record<
         step: "04",
         title: "Priority settlement review",
         description:
-          "Elite pools receive expedited payout processing within published Monday windows and dedicated support escalation."
+          "Elite pools receive expedited withdrawal processing within published Monday windows and dedicated support escalation."
       }
     ],
     benefits: [

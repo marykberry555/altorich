@@ -76,7 +76,7 @@ export function InvestmentPackageCard({ card, walletBalance, featured }: Props) 
             <div className="flex items-center justify-between gap-3">
               <dt className="flex items-center gap-2 text-[var(--text-muted)]">
                 <Calendar size={15} aria-hidden />
-                Payout
+                Withdrawal
               </dt>
               <dd className="max-w-[58%] text-right text-xs font-semibold leading-snug text-[var(--heading)]">
                 {card.available ? card.payoutTiming : "—"}
@@ -110,11 +110,7 @@ export function InvestmentPackageCard({ card, walletBalance, featured }: Props) 
           packageTitle={card.title}
           minAmount={card.minInvestment}
           maxAmount={card.maxInvestment}
-          weeklyRoiPercent={card.weeklyRoiPercent}
           payoutTiming={card.payoutTiming}
-          cycleDays={card.cycleDays}
-          settlementFrequency={card.settlementFrequency}
-          projectedDaily={card.projectedDaily}
           walletBalance={walletBalance}
         />
       ) : null}

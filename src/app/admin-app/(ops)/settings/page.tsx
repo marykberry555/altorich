@@ -32,7 +32,7 @@ export default async function AdminAppSettingsPage() {
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">System</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-white">Platform settings</h1>
-        <p className="mt-2 text-sm text-zinc-400">Feature flags, announcements, payout windows, and release info.</p>
+        <p className="mt-2 text-sm text-zinc-400">Feature flags, announcements, withdrawal windows, and release info.</p>
       </header>
 
       {featureFlags ? <AdminFeatureFlags initial={featureFlags} /> : null}
@@ -59,7 +59,7 @@ export default async function AdminAppSettingsPage() {
             />
           </label>
           <label className="grid gap-1 text-sm text-zinc-300">
-            Payout windows
+            Withdrawal windows
             <input
               name="withdrawalWindows"
               className="field border-white/10 bg-zinc-950 text-white"

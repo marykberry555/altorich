@@ -30,7 +30,7 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json();
     const parsed = autoPayoutSchema.safeParse(body);
-    if (!parsed.success) throw Errors.badRequest("Invalid auto payout setting.");
+    if (!parsed.success) throw Errors.badRequest("Invalid auto withdrawal setting.");
 
     const profile = await services.profile.setAutoWeeklyPayout(user.id, parsed.data.enabled);
 

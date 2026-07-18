@@ -33,7 +33,7 @@ export default async function PayoutsPage() {
       metrics = adminMetrics;
       withdrawals = recent;
     } catch (error) {
-      loadError = error instanceof Error ? error.message : "Could not load payout data.";
+      loadError = error instanceof Error ? error.message : "Could not load withdrawal data.";
       try {
         pendingWithdrawals = await services.withdrawals.listPending();
       } catch {
@@ -56,8 +56,8 @@ export default async function PayoutsPage() {
     <div className="space-y-8">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Operations</p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--heading)]">Payouts</h1>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">Review manual and automatic payout requests.</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--heading)]">Withdrawals</h1>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">Review manual and automatic withdrawal requests.</p>
       </header>
 
       {loadError ? (
@@ -66,24 +66,24 @@ export default async function PayoutsPage() {
         </Card>
       ) : null}
 
-      <DashboardSection title="Payout metrics">
+      <DashboardSection title="Withdrawal metrics">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <MetricStatCard title="Pending payouts" value={String(metrics?.pendingWithdrawals ?? pendingWithdrawals.length)} accent="gold" />
-          <MetricStatCard title="Payouts (month)" value={formatNaira(metrics?.withdrawalsThisMonth ?? 0)} accent="amber" />
+          <MetricStatCard title="Pending withdrawals" value={String(metrics?.pendingWithdrawals ?? pendingWithdrawals.length)} accent="gold" />
+          <MetricStatCard title="Withdrawals (month)" value={formatNaira(metrics?.withdrawalsThisMonth ?? 0)} accent="amber" />
           <MetricStatCard title="Revenue (earnings)" value={formatNaira(metrics?.revenueEstimate ?? 0)} accent="navy" />
         </div>
         <div className="mt-4">
           <a href="/api/admin/export?type=withdrawals" className="button text-xs">
-            Export payouts CSV
+            Export withdrawals CSV
           </a>
         </div>
       </DashboardSection>
 
       <Card variant="elevated" padding="md">
-        <SectionHeading title={`Open payouts (${pendingWithdrawals.length})`} />
+        <SectionHeading title={`Open withdrawals (${pendingWithdrawals.length})`} />
         <div className="space-y-3">
           {pendingWithdrawals.length === 0 ? (
-            <p className="text-sm text-[var(--text-subtle)]">No open payout requests</p>
+            <p className="text-sm text-[var(--text-subtle)]">No open withdrawal requests</p>
           ) : (
             pendingWithdrawals.map((w) => (
               <div key={w.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
@@ -120,7 +120,7 @@ export default async function PayoutsPage() {
       </Card>
 
       <Card variant="elevated" padding="md">
-        <SectionHeading title="Recent payouts" />
+        <SectionHeading title="Recent withdrawals" />
         <DataTable>
           <Table>
             <TableHeader>
@@ -136,7 +136,7 @@ export default async function PayoutsPage() {
               {withdrawals.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="py-8 text-center text-[var(--text-subtle)]">
-                    No recent payouts
+                    No recent withdrawals
                   </TableCell>
                 </TableRow>
               ) : (

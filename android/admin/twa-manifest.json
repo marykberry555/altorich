@@ -43,8 +43,8 @@
       "chosenIconUrl": "https://altorich.com/admin-app/icon-192.png"
     },
     {
-      "name": "Payouts",
-      "shortName": "Payouts",
+      "name": "Withdrawals",
+      "shortName": "Withdrawals",
       "url": "/admin-app/payouts",
       "chosenIconUrl": "https://altorich.com/admin-app/icon-192.png"
     }

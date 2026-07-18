@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, X } from "lucide-react";
-import type { SettlementFrequency } from "@/lib/investment";
 import { formatNaira } from "@/lib/domain";
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { Button } from "@/components/ui/Button";
@@ -23,11 +22,7 @@ type Props = {
   packageTitle: string;
   minAmount: number;
   maxAmount: number;
-  weeklyRoiPercent: number;
   payoutTiming: string;
-  cycleDays: number;
-  settlementFrequency: SettlementFrequency;
-  projectedDaily: number;
   walletBalance: number;
 };
 
@@ -36,6 +31,13 @@ const STEPS: { id: Step; label: string }[] = [
   { id: "review", label: "Review" },
   { id: "success", label: "Done" }
 ];
+
+function createIdempotencyKey() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 function StepIndicator({ current }: { current: Step }) {
   const index = STEPS.findIndex((s) => s.id === current);
@@ -73,11 +75,7 @@ export function InvestFlowSheet({
   packageTitle,
   minAmount,
   maxAmount,
-  weeklyRoiPercent,
   payoutTiming,
-  cycleDays,
-  settlementFrequency,
-  projectedDaily,
   walletBalance
 }: Props) {
   const router = useRouter();
@@ -113,10 +111,7 @@ export function InvestFlowSheet({
     setReferenceId(undefined);
     setNextHref(undefined);
 
-    const idempotencyKey =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const idempotencyKey = createIdempotencyKey();
 
     try {
       await fetchJson("/api/investments", {
@@ -260,7 +255,7 @@ export function InvestFlowSheet({
                 <dd className="font-semibold text-[var(--emerald)]">Up to {PLATFORM_EARNING.dailyReturnPercent}% daily</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">Payout</dt>
+                <dt className="text-[var(--text-muted)]">Withdrawal</dt>
                 <dd className="max-w-[55%] text-right text-xs font-semibold">{payoutTiming}</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">

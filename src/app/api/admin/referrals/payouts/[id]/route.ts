@@ -19,7 +19,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { id } = await params;
     const body = await request.json();
     const parsed = actionSchema.safeParse(body);
-    if (!parsed.success) throw Errors.badRequest("Invalid payout action.");
+    if (!parsed.success) throw Errors.badRequest("Invalid withdrawal action.");
 
     const payout = await services.referrals.reviewPayout(
       id,

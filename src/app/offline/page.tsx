@@ -12,7 +12,7 @@ export default function OfflinePage() {
         <WifiOff className="mx-auto text-[var(--emerald)]" size={40} aria-hidden />
         <h1 className="mt-4 text-xl font-bold text-[var(--heading)]">You&apos;re offline</h1>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          AltoRich needs a connection for login, investments, and payouts. Cached pages may still be available when you reconnect.
+          AltoRich needs a connection for login, investments, and withdrawals. Cached pages may still be available when you reconnect.
         </p>
         <div className="mt-6 flex flex-col gap-2">
           <Button type="button" onClick={() => window.location.reload()}>

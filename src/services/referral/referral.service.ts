@@ -379,7 +379,7 @@ export class ReferralService {
       throw new AppError("Insufficient referral wallet balance.", 400, "INSUFFICIENT_BALANCE");
     }
     if (input.amount < config.min_payout_threshold) {
-      throw new AppError(`Minimum referral payout is ₦${config.min_payout_threshold.toLocaleString("en-NG")}.`, 400, "BELOW_MINIMUM");
+      throw new AppError(`Minimum referral withdrawal is ₦${config.min_payout_threshold.toLocaleString("en-NG")}.`, 400, "BELOW_MINIMUM");
     }
 
     const { data: payout, error } = await this.supabase
@@ -440,7 +440,7 @@ export class ReferralService {
     rejectionReason?: string
   ) {
     const { data: payout, error } = await this.supabase.from("referral_payouts").select("*").eq("id", payoutId).single();
-    if (error || !payout) throw Errors.notFound("Referral payout");
+    if (error || !payout) throw Errors.notFound("Referral withdrawal");
 
     const statusMap = { approve: "approved", reject: "rejected", paid: "paid" } as const;
     const nextStatus = statusMap[action];

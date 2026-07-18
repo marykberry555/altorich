@@ -86,8 +86,8 @@ export function AdminFeatureFlags({ initial }: Props) {
         <fieldset className="space-y-2">
           <legend className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Identity</legend>
           <ToggleRow
-            label="Require KYC for payouts"
-            description="When off, members can request payouts without identity verification."
+            label="Require KYC for withdrawals"
+            description="When off, members can request withdrawals without identity verification."
             checked={flags.kyc_required}
             onChange={(v) => setFlags((f) => ({ ...f, kyc_required: v }))}
           />
@@ -125,15 +125,15 @@ export function AdminFeatureFlags({ initial }: Props) {
         </fieldset>
 
         <fieldset className="space-y-2">
-          <legend className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Crypto payouts</legend>
+          <legend className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Crypto withdrawals</legend>
           <ToggleRow
-            label="Enable crypto payouts"
-            description="Allow members to request payouts to crypto wallets."
+            label="Enable crypto withdrawals"
+            description="Allow members to request withdrawals to crypto wallets."
             checked={flags.enable_crypto_payouts}
             onChange={(v) => setFlags((f) => ({ ...f, enable_crypto_payouts: v }))}
           />
           {!cryptoMasterPayout ? (
-            <p className="text-xs text-[var(--text-subtle)]">Asset toggles above apply when crypto payouts are enabled.</p>
+            <p className="text-xs text-[var(--text-subtle)]">Asset toggles above apply when crypto withdrawals are enabled.</p>
           ) : null}
         </fieldset>
       </div>

@@ -2,7 +2,7 @@ import { COMPANY, REGULATORY_DISCLOSURE, REGULATORY_PLACEHOLDER } from "@/lib/co
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 export const hero = {
-  eyebrow: "Verified Platform · Monday payouts",
+  eyebrow: "Verified Platform · Monday withdrawals",
   title: "Earn 5% Daily | 35% every Monday",
   subtitle:
     "Choose an investment sector, fund your account, and watch your investment grow through Alto Rich's guaranteed Platform Earning Model.",
@@ -20,7 +20,7 @@ export const valueProps = [
   {
     title: "Clear settlement windows",
     description:
-      "Payouts follow published schedules. You always know when requests are reviewed and processed."
+      "Withdrawals follow published schedules. You always know when requests are reviewed and processed."
   },
   {
     title: "One transparent Platform Earning Model",
@@ -52,7 +52,7 @@ export const howItWorks = [
   {
     step: "04",
     title: "Earn on schedule",
-    description: "Weekly settlements every Monday. Request payout to your bank on published windows."
+    description: "Weekly settlements every Monday. Request withdrawal to your bank on published windows."
   }
 ];
 
@@ -82,7 +82,7 @@ export const sampleTestimonials = [
     name: "Fatima B.",
     role: "Diaspora · supporting family in Kano",
     quote:
-      "I fund from abroad and my sister manages payouts locally. The process is structured and documented — exactly what our family needed.",
+      "I fund from abroad and my sister manages withdrawals locally. The process is structured and documented — exactly what our family needed.",
     sample: true
   }
 ];
@@ -102,7 +102,7 @@ export const faqs = [
   },
   {
     q: "When can I withdraw?",
-    a: "Payout requests are accepted during published windows — typically Mondays and Thursdays from 8:00 AM West Africa Time. Payouts are processed after verification."
+    a: "Withdrawal requests are accepted during published windows — typically Mondays and Thursdays from 8:00 AM West Africa Time. Withdrawals are processed after verification."
   },
   {
     q: "Who can invest?",
@@ -185,7 +185,7 @@ export const aboutPage = {
     },
     {
       title: "Published member processes",
-      description: "Deposits, investments, and payouts follow documented steps — no guesswork."
+      description: "Deposits, investments, and withdrawals follow documented steps — no guesswork."
     },
     {
       title: "Verified identity checks",
@@ -205,7 +205,7 @@ export const aboutPage = {
     },
     {
       title: "Responsive support",
-      description: "Reach us when you need clarity — from onboarding questions to payout status."
+      description: "Reach us when you need clarity — from onboarding questions to withdrawal status."
     }
   ],
   operations: [

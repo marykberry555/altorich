@@ -80,7 +80,7 @@ export function HomePage({ homepageStats }: Props) {
               />
             </div>
             <p className="mt-3 text-xs text-[var(--text-subtle)]">
-              UK-registered · Naira-native · Monday 09:00 WAT payouts
+              UK-registered · Naira-native · Monday 09:00 WAT withdrawals
             </p>
           </div>
 
@@ -159,7 +159,7 @@ export function HomePage({ homepageStats }: Props) {
             dark
             eyebrow="Trust"
             title="Built on verification, not promises."
-            description={`Every deposit is reconciled. Every payout follows published windows. One ${PLATFORM_EARNING.modelName} — up to ${PLATFORM_EARNING.dailyReturnPercent}% daily — guaranteed.`}
+            description={`Every deposit is reconciled. Every withdrawal follows published windows. One ${PLATFORM_EARNING.modelName} — up to ${PLATFORM_EARNING.dailyReturnPercent}% daily — guaranteed.`}
           />
           <div className="grid gap-3 sm:grid-cols-2">
             {trustIndicators.map((item) => (

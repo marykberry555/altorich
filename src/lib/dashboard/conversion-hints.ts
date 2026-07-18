@@ -18,7 +18,7 @@ export function buildActionHints(state: DashboardConversionState): NotificationR
     hints.push({
       id: "hint-track",
       title: "Your investment is active",
-      body: "Track live earnings in your portfolio. Payouts follow the Monday schedule.",
+      body: "Track live earnings in your portfolio. Withdrawals follow the Monday schedule.",
       created_at: now,
       read_at: null
     });

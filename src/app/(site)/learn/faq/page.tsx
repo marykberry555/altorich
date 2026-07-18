@@ -8,7 +8,7 @@ import { buildMetadata } from "@/lib/seo";
 export const metadata = buildMetadata({
   title: "FAQs — Common questions",
   description:
-    "Straight answers on registration, wallet funding, returns, and Monday 09:00 WAT payouts for Alto Rich members.",
+    "Straight answers on registration, wallet funding, returns, and Monday 09:00 WAT withdrawals for Alto Rich members.",
   path: "/learn/faq"
 });
 
@@ -20,7 +20,7 @@ export default function FaqPage() {
           <PageHero
             eyebrow="FAQs"
             title="Common questions from Nigerian members"
-            description="Straight answers on registration, wallet funding, returns, and payouts — no marketing spin."
+            description="Straight answers on registration, wallet funding, returns, and withdrawals — no marketing spin."
           />
         </div>
       </section>

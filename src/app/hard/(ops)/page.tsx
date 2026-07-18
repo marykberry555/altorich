@@ -48,9 +48,9 @@ export default async function AdminPage() {
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricStatCard title="Deposits (month)" value={formatNaira(metrics?.depositsThisMonth ?? 0)} accent="emerald" href={`${HARD_OPS_HOME}/deposits`} />
-          <MetricStatCard title="Payouts (month)" value={formatNaira(metrics?.withdrawalsThisMonth ?? 0)} accent="amber" href={`${HARD_OPS_HOME}/payouts`} />
+          <MetricStatCard title="Withdrawals (month)" value={formatNaira(metrics?.withdrawalsThisMonth ?? 0)} accent="amber" href={`${HARD_OPS_HOME}/payouts`} />
           <MetricStatCard
-            title="Pending payouts"
+            title="Pending withdrawals"
             value={String((metrics?.pendingWithdrawals ?? 0) + pendingReferralPayouts)}
             accent="gold"
             href={`${HARD_OPS_HOME}/payouts`}
@@ -62,7 +62,7 @@ export default async function AdminPage() {
             Export funding CSV
           </a>
           <a href="/api/admin/export?type=withdrawals" className="button text-xs">
-            Export payouts CSV
+            Export withdrawals CSV
           </a>
           <a href="/api/admin/export?type=members" className="button text-xs">
             Export members CSV

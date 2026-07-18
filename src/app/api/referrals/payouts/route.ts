@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const parsed = payoutSchema.safeParse({ ...body, amount: Number(body.amount) });
-    if (!parsed.success) throw Errors.badRequest("Invalid referral payout request.");
+    if (!parsed.success) throw Errors.badRequest("Invalid referral withdrawal request.");
 
     const payout = await services.referrals.requestPayout(user.id, {
       ...parsed.data,
