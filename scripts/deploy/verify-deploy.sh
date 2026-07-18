@@ -162,7 +162,23 @@ check_route "$PUBLIC_BASE" "public" "/"
 
 # Fail the deploy if critical public/auth routes render error boundaries or 5xx.
 deploy_log "Running release gate against ${PUBLIC_BASE}..."
-if ! (cd "${APP_ROOT}" && RELEASE_GATE_BASE_URL="${PUBLIC_BASE}" node scripts/release-gate.mjs); then
+NODE_BIN="$(command -v node || true)"
+if [[ -z "$NODE_BIN" ]]; then
+  for candidate in \
+    "/home/altosujd/nodevenv/repositories/alto-app/${NODE_VERSION}/bin/node" \
+    "/home/altosujd/nodevenv/repositories/alto-app/22/bin/node" \
+    "/home/altosujd/nodevenv/repositories/alto-app/20/bin/node"; do
+    if [[ -x "$candidate" ]]; then
+      NODE_BIN="$candidate"
+      break
+    fi
+  done
+fi
+if [[ -z "$NODE_BIN" ]]; then
+  deploy_log "FAIL: release gate — node binary not found"
+  exit 1
+fi
+if ! (cd "${APP_ROOT}" && RELEASE_GATE_BASE_URL="${PUBLIC_BASE}" "$NODE_BIN" scripts/release-gate.mjs); then
   deploy_log "FAIL: release gate"
   exit 1
 fi
