@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { COMPANY } from "@/lib/company";
 import {
   REFERRAL_INVALID_MESSAGE,
@@ -8,7 +6,6 @@ import {
   normalizeReferralCode
 } from "@/lib/referral/attribution";
 import { resolveReferralCode } from "@/lib/referral/resolve";
-import { isSocialPreviewBot } from "@/lib/security/bot-block";
 import { ReferralLandingClient } from "@/components/referral/ReferralLandingClient";
 
 type Props = { params: Promise<{ code: string }> };
@@ -34,7 +31,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical },
-    // Allow social crawlers to read this share surface; site-wide robots stay private.
     robots: {
       index: false,
       follow: false,
@@ -58,12 +54,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+/** Served to social preview crawlers (humans are redirected in middleware). */
 export default async function ReferralShortLinkPage({ params }: Props) {
   const { code: raw } = await params;
   const code = normalizeReferralCode(raw);
 
   if (!code) {
-    redirect("/auth/register");
+    return (
+      <ReferralLandingClient
+        code=""
+        referrerName={null}
+        invalid
+        invalidMessage={REFERRAL_INVALID_MESSAGE}
+        registerHref="/auth/register"
+      />
+    );
   }
 
   let referrerName: string | null = null;
@@ -73,15 +78,6 @@ export default async function ReferralShortLinkPage({ params }: Props) {
     referrerName = resolved.referrerName;
   } catch {
     invalid = true;
-  }
-
-  const headerList = await headers();
-  const ua = headerList.get("user-agent");
-  const isPreviewBot = isSocialPreviewBot(ua);
-
-  // Humans go straight to signup with the code attached; preview bots stay to read OG tags.
-  if (!isPreviewBot && !invalid) {
-    redirect(buildRegisterUrlWithRef(code));
   }
 
   return (
