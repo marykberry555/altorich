@@ -4,10 +4,11 @@ import { HARD_OPS_HOME } from "@/lib/hard-ops";
 import { ADMIN_APP_HOME, ADMIN_APP_INSTALL } from "@/lib/admin-app/constants";
 import { buildPublicUrl } from "@/lib/request-url";
 import { applyDocumentNoStoreHeaders } from "@/lib/cache/response-headers";
-import { botBlockedResponse, isBlockedBot, X_ROBOTS_TAG } from "@/lib/security/bot-block";
+import { botBlockedResponse, isBlockedBot, isSocialPreviewBot, X_ROBOTS_TAG } from "@/lib/security/bot-block";
 import {
   REFERRAL_COOKIE,
   REFERRAL_TTL_SECONDS,
+  buildRegisterUrlWithRef,
   normalizeReferralCode,
   referralCodeFromSearchParams
 } from "@/lib/referral/attribution";
@@ -131,6 +132,16 @@ export async function middleware(request: NextRequest) {
 
   if (isBlockedBot(userAgent, pathname)) {
     return botBlockedResponse();
+  }
+
+  // Short referral links: humans go to signup; social crawlers stay for Open Graph HTML.
+  const referralPath = pathname.match(/^\/r\/([A-Za-z0-9_-]+)/i);
+  if (referralPath) {
+    const code = normalizeReferralCode(referralPath[1]);
+    if (code && !isSocialPreviewBot(userAgent)) {
+      const target = buildPublicUrl(buildRegisterUrlWithRef(code), request);
+      return withReferralAttribution(request, NextResponse.redirect(target));
+    }
   }
 
   if (pathname === "/admin") {
