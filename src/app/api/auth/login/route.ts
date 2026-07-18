@@ -10,6 +10,7 @@ import { userIsAdmin } from "@/lib/auth/admin-role";
 import { captureLoginActivity } from "@/lib/auth/capture-login-activity";
 import { recordSecurityEvent } from "@/lib/auth/record-security-event";
 import { clientIp, rateLimit } from "@/lib/security/rate-limit";
+import { clientIpFromHeaders, geoFromRequestHeaders } from "@/lib/auth/user-agent";
 
 const schema = z.object({
   username: z.string().min(3),
@@ -40,11 +41,14 @@ export async function POST(req: Request) {
     }
 
     const auth = await getAuthService();
+    const geo = geoFromRequestHeaders(req.headers);
     const result = await auth.login({
       username: body.username,
       pin: body.pin,
       deviceFingerprint: body.deviceFingerprint,
-      userAgent: body.userAgent ?? req.headers.get("user-agent") ?? ""
+      userAgent: body.userAgent ?? req.headers.get("user-agent") ?? "",
+      ipAddress: clientIpFromHeaders(req.headers) ?? null,
+      country: geo.country ?? null
     });
 
     if (result.requiresDeviceOtp) {

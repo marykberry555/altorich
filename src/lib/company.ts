@@ -17,7 +17,11 @@ export const COMPANY = {
   nigeriaOffice: "Lagos, Nigeria",
   currency: "NGN" as const,
   founded: "2024",
-  tagline: "Invest smarter. Track your portfolio. Grow your wealth with confidence."
+  tagline: "Invest smarter. Track your portfolio. Grow your wealth with confidence.",
+  social: {
+    facebook: "https://www.facebook.com/realaltorich",
+    whatsappChannel: "https://whatsapp.com/channel/0029VbDX5IsLdQebJ8M3TM43"
+  }
 } as const;
 
 export const REGULATORY_DISCLOSURE =

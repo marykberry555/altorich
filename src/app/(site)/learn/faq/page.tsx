@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { faqs } from "@/content/site";
 import { PageHero } from "@/components/marketing/PageHero";
+import { OfficialSocialLinks } from "@/components/social/OfficialSocialLinks";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { buildMetadata } from "@/lib/seo";
@@ -34,14 +35,21 @@ export default function FaqPage() {
             </Card>
           ))}
 
-          <div className="pt-6 flex flex-wrap gap-3">
-            <Link href="/contact">
-              <Button variant="outline">Visit help centre</Button>
-            </Link>
-            <Link href="/contact">
-              <Button>Still need help?</Button>
-            </Link>
-          </div>
+          <Card variant="outline" className="mt-8">
+            <h2 className="font-semibold text-[var(--heading)]">Community & help</h2>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              Join the official Alto Rich channels for updates, or contact support if you need account help.
+            </p>
+            <OfficialSocialLinks className="mt-4" size="sm" />
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href="/contact">
+                <Button variant="outline">Visit help centre</Button>
+              </Link>
+              <Link href="/contact">
+                <Button>Still need help?</Button>
+              </Link>
+            </div>
+          </Card>
         </div>
       </section>
     </>

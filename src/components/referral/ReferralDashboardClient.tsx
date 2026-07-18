@@ -23,6 +23,7 @@ import { ReferralPayoutPanel } from "@/components/referral/ReferralPayoutPanel";
 import { VipLevelUpCelebration } from "@/components/referral/VipLevelUpCelebration";
 import { VipLevelCardGrid } from "@/components/referral/VipLevelCardGrid";
 import { VipProgressPanel } from "@/components/referral/VipProgressPanel";
+import { OfficialSocialLinks } from "@/components/social/OfficialSocialLinks";
 import { getVipDisplayTitle } from "@/lib/referral/vip-display";
 
 type Props = {
@@ -195,6 +196,11 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
             >
               <Mail size={14} /> Email
             </a>
+          </div>
+
+          <div className="mt-6 border-t border-[var(--border)] pt-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Follow us</p>
+            <OfficialSocialLinks className="mt-3" size="sm" />
           </div>
         </Card>
 

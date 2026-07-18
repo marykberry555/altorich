@@ -780,6 +780,12 @@ export type Database = {
           user_agent: string;
           last_seen_at: string;
           created_at: string;
+          device_name: string;
+          browser: string;
+          operating_system: string;
+          ip_address: string | null;
+          country: string | null;
+          trusted_token: string | null;
         };
         Insert: {
           id?: string;
@@ -787,6 +793,12 @@ export type Database = {
           device_fingerprint: string;
           user_agent?: string;
           last_seen_at?: string;
+          device_name?: string;
+          browser?: string;
+          operating_system?: string;
+          ip_address?: string | null;
+          country?: string | null;
+          trusted_token?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["trusted_devices"]["Insert"]>;
         Relationships: TableRelationships;

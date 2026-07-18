@@ -67,8 +67,8 @@ export function investmentActivatedEmailHtml(amount: number, reference?: string)
 export function newDeviceLoginEmailHtml() {
   return activityNotificationEmailHtml({
     title: "New device sign-in",
-    body: "Your AltoRich account was signed in from a new browser or device. If this was you, no action is needed.",
-    ctaLabel: "Review account",
+    body: `Your Alto Rich account was signed in from a new browser or device. If this was you, no action is required. If you do not recognize this activity, contact ${COMPANY.supportEmail} immediately.`,
+    ctaLabel: "Review Account",
     ctaHref: `${COMPANY.siteUrl}/settings`
   });
 }

@@ -1,10 +1,20 @@
 import { COMPANY } from "@/lib/company";
+import { OFFICIAL_SOCIAL_CHANNELS } from "@/lib/social/official-channels";
 
 type EmailLayoutOptions = {
   title: string;
   body: string;
   preview?: string;
 };
+
+function emailSocialFooter() {
+  const links = OFFICIAL_SOCIAL_CHANNELS.map(
+    (c) =>
+      `<a href="${c.href}" style="color:#047857;text-decoration:none;font-weight:600;margin-right:12px;" target="_blank" rel="noopener noreferrer">${c.label}</a>`
+  ).join("");
+
+  return `<p style="margin:12px 0 0;font-size:12px;line-height:1.6;color:#64748b;">Follow us: ${links}</p>`;
+}
 
 export function emailLayout({ title, body, preview }: EmailLayoutOptions): string {
   const previewText = preview ?? title;
@@ -40,7 +50,8 @@ export function emailLayout({ title, body, preview }: EmailLayoutOptions): strin
                 Questions? Reply to this email or write to
                 <a href="mailto:${COMPANY.supportEmail}" style="color:#047857;text-decoration:none;font-weight:600;">${COMPANY.supportEmail}</a>
               </p>
-              <p style="margin:0;font-size:11px;line-height:1.6;color:#94a3b8;">
+              ${emailSocialFooter()}
+              <p style="margin:12px 0 0;font-size:11px;line-height:1.6;color:#94a3b8;">
                 ${COMPANY.legalName} · ${COMPANY.addressFull}
               </p>
             </td>

@@ -5,19 +5,24 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProfileSettingsForm } from "@/components/ProfileSettingsForm";
 import { BankAccountsManager } from "@/components/settings/BankAccountsManager";
+import { TrustedDevicesManager } from "@/components/settings/TrustedDevicesManager";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
+import { getAuthService } from "@/lib/auth/service";
 
 export default async function SettingsPage() {
   const user = await getSessionUser();
   const services = await getUserServices();
+  const auth = await getAuthService();
 
   let profile = null;
   let bankAccounts: Awaited<ReturnType<NonNullable<typeof services>["profile"]["listBankAccounts"]>> = [];
+  let trustedDevices: Awaited<ReturnType<typeof auth.listTrustedDevices>> = [];
 
   if (user && services) {
     profile = await services.profile.getProfile(user.id).catch(() => null);
     bankAccounts = await services.profile.listBankAccounts(user.id).catch(() => []);
+    trustedDevices = await auth.listTrustedDevices(user.id).catch(() => []);
   }
 
   const prefs = (profile?.notification_preferences ?? { in_app: true, email: true, sms: false }) as {
@@ -53,6 +58,15 @@ export default async function SettingsPage() {
         <Link href="/withdrawals" className="mt-4 inline-block">
           <Button size="sm">Manage withdrawals</Button>
         </Link>
+      </Card>
+
+      <Card variant="elevated" className="mt-4">
+        <h2 className="font-semibold text-[var(--heading)]">Trusted devices</h2>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          Browsers you have verified can sign in with username and PIN only. Remove a device to require email
+          verification again.
+        </p>
+        <TrustedDevicesManager initialDevices={trustedDevices} />
       </Card>
 
       <Card variant="elevated" className="mt-4">

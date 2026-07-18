@@ -36,6 +36,7 @@ const authRoutes = [
   "/auth/change-pin",
   "/auth/change-password",
   "/auth/verify",
+  "/auth/verify-device",
   "/hard/auth",
   "/admin/auth",
   "/admin/download",

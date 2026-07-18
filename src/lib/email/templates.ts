@@ -33,15 +33,18 @@ export function welcomeEmailHtml(firstName: string) {
   });
 }
 
-export function deviceVerificationEmailHtml(code: string) {
+export function deviceVerificationEmailHtml(code: string, verifyLink: string) {
   return emailLayout({
     title: "Verify your device",
     preview: `New sign-in to your ${COMPANY.brand} account — code ${code}`,
     body: `
-      ${emailParagraph("We noticed a sign-in from a new device or browser. Enter this code to continue:")}
+      ${emailParagraph("We noticed a sign-in from a new device or browser. Enter this code on the sign-in screen, or verify in one click:")}
       ${emailCodeBlock(code)}
-      ${emailButton(`${COMPANY.siteUrl}/auth/login`, "Return to sign in")}
-      ${emailMuted(`If this wasn't you, secure your account immediately and contact us at ${COMPANY.supportEmail}.`)}
+      ${emailParagraph("Or continue with this secure link (opens on this device):")}
+      ${emailButton(verifyLink, "Verify this device")}
+      ${emailMuted("If the button does not work, copy and paste this link into your browser:")}
+      <p style="margin:8px 0 0;font-size:11px;line-height:1.5;color:#94a3b8;word-break:break-all;">${verifyLink}</p>
+      ${emailMuted(`The code and link expire in 10 minutes. If this wasn't you, contact us at ${COMPANY.supportEmail} immediately.`)}
     `
   });
 }
@@ -146,6 +149,7 @@ export type EmailSample = {
 
 export function getEmailSamples(): EmailSample[] {
   const sampleLink = `${COMPANY.siteUrl}/auth/verify?email=demo@altorich.com&token=sample-token`;
+  const deviceLink = `${COMPANY.siteUrl}/auth/verify-device?email=demo@altorich.com&token=sample-device-token`;
 
   return [
     {
@@ -162,9 +166,9 @@ export function getEmailSamples(): EmailSample[] {
     },
     {
       id: "device-otp",
-      name: "New device sign-in",
+      name: "New device verification (OTP + link)",
       subject: "Verify your device",
-      html: deviceVerificationEmailHtml("719304")
+      html: deviceVerificationEmailHtml("719304", deviceLink)
     },
     {
       id: "pin-recovery",

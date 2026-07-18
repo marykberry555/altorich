@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { COMPANY } from "@/lib/company";
 import { BrandLogoStatic } from "@/components/brand/BrandLogoStatic";
+import { OfficialSocialLinks } from "@/components/social/OfficialSocialLinks";
 import { footerLinks } from "@/content/navigation";
 
 export function SiteFooter() {
@@ -22,6 +23,10 @@ export function SiteFooter() {
                 {COMPANY.supportEmail}
               </a>
             </p>
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--gold-light)]">Follow us</p>
+              <OfficialSocialLinks variant="onDark" size="sm" className="mt-2" />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 lg:col-span-3">

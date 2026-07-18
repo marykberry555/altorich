@@ -3,6 +3,7 @@ import { Mail, MapPin } from "lucide-react";
 import { branches } from "@/content/site";
 import { PageHero } from "@/components/marketing/PageHero";
 import { ContactForm } from "@/components/marketing/ContactForm";
+import { OfficialSocialLinks } from "@/components/social/OfficialSocialLinks";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { COMPANY } from "@/lib/company";
@@ -43,6 +44,10 @@ export default function ContactPage() {
               <p className="mt-4 text-xs text-[var(--text-muted)]">
                 {COMPANY.legalName} · Company No. {COMPANY.companyNumber}
               </p>
+              <div className="mt-5 border-t border-[var(--border)] pt-4">
+                <h3 className="text-sm font-semibold text-[var(--heading)]">Follow us</h3>
+                <OfficialSocialLinks className="mt-3" size="sm" />
+              </div>
             </Card>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:col-span-2">
@@ -65,7 +70,8 @@ export default function ContactPage() {
             <h2 className="font-semibold text-[var(--heading)]">Before you write</h2>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
               Many questions are answered in our help centre and FAQs. For deposit or withdrawal issues, include your
-              transfer reference and registered phone number.
+              transfer reference and registered phone number. You can also join the Alto Rich community on Facebook
+              and WhatsApp.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <Link href="/learn/faq">
@@ -78,6 +84,7 @@ export default function ContactPage() {
                 <Button variant="outline" size="sm">Complaints procedure</Button>
               </Link>
             </div>
+            <OfficialSocialLinks className="mt-5" size="sm" />
           </Card>
         </div>
       </section>

@@ -152,6 +152,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         });
         if (emailError) throw emailError;
         fieldChanges.push({ field: "email", oldValue: previousEmail, newValue: body.email });
+        await services.supabase.from("trusted_devices").delete().eq("user_id", memberId);
       }
     }
 

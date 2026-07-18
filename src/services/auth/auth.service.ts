@@ -4,7 +4,6 @@ import type { Database } from "@/types/database";
 import { Errors, AppError } from "@/lib/errors";
 import { hashPin, isValidPin, verifyPin } from "@/lib/auth/pin";
 import { generateOtpCode, otpExpiresAt } from "@/lib/auth/otp";
-import { getDeviceFingerprint } from "@/lib/auth/device";
 import {
   deviceVerificationEmailHtml,
   pinRecoveryEmailHtml,
@@ -14,6 +13,7 @@ import {
   welcomeEmailHtml
 } from "@/services/auth/email.service";
 import { newDeviceLoginEmailHtml } from "@/lib/email/activity-templates";
+import { parseUserAgent } from "@/lib/auth/user-agent";
 import { getPublicEnv } from "@/lib/env";
 import { assertIdentityAvailable, findUserByEmail } from "@/lib/validation/check-identity";
 import {
@@ -62,8 +62,61 @@ export class AuthService {
     if (error) throw error;
     if (!data) throw new AppError("Invalid or expired verification code.", 400, "INVALID_OTP");
 
-    await this.supabase.from("auth_otps").update({ consumed_at: new Date().toISOString() }).eq("id", data.id);
+    const consumedAt = new Date().toISOString();
+    await this.supabase.from("auth_otps").update({ consumed_at: consumedAt }).eq("id", data.id);
+    // Invalidate sibling codes/links for the same purpose (e.g. 6-digit + magic token).
+    await this.supabase
+      .from("auth_otps")
+      .update({ consumed_at: consumedAt })
+      .eq("email", email.toLowerCase())
+      .eq("purpose", purpose)
+      .is("consumed_at", null);
     return data;
+  }
+
+  private deviceDisplayMeta(userAgent: string) {
+    const parsed = parseUserAgent(userAgent);
+    const deviceLabel =
+      parsed.deviceType === "mobile"
+        ? "Mobile"
+        : parsed.deviceType === "tablet"
+          ? "Tablet"
+          : parsed.deviceType === "desktop"
+            ? "Desktop"
+            : "Device";
+    return {
+      device_name: `${parsed.browser} on ${parsed.operatingSystem} (${deviceLabel})`,
+      browser: parsed.browser,
+      operating_system: parsed.operatingSystem
+    };
+  }
+
+  async listTrustedDevices(userId: string) {
+    const { data, error } = await this.supabase
+      .from("trusted_devices")
+      .select(
+        "id, device_fingerprint, device_name, browser, operating_system, user_agent, ip_address, country, last_seen_at, created_at"
+      )
+      .eq("user_id", userId)
+      .order("last_seen_at", { ascending: false });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async revokeTrustedDevice(userId: string, deviceId: string) {
+    const { error } = await this.supabase
+      .from("trusted_devices")
+      .delete()
+      .eq("user_id", userId)
+      .eq("id", deviceId);
+    if (error) throw error;
+    return { ok: true as const };
+  }
+
+  async revokeAllTrustedDevices(userId: string) {
+    const { error } = await this.supabase.from("trusted_devices").delete().eq("user_id", userId);
+    if (error) throw error;
+    return { ok: true as const };
   }
 
   async register(input: {
@@ -241,7 +294,14 @@ export class AuthService {
     return this.createSessionForUser(data.user_id);
   }
 
-  async login(input: { username: string; pin: string; deviceFingerprint: string; userAgent: string }) {
+  async login(input: {
+    username: string;
+    pin: string;
+    deviceFingerprint: string;
+    userAgent: string;
+    ipAddress?: string | null;
+    country?: string | null;
+  }) {
     const username = input.username.trim().toLowerCase();
     const { data: profile, error } = await this.supabase
       .from("profiles")
@@ -293,13 +353,23 @@ export class AuthService {
         }
 
         const otp = await this.createOtp(authUser.user.email, "login_device", profile.id);
+        const magicToken = randomBytes(24).toString("hex");
+        await this.supabase.from("auth_otps").insert({
+          email: authUser.user.email.toLowerCase(),
+          code: magicToken,
+          purpose: "login_device",
+          user_id: profile.id,
+          expires_at: otpExpiresAt(10)
+        });
+
+        const env = getPublicEnv();
+        const verifyLink = `${env.NEXT_PUBLIC_SITE_URL}/auth/verify-device?email=${encodeURIComponent(authUser.user.email)}&token=${magicToken}`;
         await sendAuthEmail({
           to: authUser.user.email,
           subject: "Verify your device",
-          html: deviceVerificationEmailHtml(otp)
+          html: deviceVerificationEmailHtml(otp, verifyLink)
         });
         if (process.env.NODE_ENV !== "production") {
-           
           console.info(`[AltoRich dev] Device OTP for ${authUser.user.email}: ${otp}`);
         }
         return {
@@ -311,9 +381,18 @@ export class AuthService {
         };
       }
 
+      const meta = this.deviceDisplayMeta(input.userAgent);
       await this.supabase
         .from("trusted_devices")
-        .update({ last_seen_at: new Date().toISOString(), user_agent: input.userAgent })
+        .update({
+          last_seen_at: new Date().toISOString(),
+          user_agent: input.userAgent,
+          device_name: meta.device_name,
+          browser: meta.browser,
+          operating_system: meta.operating_system,
+          ip_address: input.ipAddress ?? null,
+          country: input.country ?? null
+        })
         .eq("id", trusted.id);
     }
 
@@ -331,16 +410,38 @@ export class AuthService {
     code: string;
     deviceFingerprint: string;
     userAgent: string;
+    ipAddress?: string | null;
+    country?: string | null;
   }) {
     const otp = await this.consumeOtp(input.email, input.code, "login_device");
     if (!otp.user_id) throw Errors.notFound("User");
 
-    await this.supabase.from("trusted_devices").upsert({
-      user_id: otp.user_id,
-      device_fingerprint: input.deviceFingerprint,
-      user_agent: input.userAgent,
-      last_seen_at: new Date().toISOString()
-    });
+    const meta = this.deviceDisplayMeta(input.userAgent);
+    const trustedToken = randomBytes(16).toString("hex");
+
+    const { data: existing } = await this.supabase
+      .from("trusted_devices")
+      .select("id")
+      .eq("user_id", otp.user_id)
+      .eq("device_fingerprint", input.deviceFingerprint)
+      .maybeSingle();
+
+    const { error: upsertError } = await this.supabase.from("trusted_devices").upsert(
+      {
+        user_id: otp.user_id,
+        device_fingerprint: input.deviceFingerprint,
+        user_agent: input.userAgent,
+        last_seen_at: new Date().toISOString(),
+        device_name: meta.device_name,
+        browser: meta.browser,
+        operating_system: meta.operating_system,
+        ip_address: input.ipAddress ?? null,
+        country: input.country ?? null,
+        trusted_token: trustedToken
+      },
+      { onConflict: "user_id,device_fingerprint" }
+    );
+    if (upsertError) throw upsertError;
 
     const { data: profile } = await this.supabase
       .from("profiles")
@@ -350,15 +451,21 @@ export class AuthService {
 
     const session = await this.createSessionForUser(otp.user_id);
 
-    await this.supabase.auth.admin.getUserById(otp.user_id).then(async ({ data: authUser }) => {
-      if (authUser.user?.email) {
-        await sendAuthEmail({
-          to: authUser.user.email,
-          subject: "New device sign-in · AltoRich",
-          html: newDeviceLoginEmailHtml()
-        });
-      }
-    }).catch(() => null);
+    // Notification email only after a newly verified device (not every login).
+    if (!existing) {
+      await this.supabase.auth.admin
+        .getUserById(otp.user_id)
+        .then(async ({ data: authUser }) => {
+          if (authUser.user?.email) {
+            await sendAuthEmail({
+              to: authUser.user.email,
+              subject: "New device sign-in",
+              html: newDeviceLoginEmailHtml()
+            });
+          }
+        })
+        .catch(() => null);
+    }
 
     return {
       ...session,
@@ -441,6 +548,7 @@ export class AuthService {
 
     const pinHash = hashPin(newPin);
     await this.supabase.from("profiles").update({ pin_hash: pinHash, must_change_pin: false }).eq("id", otp.user_id);
+    await this.revokeAllTrustedDevices(otp.user_id);
     return { ok: true };
   }
 
@@ -469,6 +577,7 @@ export class AuthService {
       .from("profiles")
       .update({ pin_hash: hashPin(newPin), must_change_pin: false })
       .eq("id", userId);
+    await this.revokeAllTrustedDevices(userId);
     return { ok: true };
   }
 
@@ -478,6 +587,7 @@ export class AuthService {
       .from("profiles")
       .update({ pin_hash: hashPin(newPin), must_change_pin: false })
       .eq("id", userId);
+    await this.revokeAllTrustedDevices(userId);
     return { ok: true };
   }
 
