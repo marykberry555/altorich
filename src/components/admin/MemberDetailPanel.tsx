@@ -6,6 +6,7 @@ import { formatNaira } from "@/lib/domain";
 import { StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/design-system";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { MemberAvatar } from "@/components/profile/MemberAvatar";
 import type { Database } from "@/types/database";
 
 type MemberDetail = {
@@ -69,14 +70,24 @@ export function MemberDetailPanel({ memberId, memberName, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
       <Card variant="elevated" padding="md" className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden">
         <div className="mb-4 flex items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Member profile</p>
-            <h2 className="mt-1 text-xl font-bold text-[var(--heading)]">{title}</h2>
+          <div className="flex min-w-0 items-start gap-4">
             {detail ? (
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
-                {detail.email ?? detail.profile.phone ?? detail.profile.username ?? detail.profile.invite_code}
-              </p>
+              <MemberAvatar
+                fullName={detail.profile.full_name || memberName || "Member"}
+                avatarUrl={detail.profile.avatar_url}
+                size="xl"
+                href={null}
+              />
             ) : null}
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Member profile</p>
+              <h2 className="mt-1 text-xl font-bold text-[var(--heading)]">{title}</h2>
+              {detail ? (
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
+                  {detail.email ?? detail.profile.phone ?? detail.profile.username ?? detail.profile.invite_code}
+                </p>
+              ) : null}
+            </div>
           </div>
           <Button type="button" variant="ghost" size="sm" onClick={onClose} aria-label="Close">
             <X size={18} />

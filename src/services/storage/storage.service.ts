@@ -50,7 +50,9 @@ export class StorageService {
   async upload(bucket: BucketId, path: string, file: Buffer | ArrayBuffer, contentType: string) {
     const { data, error } = await this.supabase.storage.from(bucket).upload(path, file, {
       contentType,
-      upsert: true
+      upsert: true,
+      // Avatars are re-uploaded to the same path; keep CDN TTL short and rely on ?v= cache bust.
+      cacheControl: bucket === STORAGE_BUCKETS.avatars ? "60" : "3600"
     });
 
     if (error) throw error;

@@ -7,6 +7,7 @@ import { formatNaira } from "@/lib/domain";
 import { adminAppPath } from "@/lib/admin-app/constants";
 import { Button } from "@/components/ui/Button";
 import { AdminQuickActions, type AdminQuickAction } from "@/components/admin-app/AdminQuickActions";
+import { MemberAvatar } from "@/components/profile/MemberAvatar";
 import type { Database } from "@/types/database";
 
 type MemberDetail = {
@@ -286,16 +287,25 @@ export function AdminMemberProfileView({ memberId }: { memberId: string }) {
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <Link href={adminAppPath("/members")} className="mb-3 inline-flex items-center gap-1 text-xs text-emerald-400 hover:underline">
-            <ArrowLeft size={14} />
-            Back to members
-          </Link>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">Member profile</p>
-          <h1 className="mt-2 text-2xl font-bold text-white">{detail?.profile.full_name ?? "Member"}</h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            {detail?.email ?? detail?.profile.phone ?? detail?.profile.username ?? detail?.profile.invite_code}
-          </p>
+        <div className="flex min-w-0 items-start gap-4">
+          <MemberAvatar
+            fullName={detail?.profile.full_name ?? "Member"}
+            avatarUrl={detail?.profile.avatar_url}
+            size="xl"
+            href={null}
+            className="ring-white/20"
+          />
+          <div className="min-w-0">
+            <Link href={adminAppPath("/members")} className="mb-3 inline-flex items-center gap-1 text-xs text-emerald-400 hover:underline">
+              <ArrowLeft size={14} />
+              Back to members
+            </Link>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">Member profile</p>
+            <h1 className="mt-2 text-2xl font-bold text-white">{detail?.profile.full_name ?? "Member"}</h1>
+            <p className="mt-1 text-sm text-zinc-400">
+              {detail?.email ?? detail?.profile.phone ?? detail?.profile.username ?? detail?.profile.invite_code}
+            </p>
+          </div>
         </div>
         <AdminQuickActions busy={busy} onAction={(action) => void runQuickAction(action)} />
       </header>

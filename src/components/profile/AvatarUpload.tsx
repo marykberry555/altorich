@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Camera, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { compressImageForAvatar, getInitials, AVATAR_UPDATED_EVENT } from "@/lib/avatar/display";
 
-export const AVATAR_UPDATED_EVENT = "altorich:avatar-updated";
+export { AVATAR_UPDATED_EVENT };
 
 type Props = {
   fullName: string;
@@ -14,39 +16,57 @@ type Props = {
 };
 
 export function AvatarUpload({ fullName, avatarUrl, size = "md", className }: Props) {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(avatarUrl ?? null);
+  const [failed, setFailed] = useState(false);
+  const localOverride = useRef<string | null>(null);
+  const dim = size === "lg" ? "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]" : "h-11 w-11";
+  const initials = getInitials(fullName);
 
   useEffect(() => {
-    setPreviewUrl(avatarUrl ?? null);
+    // Keep a successful upload visible until the server prop catches up after refresh.
+    if (localOverride.current && !avatarUrl) return;
+    if (avatarUrl && localOverride.current && avatarUrl === localOverride.current) {
+      localOverride.current = null;
+    }
+    setPreviewUrl(avatarUrl ?? localOverride.current);
+    setFailed(false);
   }, [avatarUrl]);
-  const dim = size === "lg" ? "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]" : "h-11 w-11";
 
   async function handleFile(file: File) {
     setUploading(true);
     setError("");
     try {
+      const compressed = await compressImageForAvatar(file);
       const form = new FormData();
-      form.append("file", file);
+      form.append("file", compressed);
       const res = await fetch("/api/uploads/avatar", { method: "POST", body: form });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? "Upload failed.");
+        setError(typeof data.error === "string" ? data.error : "Upload failed. Use JPG, PNG, or WebP under 2MB.");
         return;
       }
-      const url = (data.url as string) ?? null;
-      if (url) {
-        setPreviewUrl(url);
-        window.dispatchEvent(new CustomEvent(AVATAR_UPDATED_EVENT, { detail: { url } }));
+      const url = typeof data.url === "string" ? data.url : null;
+      if (!url) {
+        setError("Upload succeeded but no photo URL was returned.");
+        return;
       }
+      localOverride.current = url;
+      setPreviewUrl(url);
+      setFailed(false);
+      window.dispatchEvent(new CustomEvent(AVATAR_UPDATED_EVENT, { detail: { url } }));
+      router.refresh();
     } catch {
-      setError("Could not upload photo.");
+      setError("Could not upload photo. Check your connection and try again.");
     } finally {
       setUploading(false);
     }
   }
+
+  const showImage = Boolean(previewUrl) && !failed;
 
   return (
     <div className={cn("relative shrink-0", className)}>
@@ -60,12 +80,17 @@ export function AvatarUpload({ fullName, avatarUrl, size = "md", className }: Pr
         )}
         aria-label="Update profile photo"
       >
-        {previewUrl ? (
+        {showImage ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+          <img
+            src={previewUrl!}
+            alt=""
+            className="h-full w-full object-cover"
+            onError={() => setFailed(true)}
+          />
         ) : (
-          <span className="flex h-full w-full items-center justify-center bg-[var(--emerald-soft)] text-[var(--emerald)]">
-            <Camera size={size === "lg" ? 24 : 18} aria-hidden />
+          <span className="flex h-full w-full items-center justify-center bg-[var(--emerald-soft)] text-sm font-semibold text-[var(--emerald)]">
+            {initials}
           </span>
         )}
         <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -89,7 +114,7 @@ export function AvatarUpload({ fullName, avatarUrl, size = "md", className }: Pr
           e.target.value = "";
         }}
       />
-      {error ? <p className="absolute -bottom-5 left-0 text-[10px] text-red-600">{error}</p> : null}
+      {error ? <p className="absolute -bottom-5 left-0 max-w-[14rem] text-[10px] leading-tight text-red-600">{error}</p> : null}
     </div>
   );
 }

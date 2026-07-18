@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/Card";
 import { DataTable, SectionHeading, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/design-system";
 import { MemberActionsMenu, type MemberAction } from "@/components/admin/MemberActionsMenu";
 import { MemberDetailPanel } from "@/components/admin/MemberDetailPanel";
+import { MemberAvatar } from "@/components/profile/MemberAvatar";
 
 type Member = {
   id: string;
@@ -20,6 +21,7 @@ type Member = {
   phone: string | null;
   invite_code: string | null;
   account_status: string | null;
+  avatar_url: string | null;
   walletBalance: number;
 };
 
@@ -330,14 +332,22 @@ export function MembersAdminPanel({
                     <TableCell>
                       <button
                         type="button"
-                        className="text-left hover:text-[var(--emerald)]"
+                        className="flex items-center gap-3 text-left hover:text-[var(--emerald)]"
                         onClick={() => {
                           if (profileBasePath) router.push(`${profileBasePath.replace(/\/$/, "")}/${member.id}`);
                           else setDetailMember({ id: member.id, name: member.full_name || "Member" });
                         }}
                       >
-                        <p className="font-medium underline-offset-2 hover:underline">{member.full_name || "—"}</p>
-                        <p className="text-xs text-[var(--text-muted)]">{member.email ?? member.phone ?? member.invite_code}</p>
+                        <MemberAvatar
+                          fullName={member.full_name || "Member"}
+                          avatarUrl={member.avatar_url}
+                          size="sm"
+                          href={null}
+                        />
+                        <span className="min-w-0">
+                          <p className="font-medium underline-offset-2 hover:underline">{member.full_name || "—"}</p>
+                          <p className="text-xs text-[var(--text-muted)]">{member.email ?? member.phone ?? member.invite_code}</p>
+                        </span>
                       </button>
                     </TableCell>
                     <TableCell>{member.username ?? "—"}</TableCell>
