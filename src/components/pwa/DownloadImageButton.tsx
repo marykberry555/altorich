@@ -15,7 +15,7 @@ export function DownloadImageButton({ className }: Props) {
 
   const handleDownload = useCallback(async () => {
     if (pwa?.isStandalone) {
-      window.location.href = "/app";
+      window.location.href = "/auth/login";
       return;
     }
 
