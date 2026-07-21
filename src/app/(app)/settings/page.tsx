@@ -46,7 +46,7 @@ export default async function SettingsPage() {
       </Card>
 
       <Card variant="elevated" className="mt-4">
-        <h2 className="font-semibold text-[var(--heading)]">Profile & preferred portfolio</h2>
+        <h2 className="font-semibold text-[var(--heading)]">Profile & package</h2>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
           Update your details, location, or preferred investment portfolio.
         </p>

@@ -91,7 +91,7 @@ export function ProfileSettingsForm({
       <SecureConfirmDialog
         open={confirmOpen}
         title="Save profile changes?"
-        description="Your phone, location, preferred portfolio, and notification preferences will be updated."
+        description="Your phone, location, selected package, and notification preferences will be updated."
         confirmLabel="Save changes"
         onConfirm={() => void confirmSave()}
         onCancel={() => setConfirmOpen(false)}
