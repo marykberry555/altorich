@@ -5,10 +5,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProfileSettingsForm } from "@/components/ProfileSettingsForm";
 import { BankAccountsManager } from "@/components/settings/BankAccountsManager";
+import { CryptoWalletsManager } from "@/components/settings/CryptoWalletsManager";
 import { TrustedDevicesManager } from "@/components/settings/TrustedDevicesManager";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import { getAuthService } from "@/lib/auth/service";
+import { mergePaymentRails, toPublicPaymentRailsSnapshot } from "@/lib/payments/payment-rails";
+import { readPayoutPreferences } from "@/lib/payments/member-destinations";
 
 export default async function SettingsPage() {
   const user = await getSessionUser();
@@ -30,6 +33,11 @@ export default async function SettingsPage() {
     email: boolean;
     sms: boolean;
   };
+
+  const rails = services
+    ? await services.paymentRails.getPublicSnapshot().catch(() => toPublicPaymentRailsSnapshot(mergePaymentRails(null)))
+    : toPublicPaymentRailsSnapshot(mergePaymentRails(null));
+  const cryptoWallets = readPayoutPreferences(profile?.notification_preferences).cryptoWallets ?? [];
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -62,13 +70,23 @@ export default async function SettingsPage() {
         </div>
       </Card>
 
-      <Card variant="elevated" className="mt-4">
-        <h2 className="font-semibold text-[var(--heading)]">Bank accounts</h2>
-        <BankAccountsManager initialAccounts={bankAccounts} />
-        <Link href="/withdrawals" className="mt-4 inline-block">
-          <Button size="sm">Manage withdrawals</Button>
-        </Link>
-      </Card>
+      {rails.bankWithdrawalOpen || rails.bankDepositOpen ? (
+        <Card variant="elevated" className="mt-4">
+          <h2 className="font-semibold text-[var(--heading)]">Bank accounts</h2>
+          <BankAccountsManager initialAccounts={bankAccounts} />
+          <Link href="/withdrawals" className="mt-4 inline-block">
+            <Button size="sm">Manage withdrawals</Button>
+          </Link>
+        </Card>
+      ) : null}
+
+      <div className="mt-4">
+        <CryptoWalletsManager
+          initialWallets={cryptoWallets}
+          enabled={rails.cryptoWithdrawalOpen || rails.cryptoDepositOpen}
+          unavailableMessage={rails.messages.bankOnlyWithdrawal}
+        />
+      </div>
 
       <Card variant="elevated" className="mt-4">
         <h2 className="font-semibold text-[var(--heading)]">Trusted devices</h2>

@@ -5,9 +5,15 @@ import { cn } from "@/lib/utils";
 type Props = {
   className?: string;
   compact?: boolean;
+  /** Member-facing status line — keep calm and intentional. */
+  message?: string;
 };
 
-export function AppLoader({ className, compact = false }: Props) {
+export function AppLoader({
+  className,
+  compact = false,
+  message = "Loading your account…"
+}: Props) {
   return (
     <div
       className={cn(
@@ -39,7 +45,7 @@ export function AppLoader({ className, compact = false }: Props) {
       <p className="text-xl font-bold tracking-tight text-[var(--heading)]">Alto Rich</p>
       <p className="sr-only">Loading</p>
       <p className="text-sm text-[var(--text-muted)]" aria-hidden>
-        Loading your account…
+        {message}
       </p>
     </div>
   );

@@ -7,12 +7,23 @@ import { apiErrorResponse } from "@/lib/errors/api-response";
 import { logger } from "@/lib/logger";
 import { accountNumberSchema } from "@/lib/validation/schemas";
 import { COMPANY } from "@/lib/company";
+import { cryptoAssetSchema, cryptoNetworkSchema } from "@/lib/payments/payment-rails";
 
-const withdrawalSchema = z.object({
+const bankWithdrawalSchema = z.object({
+  rail: z.literal("bank").optional(),
   amount: z.number().positive(),
   bankName: z.string().min(2),
   accountName: z.string().min(2).optional(),
   accountNumber: accountNumberSchema,
+  note: z.string().max(500).optional()
+});
+
+const cryptoWithdrawalSchema = z.object({
+  rail: z.literal("crypto"),
+  amount: z.number().positive(),
+  asset: cryptoAssetSchema,
+  network: cryptoNetworkSchema,
+  walletAddress: z.string().min(8).max(200),
   note: z.string().max(500).optional()
 });
 
@@ -64,23 +75,14 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Service role required: member INSERT on withdrawals was removed for security.
-    // Authenticated members create withdrawals only through this API.
     const user = await requireSessionUser();
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 
     const body = await request.json();
-    const parsed = withdrawalSchema.safeParse({ ...body, amount: Number(body.amount) });
-    if (!parsed.success) {
-      throw Errors.badRequest("Please add your bank account first and enter a valid withdrawal amount.");
-    }
+    const rail = body.rail === "crypto" ? "crypto" : "bank";
 
-    if (!Number.isFinite(parsed.data.amount) || parsed.data.amount <= 0) {
-      throw Errors.badRequest("Enter a valid withdrawal amount.");
-    }
-
-    const accountName = await services.profile.getRegisteredFullName(user.id);
+    await services.paymentRails.assertWithdrawalAllowed(rail);
 
     const idempotencyKey =
       request.headers.get("idempotency-key")?.trim() ||
@@ -110,6 +112,59 @@ export async function POST(request: NextRequest) {
           { status: 200 }
         );
       }
+    }
+
+    const accountName = await services.profile.getRegisteredFullName(user.id);
+
+    if (rail === "crypto") {
+      const parsed = cryptoWithdrawalSchema.safeParse({ ...body, amount: Number(body.amount), rail: "crypto" });
+      if (!parsed.success) {
+        throw Errors.badRequest("Provide a valid crypto asset, network, wallet address, and amount.");
+      }
+
+      const userNote = parsed.data.note?.trim() || "";
+      const dest = `CRYPTO|${parsed.data.asset}|${parsed.data.network}|${parsed.data.walletAddress}`;
+      const note = idempotencyKey
+        ? `${`IDEM-${idempotencyKey}`.slice(0, 80)}|${dest}${userNote ? `|${userNote}` : ""}`.slice(0, 500)
+        : `${dest}${userNote ? `|${userNote}` : ""}`.slice(0, 500);
+
+      let withdrawal;
+      try {
+        withdrawal = await services.withdrawals.create({
+          userId: user.id,
+          amount: parsed.data.amount,
+          bankName: `CRYPTO-${parsed.data.asset}`,
+          accountName,
+          // Sentinel 10-digit placeholder — full address is in note until migration lands.
+          accountNumber: "9999999999",
+          note,
+          idempotencyKey: idempotencyKey || null,
+          requestType: "manual"
+        });
+      } catch (error) {
+        mapWithdrawalError(error);
+      }
+
+      if (!withdrawal) throw Errors.badRequest("Unable to create withdrawal request.");
+
+      const queueView =
+        "queueView" in withdrawal && withdrawal.queueView
+          ? withdrawal.queueView
+          : await services.withdrawals.buildQueueView(withdrawal);
+
+      return NextResponse.json(
+        { ...withdrawal, queueView, scheduleMessage: queueView.scheduleMessage, rail: "crypto" },
+        { status: 201 }
+      );
+    }
+
+    const parsed = bankWithdrawalSchema.safeParse({ ...body, amount: Number(body.amount) });
+    if (!parsed.success) {
+      throw Errors.badRequest("Please add your bank account first and enter a valid withdrawal amount.");
+    }
+
+    if (!Number.isFinite(parsed.data.amount) || parsed.data.amount <= 0) {
+      throw Errors.badRequest("Enter a valid withdrawal amount.");
     }
 
     try {
@@ -155,14 +210,16 @@ export async function POST(request: NextRequest) {
       withdrawalId: withdrawal.id,
       userId: user.id,
       idempotencyKey: idempotencyKey || null,
-      queuePosition: queueView.queuePosition
+      queuePosition: queueView.queuePosition,
+      rail: "bank"
     });
 
     return NextResponse.json(
       {
         ...withdrawal,
         queueView,
-        scheduleMessage: queueView.scheduleMessage
+        scheduleMessage: queueView.scheduleMessage,
+        rail: "bank"
       },
       { status: 201 }
     );

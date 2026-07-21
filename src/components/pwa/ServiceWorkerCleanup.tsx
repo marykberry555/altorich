@@ -5,8 +5,9 @@ import { clearLegacyRuntimeArtifacts } from "@/lib/cache/chunk-recovery";
 
 /**
  * Boot-time cleanup for known-legacy / stale root SW strategies.
- * Member site no longer keeps a controlling SW — purge on load so phones
- * stop looping on "Updating Alto Rich" after deploys.
+ * Purges at most once per browser (flagged in clearLegacyRuntimeArtifacts).
+ * Never nuclear-clear caches on every navigation — that races chunk fetches
+ * and surfaces the global error boundary during normal browsing.
  */
 export function ServiceWorkerCleanup() {
   useEffect(() => {

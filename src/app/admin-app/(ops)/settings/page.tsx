@@ -40,6 +40,19 @@ export default async function AdminAppSettingsPage() {
 
       {featureFlags ? <AdminFeatureFlags initial={featureFlags} /> : null}
 
+      <Card variant="elevated" padding="md" className="border-white/10 bg-zinc-900/80">
+        <SectionHeading title="Payment rails" />
+        <p className="mb-4 text-sm text-zinc-400">
+          Instantly enable or disable Bank and Crypto deposits/withdrawals without redeploying.
+        </p>
+        <Link
+          href="/admin-app/payment-rails"
+          className="inline-flex rounded-lg bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/25"
+        >
+          Open payment rails controls
+        </Link>
+      </Card>
+
       <HomepageStatsAdmin initial={homepageStats} />
 
       <Card variant="elevated" padding="md" className="border-white/10 bg-zinc-900/80">

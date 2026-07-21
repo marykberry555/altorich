@@ -11,6 +11,7 @@ import {
   SETTLEMENT_QUEUE_SETTINGS_KEY,
   type SettlementQueueConfig
 } from "@/lib/payout/settlement-queue";
+import { PAYMENT_RAILS_SETTINGS_KEY, type PaymentRailsLiveState } from "@/config/payment-rails";
 
 type Client = SupabaseClient<Database>;
 
@@ -104,12 +105,51 @@ export class SettingsService {
         usdt: { network: string; address: string };
         usdc: { network: string; address: string };
         btc: { address: string };
+        addresses?: Array<{
+          asset: string;
+          network: string;
+          address: string;
+          label?: string;
+        }>;
       }>("crypto_wallets")) ?? {
         usdt: { network: "", address: "" },
         usdc: { network: "", address: "" },
-        btc: { address: "" }
+        btc: { address: "" },
+        addresses: []
       }
     );
+  }
+
+  async updateCryptoWallets(
+    value: {
+      usdt: { network: string; address: string };
+      usdc: { network: string; address: string };
+      btc: { address: string };
+      addresses?: unknown[];
+    },
+    updatedBy?: string
+  ) {
+    const { error } = await this.supabase.from("settings").upsert({
+      key: "crypto_wallets",
+      value,
+      updated_by: updatedBy ?? null,
+      updated_at: new Date().toISOString()
+    } as Database["public"]["Tables"]["settings"]["Insert"]);
+    if (error) throw error;
+  }
+
+  async getPaymentRailsLive() {
+    return this.get<PaymentRailsLiveState>(PAYMENT_RAILS_SETTINGS_KEY);
+  }
+
+  async updatePaymentRailsLive(value: PaymentRailsLiveState, updatedBy?: string) {
+    const { error } = await this.supabase.from("settings").upsert({
+      key: PAYMENT_RAILS_SETTINGS_KEY,
+      value,
+      updated_by: updatedBy ?? null,
+      updated_at: new Date().toISOString()
+    } as Database["public"]["Tables"]["settings"]["Insert"]);
+    if (error) throw error;
   }
 
   async getFeatureFlags(): Promise<FeatureFlags> {

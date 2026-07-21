@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BrandLogoStatic } from "@/components/brand/BrandLogoStatic";
 import { Button } from "@/components/ui/Button";
 import { logRouteError } from "@/lib/observability/route-error";
 import {
   chunkRecoveryAlreadyTried,
   isChunkLoadFailure,
-  recoverFromChunkFailure
+  recoverFromChunkFailure,
+  safeRecoveryHref
 } from "@/lib/cache/chunk-recovery";
 import {
   classifyThrownError,
@@ -25,12 +27,14 @@ type Props = {
   dashboardHref?: string;
   homeHref?: string;
   showDebugDetails?: boolean;
-  /** Use on dark admin surfaces so copy stays readable without relying on theme CSS vars. */
   tone?: "default" | "dark";
-  /** Force a category when the boundary knows the failure mode. */
   category?: ErrorCategory;
 };
 
+/**
+ * Premium recovery surface — never exposes framework wording.
+ * Chunk / deploy mismatches auto-recover silently with a calm refresh state.
+ */
 export function RouteErrorFallback({
   error,
   reset,
@@ -42,36 +46,44 @@ export function RouteErrorFallback({
   tone = "default",
   category: categoryOverride
 }: Props) {
-  const [referenceId, setReferenceId] = useState<string | null>(null);
-  const [reported, setReported] = useState(false);
   const dark = tone === "dark" || route.startsWith("/admin") || route.startsWith("/hard");
-
   const isChunk = isChunkLoadFailure(error.message);
-  const recoveryTried = isChunk && chunkRecoveryAlreadyTried();
+  const [phase, setPhase] = useState<"recovering" | "ready">(isChunk ? "recovering" : "ready");
+  const [referenceId, setReferenceId] = useState<string | null>(null);
+
   const category = categoryOverride ?? (isChunk ? "network" : classifyThrownError(error));
   const copy = isChunk
-    ? recoveryTried
-      ? {
-          category: "network" as const,
-          title: "Couldn't load this screen",
-          body: "Please continue below. Your money and account are safe — nothing was lost.",
-          nextActions: [
-            { label: "Open login", href: "/auth/login" },
-            { label: "Try again", action: "retry" as const }
-          ]
-        }
-      : memberCopyForCategory("network", "chunk")
+    ? memberCopyForCategory("network", "refreshing")
     : memberCopyForCategory(category);
 
   useEffect(() => {
     logRouteError(error, { route, component, digest: error.digest });
 
     if (isChunkLoadFailure(error.message)) {
-      setReported(true);
+      setPhase("recovering");
       if (!chunkRecoveryAlreadyTried()) {
         void recoverFromChunkFailure(error.message);
+        return;
       }
-      return;
+      // Already attempted once this session — soft-land without leaving a broken screen.
+      const timer = window.setTimeout(() => {
+        window.location.replace(safeRecoveryHref(window.location.pathname || route));
+      }, 600);
+      return () => window.clearTimeout(timer);
+    }
+
+    // Soft auto-retry once for transient server digests.
+    if (category === "server" && error.digest) {
+      const key = `altorich:soft-reset:${error.digest}`;
+      try {
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, "1");
+          const timer = window.setTimeout(() => reset(), 900);
+          return () => window.clearTimeout(timer);
+        }
+      } catch {
+        /* ignore */
+      }
     }
 
     void fetch("/api/client-error", {
@@ -83,7 +95,6 @@ export function RouteErrorFallback({
         component,
         message: error.message,
         digest: error.digest,
-        stack: error.stack,
         category,
         at: new Date().toISOString(),
         device: {
@@ -99,14 +110,13 @@ export function RouteErrorFallback({
       })
     })
       .then(async (res) => {
-        const body = (await res.json().catch(() => ({}))) as { referenceId?: string; ok?: boolean };
+        const body = (await res.json().catch(() => ({}))) as { referenceId?: string };
         if (body.referenceId) setReferenceId(body.referenceId);
-        if (res.ok) setReported(true);
       })
-      .catch(() => {
-        /* reporting must never break the fallback UI */
-      });
-  }, [error, route, component, category]);
+      .catch(() => undefined);
+
+    setPhase("ready");
+  }, [error, route, component, category, reset]);
 
   const actions = copy.nextActions.map((action, index) => {
     if (action.action === "retry") {
@@ -115,14 +125,14 @@ export function RouteErrorFallback({
           key={`retry-${index}`}
           type="button"
           onClick={() => {
-            window.location.assign(window.location.pathname || "/auth/login");
+            window.location.assign(window.location.pathname || homeHref);
           }}
         >
           {action.label}
         </Button>
       );
     }
-    if (action.href === "/auth/login" || action.action === "signin" || action.href === "/login") {
+    if (action.action === "signin" || action.href === "/auth/login" || action.href === "/login") {
       return (
         <a key={`signin-${index}`} href="/auth/login">
           <Button type="button">{action.label}</Button>
@@ -131,7 +141,7 @@ export function RouteErrorFallback({
     }
     if (action.action === "support" || action.href === "/contact") {
       return (
-        <a key="support" href={`mailto:${COMPANY.supportEmail}`}>
+        <a key={`support-${index}`} href={`mailto:${COMPANY.supportEmail}`}>
           <Button
             type="button"
             variant="outline"
@@ -142,9 +152,14 @@ export function RouteErrorFallback({
         </a>
       );
     }
-    const href = action.href === "/dashboard" ? dashboardHref : action.href || homeHref;
+    const href =
+      action.action === "dashboard" || action.href === "/dashboard"
+        ? dashboardHref
+        : action.action === "home" || action.href === "/"
+          ? homeHref
+          : action.href || homeHref;
     return (
-      <Link key={href} href={href}>
+      <Link key={`${href}-${index}`} href={href}>
         <Button
           type="button"
           variant="outline"
@@ -158,27 +173,47 @@ export function RouteErrorFallback({
 
   return (
     <div
-      role="alert"
+      role="status"
+      aria-live="polite"
       className={cn(
-        "mx-auto flex min-h-[50vh] max-w-3xl flex-col items-center justify-center gap-4 px-4 py-10 text-center",
+        "mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center gap-5 px-4 py-12 text-center",
         dark && "rounded-2xl border border-white/10 bg-zinc-950"
       )}
     >
-      <h1 className={cn("text-xl font-bold", dark ? "text-white" : "text-[var(--heading)]")}>{copy.title}</h1>
-      <p className={cn("max-w-md text-sm leading-relaxed", dark ? "text-zinc-300" : "text-[var(--text-muted)]")}>
-        {copy.body}
-      </p>
-      {referenceId || error.digest ? (
-        <p className={cn("font-mono text-xs", dark ? "text-zinc-500" : "text-[var(--text-subtle)]")}>
-          Reference ID: {referenceId ?? `AR-${String(error.digest).slice(0, 6).toUpperCase()}`}
+      <BrandLogoStatic variant="icon" href={homeHref} />
+      <div className="space-y-2">
+        <h1 className={cn("text-xl font-bold tracking-tight", dark ? "text-white" : "text-[var(--heading)]")}>
+          {copy.title}
+        </h1>
+        <p className={cn("text-sm leading-relaxed", dark ? "text-zinc-300" : "text-[var(--text-muted)]")}>
+          {copy.body}
         </p>
-      ) : reported || isChunk ? null : (
-        <p className={cn("text-xs", dark ? "text-zinc-500" : "text-[var(--text-subtle)]")}>Logging this issue…</p>
+      </div>
+
+      {phase === "recovering" ? (
+        <div
+          className={cn(
+            "h-1 w-40 overflow-hidden rounded-full",
+            dark ? "bg-white/10" : "bg-[var(--gray-200)]"
+          )}
+          aria-hidden
+        >
+          <div className="h-full w-1/2 animate-pulse rounded-full bg-[var(--emerald)]" />
+        </div>
+      ) : (
+        <div className="flex flex-wrap justify-center gap-2">{actions}</div>
       )}
-      {showDebugDetails && error.stack ? (
+
+      {referenceId && phase === "ready" && !isChunk ? (
+        <p className={cn("font-mono text-[10px]", dark ? "text-zinc-600" : "text-[var(--text-subtle)]")}>
+          Ref {referenceId}
+        </p>
+      ) : null}
+
+      {showDebugDetails && error.stack && phase === "ready" ? (
         <pre
           className={cn(
-            "max-h-64 w-full overflow-auto rounded-lg border p-3 text-left text-[11px] leading-relaxed",
+            "max-h-48 w-full overflow-auto rounded-lg border p-3 text-left text-[11px] leading-relaxed",
             dark
               ? "border-white/10 bg-zinc-900 text-zinc-300"
               : "border-[var(--border)] bg-[var(--gray-50)] text-[var(--text-muted)]"
@@ -187,7 +222,6 @@ export function RouteErrorFallback({
           {error.stack}
         </pre>
       ) : null}
-      <div className="flex flex-wrap justify-center gap-2">{actions}</div>
     </div>
   );
 }

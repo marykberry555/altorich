@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-const chunkFailurePattern = /Loading chunk .* failed|ChunkLoadError|This page couldn't load|Something went wrong/i;
+const chunkFailurePattern =
+  /Loading chunk .* failed|ChunkLoadError|Couldn't load this screen|Please continue below|Your money and account are safe|Something went wrong|Application error/i;
 
 async function assertNoChunkFailure(page: import("@playwright/test").Page) {
   await expect(page.locator("body")).not.toContainText(chunkFailurePattern, { timeout: 5000 });

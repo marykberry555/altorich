@@ -1,30 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { WifiOff } from "lucide-react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { COMPANY } from "@/lib/company";
 
 export default function OfflinePage() {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[var(--surface)] px-4">
-      <Card variant="elevated" padding="lg" className="max-w-md text-center">
-        <WifiOff className="mx-auto text-[var(--emerald)]" size={40} aria-hidden />
-        <h1 className="mt-4 text-xl font-bold text-[var(--heading)]">You&apos;re offline</h1>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">
-          AltoRich needs a connection for login, investments, and withdrawals. Cached pages may still be available when you reconnect.
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center gap-5 bg-[var(--surface)] px-4 py-16 text-center">
+      <BrandLogo variant="icon" href="/" />
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Alto Rich</p>
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">Reconnecting securely</h1>
+        <p className="text-sm leading-relaxed text-[var(--text-muted)]">
+          We&apos;re waiting for your connection to return. This page will continue automatically when you&apos;re back
+          online.
         </p>
-        <div className="mt-6 flex flex-col gap-2">
-          <Button type="button" onClick={() => window.location.reload()}>
-            Try again
+      </div>
+      <div className="flex flex-wrap justify-center gap-2">
+        <Button type="button" onClick={() => window.location.reload()}>
+          Refresh page
+        </Button>
+        <Link href="/dashboard">
+          <Button type="button" variant="outline">
+            Return to dashboard
           </Button>
-          <Link href="/dashboard">
-            <Button variant="outline" className="w-full">
-              Open dashboard
-            </Button>
-          </Link>
-        </div>
-      </Card>
-    </div>
+        </Link>
+        <a href={`mailto:${COMPANY.supportEmail}`}>
+          <Button type="button" variant="ghost">
+            Contact support
+          </Button>
+        </a>
+      </div>
+    </main>
   );
 }

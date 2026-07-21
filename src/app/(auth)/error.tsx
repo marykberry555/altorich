@@ -15,8 +15,8 @@ export default function AuthError({
       reset={reset}
       route="/auth"
       component="AuthErrorBoundary"
-      dashboardHref="/login"
-      homeHref="/login"
+      dashboardHref="/auth/login"
+      homeHref="/auth/login"
     />
   );
 }

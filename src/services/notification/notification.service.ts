@@ -155,17 +155,24 @@ export class NotificationService {
   }
 
   async notifyEvent(event: NotificationEvent, userId: string, data: Record<string, unknown> = {}) {
+    const rail = typeof data.rail === "string" ? data.rail : typeof data.method === "string" ? data.method : null;
+    const railLabel = rail === "crypto" ? "crypto" : rail === "bank" ? "bank" : null;
+
     const templates: Record<NotificationEvent, { title: string; body: string }> = {
       "payment.received": {
-        title: "Payment received",
-        body: `${formatNaira(Number(data.amount ?? 0))} credited to your wallet.`
+        title: railLabel === "crypto" ? "Crypto payment received" : "Payment received",
+        body: `${formatNaira(Number(data.amount ?? 0))} credited to your wallet${
+          railLabel ? ` via ${railLabel}` : ""
+        }.`
       },
       "deposit.approved": {
-        title: "Funding approved",
-        body: `${formatNaira(Number(data.amount ?? 0))} credited. Your preferred portfolio allocates automatically when the amount meets the portfolio minimum.`
+        title: railLabel === "crypto" ? "Crypto funding approved" : "Funding approved",
+        body: `${formatNaira(Number(data.amount ?? 0))} credited${
+          railLabel === "crypto" ? " from your crypto deposit" : ""
+        }. Your preferred portfolio allocates automatically when the amount meets the portfolio minimum.`
       },
       "deposit.rejected": {
-        title: "Funding declined",
+        title: railLabel === "crypto" ? "Crypto funding declined" : "Funding declined",
         body: String(data.reason ?? "Your deposit could not be verified.")
       },
       "investment.purchased": {
@@ -177,40 +184,47 @@ export class NotificationService {
         body: `${formatNaira(Number(data.amount ?? 0))} settlement credited to your wallet.`
       },
       "withdrawal.submitted": {
-        title: "Withdrawal submitted",
+        title: railLabel === "crypto" ? "Crypto payout submitted" : "Withdrawal submitted",
         body: String(
           data.schedule_message ??
-            `Your withdrawal request of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
+            (railLabel === "crypto"
+              ? `Your crypto payout request of ${formatNaira(Number(data.amount ?? 0))} is pending review.`
+              : `Your withdrawal request of ${formatNaira(Number(data.amount ?? 0))} is pending review.`)
         )
       },
       "withdrawal.auto_created": {
         title: "Automatic withdrawal created",
-        body: `Your automatic weekly withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been queued for processing.`
+        body: `Your automatic weekly withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been queued for processing${
+          railLabel ? ` via ${railLabel}` : ""
+        }.`
       },
       "withdrawal.auto_scheduled": {
         title: "Automatic withdrawal scheduled",
-        body: "Automatic weekly withdrawal is enabled. Accrued earnings will be withdrawn every Monday settlement."
+        body: "Automatic weekly withdrawal is enabled. Accrued earnings will be withdrawn every Monday settlement through the active payout rail."
       },
       "withdrawal.auto_skipped": {
         title: "Automatic withdrawal skipped",
-        body: String(data.reason ?? "Add a withdrawal bank account to receive automatic withdrawals.")
+        body: String(
+          data.reason ??
+            "Add a payout destination for the currently enabled withdrawal rail to receive automatic withdrawals."
+        )
       },
       "withdrawal.approved": {
-        title: "Withdrawal under review",
-        body: `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} is under review.`
+        title: railLabel === "crypto" ? "Crypto payout under review" : "Withdrawal under review",
+        body: `Your ${railLabel === "crypto" ? "crypto payout" : "withdrawal"} of ${formatNaira(Number(data.amount ?? 0))} is under review.`
       },
       "withdrawal.processing": {
-        title: "Withdrawal processing",
-        body: `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} is now being processed.`
+        title: railLabel === "crypto" ? "Crypto payout processing" : "Withdrawal processing",
+        body: `Your ${railLabel === "crypto" ? "crypto payout" : "withdrawal"} of ${formatNaira(Number(data.amount ?? 0))} is now being processed.`
       },
       "withdrawal.paid": {
-        title: "Withdrawal completed",
+        title: railLabel === "crypto" ? "Crypto payout completed" : "Withdrawal completed",
         body: data.settlement_reference
-          ? `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} (${String(data.settlement_reference)}) has been processed.`
-          : `Your withdrawal of ${formatNaira(Number(data.amount ?? 0))} has been processed.`
+          ? `Your ${railLabel === "crypto" ? "crypto payout" : "withdrawal"} of ${formatNaira(Number(data.amount ?? 0))} (${String(data.settlement_reference)}) has been processed.`
+          : `Your ${railLabel === "crypto" ? "crypto payout" : "withdrawal"} of ${formatNaira(Number(data.amount ?? 0))} has been processed.`
       },
       "withdrawal.rejected": {
-        title: "Withdrawal declined",
+        title: railLabel === "crypto" ? "Crypto payout declined" : "Withdrawal declined",
         body: String(data.reason ?? "Your withdrawal request was not approved.")
       },
       "kyc.approved": {

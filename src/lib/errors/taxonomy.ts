@@ -9,7 +9,7 @@ export type ErrorCategory =
 export type ErrorNextAction = {
   label: string;
   href?: string;
-  action?: "retry" | "signin" | "support";
+  action?: "retry" | "signin" | "support" | "home" | "dashboard";
 };
 
 export type MemberErrorCopy = {
@@ -20,8 +20,9 @@ export type MemberErrorCopy = {
 };
 
 const SUPPORT_HREF = "/contact";
-const SIGN_IN_HREF = "/login";
+const SIGN_IN_HREF = "/auth/login";
 const DASHBOARD_HREF = "/dashboard";
+const HOME_HREF = "/";
 
 export function makeErrorReference(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -32,93 +33,96 @@ export function makeErrorReference(): string {
   return `AR-${id}`;
 }
 
+/**
+ * Member-facing copy only — never framework wording, never "money is safe" language.
+ */
 export function memberCopyForCategory(category: ErrorCategory, detail?: string): MemberErrorCopy {
   switch (category) {
     case "authentication":
       return {
         category,
-        title: "Session expired",
-        body: detail?.trim() || "Your session has expired. Please sign in again.",
-        nextActions: [{ label: "Sign In", href: SIGN_IN_HREF, action: "signin" }]
+        title: "Please sign in to continue",
+        body: detail?.trim() || "Your session needs a quick refresh. Sign in again to pick up where you left off.",
+        nextActions: [{ label: "Sign in", href: SIGN_IN_HREF, action: "signin" }]
       };
     case "network":
       if (detail === "timeout") {
         return {
           category,
           title: "Still connecting",
-          body: "Your network is slow right now. Please wait a moment and try again — your money and account are safe.",
+          body: "This is taking a little longer than usual. We'll keep trying — you can also refresh this page.",
           nextActions: [
-            { label: "Retry", action: "retry" },
-            { label: "Dashboard", href: DASHBOARD_HREF }
+            { label: "Refresh page", action: "retry" },
+            { label: "Return to dashboard", href: DASHBOARD_HREF, action: "dashboard" }
           ]
         };
       }
       if (detail === "offline") {
         return {
           category,
-          title: "You're offline",
-          body: "Reconnect to the internet, then try again. Cached pages may still work while you wait.",
-          nextActions: [{ label: "Retry", action: "retry" }]
+          title: "Reconnecting securely",
+          body: "We're waiting for your connection to return. This page will continue automatically when you're back online.",
+          nextActions: [{ label: "Refresh page", action: "retry" }]
         };
       }
-      if (detail === "chunk") {
+      if (detail === "chunk" || detail === "refreshing") {
         return {
           category,
-          title: "Updating Alto Rich",
-          body: "A new version is loading. This page will refresh automatically — please wait a second.",
-          nextActions: [{ label: "Refresh now", action: "retry" }]
+          title: "Refreshing your experience",
+          body: "We're preparing the latest version of Alto Rich. This only takes a moment.",
+          nextActions: [{ label: "Continue", href: HOME_HREF, action: "home" }]
         };
       }
       return {
         category,
-        title: "Couldn't reach Alto Rich",
+        title: "We're reconnecting to our services",
         body:
           detail?.trim() ||
-          "We couldn't complete that request yet. This is often a brief delay on slow networks — tap Retry.",
+          "We're temporarily unable to load this information. Please refresh, or return to your dashboard.",
         nextActions: [
-          { label: "Retry", action: "retry" },
-          { label: "Dashboard", href: DASHBOARD_HREF }
+          { label: "Refresh page", action: "retry" },
+          { label: "Return to dashboard", href: DASHBOARD_HREF, action: "dashboard" }
         ]
       };
     case "validation":
       return {
         category,
         title: "Check your details",
-        body: detail?.trim() || "Please review the highlighted fields and try again.",
-        nextActions: [{ label: "Retry", action: "retry" }]
+        body: detail?.trim() || "Please review the highlighted fields and continue.",
+        nextActions: [{ label: "Continue", action: "retry" }]
       };
     case "business":
       return {
         category,
         title: "Unable to continue",
-        body: detail?.trim() || "This action can't be completed right now.",
+        body: detail?.trim() || "This action can't be completed right now. Please try again shortly.",
         nextActions: [
-          { label: "Retry", action: "retry" },
-          { label: "Dashboard", href: DASHBOARD_HREF }
+          { label: "Try again", action: "retry" },
+          { label: "Return to dashboard", href: DASHBOARD_HREF, action: "dashboard" }
         ]
       };
     case "not_found":
       return {
         category,
-        title: "Page not found",
-        body: detail?.trim() || "We couldn't find what you were looking for.",
+        title: "This page isn't available",
+        body: detail?.trim() || "That link may have moved. Head back to the dashboard or home page.",
         nextActions: [
-          { label: "Dashboard", href: DASHBOARD_HREF },
-          { label: "Contact Support", href: SUPPORT_HREF, action: "support" }
+          { label: "Return to dashboard", href: DASHBOARD_HREF, action: "dashboard" },
+          { label: "Go home", href: HOME_HREF, action: "home" }
         ]
       };
     case "server":
     default:
       return {
         category: "server",
-        title: "Couldn't load this page",
+        title: "We're preparing this page",
         body:
           detail?.trim() ||
-          "Something interrupted this screen. Your money and account are safe — tap Retry, or open the Dashboard.",
+          "We're temporarily unable to load this information. Refresh the page, or return to your dashboard.",
         nextActions: [
-          { label: "Retry", action: "retry" },
-          { label: "Dashboard", href: DASHBOARD_HREF },
-          { label: "Contact Support", href: SUPPORT_HREF, action: "support" }
+          { label: "Refresh page", action: "retry" },
+          { label: "Return to dashboard", href: DASHBOARD_HREF, action: "dashboard" },
+          { label: "Contact support", href: SUPPORT_HREF, action: "support" }
         ]
       };
   }
@@ -129,21 +133,21 @@ export function memberCopyForHttpStatus(status: number, detail?: string): Member
   if (status === 401) {
     return {
       category: "authentication",
-      title: "Session expired",
-      body: detail?.trim() || "Your session has expired. Please sign in again to continue.",
-      nextActions: [{ label: "Sign In", href: SIGN_IN_HREF, action: "signin" }]
+      title: "Please sign in to continue",
+      body: detail?.trim() || "Your session needs a quick refresh. Sign in again to continue.",
+      nextActions: [{ label: "Sign in", href: SIGN_IN_HREF, action: "signin" }]
     };
   }
   if (status === 403) {
     return {
       category: "authentication",
-      title: "Access denied",
+      title: "Access limited",
       body:
         detail?.trim() ||
-        "You don't have permission to view or change this. If you believe this is a mistake, contact support.",
+        "You don't have access to this area. If you believe this is a mistake, contact support.",
       nextActions: [
-        { label: "Dashboard", href: DASHBOARD_HREF },
-        { label: "Contact Support", href: SUPPORT_HREF, action: "support" }
+        { label: "Return to dashboard", href: DASHBOARD_HREF, action: "dashboard" },
+        { label: "Contact support", href: SUPPORT_HREF, action: "support" }
       ]
     };
   }
@@ -171,18 +175,18 @@ export function memberCopyForAppCode(code?: string, detail?: string, status?: nu
         "Please verify your email address before continuing. Check your inbox for a verification link.",
       nextActions: [
         { label: "Security Center", href: "/security" },
-        { label: "Contact Support", href: SUPPORT_HREF, action: "support" }
+        { label: "Contact support", href: SUPPORT_HREF, action: "support" }
       ]
     };
   }
   if (c === "ACTION_UNAVAILABLE" || c === "NOT_CONFIGURED") {
     return {
       category: "business",
-      title: "Action unavailable",
-      body: detail?.trim() || "This feature isn't available right now. Please try again later or contact support.",
+      title: "Temporarily unavailable",
+      body: detail?.trim() || "This feature isn't available right now. Please try again later.",
       nextActions: [
-        { label: "Dashboard", href: DASHBOARD_HREF },
-        { label: "Contact Support", href: SUPPORT_HREF, action: "support" }
+        { label: "Return to dashboard", href: DASHBOARD_HREF, action: "dashboard" },
+        { label: "Contact support", href: SUPPORT_HREF, action: "support" }
       ]
     };
   }
@@ -213,14 +217,11 @@ export function classifyThrownError(error: unknown): ErrorCategory {
       message
     )
   ) {
-    return "network"; // RouteErrorFallback maps chunk → "Updating Alto Rich"
-  }
-  if (
-    /failed to fetch|networkerror|load failed|timeout|timed out|offline|err_network/i.test(lower)
-  ) {
     return "network";
   }
-  // Opaque Next.js RSC digests are often transient render failures — treat as recoverable network/server.
+  if (/failed to fetch|networkerror|load failed|timeout|timed out|offline|err_network/i.test(lower)) {
+    return "network";
+  }
   if (!message.trim() && digest) {
     return "server";
   }

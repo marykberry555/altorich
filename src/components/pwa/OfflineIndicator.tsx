@@ -73,7 +73,7 @@ export function OfflineIndicator() {
   return (
     <div className="fixed left-0 right-0 top-0 z-[80] flex items-center justify-center gap-2 bg-[var(--navy)] px-4 py-2 text-xs font-medium text-white">
       <WifiOff size={14} aria-hidden />
-      You&apos;re offline — reconnect to continue. Your account is safe.
+      Reconnecting securely — we&apos;ll continue when your connection returns.
     </div>
   );
 }

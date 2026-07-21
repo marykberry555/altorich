@@ -15,7 +15,10 @@ const depositSchema = z.object({
   paymentReference: z.string().max(120).optional(),
   receiptNote: z.string().max(120).optional(),
   reference: z.string().max(120).optional(),
-  proofUrl: z.string().min(3).max(500).optional()
+  proofUrl: z.string().min(3).max(500).optional(),
+  rail: z.enum(["bank", "crypto"]).optional(),
+  asset: z.enum(["USDT", "USDC", "BTC", "ETH"]).optional(),
+  network: z.enum(["TRC20", "ERC20", "BEP20", "POLYGON", "BITCOIN"]).optional()
 });
 
 export async function GET() {
@@ -83,14 +86,19 @@ export async function POST(request: NextRequest) {
       "";
 
     const { amount, proofUrl } = parsed.data;
+    const rail = parsed.data.rail === "crypto" ? "crypto" : "bank";
 
     if (amount < MIN_FUNDING_AMOUNT_NGN) {
       throw Errors.badRequest(`Minimum funding amount is ₦${MIN_FUNDING_AMOUNT_NGN.toLocaleString("en-NG")}.`);
     }
 
-    const bank = await services.settings.getBankSwitchboard();
-    if (!bank.contributions_enabled) {
-      return NextResponse.json({ error: "Wallet funding is temporarily disabled." }, { status: 403 });
+    await services.paymentRails.assertDepositAllowed(rail);
+
+    if (rail === "crypto") {
+      if (!parsed.data.asset || !parsed.data.network) {
+        throw Errors.badRequest("Select a cryptocurrency and network for crypto deposits.");
+      }
+      await services.paymentRails.resolveDepositAddress(parsed.data.asset, parsed.data.network);
     }
 
     // Prevent duplicate pending queue from double-taps / retries.
@@ -129,11 +137,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const { encodeCryptoDepositNote } = await import("@/lib/payments/member-destinations");
+    const receiptNote =
+      rail === "crypto" && parsed.data.asset && parsed.data.network
+        ? encodeCryptoDepositNote({
+            asset: parsed.data.asset,
+            network: parsed.data.network,
+            paymentReference
+          })
+        : paymentReference;
+
     const deposit = await services.deposits.create({
       memberName,
       phone,
       amount,
-      receiptNote: paymentReference,
+      receiptNote,
       reference,
       userId: user.id,
       proofUrl
@@ -143,9 +161,10 @@ export async function POST(request: NextRequest) {
       depositId: deposit.id,
       userId: user.id,
       hasReference: Boolean(paymentReference),
-      pendingBefore: stats.pending
+      pendingBefore: stats.pending,
+      rail
     });
-    return NextResponse.json(deposit, { status: 201 });
+    return NextResponse.json({ ...deposit, rail }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);
   }

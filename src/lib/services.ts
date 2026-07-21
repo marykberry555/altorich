@@ -4,6 +4,7 @@ import { isSupabaseConfigured, isServiceRoleConfigured } from "@/lib/env";
 import type { Database } from "@/types/database";
 import { DepositService } from "@/services/deposit/deposit.service";
 import { SettingsService } from "@/services/admin/settings.service";
+import { PaymentRailsService } from "@/services/payments/payment-rails.service";
 import { InvestmentService } from "@/services/investment/investment.service";
 import { SettlementService } from "@/services/investment/settlement.service";
 import { WalletService } from "@/services/wallet/wallet.service";
@@ -29,6 +30,7 @@ export type ServiceBundle = {
   supabase: SupabaseClient<Database>;
   deposits: DepositService;
   settings: SettingsService;
+  paymentRails: PaymentRailsService;
   investments: InvestmentService;
   settlements: SettlementService;
   wallet: WalletService;
@@ -71,6 +73,7 @@ function buildBundle(supabase: SupabaseClient<Database>, bankConfig?: {
     supabase,
     deposits: new DepositService(supabase),
     settings,
+    paymentRails: new PaymentRailsService(settings),
     investments: new InvestmentService(supabase),
     settlements: new SettlementService(supabase),
     wallet: new WalletService(supabase),

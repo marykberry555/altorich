@@ -27,6 +27,7 @@ import {
   Users,
   Wallet,
   X,
+  Cable,
   Crown,
   Headphones,
   Landmark,
@@ -61,6 +62,7 @@ const navSections = [
       { href: adminAppPath("/investments"), label: "Investments", icon: TrendingUp },
       { href: adminAppPath("/plans"), label: "Packages", icon: Wallet },
       { href: adminAppPath("/funding-accounts"), label: "Funding accounts", icon: Wallet },
+      { href: adminAppPath("/payment-rails"), label: "Payment rails", icon: Cable },
       { href: adminAppPath("/settlements"), label: "Settlements", icon: TrendingUp },
       { href: adminAppPath("/reconciliation"), label: "Reconciliation", icon: Scale }
     ]

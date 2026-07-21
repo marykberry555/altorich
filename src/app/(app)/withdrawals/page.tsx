@@ -9,13 +9,15 @@ import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import { buildWithdrawalTrackerView, findActiveWithdrawal } from "@/lib/financial-events/withdrawal-tracker";
 import type { Withdrawal } from "@/types/database";
+import { mergePaymentRails, toPublicPaymentRailsSnapshot } from "@/lib/payments/payment-rails";
+import { readPayoutPreferences } from "@/lib/payments/member-destinations";
 
 import { memberPageMetadata } from "@/lib/seo/page-metadata";
 
 export const metadata: Metadata = memberPageMetadata(
   "Withdrawals",
   "/withdrawals",
-  "Request a withdrawal to your bank account, view settlement schedule, and track withdrawal history."
+  "Request a withdrawal, view settlement schedule, and track withdrawal history."
 );
 
 export default async function WithdrawalsPage() {
@@ -32,6 +34,11 @@ export default async function WithdrawalsPage() {
     account_name: string;
     account_number: string;
   } | null = null;
+  let wallets = readPayoutPreferences(null).cryptoWallets ?? [];
+
+  const rails = services
+    ? await services.paymentRails.getPublicSnapshot().catch(() => toPublicPaymentRailsSnapshot(mergePaymentRails(null)))
+    : toPublicPaymentRailsSnapshot(mergePaymentRails(null));
 
   if (user && services) {
     const wallet = await services.wallet.getWalletByUserId(user.id).catch(() => null);
@@ -48,10 +55,11 @@ export default async function WithdrawalsPage() {
       : null;
     const { data: profile } = await services.supabase
       .from("profiles")
-      .select("preferred_package_slug, full_name")
+      .select("preferred_package_slug, full_name, notification_preferences")
       .eq("id", user.id)
       .maybeSingle();
     registeredFullName = profile?.full_name?.trim() ?? "";
+    wallets = readPayoutPreferences(profile?.notification_preferences).cryptoWallets ?? [];
     if (profile?.preferred_package_slug) {
       preferredHref = "/investments";
     }
@@ -64,7 +72,13 @@ export default async function WithdrawalsPage() {
     <div className="mx-auto max-w-3xl space-y-8 pb-8">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Withdrawals</h1>
-        <p className="text-sm text-[var(--text-muted)]">Request a withdrawal to your bank account or reinvest your earnings.</p>
+        <p className="text-sm text-[var(--text-muted)]">
+          {rails.cryptoWithdrawalOpen && rails.bankWithdrawalOpen
+            ? "Request a payout to your bank account or crypto wallet."
+            : rails.cryptoWithdrawalOpen
+              ? "Request a cryptocurrency payout to a saved wallet."
+              : "Request a withdrawal to your bank account or reinvest your earnings."}
+        </p>
       </header>
 
       <EarningsActionChoice availableBalance={balance} preferredPackageHref={preferredHref} />
@@ -75,16 +89,13 @@ export default async function WithdrawalsPage() {
         availableBalance={balance}
         registeredFullName={registeredFullName}
         initialBank={initialBank}
+        rails={rails}
+        wallets={wallets}
       />
 
       <AutoWeeklyPayoutToggle />
 
-      {activeTracker ? (
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Live tracker</h2>
-          <WithdrawalTrackerCard tracker={activeTracker} />
-        </section>
-      ) : null}
+      {activeTracker ? <WithdrawalTrackerCard tracker={activeTracker} /> : null}
 
       <WithdrawalHistoryList rows={withdrawals} />
     </div>

@@ -153,8 +153,8 @@ function ColorfulCountdown({
         <CountdownBlock value={pad2(seconds)} label="Seconds" toneIndex={3} />
       </div>
       <p className="relative mt-3 text-center text-xs text-[var(--text-muted)] sm:text-sm">
-        Next window:{" "}
-        <span className="font-bold text-[var(--heading)]">Monday · 09:00 WAT</span>
+        Next Payout:{" "}
+        <span className="font-bold text-[var(--heading)]">Monday · 09:00 AM</span>
       </p>
     </div>
   );
@@ -201,8 +201,8 @@ function MutedCountdown({
         <CountdownBlock value={pad2(seconds)} label="Seconds" muted />
       </div>
       <p className="mt-4 text-sm text-[var(--text-muted)]">
-        Next window:{" "}
-        <span className="font-semibold text-[var(--heading)]">Monday · 09:00 WAT</span>
+        Next Payout:{" "}
+        <span className="font-semibold text-[var(--heading)]">Monday · 09:00 AM</span>
       </p>
     </div>
   );
@@ -288,7 +288,7 @@ export function WeeklyCountdown({
         <CountdownBlock value={pad2(seconds)} label="Secs" toneIndex={3} />
       </div>
       <p className="mt-3 text-center text-xs text-[var(--text-muted)] sm:text-left">
-        Next window: <span className="font-semibold text-[var(--heading)]">Monday · 09:00 WAT</span>
+        Next Payout: <span className="font-semibold text-[var(--heading)]">Monday · 09:00 AM</span>
       </p>
     </div>
   );
