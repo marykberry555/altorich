@@ -13,7 +13,7 @@ import {
   type PortfolioSlug
 } from "@/config/investment-portfolios";
 import { formatNaira } from "@/lib/domain";
-import { PORTFOLIO_TERMS } from "@/lib/copy/portfolio-terminology";
+import { PORTFOLIO_TERMS, formatInvestmentRange } from "@/lib/copy/portfolio-terminology";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
@@ -150,6 +150,16 @@ export function PortfolioCalculator({
                 <div>
                   <dt className="text-[var(--text-subtle)]">{PORTFOLIO_TERMS.primaryStrategy}</dt>
                   <dd className="mt-0.5 font-medium text-[var(--heading)]">{portfolio.strategy}</dd>
+                </div>
+                <div>
+                  <dt className="text-[var(--text-subtle)]">{PORTFOLIO_TERMS.investmentRange}</dt>
+                  <dd className="currency-ngn mt-0.5 font-medium tabular-nums text-[var(--heading)]">
+                    {formatInvestmentRange(
+                      portfolio.minimumInvestment,
+                      portfolio.maximumInvestment,
+                      formatNaira
+                    )}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-[var(--text-subtle)]">{PORTFOLIO_TERMS.dailyReturn}</dt>

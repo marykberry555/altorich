@@ -12,7 +12,7 @@ import {
   type PortfolioSlug
 } from "@/config/investment-portfolios";
 import { formatNaira } from "@/lib/domain";
-import { PORTFOLIO_TERMS } from "@/lib/copy/portfolio-terminology";
+import { formatInvestmentRange, PORTFOLIO_TERMS } from "@/lib/copy/portfolio-terminology";
 import type { HomepageStatsConfig } from "@/lib/homepage/homepage-stats";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
@@ -142,7 +142,8 @@ export function WealthGrowthExperience({ config, className }: Props) {
 
           {portfolio ? (
             <p className="mt-3 text-center text-xs font-medium text-[var(--emerald)]">
-              {portfolio.dailyReturnRate}% daily return
+              {portfolio.dailyReturnRate}% daily return ·{" "}
+              {formatInvestmentRange(portfolio.minimumInvestment, portfolio.maximumInvestment, formatNaira)}
             </p>
           ) : null}
 

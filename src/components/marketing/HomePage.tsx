@@ -123,11 +123,11 @@ export function HomePage({ homepageStats }: Props) {
           <PageHero
             eyebrow="Investment portfolios"
             title="Choose your investment portfolio"
-            description="Four strategies with published daily returns — from Alto Starter at 5% to Alto Elite at 8%."
+            description="Four strategies with published daily returns and investment ranges — from Alto Starter at 5% to Alto Elite at 8%."
           />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {investmentCategories.map((cat) => (
-              <PackageCard key={cat.slug} pkg={cat} compact showInvestmentRange={false} />
+              <PackageCard key={cat.slug} pkg={cat} compact />
             ))}
           </div>
         </div>

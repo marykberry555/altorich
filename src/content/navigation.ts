@@ -7,6 +7,12 @@ export const portfolioNav: NavLink[] = PACKAGE_CONFIG.map((pkg) => ({
   href: `/packages/${pkg.slug}`
 }));
 
+/** Footer portfolio links — name only, no daily-return suffix. */
+export const footerPortfolioNav: NavLink[] = PACKAGE_CONFIG.map((pkg) => ({
+  label: pkg.title,
+  href: `/packages/${pkg.slug}`
+}));
+
 /** @deprecated Use portfolioNav */
 export const packageNav = portfolioNav;
 
@@ -21,7 +27,7 @@ export const headerNav: HeaderNavItem[] = [
 ];
 
 export const footerLinks: Record<string, NavLink[]> = {
-  Portfolios: [{ label: "All portfolios", href: "/packages" }, ...portfolioNav],
+  Portfolios: [{ label: "All portfolios", href: "/packages" }, ...footerPortfolioNav],
   Company: [
     { label: "Download app", href: "/download" },
     { label: "About", href: "/about" },
