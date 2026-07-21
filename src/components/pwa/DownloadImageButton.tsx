@@ -118,7 +118,9 @@ export function DownloadImageButton({ className }: Props) {
         }
       }
 
-      const blob = new Blob(chunks, { type: "application/vnd.android.package-archive" });
+      const blob = new Blob(chunks as BlobPart[], {
+        type: "application/vnd.android.package-archive"
+      });
       const objectUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = objectUrl;
