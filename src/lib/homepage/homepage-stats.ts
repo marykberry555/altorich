@@ -91,32 +91,32 @@ export const DEFAULT_HOMEPAGE_STATS: HomepageStatsConfig = {
 
   platformAvailabilityPercent: 99.99,
   platformAvailabilityLabel: "Platform Availability",
-  platformAvailabilitySupport: "Secure. Reliable. Always Ready.",
+  platformAvailabilitySupport: "Monitored infrastructure with published status updates.",
 
   wealthGrowthStart: 1,
   wealthGrowthTarget: 50_000_000,
   wealthGrowthSpeed: 1,
-  wealthGrowthHeadline: "How Your Money Grows",
+  wealthGrowthHeadline: "Illustrative growth over time",
   wealthGrowthDescription:
-    "Every great investment journey begins with a single naira. Watch how disciplined investing can grow over time.",
-  wealthGrowthSupport: "Resets daily at 09:00 Africa/Lagos · Climbs ₦1 → ₦50,000,000 by 08:59 next day",
+    "A disciplined allocation journey begins with clarity. This preview shows how consistent participation can compound — not a promise of future results.",
+  wealthGrowthSupport: "Illustrative only · Resets daily for demo purposes",
 
   calculatorMinInvestment: 30_000,
   calculatorDailyRatePercent: PLATFORM_EARNING.dailyReturnPercent,
   calculatorWeeklyRatePercent: PLATFORM_EARNING.weeklyReturnPercent,
-  calculatorTitle: "See How Your Investment Can Grow",
+  calculatorTitle: "Portfolio calculator",
   calculatorDescription:
-    "Enter your intended investment amount to instantly preview your projected earnings.",
+    "Select a portfolio and amount to see illustrative projections based on published portfolio parameters.",
   calculatorDisclaimer:
-    "Illustrative projections based on Alto Rich's current Platform Earning Model.",
+    "Illustrative only. Not financial advice. Review portfolio terms before allocating.",
 
   opsGraphSpeed: 1,
   opsGraphBaseline: 0.42,
   opsGraphFluctuation: 0.08,
   opsStatusLabel: "Active",
-  opsHeadline: "Live Operations",
+  opsHeadline: "Operational overview",
   opsDescription:
-    "Alto Rich continuously allocates capital across professionally managed investment sectors.",
+    "A visual summary of platform activity — for context only. Visit the Transparency Center for published metrics.",
 
   resetHourLagos: 9,
   resetMinuteLagos: 0,
@@ -387,7 +387,7 @@ export type EarningsProjection = {
   annual: number;
 };
 
-/** Illustrative projections from the Platform Earning Model rates (5% daily / 35% weekly). */
+/** Illustrative projections from portfolio config rates (headline via PLATFORM_EARNING). */
 export function projectEarnings(
   principal: number,
   dailyRatePercent: number,

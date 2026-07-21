@@ -7,7 +7,14 @@ import { SettlementService } from "@/services/investment/settlement.service";
 import { ReferralService } from "@/services/referral/referral.service";
 import { addDays, makeInvestmentReference, type SettlementFrequency } from "@/lib/investment";
 import { buildPlanDefaults, type CreatePlanInput } from "@/lib/packages/plan-defaults";
-import { PLATFORM_EARNING, platformProjectedDaily } from "@/lib/earning/platform-earning";
+import { platformProjectedDaily } from "@/lib/earning/platform-earning";
+import {
+  getPortfolioWeeklyRoiBps,
+  isPortfolioSlug,
+  resolveWeeklyRoiBps,
+  validateInvestmentAmount,
+  type PortfolioSlug
+} from "@/config/investment-portfolios";
 import {
   assertDepositInvestReconciliation,
   isLegacyCapHealing,
@@ -107,19 +114,23 @@ export class InvestmentService {
     if (amount < min) {
       throw new AppError(`Minimum investment is ₦${min.toLocaleString("en-NG")}.`, 400, "BELOW_MINIMUM");
     }
-    // Sectors have minimum entry only — principal is unlimited (legacy max_investment ignored).
+
+    const tier = plan.tier as PortfolioSlug | null;
+    if (tier && isPortfolioSlug(tier)) {
+      const validation = validateInvestmentAmount(tier, amount);
+      if (!validation.ok) {
+        throw new AppError(validation.message, 400, validation.code);
+      }
+    }
+
     if (!plan.is_active || plan.plan_status !== "active") {
-      throw Errors.badRequest("This investment sector is not available.");
+      throw Errors.badRequest("This investment portfolio is not available.");
     }
   }
 
   /**
-   * After funding approval: invest the member's full wallet balance into their preferred sector.
-   * Skips when no sector is set or balance is below the sector minimum entry.
-   * Never caps principal — legacy plan max_investment is ignored (NULL = unlimited).
-   *
-   * When `walletBefore` is provided, runs financial integrity checks and rolls back
-   * the investment (not the deposit credit) if reconciliation fails by ≥ ₦0.01.
+   * After funding approval: invest the member's full wallet balance into their preferred portfolio
+   * when balance is within that portfolio's configured investment range.
    */
   async autoInvestFromPreferredPackage(
     userId: string,
@@ -150,12 +161,11 @@ export class InvestmentService {
     const plan = await this.getPlanBySlug(slug);
     if (!plan) return null;
 
-    const min = Number(plan.min_investment ?? plan.price);
     const wallet = await this.wallet.getWalletByUserId(userId);
     const balance = await this.wallet.getBalance(wallet.id);
     const walletBefore = context?.walletBefore ?? Math.max(0, balance - creditedAmount);
 
-    if (balance < min) {
+    const leaveInWallet = async (title: string, body: string) => {
       assertDepositInvestReconciliation({
         walletBefore,
         depositAmount: creditedAmount,
@@ -164,12 +174,36 @@ export class InvestmentService {
       });
       await this.notifications.dispatch({
         userId,
-        title: "Wallet funded — top up to invest",
-        body: `${plan.name} needs at least ₦${min.toLocaleString("en-NG")}. Your funds are in your wallet.`,
+        title,
+        body,
         channel: "in_app",
         metadata: { preferred_package: slug, deposit_id: context?.depositId ?? null }
       });
       return null;
+    };
+
+    if (isPortfolioSlug(slug)) {
+      const validation = validateInvestmentAmount(slug, balance);
+      if (!validation.ok) {
+        if (validation.code === "BELOW_MINIMUM") {
+          return leaveInWallet("Wallet funded — top up to invest", `${plan.name}: ${validation.message} Your funds are in your wallet.`);
+        }
+        if (validation.code === "ABOVE_MAXIMUM") {
+          return leaveInWallet(
+            "Wallet funded — amount above portfolio range",
+            `${plan.name}: ${validation.message} Funds remain in your wallet — invest manually or choose a higher portfolio.`
+          );
+        }
+        return leaveInWallet("Wallet funded — portfolio unavailable", `${plan.name} is not available for auto-invest. Funds remain in your wallet.`);
+      }
+    } else {
+      const min = Number(plan.min_investment ?? plan.price);
+      if (balance < min) {
+        return leaveInWallet(
+          "Wallet funded — top up to invest",
+          `${plan.name} needs at least ₦${min.toLocaleString("en-NG")}. Your funds are in your wallet.`
+        );
+      }
     }
 
     // Consume entire available wallet balance — no partial invest, no leftover cash.
@@ -269,7 +303,7 @@ export class InvestmentService {
     sourceDepositId?: string
   ): Promise<Investment> {
     const plan = await this.getPlanById(planId);
-    if (!plan) throw Errors.notFound("Investment sector");
+    if (!plan) throw Errors.notFound("Investment portfolio");
 
     this.validatePurchaseAmount(plan, amount);
 
@@ -294,9 +328,17 @@ export class InvestmentService {
     const startedAt = new Date();
     const endsAt = addDays(startedAt, plan.cycle_days);
     const frequency = (plan.settlement_frequency ?? "weekly") as SettlementFrequency;
-    // Unified platform earning engine — sector/plan never sets independent ROI.
-    const weeklyRoiBps = PLATFORM_EARNING.weeklyRoiBps;
-    const projectedDaily = platformProjectedDaily(amount);
+    const tier = (plan.tier ?? "starter") as PortfolioSlug;
+    const weeklyRoiBps = isPortfolioSlug(tier)
+      ? getPortfolioWeeklyRoiBps(tier)
+      : resolveWeeklyRoiBps({
+          slug: tier,
+          weeklyRoiBps: plan.weekly_roi_bps,
+          amountNgn: amount
+        });
+    const projectedDaily = isPortfolioSlug(tier)
+      ? platformProjectedDaily(amount, tier)
+      : platformProjectedDaily(amount);
 
     const { data: investment, error: invError } = await this.supabase
       .from("investments")
@@ -555,7 +597,7 @@ export class InvestmentService {
     if (countError) throw countError;
     if (count && count > 0) {
       throw new AppError(
-        "Cannot delete a sector that has investments. Archive it instead.",
+        "Cannot delete a portfolio that has investments. Archive it instead.",
         409,
         "PLAN_IN_USE"
       );

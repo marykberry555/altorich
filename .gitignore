@@ -75,3 +75,5 @@ public/downloads/*.aab
 !public/downloads/altorich-admin-release.aab
 !public/downloads/admin-release.json
 test-results/
+tmp/
+.local/

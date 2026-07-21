@@ -7,7 +7,7 @@ import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import type { HomepageStatsConfig } from "@/lib/homepage/homepage-stats";
 import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
 import { PageHero } from "@/components/marketing/PageHero";
-import { WealthGrowthExperience } from "@/components/marketing/WealthGrowthExperience";
+import { PortfolioCalculator } from "@/components/portfolio/PortfolioCalculator";
 import { HeroWealthCounter } from "@/components/marketing/HeroWealthCounter";
 import { LiveOperationsPanel } from "@/components/marketing/LiveOperationsPanel";
 import { PlatformByTheNumbers } from "@/components/marketing/PlatformByTheNumbers";
@@ -33,7 +33,10 @@ export function HomePage({ homepageStats }: Props) {
     image: pkg.image,
     keyBenefits: pkg.keyBenefits,
     bestFor: pkg.bestFor,
-    ctaLabel: pkg.ctaLabel
+    ctaLabel: pkg.ctaLabel,
+    dailyReturnPercent: pkg.dailyReturnPercent,
+    minNgn: pkg.minNgn,
+    maxNgn: pkg.maxNgn
   }));
 
   return (
@@ -48,7 +51,7 @@ export function HomePage({ homepageStats }: Props) {
             <div className="flex justify-center">
               <Badge variant="emerald">{hero.eyebrow}</Badge>
             </div>
-            <h1 className="mx-auto mt-4 max-w-xl text-4xl font-bold tracking-tight text-[var(--heading)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.05]">
+            <h1 className="mx-auto mt-4 max-w-xl whitespace-pre-line text-4xl font-bold tracking-tight text-[var(--heading)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.05]">
               {hero.title}
             </h1>
             <p className="mx-auto mt-3 max-w-md text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
@@ -80,7 +83,7 @@ export function HomePage({ homepageStats }: Props) {
               />
             </div>
             <p className="mt-3 text-xs text-[var(--text-subtle)]">
-              UK-registered · Naira-native · Monday 09:00 WAT withdrawals
+              UK-registered · Naira-native · Published withdrawal windows
             </p>
           </div>
 
@@ -104,22 +107,22 @@ export function HomePage({ homepageStats }: Props) {
                 {PLATFORM_EARNING.currentDailyRateLabel}: up to {PLATFORM_EARNING.dailyReturnPercent}%
               </p>
               <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                {PLATFORM_EARNING.currentWeeklyEquivalentLabel}: {PLATFORM_EARNING.weeklyReturnPercent}% ·{" "}
-                {PLATFORM_EARNING.payoutTiming}
+                {PLATFORM_EARNING.currentWeeklyEquivalentLabel}: {PLATFORM_EARNING.weeklyReturnPercent}% · Weekly
+                settlement window
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <WealthGrowthExperience config={homepageStats} />
+      <PortfolioCalculator />
 
       <section className="section-pad bg-section">
         <div className="container-ar">
           <PageHero
-            eyebrow="Investment sectors"
-            title="Choose Your Investment Sector"
-            description="Diversify your wealth across professionally managed investment sectors while earning through Alto Rich's unified Platform Earning Model."
+            eyebrow="Investment portfolios"
+            title="Choose your investment portfolio"
+            description="Four strategies with published daily returns and investment ranges — from Alto Starter at 5% to Alto Elite at 8%."
           />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {investmentCategories.map((cat) => (

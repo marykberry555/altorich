@@ -15,9 +15,13 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Megaphone,
+  Radio,
+  Scale,
   ScrollText,
   Settings,
   Shield,
+  ShieldAlert,
   ShieldCheck,
   TrendingUp,
   Users,
@@ -25,7 +29,9 @@ import {
   X,
   Crown,
   Headphones,
-  Landmark
+  Landmark,
+  Gift,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COMPANY } from "@/lib/company";
@@ -40,7 +46,10 @@ import { AdminGlobalSearch } from "@/components/admin-app/AdminGlobalSearch";
 const navSections = [
   {
     label: "Overview",
-    items: [{ href: ADMIN_APP_HOME, label: "Dashboard", icon: LayoutDashboard, exact: true }]
+    items: [
+      { href: ADMIN_APP_HOME, label: "Command center", icon: LayoutDashboard, exact: true },
+      { href: adminAppPath("/operations"), label: "Live feed", icon: Radio }
+    ]
   },
   {
     label: "Operations",
@@ -52,14 +61,17 @@ const navSections = [
       { href: adminAppPath("/investments"), label: "Investments", icon: TrendingUp },
       { href: adminAppPath("/plans"), label: "Packages", icon: Wallet },
       { href: adminAppPath("/funding-accounts"), label: "Funding accounts", icon: Wallet },
-      { href: adminAppPath("/settlements"), label: "Settlements", icon: TrendingUp }
+      { href: adminAppPath("/settlements"), label: "Settlements", icon: TrendingUp },
+      { href: adminAppPath("/reconciliation"), label: "Reconciliation", icon: Scale }
     ]
   },
   {
     label: "Programmes",
     items: [
       { href: adminAppPath("/referrals"), label: "Referrals", icon: Users },
-      { href: adminAppPath("/referrals"), label: "VIP levels", icon: Crown }
+      { href: adminAppPath("/referrals"), label: "VIP levels", icon: Crown },
+      { href: adminAppPath("/welcome-bonus"), label: "Welcome Bonus", icon: Gift },
+      { href: adminAppPath("/announcements"), label: "Announcements", icon: Megaphone }
     ]
   },
   {
@@ -67,11 +79,14 @@ const navSections = [
     items: [
       { href: adminAppPath("/notifications"), label: "Notifications", icon: Bell },
       { href: adminAppPath("/financial-health"), label: "Financial health", icon: HeartPulse },
+      { href: adminAppPath("/fraud"), label: "Fraud center", icon: ShieldAlert },
       { href: adminAppPath("/activity"), label: "Login activity", icon: Activity },
       { href: adminAppPath("/security"), label: "Security", icon: Shield },
+      { href: adminAppPath("/system-health"), label: "System health", icon: HeartPulse },
       { href: adminAppPath("/audit"), label: "Audit logs", icon: ScrollText },
       { href: adminAppPath("/errors"), label: "Error log", icon: Bug },
       { href: adminAppPath("/reports"), label: "Reports", icon: FileText },
+      { href: adminAppPath("/exports"), label: "Exports", icon: Download },
       { href: adminAppPath("/support"), label: "Support", icon: Headphones }
     ]
   },

@@ -1,4 +1,5 @@
 import { PACKAGE_CONFIG, type PackageSlug } from "@/lib/packages/package-config";
+import { getPortfolioBySlug } from "@/config/investment-portfolios";
 import type { ImageAsset } from "@/lib/images";
 
 export type { PackageSlug };
@@ -288,12 +289,13 @@ const PACKAGE_PAGE_CONTENT: Record<
 
 function buildPackageContent(slug: PackageSlug): PackageContent {
   const config = PACKAGE_CONFIG.find((p) => p.slug === slug)!;
+  const portfolio = getPortfolioBySlug(slug)!;
   const page = PACKAGE_PAGE_CONTENT[slug];
   return {
     slug: config.slug,
     title: config.title,
     subtitle: config.subtitle,
-    weeklyRoiPercent: config.weeklyRoiPercent,
+    weeklyRoiPercent: portfolio.weeklyProjectionRate,
     image: config.image,
     ...page
   };

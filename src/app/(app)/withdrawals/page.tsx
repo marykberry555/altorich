@@ -1,11 +1,22 @@
+import type { Metadata } from "next";
 import { PayoutScheduleCard } from "@/components/payout/PayoutScheduleCard";
 import { AutoWeeklyPayoutToggle } from "@/components/payout/AutoWeeklyPayoutToggle";
-import { PayoutHistoryTable } from "@/components/payout/PayoutHistoryTable";
+import { WithdrawalHistoryList } from "@/components/financial/WithdrawalHistoryList";
+import { WithdrawalTrackerCard } from "@/components/financial/WithdrawalTrackerCard";
 import { EarningsActionChoice } from "@/components/payout/EarningsActionChoice";
 import { WithdrawalWorkspace } from "@/components/payout/WithdrawalWorkspace";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
+import { buildWithdrawalTrackerView, findActiveWithdrawal } from "@/lib/financial-events/withdrawal-tracker";
 import type { Withdrawal } from "@/types/database";
+
+import { memberPageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata: Metadata = memberPageMetadata(
+  "Withdrawals",
+  "/withdrawals",
+  "Request a withdrawal to your bank account, view settlement schedule, and track withdrawal history."
+);
 
 export default async function WithdrawalsPage() {
   const user = await getSessionUser();
@@ -46,11 +57,14 @@ export default async function WithdrawalsPage() {
     }
   }
 
+  const activeWithdrawal = findActiveWithdrawal(withdrawals);
+  const activeTracker = activeWithdrawal ? buildWithdrawalTrackerView(activeWithdrawal) : null;
+
   return (
     <div className="mx-auto max-w-3xl space-y-8 pb-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Withdrawal</h1>
-        <p className="text-sm text-[var(--text-muted)]">Move earnings to your bank or reinvest.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Withdrawals</h1>
+        <p className="text-sm text-[var(--text-muted)]">Request a withdrawal to your bank account or reinvest your earnings.</p>
       </header>
 
       <EarningsActionChoice availableBalance={balance} preferredPackageHref={preferredHref} />
@@ -65,7 +79,14 @@ export default async function WithdrawalsPage() {
 
       <AutoWeeklyPayoutToggle />
 
-      <PayoutHistoryTable rows={withdrawals} />
+      {activeTracker ? (
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Live tracker</h2>
+          <WithdrawalTrackerCard tracker={activeTracker} />
+        </section>
+      ) : null}
+
+      <WithdrawalHistoryList rows={withdrawals} />
     </div>
   );
 }

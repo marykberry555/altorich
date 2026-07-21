@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { StepNumber } from "@/components/ui/StepNumber";
 import { getPackageConfig } from "@/lib/packages/package-config";
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
+import { formatNaira } from "@/lib/domain";
 
 const benefitIcons = [Shield, TrendingUp, Wallet, CheckCircle2] as const;
 
@@ -27,25 +28,46 @@ export function PackageDetailPage({ pkg }: Props) {
             href="/packages"
             className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--text-muted)] transition hover:text-[var(--heading)]"
           >
-            <ArrowLeft size={16} /> All investment sectors
+            <ArrowLeft size={16} /> All investment portfolios
           </Link>
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="emerald">{pkg.subtitle}</Badge>
-                <Badge variant="gold">{PLATFORM_EARNING.modelName}</Badge>
+                {config ? (
+                  <Badge variant="gold">
+                    {config.dailyReturnPercent}% daily · {formatNaira(config.minNgn)}–{formatNaira(config.maxNgn)}
+                  </Badge>
+                ) : (
+                  <Badge variant="gold">{PLATFORM_EARNING.modelName}</Badge>
+                )}
               </div>
               <PageHero
                 className="mt-4"
-                eyebrow="Investment sector"
-                title={pkg.title}
-                description={pkg.heroHeadline}
+                eyebrow="Investment portfolio"
+                title={pkg.subtitle}
+                description={pkg.title}
               />
-              <p className="mt-4 text-sm leading-relaxed text-[var(--text-muted)] sm:text-base">{pkg.heroDescription}</p>
+              <p className="mt-2 text-base font-semibold text-[var(--heading)]">{pkg.heroHeadline}</p>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--text-muted)] sm:text-base">{pkg.heroDescription}</p>
+              {config ? (
+                <dl className="mt-5 grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-raised)]/80 p-4 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Daily return</dt>
+                    <dd className="mt-1 font-semibold text-[var(--emerald)]">{config.dailyReturnPercent}%</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-[0.12em] text-[var(--text-subtle)]">Investment range</dt>
+                    <dd className="currency-ngn mt-1 font-semibold text-[var(--heading)]">
+                      {formatNaira(config.minNgn)} to {formatNaira(config.maxNgn)}
+                    </dd>
+                  </div>
+                </dl>
+              ) : null}
               {config?.whyChoose ? (
                 <div className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--surface-raised)]/80 p-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">
-                    Why choose this sector?
+                    Why choose this portfolio?
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{config.whyChoose}</p>
                   {config.bestFor ? (
@@ -86,6 +108,15 @@ export function PackageDetailPage({ pkg }: Props) {
               </Card>
             ))}
           </div>
+          <p className="mt-6">
+            <Link
+              href="/how-it-works"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--emerald)] hover:underline"
+            >
+              See the full member journey
+              <ArrowRight size={14} aria-hidden />
+            </Link>
+          </p>
         </div>
       </section>
 

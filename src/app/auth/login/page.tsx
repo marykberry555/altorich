@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { AuthPageFallback } from "@/components/auth/AuthPageFallback";
 
 export default function AuthLoginPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-[var(--text-muted)]">AltoRich... Hold On</div>}>
+    <Suspense fallback={<AuthPageFallback />}>
       <LoginForm />
     </Suspense>
   );

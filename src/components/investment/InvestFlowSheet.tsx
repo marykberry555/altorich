@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, X } from "lucide-react";
 import { formatNaira } from "@/lib/domain";
-import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
+import { calculateWeeklyProjection, getPortfolioBySlug, type PortfolioSlug } from "@/config/investment-portfolios";
 import { Button } from "@/components/ui/Button";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Card } from "@/components/ui/Card";
 import { InlineErrorNotice } from "@/components/errors/InlineErrorNotice";
 import { ApiRequestError, fetchJson, formatMemberApiError } from "@/lib/api/fetch-json";
+import { PORTFOLIO_TERMS, formatInvestmentRange } from "@/lib/copy/portfolio-terminology";
 import { cn } from "@/lib/utils";
 
 type Step = "amount" | "review" | "success";
@@ -19,8 +20,13 @@ type Props = {
   open: boolean;
   onClose: () => void;
   planId: string;
-  packageTitle: string;
+  portfolioTitle?: string;
+  /** @deprecated Use portfolioTitle */
+  packageTitle?: string;
+  portfolioSlug?: PortfolioSlug;
+  strategy?: string;
   minAmount: number;
+  maxAmount?: number;
   payoutTiming: string;
   walletBalance: number;
 };
@@ -71,11 +77,19 @@ export function InvestFlowSheet({
   open,
   onClose,
   planId,
+  portfolioTitle,
   packageTitle,
+  portfolioSlug,
+  strategy,
   minAmount,
+  maxAmount,
   payoutTiming,
   walletBalance
 }: Props) {
+  const title = portfolioTitle || packageTitle || "Portfolio";
+  const portfolio = portfolioSlug ? getPortfolioBySlug(portfolioSlug) : undefined;
+  const effectiveMax = maxAmount ?? portfolio?.maximumInvestment;
+  const effectiveStrategy = strategy ?? portfolio?.strategy;
   const router = useRouter();
   const [step, setStep] = useState<Step>("amount");
   const [amount, setAmount] = useState(String(minAmount));
@@ -98,8 +112,14 @@ export function InvestFlowSheet({
   }, [open, minAmount]);
 
   const parsedAmount = parseCurrencyInput(amount);
-  const validAmount = parsedAmount >= minAmount;
+  const validAmount =
+    parsedAmount >= minAmount && (effectiveMax == null || parsedAmount <= effectiveMax);
   const sufficientBalance = walletBalance >= parsedAmount;
+  const dailyRate = portfolio?.dailyReturnRate;
+  const weeklyAtAmount =
+    portfolioSlug && parsedAmount > 0
+      ? calculateWeeklyProjection(portfolioSlug, parsedAmount)
+      : 0;
 
   async function confirmInvest() {
     if (inFlight.current || loading) return;
@@ -150,11 +170,14 @@ export function InvestFlowSheet({
             {step !== "success" ? (
               <>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">
-                  Select investment sector
+                  {PORTFOLIO_TERMS.selectedPortfolio}
                 </p>
                 <h2 id="invest-flow-title" className="truncate text-lg font-bold text-[var(--heading)]">
-                  {packageTitle}
+                  {title}
                 </h2>
+                {effectiveStrategy ? (
+                  <p className="truncate text-xs text-[var(--text-muted)]">{effectiveStrategy}</p>
+                ) : null}
               </>
             ) : (
               <h2 id="invest-flow-title" className="text-lg font-bold text-[var(--heading)]">
@@ -185,7 +208,7 @@ export function InvestFlowSheet({
             </div>
             <p className="text-xl font-bold text-[var(--heading)]">You&apos;re all set</p>
             <p className="currency-ngn text-sm text-[var(--text-muted)]">
-              {formatNaira(parsedAmount)} invested in {packageTitle}
+              {formatNaira(parsedAmount)} allocated to {title}
             </p>
             <Link href="/dashboard" className="mt-2">
               <Button className="gap-2">
@@ -197,19 +220,33 @@ export function InvestFlowSheet({
         ) : step === "amount" ? (
           <div className="space-y-4 overflow-y-auto px-5 py-5">
             <div>
-              <p className="text-sm font-semibold text-[var(--heading)]">Choose investment amount</p>
+              <p className="text-sm font-semibold text-[var(--heading)]">{PORTFOLIO_TERMS.investmentAmount}</p>
               <p className="currency-ngn mt-1 text-sm text-[var(--text-muted)]">
                 Wallet: {formatNaira(walletBalance)}
               </p>
             </div>
 
             <CurrencyInput
-              label={`Amount (min ${formatNaira(minAmount)})`}
+              label={
+                effectiveMax != null
+                  ? `Amount (${formatNaira(minAmount)} – ${formatNaira(effectiveMax)})`
+                  : `Amount (min ${formatNaira(minAmount)})`
+              }
               prefix="₦"
               value={amount}
               onChange={setAmount}
               required
             />
+
+            {!validAmount && parsedAmount > 0 ? (
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                {parsedAmount < minAmount
+                  ? `Minimum investment is ${formatNaira(minAmount)}.`
+                  : effectiveMax != null && parsedAmount > effectiveMax
+                    ? `Maximum investment is ${formatNaira(effectiveMax)}.`
+                    : null}
+              </p>
+            ) : null}
 
             {!sufficientBalance && validAmount ? (
               <p className="text-sm text-amber-700 dark:text-amber-300">
@@ -240,30 +277,46 @@ export function InvestFlowSheet({
             <p className="text-sm font-semibold text-[var(--heading)]">Review</p>
 
             <dl className="divide-y divide-[var(--border)] rounded-xl border border-[var(--border)] text-sm">
+              {effectiveStrategy ? (
+                <div className="flex justify-between gap-4 px-4 py-3">
+                  <dt className="text-[var(--text-muted)]">{PORTFOLIO_TERMS.primaryStrategy}</dt>
+                  <dd className="max-w-[55%] text-right text-xs font-medium text-[var(--heading)]">{effectiveStrategy}</dd>
+                </div>
+              ) : null}
               <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">Investment sector</dt>
-                <dd className="font-semibold text-[var(--heading)]">{packageTitle}</dd>
+                <dt className="text-[var(--text-muted)]">{PORTFOLIO_TERMS.selectedPortfolio}</dt>
+                <dd className="max-w-[55%] text-right font-semibold text-[var(--heading)]">{title}</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">Amount</dt>
+                <dt className="text-[var(--text-muted)]">{PORTFOLIO_TERMS.dailyReturn}</dt>
+                <dd className="font-semibold text-[var(--emerald)]">
+                  {dailyRate != null ? `${dailyRate}%` : "—"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 px-4 py-3">
+                <dt className="text-[var(--text-muted)]">{PORTFOLIO_TERMS.investmentRange}</dt>
+                <dd className="currency-ngn max-w-[55%] text-right text-xs font-semibold tabular-nums">
+                  {effectiveMax != null
+                    ? `${formatNaira(minAmount)} to ${formatNaira(effectiveMax)}`
+                    : `From ${formatNaira(minAmount)}`}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 px-4 py-3">
+                <dt className="text-[var(--text-muted)]">{PORTFOLIO_TERMS.investmentAmount}</dt>
                 <dd className="currency-ngn font-bold tabular-nums text-[var(--heading)]">{formatNaira(parsedAmount)}</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">{PLATFORM_EARNING.modelName}</dt>
-                <dd className="font-semibold text-[var(--emerald)]">Up to {PLATFORM_EARNING.dailyReturnPercent}% daily</dd>
-              </div>
-              <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">Withdrawal</dt>
+                <dt className="text-[var(--text-muted)]">Settlement</dt>
                 <dd className="max-w-[55%] text-right text-xs font-semibold">{payoutTiming}</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
                 <dt className="text-[var(--text-muted)]">Auto-reinvest</dt>
-                <dd className="text-right text-xs font-medium">Until you stop · guaranteed</dd>
+                <dd className="text-right text-xs font-medium">Weekly until you stop</dd>
               </div>
               <div className="flex justify-between gap-4 px-4 py-3">
-                <dt className="text-[var(--text-muted)]">This week at your amount</dt>
+                <dt className="text-[var(--text-muted)]">{PORTFOLIO_TERMS.weeklyProjection}</dt>
                 <dd className="currency-ngn font-bold tabular-nums text-[var(--emerald)]">
-                  {formatNaira(Math.round((parsedAmount * PLATFORM_EARNING.weeklyReturnPercent) / 100))}
+                  {formatNaira(weeklyAtAmount)}
                 </dd>
               </div>
             </dl>

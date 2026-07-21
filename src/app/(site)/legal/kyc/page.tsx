@@ -1,5 +1,12 @@
 import { LegalDocument } from "@/components/marketing/LegalDocument";
 import { COMPANY } from "@/lib/company";
+import { legalPageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata = legalPageMetadata(
+  "Know Your Customer Policy",
+  "/legal/kyc",
+  "Identity verification requirements and document standards for Alto Rich members."
+);
 
 export default function KycPage() {
   return (

@@ -1,5 +1,12 @@
 import { LegalDocument } from "@/components/marketing/LegalDocument";
 import { COMPANY } from "@/lib/company";
+import { legalPageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata = legalPageMetadata(
+  "Complaints Procedure",
+  "/legal/complaints",
+  "How to raise a complaint with Alto Rich and what to expect from our resolution process."
+);
 
 export default function ComplaintsPage() {
   return (

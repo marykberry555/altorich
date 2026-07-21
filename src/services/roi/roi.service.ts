@@ -4,6 +4,11 @@ import { Errors, AppError } from "@/lib/errors";
 import { currentTickerWindowLagos } from "@/lib/roi/time";
 import { computeWeeklyTicker } from "@/lib/roi/math";
 import { SettingsService } from "@/services/admin/settings.service";
+import {
+  INVESTMENT_PORTFOLIOS,
+  type PortfolioSlug,
+  validateInvestmentAmount
+} from "@/config/investment-portfolios";
 
 type Client = SupabaseClient<Database>;
 
@@ -14,6 +19,10 @@ export type RoiState = {
   activeInvestment: (RoiInvestment & { tier: RoiTier }) | null;
   exchangeRateNgnPerUsd: number;
 };
+
+const ROI_TIER_NAME_TO_SLUG: Record<string, PortfolioSlug> = Object.fromEntries(
+  INVESTMENT_PORTFOLIOS.map((p) => [p.name, p.id])
+) as Record<string, PortfolioSlug>;
 
 export class RoiService {
   private readonly settings: SettingsService;
@@ -59,11 +68,23 @@ export class RoiService {
   }
 
   validateTierAmount(tier: RoiTier, principalNgn: number) {
+    const slug = ROI_TIER_NAME_TO_SLUG[tier.name];
+    if (slug) {
+      const validation = validateInvestmentAmount(slug, principalNgn);
+      if (!validation.ok) {
+        throw new AppError(validation.message, 400, validation.code);
+      }
+      return;
+    }
+
     const min = Number(tier.min_ngn);
     if (principalNgn < min) {
       throw new AppError(`Minimum for ${tier.name} is ₦${min.toLocaleString("en-NG")}.`, 400, "BELOW_MIN");
     }
-    // Legacy max_ngn ignored — sectors have minimum entry only (unlimited principal).
+    const max = tier.max_ngn != null ? Number(tier.max_ngn) : null;
+    if (max != null && principalNgn > max) {
+      throw new AppError(`Maximum for ${tier.name} is ₦${max.toLocaleString("en-NG")}.`, 400, "ABOVE_MAXIMUM");
+    }
   }
 
   async createInvestment(input: {

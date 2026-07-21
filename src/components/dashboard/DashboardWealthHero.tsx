@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { MemberAvatar } from "@/components/profile/MemberAvatar";
 import { AnimatedEarningsCounter } from "@/components/investment/AnimatedEarningsCounter";
 import { DashboardPayoutCountdown } from "@/components/dashboard/DashboardPayoutCountdown";
-import { getGreeting } from "@/lib/utils/avatar";
+import { getPersonalizedGreeting } from "@/lib/utils/avatar";
 import { getPackageLabel } from "@/lib/packages/constants";
 import { formatNaira } from "@/lib/domain";
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
@@ -102,8 +102,8 @@ export function DashboardWealthHero({
           <div className="flex items-center gap-3 sm:gap-4">
             <MemberAvatar fullName={name} avatarUrl={avatarUrl} size="lg" className="ring-2 ring-white/20" />
             <div>
-              <p className="text-sm font-medium text-white/70">{getGreeting()},</p>
-              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{name}</h1>
+              <p className="text-sm font-medium text-white/70">{getPersonalizedGreeting(name)}</p>
+              <h1 className="sr-only">{name}</h1>
               {handle ? (
                 <p className="mt-1 text-sm font-medium text-emerald-200/90">{handle}</p>
               ) : null}
@@ -146,8 +146,8 @@ export function DashboardWealthHero({
             <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">₦0.00</p>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/80">
               {walletBalance > 0
-                ? "Your wallet is funded. Allocate to your preferred investment sector to begin."
-                : "Fund your wallet, choose an investment sector, and earn every Monday."}
+                ? "Your wallet is funded. Allocate to your preferred investment portfolio to begin."
+                : "Fund your wallet, choose an investment portfolio, and earn every Monday."}
             </p>
             <div className="mt-5">
               <Link href={cta.href}>
@@ -171,7 +171,7 @@ export function DashboardWealthHero({
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
             <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
-              Current Investment Sector
+              Current Portfolio
             </dt>
             <dd className="mt-1 truncate text-lg font-bold sm:text-xl">{sectorLabel}</dd>
           </div>
@@ -238,8 +238,8 @@ export function DashboardWealthHeroStatic({
         <div className="flex items-center gap-3 sm:gap-4">
           <MemberAvatar fullName={name} avatarUrl={avatarUrl} size="lg" className="ring-2 ring-white/20" />
           <div>
-            <p className="text-sm font-medium text-white/70">{getGreeting()},</p>
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{name}</h1>
+            <p className="text-sm font-medium text-white/70">{getPersonalizedGreeting(name)}</p>
+            <h1 className="sr-only">{name}</h1>
             {handle ? (
               <p className="mt-1 text-sm font-medium text-emerald-200/90">{handle}</p>
             ) : null}
@@ -258,8 +258,8 @@ export function DashboardWealthHeroStatic({
             <p className="mt-3 text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">₦0.00</p>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/80">
               {walletBalance > 0
-                ? "Your wallet is funded. Allocate to your preferred investment sector to begin."
-                : "Fund your wallet, choose an investment sector, and earn every Monday."}
+                ? "Your wallet is funded. Allocate to your preferred investment portfolio to begin."
+                : "Fund your wallet, choose an investment portfolio, and earn every Monday."}
             </p>
             <div className="mt-5">
               <Link href={cta.href}>
@@ -283,7 +283,7 @@ export function DashboardWealthHeroStatic({
           </div>
           <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
             <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/60">
-              Current Investment Sector
+              Current Portfolio
             </dt>
             <dd className="mt-1 truncate text-lg font-bold sm:text-xl">{sectorLabel}</dd>
           </div>

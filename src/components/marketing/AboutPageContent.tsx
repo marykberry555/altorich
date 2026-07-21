@@ -19,13 +19,13 @@ import {
   Users,
   Wallet
 } from "lucide-react";
+import { LeadershipPreviewSection } from "@/components/marketing/LeadershipPreviewSection";
 import { PageHero } from "@/components/marketing/PageHero";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import {
   aboutPage,
-  leadership,
   mission,
   values,
   vision
@@ -277,39 +277,7 @@ export function AboutPageContent() {
         </div>
       </section>
 
-      {/* Leadership */}
-      <section className="section-pad bg-[var(--gray-50)]">
-        <div className="container-ar">
-          <PageHero
-            eyebrow="Leadership"
-            title="People behind the platform"
-            description="International governance with a Nigeria-first operations team."
-            align="center"
-            className="mx-auto"
-          />
-          <div className="mx-auto mt-8 grid max-w-4xl gap-6 md:grid-cols-2">
-            {leadership.map((person, index) => (
-              <Card key={person.name} variant="elevated" padding="lg" className="h-full">
-                <div
-                  className={cn(
-                    "inline-flex size-12 items-center justify-center rounded-2xl",
-                    index === 0
-                      ? "bg-[var(--navy)] text-white"
-                      : "bg-[var(--emerald-soft)] text-[var(--emerald)]"
-                  )}
-                >
-                  {index === 0 ? <Building2 size={22} aria-hidden /> : <Users size={22} aria-hidden />}
-                </div>
-                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--gold)]">
-                  {person.role}
-                </p>
-                <h3 className="mt-2 text-xl font-bold text-[var(--heading)]">{person.name}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-[var(--text-muted)]">{person.bio}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      <LeadershipPreviewSection />
 
       {/* Timeline */}
       <section className="section-pad bg-section">

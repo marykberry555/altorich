@@ -4,17 +4,25 @@ import type { InvestmentPlan } from "@/types/database";
 import type { SettlementFrequency } from "@/lib/investment";
 import { settlementFrequencyLabel } from "@/lib/investment-accrual-live";
 import { formatNaira } from "@/lib/domain";
-import { getPackageConfig, PACKAGE_SLUGS, projectedDailyForPrincipal } from "@/lib/packages/package-config";
-import { PLATFORM_EARNING, formatPlatformDailyLabel } from "@/lib/earning/platform-earning";
+import {
+  getPackageConfig,
+  PACKAGE_SLUGS,
+  projectedDailyForPrincipal,
+  calculateWeeklyProjection
+} from "@/lib/packages/package-config";
+import { getPortfolioBySlug } from "@/config/investment-portfolios";
+import { formatPlatformDailyLabel } from "@/lib/earning/platform-earning";
+import { formatInvestmentRange } from "@/lib/copy/portfolio-terminology";
 
-export type PackagePlanCard = {
+export type PortfolioPlanCard = {
   slug: PackageSlug;
   title: string;
   subtitle: string;
+  strategy: string;
   description: string;
   planId: string | null;
-  /** Minimum qualification / entry amount — no maximum. */
   minInvestment: number;
+  maxInvestment: number;
   weeklyRoiPercent: number;
   dailyReturnPercent: number;
   cycleDays: number;
@@ -28,7 +36,13 @@ export type PackagePlanCard = {
   keyBenefits: string[];
 };
 
-export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[] {
+/** @deprecated Use PortfolioPlanCard */
+export type PackagePlanCard = PortfolioPlanCard;
+
+const ILLUSTRATIVE_DISCLOSURE =
+  "Illustrative returns based on published portfolio parameters — not a guarantee of future results.";
+
+export function buildPortfolioPlanCards(plans: InvestmentPlan[]): PortfolioPlanCard[] {
   const byTier = new Map<string, InvestmentPlan[]>();
   for (const plan of plans) {
     const tier = plan.tier as PackageSlug;
@@ -39,67 +53,75 @@ export function buildPackagePlanCards(plans: InvestmentPlan[]): PackagePlanCard[
   return PACKAGE_SLUGS.map((slug) => {
     const content = packageList.find((p) => p.slug === slug)!;
     const tierDefaults = getPackageConfig(slug)!;
+    const portfolio = getPortfolioBySlug(slug)!;
     const tierPlans = (byTier.get(slug) ?? []).sort((a, b) => a.sort_order - b.sort_order);
     const primary = tierPlans[0] ?? null;
-    const weeklyRoiPercent = PLATFORM_EARNING.weeklyReturnPercent;
-    const dailyReturnPercent = PLATFORM_EARNING.dailyReturnPercent;
+
+    const base = {
+      slug,
+      title: portfolio.name,
+      subtitle: portfolio.subtitle,
+      strategy: portfolio.strategy,
+      weeklyRoiPercent: portfolio.weeklyProjectionRate,
+      dailyReturnPercent: portfolio.dailyReturnRate,
+      minInvestment: portfolio.minimumInvestment,
+      maxInvestment: portfolio.maximumInvestment,
+      payoutTiming: portfolio.payoutTiming,
+      accentGradient: tierDefaults.accentGradient,
+      keyBenefits: portfolio.highlights
+    };
 
     if (!primary) {
       return {
-        slug,
-        title: tierDefaults.title,
-        subtitle: tierDefaults.subtitle,
+        ...base,
         description: tierDefaults.cardDescription,
         planId: null,
-        minInvestment: tierDefaults.minNgn,
-        weeklyRoiPercent,
-        dailyReturnPercent,
         cycleDays: 365,
-        settlementFrequency: "weekly",
+        settlementFrequency: "weekly" as SettlementFrequency,
         projectedDaily: 0,
-        payoutTiming: tierDefaults.payoutTiming,
         planStatus: "unavailable",
-        riskDisclosure: PLATFORM_EARNING.guarantee,
-        available: false,
-        accentGradient: tierDefaults.accentGradient,
-        keyBenefits: tierDefaults.keyBenefits
+        riskDisclosure: ILLUSTRATIVE_DISCLOSURE,
+        available: false
       };
     }
 
-    const minInvestment = Math.min(...tierPlans.map((p) => Number(p.min_investment ?? p.price)));
-
     return {
-      slug,
-      title: tierDefaults.title,
-      subtitle: tierDefaults.subtitle,
+      ...base,
       description: primary.description || content.heroHeadline,
       planId: primary.id,
-      minInvestment,
-      weeklyRoiPercent,
-      dailyReturnPercent,
       cycleDays: primary.cycle_days,
       settlementFrequency: (primary.settlement_frequency ?? "weekly") as SettlementFrequency,
-      projectedDaily: projectedDailyForPrincipal(minInvestment),
-      payoutTiming: tierDefaults.payoutTiming,
+      projectedDaily: projectedDailyForPrincipal(portfolio.minimumInvestment, slug),
       planStatus: primary.plan_status,
-      riskDisclosure: primary.risk_disclosure || PLATFORM_EARNING.guarantee,
-      available: primary.is_active && primary.plan_status === "active",
-      accentGradient: tierDefaults.accentGradient,
-      keyBenefits: tierDefaults.keyBenefits
+      riskDisclosure: primary.risk_disclosure || ILLUSTRATIVE_DISCLOSURE,
+      available: primary.is_active && primary.plan_status === "active"
     };
   });
 }
+
+/** @deprecated Use buildPortfolioPlanCards */
+export const buildPackagePlanCards = buildPortfolioPlanCards;
 
 export function formatSettlementLabel(frequency: SettlementFrequency) {
   return settlementFrequencyLabel(frequency);
 }
 
-/** One-line expected return for sector cards — always the platform engine. */
+export function formatPortfolioRange(slug: PackageSlug) {
+  const portfolio = getPortfolioBySlug(slug);
+  if (!portfolio) return "";
+  return formatInvestmentRange(portfolio.minimumInvestment, portfolio.maximumInvestment, formatNaira);
+}
+
+/** One-line expected return summary for portfolio cards. */
 export function formatExpectedReturnSummary(card: {
+  slug?: PackageSlug;
   weeklyRoiPercent?: number;
   minInvestment: number;
   payoutTiming: string;
 }) {
-  const weeklyAtMin = Math.round((card.minInvestment * PLATFORM_EARNING.weeklyReturnPercent) / 100);
-  return `${formatPlatformDailyLabel()} · ${formatNaira(weeklyAtMin)}/wk at min · ${card.payoutTiming}`;
+  const weeklyAtMin = card.slug
+    ? calculateWeeklyProjection(card.slug, card.minInvestment)
+    : Math.round((card.minInvestment * (card.weeklyRoiPercent ?? 0)) / 100);
+  const dailyLabel = card.slug ? formatPlatformDailyLabel(card.slug) : formatPlatformDailyLabel();
+  return `${dailyLabel} · ${formatNaira(weeklyAtMin)}/wk at min · ${card.payoutTiming}`;
 }

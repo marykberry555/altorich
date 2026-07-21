@@ -11,6 +11,7 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { MemberAvatar } from "@/components/profile/MemberAvatar";
+import { IncidentBanner } from "@/components/trust/IncidentBanner";
 import { MARKETING_HOME } from "@/lib/pwa/config";
 
 type Props = {
@@ -211,6 +212,7 @@ export function DashboardShell({ fullName, username, avatarUrl, children }: Prop
           </div>
         ) : null}
 
+        <IncidentBanner />
         <main className="dashboard-main mx-auto max-w-6xl space-y-5 !px-4 !pb-16 !pt-4 sm:space-y-6 sm:!py-5 lg:!px-8 lg:!py-6 lg:!pb-6">
           {children}
         </main>

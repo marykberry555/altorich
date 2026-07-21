@@ -5,7 +5,7 @@ import { NotificationService } from "@/services/notification/notification.servic
 import { WithdrawalService } from "@/services/withdrawal/withdrawal.service";
 import { settlementDates, type SettlementFrequency } from "@/lib/investment";
 import { settlementInterestForInvestment, weeklySettlementWindow } from "@/lib/investment/accrual-math";
-import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
+import { resolveWeeklyRoiBps } from "@/config/investment-portfolios";
 
 type Client = SupabaseClient<Database>;
 
@@ -68,7 +68,16 @@ export class SettlementService {
     const results: { investmentId: string; amount: number; action: "reinvest" | "payout" }[] = [];
 
     for (const investment of active ?? []) {
-      const bps = PLATFORM_EARNING.weeklyRoiBps;
+      const planRel = investment.investment_plans as
+        | { weekly_roi_bps?: number | null; tier?: string | null }
+        | { weekly_roi_bps?: number | null; tier?: string | null }[]
+        | null;
+      const plan = Array.isArray(planRel) ? planRel[0] : planRel;
+      const bps = resolveWeeklyRoiBps({
+        slug: plan?.tier,
+        weeklyRoiBps: (investment as { weekly_roi_bps?: number | null }).weekly_roi_bps ?? plan?.weekly_roi_bps,
+        amountNgn: Number(investment.amount)
+      });
       const amount = Number(investment.amount);
       const lastWeeklySettlementAt = (investment as { last_weekly_settlement_at?: string | null })
         .last_weekly_settlement_at

@@ -1,19 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  formatNairaCounter,
-  projectEarnings,
-  type HomepageStatsConfig
-} from "@/lib/homepage/homepage-stats";
+  calculateAnnualProjection,
+  calculateDailyReturn,
+  calculateMonthlyProjection,
+  calculateWeeklyProjection,
+  getAvailablePortfolios,
+  getPortfolioByInvestmentAmount,
+  getPortfolioBySlug,
+  type PortfolioSlug
+} from "@/config/investment-portfolios";
+import { formatNaira } from "@/lib/domain";
+import { formatInvestmentRange, PORTFOLIO_TERMS } from "@/lib/copy/portfolio-terminology";
+import type { HomepageStatsConfig } from "@/lib/homepage/homepage-stats";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 
-/** Matches ₦100,000 → ₦5,000 daily / ₦35,000 weekly under the Platform Earning Model. */
 const CALCULATOR_DEFAULT = 100_000;
 
 type Props = {
-  config: HomepageStatsConfig;
+  config?: HomepageStatsConfig;
   className?: string;
 };
 
@@ -32,24 +39,39 @@ function toAmount(digits: string) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function formatProjection(amount: number) {
-  if (!Number.isFinite(amount) || amount <= 0) return "₦0";
-  return formatNairaCounter(amount);
-}
-
-/** Earnings calculator — sits below the hero (counter lives in the hero). */
+/**
+ * Homepage earnings calculator — rates follow the selected / matched portfolio
+ * (5% / 6% / 7% / 8%), not a single platform flat rate.
+ */
 export function WealthGrowthExperience({ config, className }: Props) {
-  const [amountDigits, setAmountDigits] = useState(() => String(CALCULATOR_DEFAULT));
+  const portfolios = getAvailablePortfolios();
+  const [slug, setSlug] = useState<PortfolioSlug>("starter");
+  const [amountDigits, setAmountDigits] = useState(() =>
+    String(config?.calculatorMinInvestment ?? CALCULATOR_DEFAULT)
+  );
+
   const amount = toAmount(amountDigits);
   const displayValue = withCommas(amountDigits);
 
-  const projection = projectEarnings(
-    amount,
-    config.calculatorDailyRatePercent,
-    config.calculatorWeeklyRatePercent
+  // Keep portfolio selection aligned with amount when the amount enters another band.
+  const matched = amount > 0 ? getPortfolioByInvestmentAmount(amount) : undefined;
+  const activeSlug = (matched?.slug ?? slug) as PortfolioSlug;
+  const portfolio = getPortfolioBySlug(activeSlug);
+
+  const projections = useMemo(
+    () => ({
+      daily: calculateDailyReturn(activeSlug, amount),
+      weekly: calculateWeeklyProjection(activeSlug, amount),
+      monthly: calculateMonthlyProjection(activeSlug, amount),
+      threeMonth: calculateDailyReturn(activeSlug, amount) * 90,
+      sixMonth: calculateDailyReturn(activeSlug, amount) * 180,
+      annual: calculateAnnualProjection(activeSlug, amount)
+    }),
+    [activeSlug, amount]
   );
 
-  const belowMin = amount > 0 && amount < config.calculatorMinInvestment;
+  const belowMin = Boolean(portfolio && amount > 0 && amount < portfolio.minimumInvestment);
+  const aboveMax = Boolean(portfolio && amount > portfolio.maximumInvestment);
 
   return (
     <section
@@ -59,69 +81,91 @@ export function WealthGrowthExperience({ config, className }: Props) {
       )}
       aria-labelledby="earnings-calculator-heading"
     >
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.08),transparent_60%)]"
-        aria-hidden
-      />
       <div className="container-ar relative">
         <div className="mx-auto max-w-3xl rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-raised)] p-5 shadow-[var(--shadow-md)] sm:p-7">
           <h2
             id="earnings-calculator-heading"
             className="text-center text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl"
           >
-            {config.calculatorTitle}
+            {config?.calculatorTitle ?? "Portfolio calculator"}
           </h2>
           <p className="mx-auto mt-2.5 max-w-lg text-center text-sm leading-relaxed text-[var(--text-muted)]">
-            Enter your intended investment amount to instantly preview your projected earnings.
+            {config?.calculatorDescription ??
+              "Select a portfolio and amount to preview earnings from published portfolio rates."}
           </p>
 
-          <label className="mx-auto mt-5 block max-w-md">
-            <span className="mb-1.5 block text-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
-              Investment Amount (₦)
-            </span>
-            <div
-              className={cn(
-                "flex h-14 w-full items-center justify-center gap-1 rounded-[var(--radius)]",
-                "border border-[var(--border-strong)] bg-[var(--surface)] px-4 shadow-[var(--shadow-sm)]",
-                "transition focus-within:border-[var(--emerald)] focus-within:ring-2 focus-within:ring-[var(--emerald)]/25"
-              )}
-            >
-              <span className="shrink-0 select-none text-lg font-semibold text-[var(--text-muted)]" aria-hidden>
-                ₦
+          <div className="mx-auto mt-5 grid max-w-lg gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1.5 block text-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
+                {PORTFOLIO_TERMS.selectedPortfolio}
               </span>
-              <input
-                type="text"
-                inputMode="numeric"
-                autoComplete="off"
-                value={displayValue}
-                onChange={(e) => setAmountDigits(digitsOnly(e.target.value))}
-                placeholder="100,000"
-                style={{ width: `${Math.max((displayValue || "100,000").length, 1) + 1}ch` }}
+              <select
+                className="field w-full"
+                value={activeSlug}
+                onChange={(e) => setSlug(e.target.value as PortfolioSlug)}
+              >
+                {portfolios.map((p) => (
+                  <option key={p.slug} value={p.slug}>
+                    {p.strategy} — {p.name} — {p.dailyReturnRate}%
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">
+                Investment Amount (₦)
+              </span>
+              <div
                 className={cn(
-                  "max-w-[min(100%,18ch)] bg-transparent text-center text-lg font-semibold tabular-nums text-[var(--heading)]",
-                  "placeholder:text-[var(--text-subtle)] outline-none"
+                  "flex h-12 w-full items-center justify-center gap-1 rounded-[var(--radius)]",
+                  "border border-[var(--border-strong)] bg-[var(--surface)] px-4",
+                  "transition focus-within:border-[var(--emerald)] focus-within:ring-2 focus-within:ring-[var(--emerald)]/25"
                 )}
-                aria-invalid={belowMin || undefined}
-              />
-            </div>
-            {belowMin ? (
-              <span className="mt-2 block text-center text-xs text-[var(--text-subtle)]">
-                Minimum ₦{withCommas(String(config.calculatorMinInvestment))}
-              </span>
-            ) : null}
-          </label>
+              >
+                <span className="shrink-0 select-none text-lg font-semibold text-[var(--text-muted)]" aria-hidden>
+                  ₦
+                </span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={displayValue}
+                  onChange={(e) => setAmountDigits(digitsOnly(e.target.value))}
+                  placeholder="100,000"
+                  className="w-full bg-transparent text-center text-lg font-semibold tabular-nums outline-none"
+                  aria-invalid={belowMin || aboveMax || undefined}
+                />
+              </div>
+            </label>
+          </div>
+
+          {portfolio ? (
+            <p className="mt-3 text-center text-xs font-medium text-[var(--emerald)]">
+              {portfolio.dailyReturnRate}% daily return ·{" "}
+              {formatInvestmentRange(portfolio.minimumInvestment, portfolio.maximumInvestment, formatNaira)}
+            </p>
+          ) : null}
+
+          {belowMin || aboveMax ? (
+            <p className="mt-2 text-center text-xs text-amber-800 dark:text-amber-300">
+              {belowMin
+                ? `Minimum for ${portfolio?.name} is ${formatNaira(portfolio!.minimumInvestment)}.`
+                : `Maximum for ${portfolio?.name} is ${formatNaira(portfolio!.maximumInvestment)}.`}
+            </p>
+          ) : null}
 
           <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4">
-            <ResultCard label="Today's Earnings" value={formatProjection(projection.today)} />
-            <ResultCard label="Weekly Earnings" value={formatProjection(projection.weekly)} />
-            <ResultCard label="Monthly Projection" value={formatProjection(projection.monthly)} />
-            <ResultCard label="3-Month Projection" value={formatProjection(projection.threeMonth)} />
-            <ResultCard label="6-Month Projection" value={formatProjection(projection.sixMonth)} />
-            <ResultCard label="Annual Projection" value={formatProjection(projection.annual)} />
+            <ResultCard label="Today's Earnings" value={formatNaira(projections.daily)} />
+            <ResultCard label="Weekly Earnings" value={formatNaira(projections.weekly)} />
+            <ResultCard label="Monthly Projection" value={formatNaira(projections.monthly)} />
+            <ResultCard label="3-Month Projection" value={formatNaira(projections.threeMonth)} />
+            <ResultCard label="6-Month Projection" value={formatNaira(projections.sixMonth)} />
+            <ResultCard label="Annual Projection" value={formatNaira(projections.annual)} />
           </div>
 
           <p className="mt-4 text-center text-xs leading-relaxed text-[var(--text-subtle)]">
-            Illustrative projections based on Alto Rich&apos;s current Platform Earning Model.
+            {PORTFOLIO_TERMS.illustrativeOnly} Projections use the selected portfolio&apos;s published daily rate.
           </p>
         </div>
       </div>
@@ -132,12 +176,10 @@ export function WealthGrowthExperience({ config, className }: Props) {
 function ResultCard({ label, value }: { label: string; value: string }) {
   return (
     <Card variant="elevated" padding="sm" className="text-center transition-shadow duration-200">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-subtle)]">
-        {label}
-      </p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-subtle)]">{label}</p>
       <p
         key={value}
-        className="mt-1.5 animate-fade-in text-xl font-bold tabular-nums tracking-tight text-[var(--emerald)] sm:text-2xl"
+        className="currency-ngn mt-1.5 animate-fade-in text-xl font-bold tabular-nums tracking-tight text-[var(--emerald)] sm:text-2xl"
       >
         {value}
       </p>

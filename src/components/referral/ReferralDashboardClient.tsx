@@ -16,9 +16,9 @@ import type { ReferralActivityRow, ReferralDashboard, VipLevelConfig } from "@/l
 import { formatNaira } from "@/lib/domain";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { MemberAvatar } from "@/components/profile/MemberAvatar";
 import { ReferralPayoutPanel } from "@/components/referral/ReferralPayoutPanel";
+import { ReferralProgressCard } from "@/components/financial/ReferralProgressCard";
+import { buildReferralProgress } from "@/lib/financial-events/referral-progress";
 import { VipLevelUpCelebration } from "@/components/referral/VipLevelUpCelebration";
 import { VipLevelCardGrid } from "@/components/referral/VipLevelCardGrid";
 import { VipProgressPanel } from "@/components/referral/VipProgressPanel";
@@ -38,10 +38,6 @@ function XIcon({ className }: { className?: string }) {
   );
 }
 
-function isVerifiedStatus(status: string) {
-  return ["verified", "qualified", "paid"].includes(status);
-}
-
 function formatJoinedDate(iso: string) {
   try {
     return new Intl.DateTimeFormat("en-GB", {
@@ -55,35 +51,8 @@ function formatJoinedDate(iso: string) {
 }
 
 function ReferralMemberCard({ row }: { row: ReferralActivityRow }) {
-  const verified = isVerifiedStatus(row.status);
-
-  return (
-    <li className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-raised)] p-4 shadow-[var(--shadow-sm)]">
-      <div className="flex items-start gap-3">
-        <MemberAvatar fullName={row.referredName} avatarUrl={row.avatarUrl} size="md" href={null} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-bold text-[var(--heading)]">{row.referredName}</p>
-          {row.username ? (
-            <p className="mt-0.5 truncate text-sm text-[var(--text-muted)]">@{row.username}</p>
-          ) : null}
-          <p className="mt-1 text-xs text-[var(--text-subtle)]">Joined {formatJoinedDate(row.createdAt)}</p>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {verified ? (
-              <Badge variant="emerald">Verified Investor</Badge>
-            ) : (
-              <Badge variant="gold">Pending Investment</Badge>
-            )}
-            {row.commissionAmount > 0 ? (
-              <span className="currency-ngn text-sm font-semibold tabular-nums text-[var(--emerald)]">
-                Earned {formatNaira(row.commissionAmount)}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </li>
-  );
+  const progress = buildReferralProgress(row, { emailVerified: row.verifiedAt != null });
+  return <ReferralProgressCard referral={progress} />;
 }
 
 export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) {
@@ -188,9 +157,11 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
           {dashboard.recentReferrals.length === 0 ? (
             <p className="mt-4 text-sm text-[var(--text-muted)]">No referrals yet — share your link to get started.</p>
           ) : (
-            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            <ul className="mt-4 grid gap-3">
               {dashboard.recentReferrals.map((row) => (
-                <ReferralMemberCard key={row.id} row={row} />
+                <li key={row.id}>
+                  <ReferralMemberCard row={row} />
+                </li>
               ))}
             </ul>
           )}

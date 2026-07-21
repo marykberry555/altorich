@@ -42,7 +42,9 @@ export type NotificationEvent =
   | "vip.level_up"
   | "liquidation.requested"
   | "liquidation.approved"
-  | "liquidation.rejected";
+  | "liquidation.rejected"
+  | "welcome_bonus.awarded"
+  | "welcome_bonus.unlocked";
 
 type Client = SupabaseClient<Database>;
 
@@ -160,7 +162,7 @@ export class NotificationService {
       },
       "deposit.approved": {
         title: "Funding approved",
-        body: `${formatNaira(Number(data.amount ?? 0))} credited. Your preferred investment sector invests automatically when the amount meets the sector minimum.`
+        body: `${formatNaira(Number(data.amount ?? 0))} credited. Your preferred portfolio allocates automatically when the amount meets the portfolio minimum.`
       },
       "deposit.rejected": {
         title: "Funding declined",
@@ -261,6 +263,17 @@ export class NotificationService {
       "liquidation.rejected": {
         title: "Capital liquidation declined",
         body: String(data.reason ?? "Your capital liquidation request was not approved. Your investment remains active.")
+      },
+      "welcome_bonus.awarded": {
+        title: "Welcome Bonus awarded",
+        body: `${formatNaira(Number(data.amount ?? 0))} Welcome Bonus locked for your 35-day qualification period. It unlocks on the first Monday settlement after qualification.`
+      },
+      "welcome_bonus.unlocked": {
+        title: "Welcome Bonus unlocked",
+        body: String(
+          data.message ??
+            `Your ${formatNaira(Number(data.amount ?? 0))} Welcome Bonus is available for Monday withdrawal.`
+        )
       }
     };
 

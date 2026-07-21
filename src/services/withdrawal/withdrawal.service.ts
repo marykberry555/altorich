@@ -290,9 +290,12 @@ export class WithdrawalService {
     idempotencyKey?: string | null;
     requestType?: "manual" | "automatic";
     asOf?: Date;
+    /** Debit NGN investment wallet (default) or Welcome Bonus WB wallet. */
+    fundSource?: "ngn_wallet" | "welcome_bonus";
   }) {
     const accountNumber = normalizeAccountNumber(input.accountNumber);
     assertValidAccountNumber(accountNumber);
+    const fundSource = input.fundSource ?? "ngn_wallet";
 
     const idempotencyKey = input.idempotencyKey?.trim() || null;
     if (idempotencyKey) {
@@ -324,11 +327,19 @@ export class WithdrawalService {
       throw new AppError(kycCheck.reason ?? "Identity verification is required before requesting a withdrawal.", 403, "KYC_REQUIRED");
     }
 
-    const wallet = await this.wallet.getWalletByUserId(input.userId);
-    const balance = await this.wallet.getBalance(wallet.id);
-    const reserved = await this.sumOpenWithdrawalAmount(input.userId);
-    if (balance - reserved < input.amount) {
-      throw new AppError("Insufficient available balance.", 400, "INSUFFICIENT_BALANCE");
+    if (fundSource === "welcome_bonus") {
+      const wbWallet = await this.wallet.getWalletByUserId(input.userId, "WB");
+      const wbBalance = await this.wallet.getBalance(wbWallet.id);
+      if (wbBalance < input.amount) {
+        throw new AppError("Insufficient Welcome Bonus balance.", 400, "INSUFFICIENT_BALANCE");
+      }
+    } else {
+      const wallet = await this.wallet.getWalletByUserId(input.userId);
+      const balance = await this.wallet.getBalance(wallet.id);
+      const reserved = await this.sumOpenWithdrawalAmount(input.userId);
+      if (balance - reserved < input.amount) {
+        throw new AppError("Insufficient available balance.", 400, "INSUFFICIENT_BALANCE");
+      }
     }
 
     const requestType = input.requestType ?? "manual";
@@ -387,8 +398,9 @@ export class WithdrawalService {
       batch_number: batchNumber,
       estimated_processing_at: estimatedAt.toISOString(),
       queued_at: queuedAt,
-      settlement_reference: settlementReference
-    });
+      settlement_reference: settlementReference,
+      fund_source: fundSource
+    } as Database["public"]["Tables"]["withdrawals"]["Insert"]);
 
     if (!data) {
       // Unique idempotency race — return the winner's row.
@@ -419,7 +431,8 @@ export class WithdrawalService {
       scheduled_at: queue.scheduledAt.toISOString(),
       schedule_message: scheduleMessage,
       queue_position: queueView.queuePosition,
-      estimated_processing_at: queueView.estimatedProcessingAt
+      estimated_processing_at: queueView.estimatedProcessingAt,
+      fund_source: fundSource
     });
 
     return { ...data, queueView, scheduleMessage, settlementReference };
@@ -621,9 +634,17 @@ export class WithdrawalService {
     }
 
     // Never mark paid without a ledger debit first.
-    const wallet = await this.wallet.getWalletByUserId(withdrawal.user_id);
+    const fundSource =
+      (withdrawal as Withdrawal & { fund_source?: string }).fund_source === "welcome_bonus"
+        ? "welcome_bonus"
+        : "ngn_wallet";
+    const wallet = await this.wallet.getWalletByUserId(
+      withdrawal.user_id,
+      fundSource === "welcome_bonus" ? "WB" : "NGN"
+    );
     const balance = await this.wallet.getBalance(wallet.id);
-    const reservedOthers = await this.sumOpenWithdrawalAmount(withdrawal.user_id, withdrawalId);
+    const reservedOthers =
+      fundSource === "welcome_bonus" ? 0 : await this.sumOpenWithdrawalAmount(withdrawal.user_id, withdrawalId);
     if (balance - reservedOthers < Number(withdrawal.amount)) {
       throw new AppError("Insufficient available balance.", 400, "INSUFFICIENT_BALANCE");
     }
@@ -695,6 +716,13 @@ export class WithdrawalService {
       settlement_reference: withdrawal.settlement_reference ?? null
     });
 
+    if (fundSource === "welcome_bonus") {
+      const { WelcomeBonusService } = await import("@/services/welcome-bonus/welcome-bonus.service");
+      await new WelcomeBonusService(this.supabase)
+        .markBonusPaidFromWithdrawal(withdrawalId, withdrawal.settlement_reference ?? null)
+        .catch(() => undefined);
+    }
+
     return normalizeWithdrawalRow(data);
   }
 
@@ -730,12 +758,16 @@ export class WithdrawalService {
   private async sumOpenWithdrawalAmount(userId: string, excludeId?: string) {
     const { data, error } = await this.supabase
       .from("withdrawals")
-      .select("id, amount")
+      .select("id, amount, fund_source")
       .eq("user_id", userId)
       .in("status", [...RESERVED_STATUSES]);
     if (error) throw error;
     return (data ?? [])
-      .filter((row) => row.id !== excludeId)
+      .filter((row) => {
+        if (row.id === excludeId) return false;
+        const source = (row as { fund_source?: string }).fund_source;
+        return !source || source === "ngn_wallet";
+      })
       .reduce((sum, row) => sum + Number(row.amount), 0);
   }
 

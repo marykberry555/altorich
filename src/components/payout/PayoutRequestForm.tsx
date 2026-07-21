@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Card } from "@/components/ui/Card";
 import { InlineErrorNotice } from "@/components/errors/InlineErrorNotice";
+import { SecureConfirmDialog } from "@/components/trust/SecureConfirmDialog";
 import { ApiRequestError, fetchJson, formatMemberApiError } from "@/lib/api/fetch-json";
 import type { WithdrawalBankAccount } from "@/components/payout/PayoutBankAccountSection";
 
@@ -37,6 +38,8 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
   const [success, setSuccess] = useState(false);
   const [queueView, setQueueView] = useState<QueueView | null>(null);
   const [withdrawalId, setWithdrawalId] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingAmount, setPendingAmount] = useState<number | null>(null);
   const inFlight = useRef(false);
 
   useEffect(() => {
@@ -55,6 +58,29 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (inFlight.current || isSubmitting) return;
+
+    const parsedAmount = parseCurrencyInput(amount);
+    if (!parsedAmount || parsedAmount <= 0) {
+      setMessage("Enter a valid withdrawal amount.");
+      return;
+    }
+    if (parsedAmount > availableBalance) {
+      setMessage("Insufficient available balance.");
+      setNextHref("/deposits");
+      return;
+    }
+    if (!bank) {
+      setMessage("Please add your bank account first.");
+      return;
+    }
+
+    setPendingAmount(parsedAmount);
+    setConfirmOpen(true);
+  }
+
+  async function confirmWithdrawal() {
+    if (!pendingAmount || !bank || inFlight.current) return;
+    setConfirmOpen(false);
     inFlight.current = true;
     setIsSubmitting(true);
     setMessage("");
@@ -63,26 +89,8 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
     setSuccess(false);
     setQueueView(null);
 
-    const parsedAmount = parseCurrencyInput(amount);
-    if (!parsedAmount || parsedAmount <= 0) {
-      setMessage("Enter a valid withdrawal amount.");
-      setIsSubmitting(false);
-      inFlight.current = false;
-      return;
-    }
-    if (parsedAmount > availableBalance) {
-      setMessage("Insufficient available balance.");
-      setNextHref("/deposits");
-      setIsSubmitting(false);
-      inFlight.current = false;
-      return;
-    }
-    if (!bank) {
-      setMessage("Please add your bank account first.");
-      setIsSubmitting(false);
-      inFlight.current = false;
-      return;
-    }
+    const parsedAmount = pendingAmount;
+    setPendingAmount(null);
 
     const idempotencyKey =
       typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -129,6 +137,22 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
   }
 
   return (
+    <>
+      <SecureConfirmDialog
+        open={confirmOpen}
+        title="Confirm withdrawal"
+        description={
+          pendingAmount && bank
+            ? `Request ${formatNaira(pendingAmount)} to ${bank.bank_name} · ${bank.account_number}? This will enter the settlement queue.`
+            : undefined
+        }
+        confirmLabel="Submit withdrawal"
+        onConfirm={() => void confirmWithdrawal()}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setPendingAmount(null);
+        }}
+      />
     <Card variant="elevated" className="p-5 sm:p-6">
       {success ? (
         <div className="space-y-4 rounded-xl border border-[var(--emerald)]/20 bg-[var(--emerald-soft)]/30 p-4">
@@ -219,5 +243,6 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
         </form>
       )}
     </Card>
+    </>
   );
 }

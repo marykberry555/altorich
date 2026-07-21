@@ -1,6 +1,7 @@
 import {
   classifyHttpStatus,
   classifyThrownError,
+  memberCopyForAppCode,
   memberCopyForCategory,
   type ErrorCategory,
   type ErrorNextAction
@@ -138,7 +139,8 @@ export async function fetchJson<T>(url: string, init?: FetchJsonOptions): Promis
 
       if (!response.ok) {
         const category = body.category ?? classifyHttpStatus(response.status);
-        const message = body.error?.trim() || memberCopyForCategory(category).body;
+        const copy = memberCopyForAppCode(body.code, body.error, response.status);
+        const message = body.error?.trim() || copy.body;
 
         // Retry transient gateway failures on idempotent reads.
         if (

@@ -11,3 +11,17 @@ export function getGreeting(): string {
   if (hour < 17) return "Good afternoon";
   return "Good evening";
 }
+
+export function getFirstName(fullName: string): string {
+  const trimmed = fullName.trim();
+  if (!trimmed) return "Member";
+  return trimmed.split(/\s+/)[0] ?? "Member";
+}
+
+export function getPersonalizedGreeting(fullName: string): string {
+  const first = getFirstName(fullName);
+  const hour = new Date().getHours();
+  if (hour < 12) return `Good morning, ${first} 👋`;
+  if (hour < 17) return `Good afternoon, ${first}`;
+  return `Good evening, ${first}`;
+}

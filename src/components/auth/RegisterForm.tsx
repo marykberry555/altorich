@@ -12,10 +12,12 @@ import { PinField } from "@/components/ui/PinField";
 import { MathChallenge, useMathChallenge } from "@/components/ui/MathChallenge";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
-import type { PackageSlug } from "@/content/packages";
+import type { PortfolioSlug } from "@/config/investment-portfolios";
+import { PORTFOLIO_TERMS } from "@/lib/copy/portfolio-terminology";
 import { PackageSelectionField } from "@/components/auth/PackageSelectionField";
 import { LocationFields } from "@/components/location/LocationFields";
 import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
+import { WelcomeBonusSlotCounter } from "@/components/welcome-bonus/WelcomeBonusSlotCounter";
 import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE, WEAK_PASSWORD_MESSAGE } from "@/lib/validation/identity";
 import type { NgStateCode } from "@/lib/location/ng-locations";
 import {
@@ -40,7 +42,7 @@ export function RegisterForm() {
   const [referrerName, setReferrerName] = useState<string | null>(null);
   const [referralLocked, setReferralLocked] = useState(false);
   const [referralError, setReferralError] = useState("");
-  const [preferredPackage, setPreferredPackage] = useState<PackageSlug | "">("");
+  const [preferredPackage, setPreferredPackage] = useState<PortfolioSlug | "">("");
   const [locationStateCode, setLocationStateCode] = useState<NgStateCode | "">("");
   const [locationCityArea, setLocationCityArea] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -93,7 +95,7 @@ export function RegisterForm() {
       return;
     }
     if (!preferredPackage) {
-      setError("Select a preferred investment sector.");
+      setError(`Select a preferred ${PORTFOLIO_TERMS.portfolio.toLowerCase()}.`);
       return;
     }
     if (!locationStateCode || !locationCityArea) {
@@ -172,8 +174,9 @@ export function RegisterForm() {
   return (
     <AuthShell>
       <Card variant="elevated" padding="lg" className="w-full">
-        <div className="mb-6">
+        <div className="mb-6 space-y-4">
           <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">Create your account</h1>
+          <WelcomeBonusSlotCounter compact />
         </div>
 
         <form onSubmit={handleRegister} className="grid gap-3">

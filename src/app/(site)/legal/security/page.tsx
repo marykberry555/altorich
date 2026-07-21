@@ -1,5 +1,12 @@
 import { LegalDocument } from "@/components/marketing/LegalDocument";
 import { COMPANY } from "@/lib/company";
+import { legalPageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata = legalPageMetadata(
+  "Security Policy",
+  "/legal/security",
+  "Platform security practices, financial controls, and member security responsibilities at Alto Rich."
+);
 
 export default function SecurityPage() {
   return (

@@ -24,6 +24,7 @@
     "android:admin:release": "bash scripts/android/release-admin-rc.sh",
     "android:admin:gradle-release": "bash scripts/android/gradle-release-admin.sh",
     "images:optimize": "node scripts/optimize-marketing-images.mjs",
+    "images:mgt": "node scripts/optimize-management-images.mjs",
     "verify:db": "node scripts/verify-database.mjs",
     "verify:rls": "node scripts/verify-rls.mjs",
     "verify:ledger": "node scripts/verify-ledger-integrity.mjs",

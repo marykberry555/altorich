@@ -29,7 +29,9 @@ export function normalizeWithdrawalRow(row: WithdrawalRow): WithdrawalRow {
     processing_started_at: row.processing_started_at ?? null,
     paid_at: row.paid_at ?? null,
     settlement_reference: row.settlement_reference ?? null,
-    idempotency_key: row.idempotency_key ?? null
+    idempotency_key: row.idempotency_key ?? null,
+    fund_source:
+      (row as { fund_source?: string }).fund_source === "welcome_bonus" ? "welcome_bonus" : "ngn_wallet"
   };
 }
 

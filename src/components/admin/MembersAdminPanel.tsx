@@ -12,6 +12,8 @@ import { DataTable, SectionHeading, StatusBadge, Table, TableBody, TableCell, Ta
 import { MemberActionsMenu, type MemberAction } from "@/components/admin/MemberActionsMenu";
 import { MemberDetailPanel } from "@/components/admin/MemberDetailPanel";
 import { MemberAvatar } from "@/components/profile/MemberAvatar";
+import { AdvancedMemberSearchBar } from "@/components/admin-ops/AdvancedMemberSearchBar";
+import type { MemberSearchFilters } from "@/lib/admin-ops/types";
 
 type Member = {
   id: string;
@@ -43,6 +45,7 @@ export function MembersAdminPanel({
   const [members, setMembers] = useState<Member[]>([]);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<MemberSearchFilters>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -62,7 +65,16 @@ export function MembersAdminPanel({
     setLoading(true);
     try {
       const params = new URLSearchParams({ limit: "100" });
-      if (search.trim()) params.set("search", search.trim());
+      const q = filters.q ?? search;
+      if (q.trim()) params.set("search", q.trim());
+      if (filters.status) params.set("status", filters.status);
+      if (filters.kycStatus) params.set("kycStatus", filters.kycStatus);
+      if (filters.emailVerified) params.set("emailVerified", filters.emailVerified);
+      if (filters.memberId) params.set("memberId", filters.memberId);
+      if (filters.inviteCode) params.set("inviteCode", filters.inviteCode);
+      if (filters.registeredFrom) params.set("registeredFrom", filters.registeredFrom);
+      if (filters.registeredTo) params.set("registeredTo", filters.registeredTo);
+      if (filters.locationState) params.set("locationState", filters.locationState);
       const res = await fetch(`/api/admin/members?${params}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load members");
@@ -74,7 +86,7 @@ export function MembersAdminPanel({
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, filters]);
 
   useEffect(() => {
     void load();
@@ -282,21 +294,16 @@ export function MembersAdminPanel({
         </Card>
       ) : null}
 
-      <Card variant="elevated" padding="md" className="min-w-0">
-        <div className="mb-4 flex flex-wrap gap-2">
-          <input
-            className="field min-w-0 max-w-full flex-1 basis-40 sm:max-w-xs"
-            placeholder="Search name, username, phone…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && void load()}
-          />
-          <Button type="button" variant="outline" size="sm" onClick={() => void load()}>
-            Search
-          </Button>
-        </div>
+      <AdvancedMemberSearchBar
+        filters={{ ...filters, q: filters.q ?? search }}
+        onChange={(next) => {
+          setFilters(next);
+          if (next.q !== undefined) setSearch(next.q);
+        }}
+        onSearch={() => void load()}
+      />
 
-        {/* Mobile stacked cards */}
+      <Card variant="elevated" padding="md" className="min-w-0">
         <ul className="space-y-3 md:hidden">
           {loading ? (
             <li className="flex justify-center py-10 text-[var(--text-subtle)]">

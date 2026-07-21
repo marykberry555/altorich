@@ -8,6 +8,7 @@ import { LocationFields } from "@/components/location/LocationFields";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
+import { SecureConfirmDialog } from "@/components/trust/SecureConfirmDialog";
 import { COMPANY } from "@/lib/company";
 import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE } from "@/lib/validation/identity";
 import type { NgStateCode } from "@/lib/location/ng-locations";
@@ -39,18 +40,23 @@ export function ProfileSettingsForm({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useFlashError();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
     if (!preferredPackage) {
-      setMessage("Select your preferred investment sector.");
+      setMessage("Select your preferred investment portfolio.");
       return;
     }
     if (!locationStateCode || !locationCityArea) {
       setMessage("Select your state and city / area.");
       return;
     }
+    setConfirmOpen(true);
+  }
 
+  async function confirmSave() {
+    setConfirmOpen(false);
     setLoading(true);
     setMessage("");
     setError("");
@@ -81,6 +87,15 @@ export function ProfileSettingsForm({
   }
 
   return (
+    <>
+      <SecureConfirmDialog
+        open={confirmOpen}
+        title="Save profile changes?"
+        description="Your phone, location, preferred portfolio, and notification preferences will be updated."
+        confirmLabel="Save changes"
+        onConfirm={() => void confirmSave()}
+        onCancel={() => setConfirmOpen(false)}
+      />
     <form onSubmit={handleSave} className="grid gap-4">
       <div className="grid gap-1.5">
         <span className="text-sm font-medium text-[var(--text-muted)]">Registered Full Name</span>
@@ -137,5 +152,6 @@ export function ProfileSettingsForm({
         {loading ? "Saving…" : "Save changes"}
       </Button>
     </form>
+    </>
   );
 }

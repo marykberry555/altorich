@@ -1,5 +1,12 @@
 import { LegalDocument } from "@/components/marketing/LegalDocument";
 import { COMPANY } from "@/lib/company";
+import { legalPageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata = legalPageMetadata(
+  "Privacy Policy",
+  "/legal/privacy",
+  "How Alto Rich collects, uses, stores, and protects member personal data."
+);
 
 export default function PrivacyPage() {
   return (

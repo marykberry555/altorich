@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AuthPageFallback } from "@/components/auth/AuthPageFallback";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/AuthShell";
@@ -64,7 +65,7 @@ function ChangePasswordForm() {
 
 export default function ChangePasswordPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-[var(--text-muted)]">AltoRich... Hold On</div>}>
+    <Suspense fallback={<AuthPageFallback />}>
       <ChangePasswordForm />
     </Suspense>
   );

@@ -7,7 +7,8 @@ export { PRIVATE_SITE_ROBOTS };
 
 /** Canonical social sharing copy — used across OG, Twitter, and JSON-LD. */
 export const SOCIAL_SHARE_TITLE = "Alto Rich";
-export const SOCIAL_SHARE_DESCRIPTION = "Grow your naira with clarity — earn up to 5% daily on one transparent platform model.";
+export const SOCIAL_SHARE_DESCRIPTION =
+  "Structured wealth management for Nigeria — transparent operations, published settlement processes, and a clear member journey.";
 
 const siteUrl = COMPANY.siteUrl;
 
@@ -65,19 +66,24 @@ export type PageSeo = {
 
 export function buildMetadata(page: PageSeo): Metadata {
   const url = `${siteUrl}${page.path}`;
+  const description = page.description?.trim() || SOCIAL_SHARE_DESCRIPTION;
 
   return {
     title: page.title,
-    description: SOCIAL_SHARE_DESCRIPTION,
+    description,
     alternates: { canonical: url },
-    robots: PRIVATE_SITE_ROBOTS,
+    robots: page.noIndex ? { index: false, follow: false } : PRIVATE_SITE_ROBOTS,
     openGraph: {
       ...defaultSocialMetadata.openGraph,
+      title: page.title,
+      description,
       url,
       type: page.type ?? "website"
     },
     twitter: {
-      ...defaultSocialMetadata.twitter
+      ...defaultSocialMetadata.twitter,
+      title: page.title,
+      description
     }
   };
 }
@@ -127,12 +133,56 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
+export function personJsonLd(input: {
+  name: string;
+  jobTitle: string;
+  description?: string;
+  image?: string;
+  worksFor?: string;
+  location?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: input.name,
+    jobTitle: input.jobTitle,
+    ...(input.description ? { description: input.description } : {}),
+    ...(input.image ? { image: input.image.startsWith("http") ? input.image : `${siteUrl}${input.image}` } : {}),
+    ...(input.worksFor
+      ? { worksFor: { "@type": "Organization", name: input.worksFor } }
+      : { worksFor: { "@type": "Organization", name: COMPANY.legalName } }),
+    ...(input.location ? { workLocation: { "@type": "Place", name: input.location } } : {})
+  };
+}
+
+export function leadershipPageJsonLd(
+  executives: { name: string; title: string; intro: string; imageSrc: string; office: string }[]
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Leadership & Governance",
+    description: "Meet the leadership team behind Alto Rich — committed to transparency, operational excellence, and member trust.",
+    url: `${siteUrl}/company/leadership`,
+    isPartOf: { "@type": "WebSite", name: SOCIAL_SHARE_TITLE, url: siteUrl },
+    about: executives.map((exec) =>
+      personJsonLd({
+        name: exec.name,
+        jobTitle: exec.title,
+        description: exec.intro,
+        image: exec.imageSrc,
+        location: exec.office
+      })
+    )
+  };
+}
+
 export function articleJsonLd(input: { title: string; description: string; path: string; datePublished?: string }) {
   return {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: input.title,
-    description: SOCIAL_SHARE_DESCRIPTION,
+    description: input.description?.trim() || SOCIAL_SHARE_DESCRIPTION,
     url: `${siteUrl}${input.path}`,
     datePublished: input.datePublished ?? COMPANY.founded,
     author: { "@type": "Organization", name: SOCIAL_SHARE_TITLE },

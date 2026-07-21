@@ -25,7 +25,7 @@ export type NextAction = {
 
 const JOURNEY_STEPS: { id: JourneyStepId; label: string }[] = [
   { id: "account", label: "Create account" },
-  { id: "fund", label: "Fund wallet" },
+  { id: "fund", label: "Make a deposit" },
   { id: "choose", label: "Choose package" },
   { id: "active", label: "Investment active" },
   { id: "earning", label: "Start earning" },
@@ -50,6 +50,13 @@ export function resolveJourneySteps(state: DashboardConversionState) {
     complete: step.id === "account" || index < currentIndex,
     current: step.id === current
   }));
+}
+
+export function shouldShowNextAction(state: DashboardConversionState): boolean {
+  if (state.hasActiveInvestment && state.pendingWithdrawals === 0 && state.pendingDeposits === 0) {
+    return false;
+  }
+  return true;
 }
 
 export function resolveNextAction(state: DashboardConversionState): NextAction {
@@ -91,10 +98,10 @@ export function resolveNextAction(state: DashboardConversionState): NextAction {
 
   if (state.walletBalance <= 0) {
     return {
-      title: "Fund your wallet",
+      title: "Make your first deposit",
       description: "Add naira to your Alto Rich wallet — the first step toward your first investment.",
       href: "/deposits",
-      cta: "Fund my account",
+      cta: "Go to deposits",
       tone: "emerald"
     };
   }

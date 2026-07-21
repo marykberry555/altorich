@@ -1,5 +1,12 @@
 import { LegalDocument } from "@/components/marketing/LegalDocument";
 import { COMPANY, REGULATORY_PLACEHOLDER } from "@/lib/company";
+import { legalPageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata = legalPageMetadata(
+  "Terms of Service",
+  "/legal/terms",
+  "Membership rules, platform use, and cooperative participation terms for Alto Rich members."
+);
 
 export default function TermsPage() {
   return (

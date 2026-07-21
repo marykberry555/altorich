@@ -12,8 +12,8 @@ export default async function PlansPage() {
     <div className="space-y-8">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Operations</p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--heading)]">Investment plans</h1>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">Add, review, or remove investment packages.</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-[var(--heading)]">Investment portfolios</h1>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">Manage portfolio slots linked to the centralized configuration.</p>
       </header>
 
       <Card variant="elevated" padding="md">

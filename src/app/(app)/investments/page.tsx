@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth/session";
 import { getUserServices } from "@/lib/services";
-import { buildPackagePlanCards } from "@/lib/packages/investment-catalog";
+import { buildPortfolioPlanCards } from "@/lib/packages/investment-catalog";
 import { fetchInvestmentContext } from "@/lib/investment/mappers";
-import { InvestmentPackageCard } from "@/components/investment/InvestmentPackageCard";
+import { InvestmentPortfolioCard } from "@/components/investment/InvestmentPortfolioCard";
 import { ActiveInvestmentsList } from "@/components/investment/ActiveInvestmentCard";
+import { PORTFOLIO_TERMS } from "@/lib/copy/portfolio-terminology";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { formatNaira } from "@/lib/domain";
@@ -14,14 +15,14 @@ export default async function InvestmentsPage() {
   const services = await getUserServices();
 
   let plansError: string | null = null;
-  let cards = buildPackagePlanCards([]);
+  let cards = buildPortfolioPlanCards([]);
 
   if (services) {
     try {
       const plans = await services.investments.listActivePlans();
-      cards = buildPackagePlanCards(plans);
+      cards = buildPortfolioPlanCards(plans);
     } catch (error) {
-      plansError = error instanceof Error ? error.message : "Unable to load investment packages.";
+      plansError = error instanceof Error ? error.message : "Unable to load investment portfolios.";
     }
   } else {
     plansError = "Investment services are temporarily unavailable. Please try again shortly.";
@@ -55,15 +56,21 @@ export default async function InvestmentsPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <header className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--emerald)]">Invest</p>
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">Select package</h1>
-        <p className="max-w-xl text-sm text-[var(--text-muted)]">
-          Fund your wallet, choose a package, and confirm in seconds. Earnings auto-reinvest weekly until you stop.
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)] sm:text-3xl">
+          {PORTFOLIO_TERMS.investmentPortfolios}
+        </h1>
+        <p className="max-w-xl text-sm leading-relaxed text-[var(--text-muted)]">
+          Select a portfolio, review strategy and investment range, then allocate from your wallet. Settlements follow
+          the published weekly schedule.{" "}
+          <Link href="/how-it-works" className="font-semibold text-[var(--emerald)] hover:underline">
+            How it works →
+          </Link>
         </p>
       </header>
 
       {plansError ? (
         <Card variant="elevated" className="border-red-200/80 bg-red-50/90 dark:border-red-500/30 dark:bg-red-500/10">
-          <p className="font-semibold text-red-800 dark:text-red-200">Could not load invest page</p>
+          <p className="font-semibold text-red-800 dark:text-red-200">Could not load portfolio catalogue</p>
           <p className="mt-1 text-sm text-red-700 dark:text-red-300">{plansError}</p>
           <Link href="/dashboard" className="mt-4 inline-block">
             <Button size="sm" variant="outline">
@@ -73,9 +80,9 @@ export default async function InvestmentsPage() {
         </Card>
       ) : availableCards.length === 0 ? (
         <Card variant="elevated" className="py-12 text-center">
-          <p className="text-lg font-semibold text-[var(--heading)]">No packages available right now</p>
+          <p className="text-lg font-semibold text-[var(--heading)]">{PORTFOLIO_TERMS.noPortfoliosAvailable}</p>
           <p className="mt-2 text-sm text-[var(--text-muted)]">
-            Investment plans may be temporarily unavailable. Try again shortly or contact support.
+            Portfolios may be temporarily unavailable. Try again shortly or contact support.
           </p>
           <Link href="/dashboard" className="mt-6 inline-block">
             <Button variant="outline" size="sm">
@@ -86,8 +93,8 @@ export default async function InvestmentsPage() {
       ) : (
         <section>
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {cards.map((card) => (
-              <InvestmentPackageCard
+            {availableCards.map((card) => (
+              <InvestmentPortfolioCard
                 key={card.slug}
                 card={card}
                 walletBalance={ctx?.balance ?? 0}

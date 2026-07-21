@@ -553,8 +553,8 @@ img {
 }
 
 [data-theme="dark"] .brand-logo-light {
-  display: none;
-}
+    display: none;
+  }
 
 [data-theme="dark"] .brand-logo-dark {
   display: block;

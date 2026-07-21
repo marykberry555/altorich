@@ -1,5 +1,12 @@
 import { LegalDocument } from "@/components/marketing/LegalDocument";
 import { COMPANY } from "@/lib/company";
+import { legalPageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata = legalPageMetadata(
+  "Anti-Money Laundering Policy",
+  "/legal/aml",
+  "Alto Rich AML controls, monitoring obligations, and member responsibilities."
+);
 
 export default function AmlPage() {
   return (

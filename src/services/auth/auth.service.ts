@@ -266,6 +266,7 @@ export class AuthService {
       .update({ email_verified_at: new Date().toISOString() })
       .eq("id", otp.user_id);
 
+    await this.allocateWelcomeBonusSafe(otp.user_id);
     await this.sendWelcomeEmail(otp.user_id);
     return this.createSessionForUser(otp.user_id);
   }
@@ -290,8 +291,23 @@ export class AuthService {
       .update({ email_verified_at: new Date().toISOString() })
       .eq("id", data.user_id);
 
+    await this.allocateWelcomeBonusSafe(data.user_id);
     await this.sendWelcomeEmail(data.user_id);
     return this.createSessionForUser(data.user_id);
+  }
+
+  private async allocateWelcomeBonusSafe(userId: string) {
+    try {
+      const { WelcomeBonusService } = await import("@/services/welcome-bonus/welcome-bonus.service");
+      await new WelcomeBonusService(this.supabase).allocateOnEmailVerified(userId);
+    } catch (error) {
+      // Non-blocking — verification must succeed even if promo claim fails.
+      const { logger } = await import("@/lib/logger");
+      logger.warn("Welcome bonus allocation skipped", {
+        userId,
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
   }
 
   async login(input: {

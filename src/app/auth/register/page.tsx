@@ -1,6 +1,7 @@
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { AuthPageFallback } from "@/components/auth/AuthPageFallback";
 import { COMPANY } from "@/lib/company";
 
 const title = "Join Alto Rich";
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function AuthRegisterPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-[var(--text-muted)]">AltoRich... Hold On</div>}>
+    <Suspense fallback={<AuthPageFallback />}>
       <RegisterForm />
     </Suspense>
   );

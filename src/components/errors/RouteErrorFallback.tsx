@@ -131,6 +131,7 @@ export function RouteErrorFallback({
 
   return (
     <div
+      role="alert"
       className={cn(
         "mx-auto flex min-h-[50vh] max-w-3xl flex-col items-center justify-center gap-4 px-4 py-10 text-center",
         dark && "rounded-2xl border border-white/10 bg-zinc-950"

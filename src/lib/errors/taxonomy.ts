@@ -97,6 +97,72 @@ export function memberCopyForCategory(category: ErrorCategory, detail?: string):
   }
 }
 
+/** Security-aware member messaging for HTTP status codes. */
+export function memberCopyForHttpStatus(status: number, detail?: string): MemberErrorCopy {
+  if (status === 401) {
+    return {
+      category: "authentication",
+      title: "Session expired",
+      body: detail?.trim() || "Your session has expired. Please sign in again to continue.",
+      nextActions: [{ label: "Sign In", href: SIGN_IN_HREF, action: "signin" }]
+    };
+  }
+  if (status === 403) {
+    return {
+      category: "authentication",
+      title: "Access denied",
+      body:
+        detail?.trim() ||
+        "You don't have permission to view or change this. If you believe this is a mistake, contact support.",
+      nextActions: [
+        { label: "Dashboard", href: DASHBOARD_HREF },
+        { label: "Contact Support", href: SUPPORT_HREF, action: "support" }
+      ]
+    };
+  }
+  if (status === 404) {
+    return memberCopyForCategory("not_found", detail);
+  }
+  return memberCopyForCategory(classifyHttpStatus(status), detail);
+}
+
+/** Map application error codes to professional member guidance. */
+export function memberCopyForAppCode(code?: string, detail?: string, status?: number): MemberErrorCopy {
+  const c = (code ?? "").toUpperCase();
+  if (c === "SESSION_EXPIRED" || c === "UNAUTHORIZED") {
+    return memberCopyForHttpStatus(401, detail);
+  }
+  if (c === "FORBIDDEN" || c === "PERMISSION_DENIED" || c === "NAME_LOCKED") {
+    return memberCopyForHttpStatus(403, detail);
+  }
+  if (c === "VERIFICATION_REQUIRED" || c === "EMAIL_NOT_VERIFIED") {
+    return {
+      category: "business",
+      title: "Verification required",
+      body:
+        detail?.trim() ||
+        "Please verify your email address before continuing. Check your inbox for a verification link.",
+      nextActions: [
+        { label: "Security Center", href: "/security" },
+        { label: "Contact Support", href: SUPPORT_HREF, action: "support" }
+      ]
+    };
+  }
+  if (c === "ACTION_UNAVAILABLE" || c === "NOT_CONFIGURED") {
+    return {
+      category: "business",
+      title: "Action unavailable",
+      body: detail?.trim() || "This feature isn't available right now. Please try again later or contact support.",
+      nextActions: [
+        { label: "Dashboard", href: DASHBOARD_HREF },
+        { label: "Contact Support", href: SUPPORT_HREF, action: "support" }
+      ]
+    };
+  }
+  if (status != null) return memberCopyForHttpStatus(status, detail);
+  return memberCopyForCategory(classifyAppErrorCode(code, status), detail);
+}
+
 export function classifyHttpStatus(status: number): ErrorCategory {
   if (status === 401 || status === 403) return "authentication";
   if (status === 404) return "not_found";
@@ -145,10 +211,12 @@ export function classifyAppErrorCode(code?: string, status?: number): ErrorCateg
   if (!code && status != null) return classifyHttpStatus(status);
   const c = (code ?? "").toUpperCase();
   if (["UNAUTHORIZED", "FORBIDDEN", "SESSION_EXPIRED", "NAME_LOCKED"].includes(c)) return "authentication";
+  if (["VERIFICATION_REQUIRED", "EMAIL_NOT_VERIFIED"].includes(c)) return "business";
   if (["NOT_FOUND"].includes(c)) return "not_found";
   if (["BAD_REQUEST", "VALIDATION"].includes(c)) return "validation";
-  if (["CONFLICT", "INSUFFICIENT_BALANCE", "BUSINESS_RULE"].includes(c)) return "business";
-  if (["NOT_CONFIGURED", "INTERNAL", "PERMISSION_DENIED"].includes(c)) return "server";
+  if (["CONFLICT", "INSUFFICIENT_BALANCE", "BUSINESS_RULE", "ACTION_UNAVAILABLE"].includes(c)) return "business";
+  if (["NOT_CONFIGURED", "INTERNAL"].includes(c)) return "server";
+  if (c === "PERMISSION_DENIED") return "authentication";
   if (status != null) return classifyHttpStatus(status);
   return "server";
 }

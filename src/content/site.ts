@@ -2,10 +2,9 @@ import { COMPANY, REGULATORY_DISCLOSURE, REGULATORY_PLACEHOLDER } from "@/lib/co
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 export const hero = {
-  eyebrow: "Verified Platform · Monday withdrawals",
-  title: "Earn 5% Daily | 35% every Monday",
-  subtitle:
-    "Choose an investment sector, fund your account, and watch your investment grow through Alto Rich's guaranteed Platform Earning Model.",
+  eyebrow: "Naira portfolios · Weekly settlements",
+  title: "Invest with us today.\nEarn up to 8% everyday.\nGet your payout every week.",
+  subtitle: "Choose your preferred package and put your capital to work immediately.",
   guarantee: "Guaranteed returns.",
   ctaPrimary: "Open an account",
   ctaSecondary: "See how it works"
@@ -23,8 +22,8 @@ export const valueProps = [
       "Withdrawals follow published schedules. You always know when requests are reviewed and processed."
   },
   {
-    title: "One transparent Platform Earning Model",
-    description: `Every investment earns up to ${PLATFORM_EARNING.dailyReturnPercent}% daily (${PLATFORM_EARNING.weeklyReturnPercent}% weekly equivalent) under Alto Rich's ${PLATFORM_EARNING.modelName}. Earnings auto-reinvest every Monday until you choose to stop and withdraw.`
+    title: "Published package returns",
+    description: `Each package has a clear daily return and investment range — from 5% on Starter up to ${PLATFORM_EARNING.dailyReturnPercent}% on Elite — with weekly settlements you can plan around.`
   },
   {
     title: "Local-first operations",
@@ -37,7 +36,7 @@ export const howItWorks = [
   {
     step: "01",
     title: "Create your account",
-    description: "Register with your email, Nigerian phone number, and preferred investment sector."
+    description: "Register with your email, Nigerian phone number, and preferred investment package."
   },
   {
     step: "02",
@@ -46,13 +45,13 @@ export const howItWorks = [
   },
   {
     step: "03",
-    title: "Allocate to a sector",
-    description: "Choose Starter, Growth, Premium, or Elite — your capital is allocated while earnings follow one platform model."
+    title: "Choose a package",
+    description: "Select Starter, Growth, Premium, or Elite — each with its own strategy, daily return, and investment range."
   },
   {
     step: "04",
     title: "Earn on schedule",
-    description: "Weekly settlements every Monday. Request withdrawal to your bank on published windows."
+    description: "Returns accrue daily and settle on the published weekly cycle. Withdraw to your bank on open windows."
   }
 ];
 
@@ -94,7 +93,7 @@ export const faqs = [
   },
   {
     q: "Do you guarantee returns?",
-    a: `Yes. Alto Rich uses one ${PLATFORM_EARNING.modelName} — up to ${PLATFORM_EARNING.dailyReturnPercent}% daily (${PLATFORM_EARNING.weeklyReturnPercent}% weekly equivalent), settled every Monday at 09:00 WAT. Earnings auto-reinvest until you stop your investment and withdraw.`
+    a: `Yes. Published package returns range from 5% to ${PLATFORM_EARNING.dailyReturnPercent}% daily, depending on the package you choose. Settlements follow the published weekly cycle. Earnings auto-reinvest until you stop your investment and withdraw.`
   },
   {
     q: "How do I deposit money?",
@@ -106,11 +105,11 @@ export const faqs = [
   },
   {
     q: "Who can invest?",
-    a: "Verified members aged 18 and above with a valid Nigerian bank account. Additional eligibility may apply per investment sector."
+    a: "Verified members aged 18 and above with a valid Nigerian bank account. Additional eligibility may apply per investment package."
   },
   {
-    q: "Do different sectors pay different returns?",
-    a: "No. Starter, Growth, Premium, and Elite are capital allocation sectors. Every active investment earns through Alto Rich's unified Platform Earning Model."
+    q: "Do different packages pay different returns?",
+    a: "Yes. Each package has its own published daily return and investment range — Starter 5%, Growth 6%, Premium 7%, and Elite 8% — aligned with its primary strategy."
   }
 ];
 

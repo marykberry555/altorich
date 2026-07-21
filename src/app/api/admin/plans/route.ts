@@ -11,7 +11,7 @@ const createPlanSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   tier: z.enum(["starter", "growth", "premium", "elite"]),
   min_investment: z.number().positive()
-  // max_investment intentionally omitted — sectors have unlimited principal
+  // max_investment owned by portfolio config (set in buildPlanDefaults)
 });
 
 export async function GET() {
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       min_investment: Number(body.min_investment)
     });
 
-    if (!parsed.success) throw Errors.badRequest("Enter a sector and valid minimum entry amount.");
+    if (!parsed.success) throw Errors.badRequest("Enter a portfolio and valid minimum entry amount.");
 
     const plan = await services.investments.createPlan(parsed.data);
 

@@ -26,16 +26,60 @@ export class MemberAdminService {
     return randomBytes(32).toString("hex");
   }
 
-  async listMembers(page = 1, limit = 50, search?: string) {
+  async listMembers(
+    page = 1,
+    limit = 50,
+    filters?: {
+      search?: string;
+      status?: string;
+      kycStatus?: string;
+      emailVerified?: "yes" | "no";
+      memberId?: string;
+      inviteCode?: string;
+      registeredFrom?: string;
+      registeredTo?: string;
+      locationState?: string;
+    }
+  ) {
     let query = this.supabase
       .from("profiles")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
-    if (search) {
-      const term = search.trim();
-      query = query.or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,invite_code.ilike.%${term}%,username.ilike.%${term}%`);
+    const search = filters?.search?.trim();
+    if (filters?.memberId?.trim()) {
+      query = query.eq("id", filters.memberId.trim());
+    } else if (search) {
+      query = query.or(
+        `full_name.ilike.%${search}%,phone.ilike.%${search}%,invite_code.ilike.%${search}%,username.ilike.%${search}%,id.ilike.%${search}%`
+      );
+    }
+
+    if (filters?.inviteCode?.trim()) {
+      query = query.ilike("invite_code", `%${filters.inviteCode.trim()}%`);
+    }
+    if (filters?.status?.trim()) {
+      query = query.eq("account_status", filters.status.trim() as MemberAccountStatus);
+    }
+    if (filters?.kycStatus?.trim()) {
+      query = query.eq("kyc_status", filters.kycStatus.trim() as Database["public"]["Enums"]["kyc_status"]);
+    }
+    if (filters?.emailVerified === "yes") {
+      query = query.not("email_verified_at", "is", null);
+    } else if (filters?.emailVerified === "no") {
+      query = query.is("email_verified_at", null);
+    }
+    if (filters?.registeredFrom) {
+      query = query.gte("created_at", new Date(filters.registeredFrom).toISOString());
+    }
+    if (filters?.registeredTo) {
+      const end = new Date(filters.registeredTo);
+      end.setHours(23, 59, 59, 999);
+      query = query.lte("created_at", end.toISOString());
+    }
+    if (filters?.locationState?.trim()) {
+      query = query.ilike("location_state_code", `%${filters.locationState.trim()}%`);
     }
 
     const { data, error, count } = await query;

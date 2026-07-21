@@ -1,52 +1,54 @@
 import Link from "next/link";
-import { faqs } from "@/content/site";
 import { PageHero } from "@/components/marketing/PageHero";
 import { OfficialSocialLinks } from "@/components/social/OfficialSocialLinks";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { buildMetadata } from "@/lib/seo";
+import { KnowledgeFaqCenter } from "@/components/knowledge/KnowledgeFaqCenter";
+import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
 export const metadata = buildMetadata({
-  title: "FAQs — Common questions",
+  title: "FAQ Centre — Common questions",
   description:
-    "Straight answers on registration, wallet funding, returns, and Monday 09:00 WAT withdrawals for Alto Rich members.",
+    "Searchable answers on accounts, deposits, withdrawals, investments, welcome bonus, referrals, and security.",
   path: "/learn/faq"
 });
 
 export default function FaqPage() {
+  const breadcrumb = breadcrumbJsonLd([
+    { name: "Knowledge Center", path: "/learn" },
+    { name: "FAQ", path: "/learn/faq" }
+  ]);
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+
       <section className="gradient-hero section-pad-hero">
         <div className="container-ar max-w-3xl">
           <PageHero
-            eyebrow="FAQs"
-            title="Common questions from Nigerian members"
-            description="Straight answers on registration, wallet funding, returns, and withdrawals — no marketing spin."
+            eyebrow="FAQ Centre"
+            title="Answers when you need them"
+            description="Search by topic or browse categories — straight answers on registration, funding, returns, and account security."
           />
         </div>
       </section>
 
       <section className="section-pad bg-section">
-        <div className="container-ar max-w-3xl space-y-4">
-          {faqs.map((faq) => (
-            <Card key={faq.q} variant="elevated">
-              <h2 className="font-semibold text-[var(--heading)]">{faq.q}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--text-muted)]">{faq.a}</p>
-            </Card>
-          ))}
+        <div className="container-ar max-w-3xl">
+          <KnowledgeFaqCenter />
 
-          <Card variant="outline" className="mt-8">
-            <h2 className="font-semibold text-[var(--heading)]">Community & help</h2>
+          <Card variant="outline" className="mt-10">
+            <h2 className="font-semibold text-[var(--heading)]">Still need help?</h2>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
-              Join the official Alto Rich channels for updates, or contact support if you need account help.
+              Browse the Knowledge Center for in-depth guides, or contact support for account-specific issues.
             </p>
             <OfficialSocialLinks className="mt-4" size="sm" />
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href="/contact">
-                <Button variant="outline">Visit help centre</Button>
+              <Link href="/learn">
+                <Button variant="outline">Knowledge Center</Button>
               </Link>
               <Link href="/contact">
-                <Button>Still need help?</Button>
+                <Button>Contact support</Button>
               </Link>
             </div>
           </Card>

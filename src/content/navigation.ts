@@ -2,34 +2,44 @@ import { PACKAGE_CONFIG } from "@/lib/packages/package-config";
 
 export type NavLink = { label: string; href: string };
 
-export const packageNav: NavLink[] = PACKAGE_CONFIG.map((pkg) => ({
-  label: pkg.title,
+export const portfolioNav: NavLink[] = PACKAGE_CONFIG.map((pkg) => ({
+  label: `${pkg.title} · ${pkg.dailyReturnPercent}%`,
   href: `/packages/${pkg.slug}`
 }));
+
+/** @deprecated Use portfolioNav */
+export const packageNav = portfolioNav;
 
 export type HeaderNavItem =
   | { label: string; href: string; children?: undefined }
   | { label: string; href: string; children: NavLink[] };
 
 export const headerNav: HeaderNavItem[] = [
-  { label: "Packages", href: "/packages", children: packageNav },
-  { label: "How it works", href: "/learn/how-it-works" },
-  { label: "Learn", href: "/learn" },
+  { label: "Portfolios", href: "/packages", children: portfolioNav },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" }
 ];
 
 export const footerLinks: Record<string, NavLink[]> = {
-  Packages: [{ label: "All packages", href: "/packages" }, ...packageNav],
+  Portfolios: [{ label: "All portfolios", href: "/packages" }, ...portfolioNav],
   Company: [
     { label: "Download app", href: "/download" },
     { label: "About", href: "/about" },
+    { label: "Knowledge Center", href: "/learn" },
+    { label: "Transparency", href: "/company/transparency" },
+    { label: "Leadership", href: "/company/leadership" },
+    { label: "Security Center", href: "/company/security" },
+    { label: "Compliance Hub", href: "/compliance" },
+    { label: "System status", href: "/status" },
     { label: "Contact", href: "/contact" },
-    { label: "How it works", href: "/learn/how-it-works" },
-    { label: "FAQs", href: "/learn/faq" },
+    { label: "How it works", href: "/how-it-works" },
+    { label: "FAQ Centre", href: "/learn/faq" },
     { label: "Glossary", href: "/learn/glossary" }
   ],
   Legal: [
+    { label: "Compliance Hub", href: "/compliance" },
+    { label: "Security Center", href: "/company/security" },
+    { label: "Business continuity", href: "/business-continuity" },
     { label: "Terms", href: "/legal/terms" },
     { label: "Privacy", href: "/legal/privacy" },
     { label: "Risk disclosure", href: "/legal/risk" },

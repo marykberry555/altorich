@@ -37,7 +37,10 @@ export function AppLoader({ className, compact = false }: Props) {
       />
 
       <p className="text-xl font-bold tracking-tight text-[var(--heading)]">Alto Rich</p>
-      <p className="text-sm text-[var(--text-muted)]">Hold On.</p>
+      <p className="sr-only">Loading</p>
+      <p className="text-sm text-[var(--text-muted)]" aria-hidden>
+        Loading your account…
+      </p>
     </div>
   );
 }

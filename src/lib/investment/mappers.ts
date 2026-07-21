@@ -1,5 +1,6 @@
 import { projectedDailyForPrincipal } from "@/lib/packages/tier-config";
-import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
+import type { PortfolioSlug } from "@/config/investment-portfolios";
+import { resolveWeeklyRoiBps } from "@/config/investment-portfolios";
 import type { SettlementFrequency } from "@/lib/investment";
 import type { ActiveInvestmentRow } from "@/components/investment/ActiveInvestmentCard";
 import type { LiveInvestmentInput } from "@/components/investment/LivePortfolioPanel";
@@ -17,6 +18,7 @@ type InvestmentWithPlan = {
   last_weekly_settlement_at?: string | null;
   investment_plans?: {
     name?: string;
+    tier?: string | null;
     projected_daily?: number;
     settlement_frequency?: SettlementFrequency | null;
     weekly_roi_bps?: number | null;
@@ -43,9 +45,16 @@ export function mapInvestmentRows(
   return investments.map((inv) => {
     const plan = inv.investment_plans;
     const frequency = (inv.settlement_frequency ?? plan?.settlement_frequency ?? "weekly") as SettlementFrequency;
-    const weeklyRoiBps = PLATFORM_EARNING.weeklyRoiBps;
+    const weeklyRoiBps = resolveWeeklyRoiBps({
+      slug: plan?.tier,
+      weeklyRoiBps: inv.weekly_roi_bps ?? plan?.weekly_roi_bps,
+      amountNgn: Number(inv.amount)
+    });
     const amount = Number(inv.amount);
-    const projectedDaily = projectedDailyForPrincipal(amount);
+    const tier = plan?.tier as PortfolioSlug | undefined;
+    const projectedDaily = tier
+      ? projectedDailyForPrincipal(amount, tier)
+      : Math.round((amount * weeklyRoiBps) / 10_000 / 7);
 
     return {
       id: inv.id,

@@ -8,6 +8,8 @@ import { formatNaira } from "@/lib/domain";
 import { InvestmentAccrualPanel } from "@/components/investment/InvestmentAccrualPanel";
 import { InvestmentStopPanel } from "@/components/investment/InvestmentStopPanel";
 import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
+import { getPortfolioBySlug, isPortfolioSlug, resolveWeeklyRoiBps } from "@/config/investment-portfolios";
+import { PORTFOLIO_TERMS, formatInvestmentRange } from "@/lib/copy/portfolio-terminology";
 import { StatusBadge } from "@/components/design-system";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -72,7 +74,12 @@ export default async function InvestmentDetailPage({ params }: Props) {
   const rows = mapInvestmentRows([investment as Parameters<typeof mapInvestmentRows>[0][0]], settlements);
   const row = rows[0];
   const plan = (investment as { investment_plans?: { name?: string; tier?: string } | null }).investment_plans;
-  const weeklyRoiPercent = PLATFORM_EARNING.weeklyReturnPercent;
+  const portfolio = plan?.tier && isPortfolioSlug(plan.tier) ? getPortfolioBySlug(plan.tier) : undefined;
+  const weeklyRoiPercent = portfolio?.weeklyProjectionRate ?? resolveWeeklyRoiBps({
+    slug: portfolio?.slug,
+    weeklyRoiBps: row.weeklyRoiBps,
+    amountNgn: Number(investment.amount)
+  }) / 100;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -88,17 +95,29 @@ export default async function InvestmentDetailPage({ params }: Props) {
 
       <header>
         <p className="font-mono text-xs text-[var(--text-subtle)]">{investment.reference ?? investment.id}</p>
-        <h1 className="mt-2 text-2xl font-bold text-[var(--heading)]">Investment Sector Details</h1>
+        <h1 className="mt-2 text-2xl font-bold text-[var(--heading)]">Portfolio allocation details</h1>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
-          {plan?.name ?? "Investment"} · {PLATFORM_EARNING.modelName}
+          {plan?.name ?? "Investment"} · {portfolio?.strategy ?? "Published portfolio terms"}
         </p>
       </header>
 
       <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Card variant="elevated" padding="md">
-          <dt className="text-xs text-[var(--text-subtle)]">Investment Sector</dt>
-          <dd className="mt-1 text-lg font-semibold text-[var(--heading)]">{plan?.name ?? "Investment"}</dd>
-        </Card>
+        {portfolio ? (
+          <Card variant="elevated" padding="md" className="sm:col-span-2 lg:col-span-3">
+            <dt className="text-xs text-[var(--text-subtle)]">{PORTFOLIO_TERMS.primaryStrategy}</dt>
+            <dd className="mt-1 text-lg font-semibold text-[var(--heading)]">{portfolio.strategy}</dd>
+            <p className="mt-1 text-sm font-medium text-[var(--heading)]">{portfolio.name}</p>
+            <p className="mt-2 text-sm font-medium text-[var(--emerald)]">
+              {portfolio.dailyReturnRate}% daily return ·{" "}
+              {formatInvestmentRange(portfolio.minimumInvestment, portfolio.maximumInvestment, formatNaira)}
+            </p>
+          </Card>
+        ) : (
+          <Card variant="elevated" padding="md">
+            <dt className="text-xs text-[var(--text-subtle)]">{PORTFOLIO_TERMS.selectedPortfolio}</dt>
+            <dd className="mt-1 text-lg font-semibold text-[var(--heading)]">{plan?.name ?? "Investment"}</dd>
+          </Card>
+        )}
         <Card variant="elevated" padding="md">
           <dt className="text-xs text-[var(--text-subtle)]">Principal</dt>
           <dd className="mt-1 text-lg font-bold tabular-nums">{formatNaira(Number(investment.amount))}</dd>
@@ -108,11 +127,19 @@ export default async function InvestmentDetailPage({ params }: Props) {
           <dd className="mt-1 font-medium">{new Date(investment.started_at).toLocaleString("en-NG")}</dd>
         </Card>
         <Card variant="elevated" padding="md">
-          <dt className="text-xs text-[var(--text-subtle)]">{PLATFORM_EARNING.modelName}</dt>
+          <dt className="text-xs text-[var(--text-subtle)]">{PORTFOLIO_TERMS.dailyReturn}</dt>
           <dd className="mt-1 font-semibold text-[var(--emerald)]">
-            Up to {PLATFORM_EARNING.dailyReturnPercent}% daily
+            {portfolio ? `${portfolio.dailyReturnRate}%` : "—"}
           </dd>
         </Card>
+        {portfolio ? (
+          <Card variant="elevated" padding="md">
+            <dt className="text-xs text-[var(--text-subtle)]">{PORTFOLIO_TERMS.investmentRange}</dt>
+            <dd className="currency-ngn mt-1 text-sm font-semibold tabular-nums">
+              {formatInvestmentRange(portfolio.minimumInvestment, portfolio.maximumInvestment, formatNaira)}
+            </dd>
+          </Card>
+        ) : null}
         <Card variant="elevated" padding="md">
           <dt className="text-xs text-[var(--text-subtle)]">{PLATFORM_EARNING.settlementScheduleLabel}</dt>
           <dd className="mt-1 font-medium">{formatSettlementLabel(row.settlementFrequency)}</dd>

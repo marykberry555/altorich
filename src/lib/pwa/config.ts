@@ -22,5 +22,5 @@ export const APP_SHORTCUTS = [
   { name: "Dashboard", url: "/dashboard", description: "View your portfolio overview" },
   { name: "Wallet", url: "/wallet", description: "Check wallet balance" },
   { name: "Deposit", url: "/deposits", description: "Fund your account" },
-  { name: "Invest", url: "/investments", description: "Browse investment plans" }
+  { name: "Invest", url: "/investments", description: "Browse investment portfolios" }
 ] as const;

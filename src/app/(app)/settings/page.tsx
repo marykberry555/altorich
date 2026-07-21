@@ -36,9 +36,19 @@ export default async function SettingsPage() {
       <PageHero eyebrow="Settings" title="Account & security" description="Manage your profile, withdrawal details, and preferences." />
 
       <Card variant="elevated" className="mt-8">
-        <h2 className="font-semibold text-[var(--heading)]">Profile & investment sector</h2>
+        <h2 className="font-semibold text-[var(--heading)]">Security Center</h2>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
-          Update your details, location, or preferred investment sector.
+          Review login history, trusted devices, verification status, and account activity.
+        </p>
+        <Link href="/security" className="mt-4 inline-block">
+          <Button size="sm">Open Security Center</Button>
+        </Link>
+      </Card>
+
+      <Card variant="elevated" className="mt-4">
+        <h2 className="font-semibold text-[var(--heading)]">Profile & preferred portfolio</h2>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          Update your details, location, or preferred investment portfolio.
         </p>
         <div className="mt-4">
           <ProfileSettingsForm
@@ -70,7 +80,7 @@ export default async function SettingsPage() {
       </Card>
 
       <Card variant="elevated" className="mt-4">
-        <h2 className="font-semibold text-[var(--heading)]">Security</h2>
+        <h2 className="font-semibold text-[var(--heading)]">Password & account</h2>
         <div className="mt-4 space-y-3">
           <div className="flex items-center justify-between rounded-[var(--radius-sm)] border border-[var(--border)] px-4 py-3">
             <span className="text-sm font-medium">Change password</span>

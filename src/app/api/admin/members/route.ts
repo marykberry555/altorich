@@ -15,9 +15,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = Number(searchParams.get("page") ?? 1);
     const limit = Number(searchParams.get("limit") ?? 50);
-    const search = searchParams.get("search") ?? undefined;
+    const search = searchParams.get("search") ?? searchParams.get("q") ?? undefined;
 
-    const result = await services.members.listMembers(page, limit, search);
+    const result = await services.members.listMembers(page, limit, {
+      search,
+      status: searchParams.get("status") ?? undefined,
+      kycStatus: searchParams.get("kycStatus") ?? undefined,
+      emailVerified: (searchParams.get("emailVerified") as "yes" | "no" | null) ?? undefined,
+      memberId: searchParams.get("memberId") ?? undefined,
+      inviteCode: searchParams.get("inviteCode") ?? undefined,
+      registeredFrom: searchParams.get("registeredFrom") ?? undefined,
+      registeredTo: searchParams.get("registeredTo") ?? undefined,
+      locationState: searchParams.get("locationState") ?? undefined
+    });
     return NextResponse.json(result);
   } catch (error) {
     return apiErrorResponse(error);

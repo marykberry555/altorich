@@ -4,8 +4,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/design-system";
+import { PortfolioTimeline } from "@/components/financial/PortfolioTimeline";
 import { formatNaira } from "@/lib/domain";
-import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
+import { buildPortfolioTimeline } from "@/lib/financial-events/portfolio-timeline";
+import { resolveWeeklyRoiBps } from "@/config/investment-portfolios";
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import { getPublicEnv } from "@/lib/env";
@@ -37,6 +39,9 @@ export default async function PortfolioPage() {
   let balanceHistory: { date: string; value: number }[] = [];
   let earningsTrend: { date: string; value: number }[] = [];
   let allocation: { name: string; value: number }[] = [];
+  let recentDeposits: Awaited<ReturnType<NonNullable<typeof services>["deposits"]["listForUser"]>> = [];
+  let recentWithdrawals: Awaited<ReturnType<NonNullable<typeof services>["withdrawals"]["listForUser"]>> = [];
+  let settlementTxs: { id: string; amount: number; created_at: string; reason: string }[] = [];
 
   if (user && services) {
     const analytics = await services.analytics.getMemberAnalytics(user.id).catch(() => null);
@@ -44,6 +49,24 @@ export default async function PortfolioPage() {
       balanceHistory = analytics.balanceHistory;
       earningsTrend = analytics.earningsTrend;
       allocation = analytics.allocation;
+    }
+
+    [recentDeposits, recentWithdrawals] = await Promise.all([
+      services.deposits.listForUser(user.id, 15).catch(() => []),
+      services.withdrawals.listForUser(user.id, 15).catch(() => [])
+    ]);
+
+    const wallet = await services.wallet.getWalletByUserId(user.id).catch(() => null);
+    if (wallet) {
+      const txs = await services.wallet.getTransactions(wallet.id, 30).catch(() => []);
+      settlementTxs = txs
+        .filter((t) => t.reason.includes("settlement") || t.reason.includes("earning"))
+        .map((t) => ({
+          id: t.id,
+          amount: Number(t.amount),
+          created_at: t.created_at,
+          reason: t.reason
+        }));
     }
   }
 
@@ -55,6 +78,14 @@ export default async function PortfolioPage() {
     const planAllocation = Array.from(byPlan.entries()).map(([name, value]) => ({ name, value }));
     if (planAllocation.length > 0) allocation = planAllocation;
   }
+
+  const portfolioTimeline = buildPortfolioTimeline({
+    deposits: recentDeposits,
+    investments: investCtx?.investments ?? [],
+    withdrawals: recentWithdrawals,
+    settlements: settlementTxs,
+    limit: 20
+  });
 
   return (
     <div className="space-y-6">
@@ -74,7 +105,7 @@ export default async function PortfolioPage() {
         <DashboardSection title="Weekly ROI">
           <Card variant="elevated" className="grid gap-6 sm:grid-cols-2">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Active investment sector</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Active portfolio</p>
               <p className="mt-1 text-lg font-semibold text-[var(--heading)]">{roiState.activeInvestment.tier.name}</p>
               <p className="mt-2 text-sm text-[var(--text-muted)]">
                 Principal:{" "}
@@ -85,7 +116,10 @@ export default async function PortfolioPage() {
             </div>
             <EarningsTicker
               principalNgn={Number(roiState.activeInvestment.principal_ngn)}
-              weeklyRoiBps={PLATFORM_EARNING.weeklyRoiBps}
+              weeklyRoiBps={resolveWeeklyRoiBps({
+                amountNgn: Number(roiState.activeInvestment.principal_ngn),
+                weeklyRoiBps: roiState.activeInvestment.tier.weekly_roi_bps
+              })}
               cycleStartedAt={roiState.activeInvestment.cycle_started_at}
               cycleEndsAt={roiState.activeInvestment.cycle_ends_at}
             />
@@ -112,11 +146,15 @@ export default async function PortfolioPage() {
               <EarningsTrendChart data={earningsTrend} />
             </div>
             <div className="mt-6">
-              <AllocationChart data={allocation} title="Sector distribution" />
+              <AllocationChart data={allocation} title="Portfolio distribution" />
             </div>
           </DashboardSection>
 
           {investCtx ? <ActiveInvestmentsList investments={investCtx.rows} /> : null}
+
+          <DashboardSection title="Capital lifecycle">
+            <PortfolioTimeline events={portfolioTimeline} />
+          </DashboardSection>
 
           <DashboardSection title="Upcoming settlements">
             {(portfolio?.upcomingMaturities.length ?? 0) === 0 ? (
@@ -146,7 +184,7 @@ export default async function PortfolioPage() {
                 description="Fund your account to begin growing your wealth."
                 action={
                   <Link href="/investments">
-                    <Button>Browse packages</Button>
+                    <Button>Browse portfolios</Button>
                   </Link>
                 }
               />
@@ -162,7 +200,7 @@ export default async function PortfolioPage() {
                             <p className="truncate font-medium text-[var(--heading)]">
                               {inv.reference ?? inv.id.slice(0, 8)}
                             </p>
-                            <p className="text-xs text-[var(--text-subtle)]">{plan?.name ?? "Sector"}</p>
+                            <p className="text-xs text-[var(--text-subtle)]">{plan?.name ?? "Portfolio"}</p>
                             <StatusBadge status={inv.status} />
                           </div>
                           <div className="shrink-0 text-right">
@@ -204,7 +242,7 @@ export default async function PortfolioPage() {
                           <tr key={inv.id} className="border-b border-[var(--border)] last:border-0">
                             <td className="px-4 py-3">
                               <p className="font-medium">{inv.reference ?? inv.id.slice(0, 8)}</p>
-                              <p className="text-xs text-[var(--text-subtle)]">{plan?.name ?? "Sector"}</p>
+                              <p className="text-xs text-[var(--text-subtle)]">{plan?.name ?? "Portfolio"}</p>
                             </td>
                             <td className="py-3">
                               <StatusBadge status={inv.status} />

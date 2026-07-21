@@ -25,9 +25,9 @@ export function welcomeEmailHtml(firstName: string) {
     preview: `Your ${COMPANY.brand} account is verified — you're ready to invest`,
     body: `
       ${emailParagraph(`Hi ${name},`)}
-      ${emailParagraph("Your email is verified and your AltoRich account is active. You can now fund your wallet, explore investment sectors, and track everything from your dashboard.")}
+      ${emailParagraph("Your email is verified and your Alto Rich account is active. You can now fund your wallet, explore investment portfolios, and track everything from your dashboard.")}
       ${emailButton(`${COMPANY.siteUrl}/dashboard`, "Go to your dashboard")}
-      ${emailParagraph(`Explore our <a href="${COMPANY.siteUrl}/packages" style="color:#047857;font-weight:600;text-decoration:none;">investment sectors</a> when you're ready.`)}
+      ${emailParagraph(`Explore our <a href="${COMPANY.siteUrl}/packages" style="color:#047857;font-weight:600;text-decoration:none;">investment portfolios</a> when you're ready.`)}
       ${emailMuted("Need help getting started? Visit our help centre or reply to this email.")}
     `
   });

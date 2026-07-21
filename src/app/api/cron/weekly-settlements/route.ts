@@ -4,7 +4,7 @@ import { sendEmail } from "@/lib/email/send";
 import { COMPANY } from "@/lib/company";
 import { formatNaira } from "@/lib/domain";
 import { weeklyInterestForAmount } from "@/lib/packages/tier-config";
-import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
+import { resolveWeeklyRoiBps } from "@/config/investment-portfolios";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -29,10 +29,11 @@ export async function POST(request: NextRequest) {
   try {
     const settlements = await services.settlements.processWeeklyMondaySettlements(new Date());
     const promoted = await services.withdrawals.promoteScheduledWithdrawals(new Date());
+    const welcomeUnlocked = await services.welcomeBonus.unlockDue(new Date());
 
     const { data: activeInvestments } = await services.supabase
       .from("investments")
-      .select("user_id, amount, weekly_roi_bps, stop_requested_at, status")
+      .select("user_id, amount, weekly_roi_bps, stop_requested_at, status, investment_plans(tier, weekly_roi_bps)")
       .in("status", ["active", "stopping"]);
 
     const userIds = [...new Set((activeInvestments ?? []).map((r) => String(r.user_id)))];
@@ -58,7 +59,16 @@ export async function POST(request: NextRequest) {
         const inv = (activeInvestments ?? []).find((r) => String(r.user_id) === userId);
         if (!inv) continue;
 
-        const bps = PLATFORM_EARNING.weeklyRoiBps;
+        const planRel = inv.investment_plans as
+          | { tier?: string | null; weekly_roi_bps?: number | null }
+          | { tier?: string | null; weekly_roi_bps?: number | null }[]
+          | null;
+        const plan = Array.isArray(planRel) ? planRel[0] : planRel;
+        const bps = resolveWeeklyRoiBps({
+          slug: plan?.tier,
+          weeklyRoiBps: inv.weekly_roi_bps ?? plan?.weekly_roi_bps,
+          amountNgn: Number(inv.amount)
+        });
         const weeklyDue = weeklyInterestForAmount(Number(inv.amount), bps);
         const stopping = Boolean(inv.stop_requested_at);
         const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://altorich.com";
@@ -97,13 +107,15 @@ export async function POST(request: NextRequest) {
 
     logger.info("Monday weekly settlement cron complete", {
       settlements: settlements.length,
-      emailsSent
+      emailsSent,
+      welcomeUnlocked: welcomeUnlocked.filter((r) => r.ok).length
     });
 
     return NextResponse.json({
       ok: true,
       settlementsProcessed: settlements.length,
       scheduledPayoutsPromoted: promoted,
+      welcomeBonusesUnlocked: welcomeUnlocked.filter((r) => r.ok).length,
       emailsSent
     });
   } catch (error) {

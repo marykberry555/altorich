@@ -1,5 +1,12 @@
 import { LegalDocument } from "@/components/marketing/LegalDocument";
 import { COMPANY } from "@/lib/company";
+import { legalPageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata = legalPageMetadata(
+  "Cookie Policy",
+  "/legal/cookies",
+  "How Alto Rich uses cookies and similar technologies on the website and member portal."
+);
 
 export default function CookiesPage() {
   return (

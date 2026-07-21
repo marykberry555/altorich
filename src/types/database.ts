@@ -264,6 +264,7 @@ export type Database = {
           paid_at: string | null;
           settlement_reference: string | null;
           idempotency_key: string | null;
+          fund_source: "ngn_wallet" | "welcome_bonus";
         };
         Insert: {
           user_id: string;
@@ -284,6 +285,7 @@ export type Database = {
           paid_at?: string | null;
           settlement_reference?: string | null;
           idempotency_key?: string | null;
+          fund_source?: "ngn_wallet" | "welcome_bonus";
         };
         Update: Partial<Database["public"]["Tables"]["withdrawals"]["Insert"]> & {
           status?: "scheduled" | "pending" | "approved" | "processing" | "paid" | "rejected" | "cancelled";
@@ -892,6 +894,7 @@ export type Database = {
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Deposit = Database["public"]["Tables"]["deposits"]["Row"];
 export type Withdrawal = Database["public"]["Tables"]["withdrawals"]["Row"];
+export type Investment = Database["public"]["Tables"]["investments"]["Row"];
 export type InvestmentPlan = Database["public"]["Tables"]["investment_plans"]["Row"];
 export type WalletTransaction = Database["public"]["Tables"]["wallet_transactions"]["Row"];
 export type Notification = Database["public"]["Tables"]["notifications"]["Row"];

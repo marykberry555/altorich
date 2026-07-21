@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import type { PackageSlug } from "@/content/packages";
 import { formatNaira } from "@/lib/domain";
 import { PACKAGE_TIER_CONFIG, getTierConfig } from "@/lib/packages/tier-config";
+import { getPortfolioBySlug } from "@/config/investment-portfolios";
+import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 import { DataTable, SectionHeading, StatusBadge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/design-system";
 import { CurrencyInput, parseCurrencyInput } from "@/components/ui/CurrencyInput";
 import { Button } from "@/components/ui/Button";
@@ -96,10 +98,10 @@ export function PlansAdminPanel({ initialPlans }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SectionHeading title={`Investment sectors (${plans.length})`} />
+        <SectionHeading title={`Investment portfolios (${plans.length})`} />
         <Button type="button" size="sm" onClick={() => setShowCreate((v) => !v)}>
           <Plus size={14} />
-          Add sector
+          Add portfolio slot
         </Button>
       </div>
 
@@ -113,13 +115,13 @@ export function PlansAdminPanel({ initialPlans }: Props) {
         <Card variant="elevated" padding="md">
           <form onSubmit={createPlan} className="space-y-4">
             <p className="text-sm text-[var(--text-muted)]">
-              Sectors define minimum entry only — principal is unlimited. Earnings use the global Platform Earning
-              Model (up to 5% daily) and cannot be set per sector.
+              Portfolio slots inherit limits and return rates from the centralized configuration. Headline rate up to{" "}
+              {PLATFORM_EARNING.dailyReturnPercent}% daily across portfolios.
             </p>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
-                Sector name
+                Display name
                 <input
                   className="field"
                   placeholder={tierPreview?.title ?? "Alto Starter"}
@@ -128,7 +130,7 @@ export function PlansAdminPanel({ initialPlans }: Props) {
                 />
               </label>
               <label className="grid gap-1 text-sm">
-                Investment sector
+                Portfolio
                 <select className="field" value={form.tier} onChange={(e) => setTier(e.target.value as PackageSlug)}>
                   {PACKAGE_TIER_CONFIG.map((tier) => (
                     <option key={tier.slug} value={tier.slug}>
@@ -148,14 +150,15 @@ export function PlansAdminPanel({ initialPlans }: Props) {
 
             {tierPreview ? (
               <p className="rounded-[var(--radius-sm)] bg-[var(--gray-100)] px-3 py-2 text-xs text-[var(--text-muted)]">
-                {tierPreview.subtitle} · Weekly settlement · {tierPreview.payoutTiming} · Open-ended ({365}-day cycle)
+                {tierPreview.subtitle} · {getPortfolioBySlug(form.tier)?.dailyReturnRate}% daily · Min{" "}
+                {formatNaira(tierPreview.minNgn)} · Max {formatNaira(tierPreview.maxNgn)} · {tierPreview.payoutTiming}
               </p>
             ) : null}
 
             <div className="flex gap-2">
               <Button type="submit" disabled={busy === "create"}>
                 {busy === "create" ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                Create sector
+                Create portfolio slot
               </Button>
               <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
                 Cancel
@@ -170,20 +173,26 @@ export function PlansAdminPanel({ initialPlans }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Investment Sector</TableHead>
-              <TableHead>Minimum Entry</TableHead>
-              <TableHead>Platform Earning Model</TableHead>
+              <TableHead>Portfolio</TableHead>
+              <TableHead>Investment range</TableHead>
+              <TableHead>Daily return</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {plans.map((p) => (
+            {plans.map((p) => {
+              const portfolio = p.tier ? getPortfolioBySlug(String(p.tier)) : undefined;
+              return (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell className="capitalize">{p.tier}</TableCell>
-                <TableCell className="tabular-nums">{formatNaira(Number(p.min_investment ?? p.price))}</TableCell>
-                <TableCell>Up to 5% daily</TableCell>
+                <TableCell className="tabular-nums text-xs">
+                  {portfolio
+                    ? `${formatNaira(portfolio.minimumInvestment)} – ${formatNaira(portfolio.maximumInvestment)}`
+                    : formatNaira(Number(p.min_investment ?? p.price))}
+                </TableCell>
+                <TableCell>{portfolio ? `${portfolio.dailyReturnRate}%` : "—"}</TableCell>
                 <TableCell>
                   <StatusBadge status={p.plan_status ?? "active"} />
                 </TableCell>
@@ -200,7 +209,8 @@ export function PlansAdminPanel({ initialPlans }: Props) {
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+            );
+            })}
           </TableBody>
         </Table>
       </DataTable>

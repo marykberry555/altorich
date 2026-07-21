@@ -32,7 +32,7 @@ export const LIVE_ACTIVITY_CONFIG = {
     "/about",
     "/learn/faq",
     "/contact",
-    "/learn/how-it-works",
+    "/how-it-works",
     "/download",
     "/learn"
   ]

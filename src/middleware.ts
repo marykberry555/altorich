@@ -25,7 +25,11 @@ const protectedRoutes = [
   "/vip",
   "/activities",
   "/settings",
-  "/notifications"
+  "/notifications",
+  "/security",
+  "/privacy",
+  "/documents",
+  "/announcements"
 ];
 
 const authRoutes = [

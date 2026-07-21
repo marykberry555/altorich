@@ -58,7 +58,7 @@ export function InvestmentFundingForm({ fundingEnabled }: Props) {
     const reference = paymentReference.trim();
 
     if (!parsedAmount || parsedAmount < MIN_FUNDING_AMOUNT_NGN) {
-      setMessage(`Minimum funding amount is ${formatNaira(MIN_FUNDING_AMOUNT_NGN)}.`);
+      setMessage(`Minimum deposit amount is ${formatNaira(MIN_FUNDING_AMOUNT_NGN)}.`);
       setIsSubmitting(false);
       inFlight.current = false;
       return;
@@ -114,13 +114,13 @@ export function InvestmentFundingForm({ fundingEnabled }: Props) {
               <Check size={20} aria-hidden />
             </span>
             <div>
-              <p className="text-lg font-semibold text-[var(--heading)]">Funding submitted</p>
+              <p className="text-lg font-semibold text-[var(--heading)]">Deposit submitted</p>
               <p className="mt-1 text-sm text-[var(--text-muted)]">
                 Awaiting admin verification. Once approved, your preferred package invests automatically.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button size="sm" type="button" variant="outline" onClick={() => setModalOpen(true)}>
-                  View funding details
+                  View deposit details
                 </Button>
                 <Link href="/dashboard">
                   <Button size="sm">Back to dashboard</Button>
@@ -133,7 +133,7 @@ export function InvestmentFundingForm({ fundingEnabled }: Props) {
         <Card variant="elevated" className="p-6 sm:p-8" id="fund">
           <form onSubmit={submitFunding} className="space-y-5">
             <CurrencyInput
-              label={`Funding amount (${NAIRA_SYMBOL})`}
+              label={`Deposit amount (${NAIRA_SYMBOL})`}
               prefix="₦"
               value={amountRaw}
               onChange={setAmountRaw}
@@ -165,10 +165,10 @@ export function InvestmentFundingForm({ fundingEnabled }: Props) {
             <div className="pt-1">
               <Button disabled={!fundingEnabled || isSubmitting} type="submit" className="w-full gap-2 sm:w-auto">
                 {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : null}
-                Submit funding
+                Submit deposit
               </Button>
               {!fundingEnabled ? (
-                <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">Wallet funding is temporarily paused.</p>
+                <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">Deposits are temporarily paused.</p>
               ) : null}
               {message ? (
                 <InlineErrorNotice
@@ -199,11 +199,11 @@ export function InvestmentFundingForm({ fundingEnabled }: Props) {
                 <Check size={28} aria-hidden />
               </span>
               <h2 id="funding-submitted-title" className="mt-4 text-xl font-bold text-[var(--heading)]">
-                Funding submitted
+                Deposit submitted
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">
                 An Alto Rich admin will verify your transfer. As soon as it is approved, your preferred investment
-                sector starts automatically — no extra step needed.
+                portfolio starts automatically — no extra step needed.
               </p>
             </div>
 
