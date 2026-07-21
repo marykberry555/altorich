@@ -11,6 +11,7 @@ import { PortfolioCalculator } from "@/components/portfolio/PortfolioCalculator"
 import { HeroWealthCounter } from "@/components/marketing/HeroWealthCounter";
 import { LiveOperationsPanel } from "@/components/marketing/LiveOperationsPanel";
 import { PlatformByTheNumbers } from "@/components/marketing/PlatformByTheNumbers";
+import { LeadershipPreviewSection } from "@/components/marketing/LeadershipPreviewSection";
 import { IMAGES } from "@/lib/images";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -136,7 +137,9 @@ export function HomePage({ homepageStats }: Props) {
 
       <LiveOperationsPanel config={homepageStats} />
 
-      <section className="section-pad bg-[var(--gray-50)]">
+      <LeadershipPreviewSection limit={4} />
+
+      <section className="section-pad bg-section">
         <div className="container-ar">
           <PageHero
             eyebrow="How it works"

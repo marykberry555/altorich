@@ -100,12 +100,13 @@ jobs:
           for i in $(seq 1 36); do
             if curl -fsS --max-time 15 https://altorich.com/api/health | grep -q '"status"[[:space:]]*:[[:space:]]*"ok"'; then
               html="$(curl -fsS -H 'Cache-Control: no-cache' "https://altorich.com/?_=$(date +%s)")"
-              if echo "$html" | grep -q 'Invest with us today'; then
-                echo "Production health OK + new homepage copy verified"
+              if echo "$html" | grep -q 'Invest with us today' && echo "$html" | grep -q 'Meet Our Leadership' && echo "$html" | grep -q 'Karol Kemp'; then
+                echo "Production health OK + homepage copy + leadership verified"
+                curl -fsS https://altorich.com/site.webmanifest | grep -q '"/auth/login"' && echo "PWA start_url OK"
                 curl -fsS -o /dev/null -w '%{http_code}\n' -H 'Cache-Control: no-cache' https://altorich.com/packages | grep -q '^200$' && echo "Packages page OK"
                 exit 0
               fi
-              echo "Attempt $i/36 — site healthy but new copy not visible yet..."
+              echo "Attempt $i/36 — site healthy but new homepage markers not visible yet..."
             else
               echo "Attempt $i/36 — health not ready..."
             fi

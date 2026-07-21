@@ -12,17 +12,17 @@
   "navigationDividerColorDark": "#0F1419",
   "backgroundColor": "#F8F7F5",
   "enableNotifications": true,
-  "startUrl": "/app",
+  "startUrl": "/auth/login",
   "iconUrl": "https://altorich.com/icons/android-chrome-512x512-maskable.png",
   "maskableIconUrl": "https://altorich.com/icons/android-chrome-512x512-maskable.png",
   "monochromeIconUrl": "https://altorich.com/icons/icon-monochrome.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "/Users/stanlex/Documents/AltoWealth/android/signing-key.jks",
+    "path": "../signing-key.jks",
     "alias": "altorich-admin"
   },
-  "appVersionName": "1.1.0",
-  "appVersionCode": 2,
+  "appVersionName": "1.2.0",
+  "appVersionCode": 3,
   "shortcuts": [
     {
       "name": "Dashboard",
@@ -69,5 +69,5 @@
   "fullScopeUrl": "https://altorich.com/",
   "minSdkVersion": 21,
   "orientation": "portrait-primary",
-  "appVersion": "1.1.0"
+  "appVersion": "1.2.0"
 }

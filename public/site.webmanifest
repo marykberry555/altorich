@@ -1,9 +1,9 @@
 {
   "name": "Alto Rich",
   "short_name": "Alto Rich",
-  "start_url": "/app",
+  "start_url": "/auth/login",
   "scope": "/",
-  "id": "/app",
+  "id": "/auth/login",
   "display": "standalone",
   "background_color": "#f8f7f5",
   "theme_color": "#064e3b",
@@ -39,6 +39,11 @@
   ],
   "shortcuts": [
     {
+      "name": "Login",
+      "short_name": "Login",
+      "url": "/auth/login"
+    },
+    {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "url": "/dashboard"
@@ -52,11 +57,6 @@
       "name": "Deposit",
       "short_name": "Deposit",
       "url": "/deposits"
-    },
-    {
-      "name": "Portfolios",
-      "short_name": "Portfolios",
-      "url": "/investments"
     }
   ]
 }

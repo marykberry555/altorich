@@ -61,7 +61,7 @@ export function DownloadAppBadge({
 
   if (pwa?.isStandalone) {
     return (
-      <Link href="/app" className={sharedClass} aria-label="Open Alto Rich app">
+      <Link href="/auth/login" className={sharedClass} aria-label="Open Alto Rich app">
         <ExternalLink size={spec.icon} aria-hidden />
         <span className={spec.text}>Open App</span>
       </Link>

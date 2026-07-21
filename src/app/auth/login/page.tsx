@@ -1,8 +1,29 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { AuthPageFallback } from "@/components/auth/AuthPageFallback";
+import { createClient } from "@/lib/supabase/server";
+import { ADMIN_APP_HOME } from "@/lib/admin-app/constants";
 
-export default function AuthLoginPage() {
+/** PWA / deep-link entry — show login, or continue when already signed in. */
+export default async function AuthLoginPage() {
+  const supabase = await createClient();
+  if (supabase) {
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      try {
+        const { data: isAdmin } = await supabase.rpc("has_admin_role");
+        if (isAdmin) redirect(ADMIN_APP_HOME);
+      } catch {
+        // fall through to member dashboard
+      }
+      redirect("/dashboard");
+    }
+  }
+
   return (
     <Suspense fallback={<AuthPageFallback />}>
       <LoginForm />
