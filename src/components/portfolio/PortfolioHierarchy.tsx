@@ -1,5 +1,9 @@
 import { formatNaira } from "@/lib/domain";
-import { formatPortfolioOfferLine, PORTFOLIO_TERMS } from "@/lib/copy/portfolio-terminology";
+import {
+  formatDailyReturnLabel,
+  formatPortfolioOfferLine,
+  PORTFOLIO_TERMS
+} from "@/lib/copy/portfolio-terminology";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -10,6 +14,8 @@ type Props = {
   maxNgn: number;
   /** When true, strategy is the visual headline and name is secondary. */
   strategyAsTitle?: boolean;
+  /** When false, omit min/max investment range from the offer line. */
+  showInvestmentRange?: boolean;
   className?: string;
   nameClassName?: string;
   offerClassName?: string;
@@ -19,7 +25,7 @@ type Props = {
  * Canonical portfolio presentation order everywhere:
  * 1. Strategy focus
  * 2. Portfolio name
- * 3. Daily return + investment range
+ * 3. Daily return (+ optional investment range)
  */
 export function PortfolioHierarchy({
   strategy,
@@ -28,16 +34,19 @@ export function PortfolioHierarchy({
   minNgn,
   maxNgn,
   strategyAsTitle = true,
+  showInvestmentRange = true,
   className,
   nameClassName,
   offerClassName
 }: Props) {
-  const offer = formatPortfolioOfferLine({
-    dailyReturnPercent,
-    minNgn,
-    maxNgn,
-    format: formatNaira
-  });
+  const offer = showInvestmentRange
+    ? formatPortfolioOfferLine({
+        dailyReturnPercent,
+        minNgn,
+        maxNgn,
+        format: formatNaira
+      })
+    : formatDailyReturnLabel(dailyReturnPercent);
 
   if (strategyAsTitle) {
     return (

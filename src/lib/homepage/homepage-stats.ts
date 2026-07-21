@@ -96,7 +96,7 @@ export const DEFAULT_HOMEPAGE_STATS: HomepageStatsConfig = {
   wealthGrowthStart: 1,
   wealthGrowthTarget: 50_000_000,
   wealthGrowthSpeed: 1,
-  wealthGrowthHeadline: "Illustrative growth over time",
+  wealthGrowthHeadline: "How Your Money Grows Daily",
   wealthGrowthDescription:
     "A disciplined allocation journey begins with clarity. This preview shows how consistent participation can compound — not a promise of future results.",
   wealthGrowthSupport: "Illustrative only · Resets daily for demo purposes",

@@ -25,9 +25,11 @@ export type PackageCardData = {
 type Props = {
   pkg: PackageCardData;
   compact?: boolean;
+  /** Homepage cards omit investment range amounts. */
+  showInvestmentRange?: boolean;
 };
 
-export function PackageCard({ pkg, compact = false }: Props) {
+export function PackageCard({ pkg, compact = false, showInvestmentRange = true }: Props) {
   const hasOffer =
     typeof pkg.dailyReturnPercent === "number" &&
     typeof pkg.minNgn === "number" &&
@@ -57,6 +59,7 @@ export function PackageCard({ pkg, compact = false }: Props) {
               dailyReturnPercent={pkg.dailyReturnPercent!}
               minNgn={pkg.minNgn!}
               maxNgn={pkg.maxNgn!}
+              showInvestmentRange={showInvestmentRange}
             />
           </Link>
         ) : (
