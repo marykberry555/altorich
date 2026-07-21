@@ -4,10 +4,9 @@ import { useEffect } from "react";
 import { clearLegacyRuntimeArtifacts } from "@/lib/cache/chunk-recovery";
 
 /**
- * Boot-time cleanup for known-legacy SW/cache strategies.
- * Intentionally does NOT unregister current service workers on every load —
- * that raced AdminAppPwaProvider / member SW registration and produced
- * intermittent ChunkLoadError → "Connection problem" screens.
+ * Boot-time cleanup for known-legacy / stale root SW strategies.
+ * Member site no longer keeps a controlling SW — purge on load so phones
+ * stop looping on "Updating Alto Rich" after deploys.
  */
 export function ServiceWorkerCleanup() {
   useEffect(() => {

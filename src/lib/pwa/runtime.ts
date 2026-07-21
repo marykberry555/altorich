@@ -56,10 +56,8 @@ export function shouldShowInstallPrompt() {
 }
 
 export async function registerServiceWorker() {
-  if (typeof window === "undefined" || !("serviceWorker" in navigator)) return null;
-  try {
-    return await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-  } catch {
-    return null;
-  }
+  // Member site intentionally does not keep a controlling service worker.
+  // Stale SWs caused endless "Updating Alto Rich" loops on phones/PWA after deploy.
+  // Admin push uses `/admin-app/sw.js` via AdminAppPwaProvider instead.
+  return null;
 }

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import {
+  clearLegacyRuntimeArtifacts,
   recoverFromChunkFailure,
   stripCacheBustParam,
   syncStoredBuildId
@@ -11,10 +12,19 @@ type Props = {
   buildId: string;
 };
 
+/**
+ * Phone/PWA stability:
+ * - Purge stale root service workers once per boot
+ * - Track build id without forcing reload loops
+ * - Recover from a chunk miss at most once per tab session
+ */
 export function ChunkLoadRecovery({ buildId }: Props) {
   useEffect(() => {
     stripCacheBustParam();
     syncStoredBuildId(buildId);
+    void clearLegacyRuntimeArtifacts().catch(() => {
+      /* never block boot */
+    });
 
     const onError = (event: ErrorEvent) => {
       const message = event.message || String(event.error ?? "");

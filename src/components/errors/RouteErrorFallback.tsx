@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { logRouteError } from "@/lib/observability/route-error";
-import { isChunkLoadFailure, recoverFromChunkFailure } from "@/lib/cache/chunk-recovery";
+import {
+  chunkRecoveryAlreadyTried,
+  isChunkLoadFailure,
+  recoverFromChunkFailure
+} from "@/lib/cache/chunk-recovery";
 import {
   classifyThrownError,
   memberCopyForCategory,
@@ -43,14 +47,30 @@ export function RouteErrorFallback({
   const dark = tone === "dark" || route.startsWith("/admin") || route.startsWith("/hard");
 
   const isChunk = isChunkLoadFailure(error.message);
+  const recoveryTried = isChunk && chunkRecoveryAlreadyTried();
   const category = categoryOverride ?? (isChunk ? "network" : classifyThrownError(error));
-  const copy = isChunk ? memberCopyForCategory("network", "chunk") : memberCopyForCategory(category);
+  const copy = isChunk
+    ? recoveryTried
+      ? {
+          category: "network" as const,
+          title: "Couldn't load this screen",
+          body: "Please continue below. Your money and account are safe — nothing was lost.",
+          nextActions: [
+            { label: "Open login", href: "/auth/login" },
+            { label: "Try again", action: "retry" as const }
+          ]
+        }
+      : memberCopyForCategory("network", "chunk")
+    : memberCopyForCategory(category);
 
   useEffect(() => {
     logRouteError(error, { route, component, digest: error.digest });
 
     if (isChunkLoadFailure(error.message)) {
-      void recoverFromChunkFailure(error.message);
+      setReported(true);
+      if (!chunkRecoveryAlreadyTried()) {
+        void recoverFromChunkFailure(error.message);
+      }
       return;
     }
 
@@ -88,29 +108,25 @@ export function RouteErrorFallback({
       });
   }, [error, route, component, category]);
 
-  const actions = copy.nextActions.map((action) => {
+  const actions = copy.nextActions.map((action, index) => {
     if (action.action === "retry") {
       return (
         <Button
-          key="retry"
+          key={`retry-${index}`}
           type="button"
           onClick={() => {
-            if (isChunk) {
-              window.location.reload();
-              return;
-            }
-            reset();
+            window.location.assign(window.location.pathname || "/auth/login");
           }}
         >
           {action.label}
         </Button>
       );
     }
-    if (action.action === "signin" || action.href === "/login") {
+    if (action.href === "/auth/login" || action.action === "signin" || action.href === "/login") {
       return (
-        <Link key="signin" href="/login">
+        <a key={`signin-${index}`} href="/auth/login">
           <Button type="button">{action.label}</Button>
-        </Link>
+        </a>
       );
     }
     if (action.action === "support" || action.href === "/contact") {
@@ -156,7 +172,7 @@ export function RouteErrorFallback({
         <p className={cn("font-mono text-xs", dark ? "text-zinc-500" : "text-[var(--text-subtle)]")}>
           Reference ID: {referenceId ?? `AR-${String(error.digest).slice(0, 6).toUpperCase()}`}
         </p>
-      ) : reported ? null : (
+      ) : reported || isChunk ? null : (
         <p className={cn("text-xs", dark ? "text-zinc-500" : "text-[var(--text-subtle)]")}>Logging this issue…</p>
       )}
       {showDebugDetails && error.stack ? (
