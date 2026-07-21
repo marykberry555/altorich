@@ -3,8 +3,9 @@ import { PLATFORM_EARNING } from "@/lib/earning/platform-earning";
 
 export const hero = {
   eyebrow: "Naira portfolios · Weekly settlements",
-  title: "Invest with us today.\nEarn up to 8% everyday.\nGet your payout every week.",
-  subtitle: "Choose your preferred package and put your capital to work immediately.",
+  title: "Grow Your Capital With Confidence.",
+  subtitle:
+    "Choose the plan that suits your budget, track your progress every step of the way, and enjoy transparent weekly settlements all through a simple, secure, and easy-to-use platform.",
   guarantee: "Guaranteed returns.",
   ctaPrimary: "Open an account",
   ctaSecondary: "See how it works"
