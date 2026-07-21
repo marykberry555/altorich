@@ -180,7 +180,7 @@ export const SECURITY_ARTICLES: KnowledgeArticle[] = [
   }),
   article({
     slug: "two-factor-auth",
-    title: "Two-Factor Authentication (Coming Soon)",
+    title: "Two-Factor Authentication (Planned)",
     description: "How an extra verification step will strengthen account security when enabled.",
     category: "Security Academy",
     categorySlug: "security",

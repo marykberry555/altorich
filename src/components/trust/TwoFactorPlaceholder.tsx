@@ -12,7 +12,7 @@ export function TwoFactorPlaceholder() {
             Two-factor authentication
           </h2>
         </div>
-        <Badge variant="gold">Coming soon</Badge>
+        <Badge variant="gold">Planned</Badge>
       </div>
       <p className="mt-3 text-sm text-[var(--text-muted)]">
         An extra verification step for sign-in and sensitive actions is planned. You will be notified when two-factor

@@ -39,7 +39,7 @@ export function StatementDownloadsPanel({ statements, title = "Statements & repo
             ) : (
               <Button size="sm" variant="outline" disabled className="gap-1.5">
                 <Download size={14} aria-hidden />
-                Coming soon
+                Not available
               </Button>
             )}
           </li>

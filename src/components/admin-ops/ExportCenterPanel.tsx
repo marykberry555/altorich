@@ -26,7 +26,7 @@ export function ExportCenterPanel() {
               </a>
             ) : (
               <Button size="sm" variant="outline" disabled className="gap-1.5">
-                <Download size={14} /> Coming soon
+                <Download size={14} /> Not available
               </Button>
             )}
           </div>

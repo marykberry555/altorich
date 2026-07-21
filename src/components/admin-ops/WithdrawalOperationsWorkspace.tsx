@@ -122,7 +122,7 @@ export function WithdrawalOperationsWorkspace() {
                 <Button size="sm" variant="outline" disabled={busy === w.id} onClick={() => setConfirm({ id: w.id, status: "rejected", title: "Reject this withdrawal?" })}>
                   <X size={14} /> Reject
                 </Button>
-                <Button size="sm" variant="outline" disabled title="Hold workflow coming soon">
+                <Button size="sm" variant="outline" disabled title="Hold workflow not available">
                   <Pause size={14} /> Hold
                 </Button>
                 <Button size="sm" variant="outline" disabled title="Flag for review">
