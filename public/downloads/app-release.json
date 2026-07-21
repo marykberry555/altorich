@@ -1,0 +1,17 @@
+{
+  "packageId": "com.altorich.app",
+  "name": "Alto Rich",
+  "versionName": "1.1.0",
+  "versionCode": 2,
+  "buildNumber": 2,
+  "releaseDate": "2026-07-21",
+  "buildId": "LsOeAGGKHcVtt6NGc6RVR",
+  "minSdkVersion": 21,
+  "minAndroid": "5.0 (API 21)",
+  "apkFile": "/downloads/altorich-release.apk",
+  "aabFile": "/downloads/altorich-release.aab",
+  "apkBytes": 3035961,
+  "aabBytes": 3143404,
+  "sha256CertFingerprint": "3F:B5:58:5B:D4:2A:8B:BD:A0:0D:2A:A2:47:4B:FE:67:66:61:DF:69:75:DF:5F:CF:8C:F2:AA:3B:8D:FB:83:49",
+  "updatedAt": "2026-07-21T20:09:48.270Z"
+}

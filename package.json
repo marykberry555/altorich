@@ -19,6 +19,7 @@
     "pwa:icons": "npm run brand:optimize",
     "admin-app:icons": "node scripts/generate-admin-app-icons.mjs",
     "android:build": "bash scripts/android/build-twa.sh",
+    "android:release": "bash scripts/android/gradle-release-member.sh",
     "android:admin:build": "bash scripts/android/build-admin-twa.sh",
     "android:admin:publish": "bash scripts/android/publish-admin-apk.sh",
     "android:admin:release": "bash scripts/android/release-admin-rc.sh",

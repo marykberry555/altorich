@@ -54,8 +54,8 @@
       "url": "/deposits"
     },
     {
-      "name": "Invest",
-      "short_name": "Invest",
+      "name": "Portfolios",
+      "short_name": "Portfolios",
       "url": "/investments"
     }
   ]

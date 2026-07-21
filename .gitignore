@@ -57,6 +57,19 @@ android/admin/local.properties
 android/admin/manifest-checksum.txt
 android/admin/store_icon.png
 android/admin/twa-manifest.pre-init.json
+android/member/app/
+android/member/.bw-deps/
+android/member/.gradle/
+android/member/build/
+android/member/gradle/
+android/member/gradlew
+android/member/gradlew.bat
+android/member/build.gradle
+android/member/settings.gradle
+android/member/gradle.properties
+android/member/local.properties
+android/member/manifest-checksum.txt
+android/member/store_icon.png
 android/app/
 android/.gradle/
 android/build/
@@ -68,9 +81,12 @@ android/gradle.properties
 android/gradlew
 android/gradlew.bat
 android/gradle/
-# Signed Admin release artifacts are published for sideload
+# Signed release artifacts are published for sideload
 public/downloads/*.apk
 public/downloads/*.aab
+!public/downloads/altorich-release.apk
+!public/downloads/altorich-release.aab
+!public/downloads/app-release.json
 !public/downloads/altorich-admin-release.apk
 !public/downloads/altorich-admin-release.aab
 !public/downloads/admin-release.json

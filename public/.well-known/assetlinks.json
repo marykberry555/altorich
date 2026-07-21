@@ -7,8 +7,7 @@
       "namespace": "android_app",
       "package_name": "com.altorich.app",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_RELEASE_KEY_SHA256_FINGERPRINT",
-        "REPLACE_WITH_DEBUG_KEY_SHA256_FINGERPRINT"
+        "3F:B5:58:5B:D4:2A:8B:BD:A0:0D:2A:A2:47:4B:FE:67:66:61:DF:69:75:DF:5F:CF:8C:F2:AA:3B:8D:FB:83:49"
       ]
     }
   },

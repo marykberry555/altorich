@@ -18,7 +18,7 @@
   "monochromeIconUrl": "https://altorich.com/icons/icon-monochrome.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "../signing-key.jks",
+    "path": "/Users/stanlex/Documents/AltoWealth/android/signing-key.jks",
     "alias": "altorich-admin"
   },
   "appVersionName": "1.1.0",
