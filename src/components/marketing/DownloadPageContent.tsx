@@ -14,7 +14,7 @@ export function DownloadPageContent() {
 
         <h1 className="text-3xl font-bold tracking-tight text-[var(--heading)] sm:text-4xl">Alto Rich App</h1>
         <p className="mt-4 text-base leading-relaxed text-[var(--text-muted)]">
-          Install Alto Rich on your Android device for faster access and a full-screen experience.
+          Install Alto Rich on your phone. You’ll see clear download and install progress, then open straight to login.
         </p>
 
         <div className="mt-8 flex justify-center">

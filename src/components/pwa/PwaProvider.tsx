@@ -53,6 +53,12 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
     return choice.outcome === "accepted";
   }, [installPrompt]);
 
+  useEffect(() => {
+    const onInstalled = () => setIsStandalone(isStandaloneDisplay());
+    window.addEventListener("appinstalled", onInstalled);
+    return () => window.removeEventListener("appinstalled", onInstalled);
+  }, []);
+
   const value = useMemo(
     () => ({
       isStandalone,
