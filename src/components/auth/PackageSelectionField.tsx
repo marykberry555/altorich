@@ -8,9 +8,11 @@ type Props = {
   onChange: (slug: PackageSlug) => void;
   disabled?: boolean;
   error?: string;
+  label?: string;
+  placeholder?: string;
 };
 
-/** @deprecated Prefer PortfolioSelector — retained for registration flow compatibility. */
+/** Registration package picker — labelled "Select package" for clarity. */
 export function PackageSelectionField(props: Props) {
   return <PortfolioSelector {...props} />;
 }

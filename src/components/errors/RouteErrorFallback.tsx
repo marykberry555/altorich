@@ -42,8 +42,9 @@ export function RouteErrorFallback({
   const [reported, setReported] = useState(false);
   const dark = tone === "dark" || route.startsWith("/admin") || route.startsWith("/hard");
 
-  const category = categoryOverride ?? classifyThrownError(error);
-  const copy = memberCopyForCategory(category);
+  const isChunk = isChunkLoadFailure(error.message);
+  const category = categoryOverride ?? (isChunk ? "network" : classifyThrownError(error));
+  const copy = isChunk ? memberCopyForCategory("network", "chunk") : memberCopyForCategory(category);
 
   useEffect(() => {
     logRouteError(error, { route, component, digest: error.digest });
@@ -90,7 +91,17 @@ export function RouteErrorFallback({
   const actions = copy.nextActions.map((action) => {
     if (action.action === "retry") {
       return (
-        <Button key="retry" type="button" onClick={() => reset()}>
+        <Button
+          key="retry"
+          type="button"
+          onClick={() => {
+            if (isChunk) {
+              window.location.reload();
+              return;
+            }
+            reset();
+          }}
+        >
           {action.label}
         </Button>
       );

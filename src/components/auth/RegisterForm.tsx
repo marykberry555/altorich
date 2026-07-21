@@ -13,11 +13,11 @@ import { MathChallenge, useMathChallenge } from "@/components/ui/MathChallenge";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
 import type { PortfolioSlug } from "@/config/investment-portfolios";
-import { PORTFOLIO_TERMS } from "@/lib/copy/portfolio-terminology";
 import { PackageSelectionField } from "@/components/auth/PackageSelectionField";
 import { LocationFields } from "@/components/location/LocationFields";
 import { FormFlashError, useFlashError } from "@/components/ui/FormFlashError";
 import { WelcomeBonusSlotCounter } from "@/components/welcome-bonus/WelcomeBonusSlotCounter";
+import { ApiRequestError, fetchJson, formatMemberApiError } from "@/lib/api/fetch-json";
 import { capPhoneInput, DUPLICATE_IDENTITY_MESSAGE, WEAK_PASSWORD_MESSAGE } from "@/lib/validation/identity";
 import type { NgStateCode } from "@/lib/location/ng-locations";
 import {
@@ -95,7 +95,7 @@ export function RegisterForm() {
       return;
     }
     if (!preferredPackage) {
-      setError(`Select a preferred ${PORTFOLIO_TERMS.portfolio.toLowerCase()}.`);
+      setError("Please select a package to continue.");
       return;
     }
     if (!locationStateCode || !locationCityArea) {
@@ -121,7 +121,7 @@ export function RegisterForm() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/register", {
+      await fetchJson<{ ok?: boolean }>("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -134,26 +134,26 @@ export function RegisterForm() {
           preferredPackage,
           locationStateCode,
           locationCityArea
-        })
+        }),
+        timeoutMs: 45_000,
+        retries: 1
       });
-      const data = await res.json();
-      if (!res.ok) {
-        const msg =
-          data.code === "IDENTITY_TAKEN" || /already exists|already registered|already taken/i.test(data.error ?? "")
-            ? DUPLICATE_IDENTITY_MESSAGE
-            : data.code === "WEAK_PASSWORD"
-              ? WEAK_PASSWORD_MESSAGE
-              : data.code === "REFERRAL_INVALID" || data.code === "REFERRAL_EXPIRED" || data.code === "REFERRAL_SELF"
-                ? (data.error ?? REFERRAL_INVALID_MESSAGE)
-                : (data.error ?? "Registration failed.");
-        setError(msg);
-        setLoading(false);
-        return;
-      }
       setOtpOpen(true);
-      setLoading(false);
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      if (err instanceof ApiRequestError) {
+        const msg =
+          err.code === "IDENTITY_TAKEN" || /already exists|already registered|already taken/i.test(err.message)
+            ? DUPLICATE_IDENTITY_MESSAGE
+            : err.code === "WEAK_PASSWORD"
+              ? WEAK_PASSWORD_MESSAGE
+              : err.code === "REFERRAL_INVALID" || err.code === "REFERRAL_EXPIRED" || err.code === "REFERRAL_SELF"
+                ? err.message || REFERRAL_INVALID_MESSAGE
+                : formatMemberApiError(err);
+        setError(msg);
+      } else {
+        setError(formatMemberApiError(err));
+      }
+    } finally {
       setLoading(false);
     }
   }
@@ -173,7 +173,7 @@ export function RegisterForm() {
 
   return (
     <AuthShell>
-      <Card variant="elevated" padding="lg" className="w-full">
+      <Card variant="elevated" padding="lg" className="w-full min-w-0 overflow-hidden">
         <div className="mb-6 space-y-4">
           <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">Create your account</h1>
           <WelcomeBonusSlotCounter compact />
@@ -204,7 +204,13 @@ export function RegisterForm() {
             onCityChange={setLocationCityArea}
             disabled={loading}
           />
-          <PackageSelectionField value={preferredPackage} onChange={setPreferredPackage} disabled={loading} />
+          <PackageSelectionField
+            value={preferredPackage}
+            onChange={setPreferredPackage}
+            disabled={loading}
+            label="Select package"
+            placeholder="Tap to choose a package"
+          />
           <PinField label="Choose 6-digit pin" value={pin} onChange={setPin} autoComplete="new-password" />
 
           {referralLocked && referralCode && !referralError ? (

@@ -42,12 +42,39 @@ export function memberCopyForCategory(category: ErrorCategory, detail?: string):
         nextActions: [{ label: "Sign In", href: SIGN_IN_HREF, action: "signin" }]
       };
     case "network":
+      if (detail === "timeout") {
+        return {
+          category,
+          title: "Still connecting",
+          body: "Your network is slow right now. Please wait a moment and try again — your money and account are safe.",
+          nextActions: [
+            { label: "Retry", action: "retry" },
+            { label: "Dashboard", href: DASHBOARD_HREF }
+          ]
+        };
+      }
+      if (detail === "offline") {
+        return {
+          category,
+          title: "You're offline",
+          body: "Reconnect to the internet, then try again. Cached pages may still work while you wait.",
+          nextActions: [{ label: "Retry", action: "retry" }]
+        };
+      }
+      if (detail === "chunk") {
+        return {
+          category,
+          title: "Updating Alto Rich",
+          body: "A new version is loading. This page will refresh automatically — please wait a second.",
+          nextActions: [{ label: "Refresh now", action: "retry" }]
+        };
+      }
       return {
         category,
-        title: "Connection problem",
+        title: "Couldn't reach Alto Rich",
         body:
           detail?.trim() ||
-          "We couldn't reach Alto Rich right now. Please check your internet connection or try again in a moment.",
+          "We couldn't complete that request yet. This is often a brief delay on slow networks — tap Retry.",
         nextActions: [
           { label: "Retry", action: "retry" },
           { label: "Dashboard", href: DASHBOARD_HREF }
@@ -182,9 +209,14 @@ export function classifyThrownError(error: unknown): ErrorCategory {
       : "";
 
   if (
-    /failed to fetch|networkerror|load failed|timeout|timed out|offline|err_network|chunkloaderror|loading chunk/i.test(
-      lower
+    /Loading chunk [\d]+ failed|ChunkLoadError|Failed to fetch dynamically imported module|Importing a module script failed/i.test(
+      message
     )
+  ) {
+    return "network"; // RouteErrorFallback maps chunk → "Updating Alto Rich"
+  }
+  if (
+    /failed to fetch|networkerror|load failed|timeout|timed out|offline|err_network/i.test(lower)
   ) {
     return "network";
   }

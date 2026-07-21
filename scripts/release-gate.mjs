@@ -22,6 +22,7 @@ const ERROR_MARKERS = [
   "Couldn't load this page",
   "Unexpected error",
   "Connection problem",
+  "Couldn't reach Alto Rich",
   "Something went wrong",
   "Application error: a client-side exception"
 ];

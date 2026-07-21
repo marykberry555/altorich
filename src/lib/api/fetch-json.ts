@@ -62,9 +62,9 @@ function reportServerFailure(url: string, status: number, message: string) {
 
 type FetchJsonOptions = RequestInit & {
   reportServerErrors?: boolean;
-  /** Request timeout in ms. Default 20s. */
+  /** Request timeout in ms. Default 45s for slow mobile networks. */
   timeoutMs?: number;
-  /** Retry count for idempotent GET/HEAD only. Default 1 for GET. */
+  /** Retry count. Default 2 for GET/HEAD, 0 for others unless set. */
   retries?: number;
 };
 
@@ -73,15 +73,8 @@ function sleep(ms: number) {
 }
 
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
-  if (typeof navigator !== "undefined" && navigator.onLine === false) {
-    throw new ApiRequestError({
-      message: memberCopyForCategory("network").body,
-      status: 0,
-      category: "network",
-      code: "OFFLINE"
-    });
-  }
-
+  // Do NOT hard-block on navigator.onLine — it lies on mobile (false offline,
+  // captive portals, flaky LTE). Always attempt the request.
   const controller = new AbortController();
   const external = init.signal;
   const onAbort = () => controller.abort();
@@ -99,11 +92,13 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
     const aborted =
       (error instanceof DOMException && error.name === "AbortError") ||
       (error instanceof Error && /abort/i.test(error.message));
+
+    const trulyOffline = typeof navigator !== "undefined" && navigator.onLine === false;
     throw new ApiRequestError({
-      message: memberCopyForCategory("network").body,
+      message: memberCopyForCategory("network", aborted ? "timeout" : trulyOffline ? "offline" : undefined).body,
       status: 0,
       category: "network",
-      code: aborted ? "TIMEOUT" : "NETWORK"
+      code: aborted ? "TIMEOUT" : trulyOffline ? "OFFLINE" : "NETWORK"
     });
   } finally {
     clearTimeout(timer);
@@ -111,17 +106,18 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   }
 }
 
-/** Fetch JSON with timeout, offline detection, and classified errors. Preserves caller form state. */
+/** Fetch JSON with timeout, retries, and classified errors. Preserves caller form state. */
 export async function fetchJson<T>(url: string, init?: FetchJsonOptions): Promise<T> {
   const {
     reportServerErrors = true,
-    timeoutMs = 20_000,
+    timeoutMs = 45_000,
     retries: retriesOption,
     ...requestInit
   } = init ?? {};
 
   const method = (requestInit.method ?? "GET").toUpperCase();
-  const retries = retriesOption ?? (method === "GET" || method === "HEAD" ? 1 : 0);
+  const retries = retriesOption ?? (method === "GET" || method === "HEAD" ? 2 : 0);
+  const allowMethodRetry = method === "GET" || method === "HEAD" || retriesOption != null;
 
   let lastError: unknown;
 
@@ -142,13 +138,13 @@ export async function fetchJson<T>(url: string, init?: FetchJsonOptions): Promis
         const copy = memberCopyForAppCode(body.code, body.error, response.status);
         const message = body.error?.trim() || copy.body;
 
-        // Retry transient gateway failures on idempotent reads.
+        // Retry transient gateway failures when allowed.
         if (
           attempt < retries &&
-          (method === "GET" || method === "HEAD") &&
+          allowMethodRetry &&
           (response.status === 408 || response.status === 429 || response.status >= 502)
         ) {
-          await sleep(300 * (attempt + 1));
+          await sleep(400 * (attempt + 1) ** 2);
           continue;
         }
 
@@ -173,11 +169,11 @@ export async function fetchJson<T>(url: string, init?: FetchJsonOptions): Promis
         error instanceof ApiRequestError &&
         error.category === "network" &&
         error.code !== "OFFLINE" &&
-        (method === "GET" || method === "HEAD") &&
+        allowMethodRetry &&
         attempt < retries;
 
       if (retryable) {
-        await sleep(300 * (attempt + 1));
+        await sleep(400 * (attempt + 1) ** 2);
         continue;
       }
       throw error;

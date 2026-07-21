@@ -12,6 +12,7 @@ import { OtpModal } from "@/components/auth/OtpModal";
 import { useDeviceFingerprint } from "@/lib/auth/use-device-fingerprint";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
+import { ApiRequestError, fetchJson, formatMemberApiError } from "@/lib/api/fetch-json";
 
 type LoadingPhase = "idle" | "signing-in" | "authenticating" | "redirecting";
 
@@ -65,7 +66,12 @@ export function LoginForm() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const data = await fetchJson<{
+        requiresDeviceOtp?: boolean;
+        email?: string;
+        redirect?: string;
+        error?: string;
+      }>("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
@@ -74,18 +80,13 @@ export function LoginForm() {
           pin,
           deviceFingerprint,
           userAgent: navigator.userAgent
-        })
+        }),
+        timeoutMs: 45_000,
+        retries: 1
       });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error ?? "Incorrect username or pin. Please try again.");
-        setPhase("idle");
-        return;
-      }
 
       if (data.requiresDeviceOtp) {
-        setPendingEmail(data.email);
+        setPendingEmail(data.email ?? "");
         setOtpOpen(true);
         setPhase("idle");
         return;
@@ -93,8 +94,12 @@ export function LoginForm() {
 
       setPhase("redirecting");
       completeSignIn(resolveRedirect(data.redirect ?? "/dashboard"));
-    } catch {
-      setError("We couldn't reach Alto Rich right now. Please check your internet connection or try again in a moment.");
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError && err.status >= 400 && err.status < 500
+          ? err.message
+          : formatMemberApiError(err)
+      );
       setPhase("idle");
     }
   }
@@ -103,27 +108,28 @@ export function LoginForm() {
     setPhase("authenticating");
     setError("");
 
-    const res = await fetch("/api/auth/verify-device", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify({
-        email: pendingEmail,
-        code,
-        deviceFingerprint,
-        userAgent: navigator.userAgent
-      })
-    });
-    const data = await res.json();
+    try {
+      const data = await fetchJson<{ redirect?: string }>("/api/auth/verify-device", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          email: pendingEmail,
+          code,
+          deviceFingerprint,
+          userAgent: navigator.userAgent
+        }),
+        timeoutMs: 45_000,
+        retries: 1
+      });
 
-    if (!res.ok) {
+      setOtpOpen(false);
+      setPhase("redirecting");
+      completeSignIn(resolveRedirect(data.redirect ?? "/dashboard"));
+    } catch (err) {
       setPhase("idle");
-      throw new Error(data.error ?? "Verification failed.");
+      throw new Error(formatMemberApiError(err));
     }
-
-    setOtpOpen(false);
-    setPhase("redirecting");
-    completeSignIn(resolveRedirect(data.redirect ?? "/dashboard"));
   }
 
   const submitLabel =
@@ -137,7 +143,7 @@ export function LoginForm() {
 
   return (
     <AuthShell>
-      <Card variant="elevated" padding="lg" className="w-full">
+      <Card variant="elevated" padding="lg" className="w-full min-w-0 overflow-hidden">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight text-[var(--heading)]">Sign in</h1>
           <p className="mt-1 text-sm text-[var(--text-muted)]">Enter your username and 6-digit PIN to access your account.</p>
@@ -162,7 +168,7 @@ export function LoginForm() {
           </div>
           {error ? <p className="text-xs text-red-600">{error}</p> : null}
           {slowMessage && loading ? (
-            <p className="text-xs text-[var(--text-muted)]">Still working — please wait a moment.</p>
+            <p className="text-xs text-[var(--text-muted)]">Still working — slow networks can take a few extra seconds.</p>
           ) : null}
           <Button type="submit" disabled={loading} className="w-full">
             {submitLabel}

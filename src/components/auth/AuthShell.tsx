@@ -20,7 +20,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      <div className="mx-auto grid min-h-screen w-full max-w-6xl items-stretch gap-8 px-4 pb-10 pt-20 sm:px-6 lg:grid-cols-2 lg:gap-0 lg:pt-20">
+      <div className="mx-auto grid min-h-screen w-full max-w-6xl items-stretch gap-8 overflow-x-hidden px-4 pb-10 pt-20 sm:px-6 lg:grid-cols-2 lg:gap-0 lg:pt-20">
         <aside className="hidden lg:flex lg:flex-col lg:justify-between lg:pr-14">
           <div className="animate-fade-up">
             <Badge variant="gold">Secure · Verified</Badge>
@@ -54,8 +54,9 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        <div className="flex items-center justify-center lg:pl-14">
-          <div className="w-full max-w-md animate-fade-up">
+        {/* items-start on mobile so tall forms (e.g. package picker) scroll instead of clipping */}
+        <div className="flex min-w-0 items-start justify-center lg:items-center lg:pl-14">
+          <div className="w-full min-w-0 max-w-md animate-fade-up">
             <div className="mb-6 flex items-center justify-center lg:hidden">
               <BrandLogo variant="full" priority href="/" />
             </div>
@@ -63,8 +64,6 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
-
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[var(--surface)] to-transparent" />
     </div>
   );
 }
