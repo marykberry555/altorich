@@ -21,12 +21,13 @@ function prefersReducedMotion() {
 /** Compact live wealth counter for the homepage hero. */
 export function HeroWealthCounter({ config, className }: Props) {
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [counterLabel, setCounterLabel] = useState(() =>
-    formatNairaWithKobo(wealthGrowthValueAt(config))
-  );
+  // Empty until mount — wealthGrowthValueAt() is time-based and would hydrate-mismatch (#418).
+  const [counterLabel, setCounterLabel] = useState("");
+  const [mounted, setMounted] = useState(false);
   const valueRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
+    setMounted(true);
     setReducedMotion(prefersReducedMotion());
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const onChange = () => setReducedMotion(mq.matches);
@@ -35,6 +36,8 @@ export function HeroWealthCounter({ config, className }: Props) {
   }, []);
 
   useEffect(() => {
+    if (!mounted) return;
+
     let raf = 0;
     let interval = 0;
     let lastLabel = "";
@@ -62,7 +65,7 @@ export function HeroWealthCounter({ config, className }: Props) {
       window.clearInterval(interval);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [config, reducedMotion]);
+  }, [config, reducedMotion, mounted]);
 
   return (
     <div className={cn("max-w-xl text-center", className)}>
@@ -77,7 +80,9 @@ export function HeroWealthCounter({ config, className }: Props) {
         )}
         aria-live="off"
       >
-        <span ref={valueRef}>{counterLabel}</span>
+        <span ref={valueRef} suppressHydrationWarning>
+          {mounted ? counterLabel : "\u00a0"}
+        </span>
       </p>
     </div>
   );

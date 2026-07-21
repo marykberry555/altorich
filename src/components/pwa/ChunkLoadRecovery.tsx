@@ -70,10 +70,15 @@ export function ChunkLoadRecovery({ buildId }: Props) {
       channel.onmessage = (event: MessageEvent) => {
         const data = event.data as { type?: string; target?: string } | null;
         if (data?.type !== "soft-refresh") return;
+        // Never yank an auth flow mid-PIN / OTP entry.
+        const here = window.location.pathname || "/";
+        if (here.startsWith("/auth") || here.startsWith("/admin/auth") || here.startsWith("/hard/auth")) {
+          return;
+        }
         const target =
           typeof data.target === "string" && data.target.startsWith("/")
             ? data.target
-            : window.location.pathname || "/";
+            : here;
         // Sibling tab already cleared caches — follow without re-entering recovery loops.
         window.location.replace(target);
       };

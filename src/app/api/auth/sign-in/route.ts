@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { getServiceClientOrThrow } from "@/lib/auth/session";
 import { AuthService } from "@/services/auth/auth.service";
-import { applySessionToCookies } from "@/lib/auth/apply-session";
+import { authJsonResponse } from "@/lib/auth/apply-session";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
 import { userIsAdmin } from "@/lib/auth/admin-role";
 import { captureLoginActivity } from "@/lib/auth/capture-login-activity";
@@ -22,8 +21,6 @@ export async function POST(req: Request) {
     const auth = new AuthService(supabase);
     const result = await auth.emailPasswordLogin(body);
 
-    await applySessionToCookies(result.session);
-
     await captureLoginActivity(req, result.userId);
 
     const isAdmin = await userIsAdmin(supabase, result.userId);
@@ -39,7 +36,7 @@ export async function POST(req: Request) {
               intent: body.intent
             });
 
-    return NextResponse.json({ ok: true, redirect, isAdmin });
+    return authJsonResponse({ ok: true, redirect, isAdmin }, result.session);
   } catch (error) {
     try {
       const supabase = await getServiceClientOrThrow();

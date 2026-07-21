@@ -380,11 +380,18 @@ export class AuthService {
 
         const env = getPublicEnv();
         const verifyLink = `${env.NEXT_PUBLIC_SITE_URL}/auth/verify-device?email=${encodeURIComponent(authUser.user.email)}&token=${magicToken}`;
-        await sendAuthEmail({
+        const emailSent = await sendAuthEmail({
           to: authUser.user.email,
           subject: "Verify your device",
           html: deviceVerificationEmailHtml(otp, verifyLink)
         });
+        if (!emailSent) {
+          throw new AppError(
+            "We could not send your device verification email. Please try again in a moment.",
+            503,
+            "EMAIL_SEND_FAILED"
+          );
+        }
         if (process.env.NODE_ENV !== "production") {
           console.info(`[AltoRich dev] Device OTP for ${authUser.user.email}: ${otp}`);
         }

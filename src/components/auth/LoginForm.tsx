@@ -9,7 +9,7 @@ import { PinField } from "@/components/ui/PinField";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { OtpModal } from "@/components/auth/OtpModal";
-import { useDeviceFingerprint } from "@/lib/auth/use-device-fingerprint";
+import { getClientDeviceFingerprint } from "@/lib/auth/device";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
 import { ApiRequestError, fetchJson, formatMemberApiError } from "@/lib/api/fetch-json";
@@ -22,10 +22,17 @@ function completeSignIn(redirect: string) {
   window.location.assign(redirect);
 }
 
+function resolveDeviceFingerprint(): string {
+  const fingerprint = getClientDeviceFingerprint();
+  if (!fingerprint || fingerprint === "fp_server" || fingerprint.length < 3) {
+    throw new Error("Device verification is required. Refresh the page and try again.");
+  }
+  return fingerprint;
+}
+
 export function LoginForm() {
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
-  const deviceFingerprint = useDeviceFingerprint();
 
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
@@ -61,11 +68,16 @@ export function LoginForm() {
       setError("Sign-in is temporarily unavailable. Please try again shortly.");
       return;
     }
+    if (!/^\d{6}$/.test(pin)) {
+      setError("Enter your 6-digit PIN.");
+      return;
+    }
 
     setPhase("signing-in");
     setError("");
 
     try {
+      const deviceFingerprint = resolveDeviceFingerprint();
       const data = await fetchJson<{
         requiresDeviceOtp?: boolean;
         email?: string;
@@ -109,6 +121,7 @@ export function LoginForm() {
     setError("");
 
     try {
+      const deviceFingerprint = resolveDeviceFingerprint();
       const data = await fetchJson<{ redirect?: string }>("/api/auth/verify-device", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -157,7 +170,7 @@ export function LoginForm() {
             required
             autoComplete="username"
           />
-          <PinField value={pin} onChange={setPin} autoComplete="current-password" />
+          <PinField value={pin} onChange={setPin} required autoComplete="current-password" />
           <div className="flex justify-between text-xs">
             <Link href="/auth/forgot-username" className="font-semibold text-[var(--emerald)]">
               Forgot username?

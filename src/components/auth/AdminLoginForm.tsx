@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { PinField } from "@/components/ui/PinField";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Card } from "@/components/ui/Card";
-import { useDeviceFingerprint } from "@/lib/auth/use-device-fingerprint";
+import { getClientDeviceFingerprint } from "@/lib/auth/device";
 import { isSupabaseConfigured } from "@/lib/env";
 import { COMPANY } from "@/lib/company";
 
@@ -28,7 +28,6 @@ export function AdminLoginForm({
   submitLabel = "Sign in to ops centre",
   shell = "default"
 }: Props) {
-  const deviceFingerprint = useDeviceFingerprint();
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
@@ -45,6 +44,13 @@ export function AdminLoginForm({
     setError("");
 
     try {
+      const deviceFingerprint = getClientDeviceFingerprint();
+      if (!deviceFingerprint || deviceFingerprint === "fp_server" || deviceFingerprint.length < 3) {
+        setError("Device verification is required. Refresh the page and try again.");
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

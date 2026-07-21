@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { getAuthService } from "@/lib/auth/service";
-import { applySessionToCookies } from "@/lib/auth/apply-session";
+import { authJsonResponse } from "@/lib/auth/apply-session";
 import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect";
 import { getServiceClientOrThrow } from "@/lib/auth/session";
 import { userIsAdmin } from "@/lib/auth/admin-role";
@@ -12,7 +12,7 @@ import { clientIpFromHeaders, geoFromRequestHeaders } from "@/lib/auth/user-agen
 const schema = z.object({
   email: z.string().email(),
   code: z.string().min(6).max(64),
-  deviceFingerprint: z.string().min(3),
+  deviceFingerprint: z.string().min(3, "Device verification is required. Refresh and try again."),
   userAgent: z.string().optional()
 });
 
@@ -29,7 +29,6 @@ export async function POST(req: Request) {
       ipAddress: clientIpFromHeaders(req.headers) ?? null,
       country: geo.country ?? null
     });
-    await applySessionToCookies(result.session);
 
     await captureLoginActivity(req, result.userId);
 
@@ -41,7 +40,7 @@ export async function POST(req: Request) {
       mustChangePassword: result.mustChangePassword
     });
 
-    return NextResponse.json({ ok: true, redirect, isAdmin });
+    return authJsonResponse({ ok: true, redirect, isAdmin }, result.session);
   } catch (error) {
     return apiErrorResponse(error);
   }

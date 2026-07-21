@@ -115,6 +115,14 @@ function withNoStore(response: NextResponse) {
   return applyDocumentNoStoreHeaders(response);
 }
 
+/** Keep Supabase session cookies when replacing NextResponse (e.g. redirects). */
+function withSessionCookies(from: NextResponse, to: NextResponse) {
+  from.cookies.getAll().forEach((cookie) => {
+    to.cookies.set(cookie);
+  });
+  return to;
+}
+
 function withReferralAttribution(request: NextRequest, response: NextResponse) {
   const fromQuery = referralCodeFromSearchParams(request.nextUrl.searchParams);
   const pathMatch = request.nextUrl.pathname.match(/^\/r\/([A-Za-z0-9_-]+)/i);
@@ -179,7 +187,10 @@ export async function middleware(request: NextRequest) {
       }
       return withReferralAttribution(
         request,
-        NextResponse.redirect(buildPublicUrl(isAdminRole ? ADMIN_APP_HOME : "/dashboard", request))
+        withSessionCookies(
+          response,
+          NextResponse.redirect(buildPublicUrl(isAdminRole ? ADMIN_APP_HOME : "/dashboard", request))
+        )
       );
     }
     return withReferralAttribution(request, response);
@@ -202,11 +213,14 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     if (isAdminApp && pathname === ADMIN_APP_HOME) {
-      return withReferralAttribution(request, NextResponse.redirect(buildPublicUrl(ADMIN_APP_INSTALL, request)));
+      return withReferralAttribution(
+        request,
+        withSessionCookies(response, NextResponse.redirect(buildPublicUrl(ADMIN_APP_INSTALL, request)))
+      );
     }
     const loginUrl = buildPublicUrl(isAdminApp ? "/admin/auth" : "/auth/login", request);
     loginUrl.searchParams.set("redirect", pathname);
-    return withReferralAttribution(request, NextResponse.redirect(loginUrl));
+    return withReferralAttribution(request, withSessionCookies(response, NextResponse.redirect(loginUrl)));
   }
 
   if (supabase && isProtected) {
@@ -217,18 +231,21 @@ export async function middleware(request: NextRequest) {
       .maybeSingle();
 
     if (profile?.must_change_pin && !pathname.startsWith("/auth/change-pin")) {
-      return withReferralAttribution(request, NextResponse.redirect(buildPublicUrl("/auth/change-pin", request)));
+      return withReferralAttribution(
+        request,
+        withSessionCookies(response, NextResponse.redirect(buildPublicUrl("/auth/change-pin", request)))
+      );
     }
   }
 
   if (isHardOps && supabase) {
     const denied = await enforceAdminRoute(request, supabase, user);
-    if (denied) return withReferralAttribution(request, denied);
+    if (denied) return withReferralAttribution(request, withSessionCookies(response, denied));
   }
 
   if (isAdminApp && supabase) {
     const denied = await enforceAdminRoute(request, supabase, user);
-    if (denied) return withReferralAttribution(request, denied);
+    if (denied) return withReferralAttribution(request, withSessionCookies(response, denied));
   }
 
   return withReferralAttribution(request, response);

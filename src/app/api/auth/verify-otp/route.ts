@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { getAuthService } from "@/lib/auth/service";
-import { applySessionToCookies } from "@/lib/auth/apply-session";
+import { authJsonResponse } from "@/lib/auth/apply-session";
 import { clientIp, rateLimit } from "@/lib/security/rate-limit";
 
 const schema = z.object({
@@ -32,8 +32,7 @@ export async function POST(req: Request) {
 
     const auth = await getAuthService();
     const result = await auth.verifyRegistrationOtp(body.email, body.code);
-    await applySessionToCookies(result.session);
-    return NextResponse.json({ ok: true, redirect: "/dashboard" });
+    return authJsonResponse({ ok: true, redirect: "/dashboard" }, result.session);
   } catch (error) {
     return apiErrorResponse(error);
   }
