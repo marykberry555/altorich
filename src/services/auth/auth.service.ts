@@ -512,7 +512,14 @@ export class AuthService {
       email: input.email.toLowerCase(),
       password: input.password
     });
-    if (error) throw new AppError(error.message, 401, "INVALID_CREDENTIALS");
+    if (error) {
+      throw new AppError(
+        error.message,
+        401,
+        "INVALID_CREDENTIALS",
+        "Invalid email or password."
+      );
+    }
     if (!data.user || !data.session) throw Errors.unauthorized();
 
     const { data: profile } = await this.supabase

@@ -126,6 +126,8 @@ async function main() {
   const demoPin = "123456";
   const demoPinHash = hashPin(demoPin);
 
+  const adminPinHash = hashPin("123456");
+
   const adminId = await upsertUser({
     email: "ops@altorich.com",
     password: adminPassword,
@@ -133,6 +135,7 @@ async function main() {
       full_name: "AltoRich Operations",
       username: "altorich_ops",
       phone: "08000000001",
+      pin_hash: adminPinHash,
       must_change_password: true,
       must_change_pin: false
     },
@@ -158,6 +161,7 @@ async function main() {
 
   console.log("\nSeed complete:");
   console.log("Admin → ops@altorich.com / GETrich$323 (change password on first login)");
+  console.log("Admin → username: altorich_ops / pin: 123456 (ops PIN sign-in)");
   console.log("Demo  → username: demouser / pin: 123456");
   console.log(`Admin id: ${adminId}`);
   console.log(`Demo id: ${demoId}`);
