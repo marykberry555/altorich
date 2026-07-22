@@ -75,6 +75,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const { enforceRateLimit } = await import("@/lib/security/rate-limit");
+    const limited = enforceRateLimit(request, "withdrawalCreate");
+    if (limited) return limited;
+
     const user = await requireSessionUser();
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();

@@ -75,12 +75,8 @@ export function ChunkLoadRecovery({ buildId }: Props) {
         if (here.startsWith("/auth") || here.startsWith("/admin/auth") || here.startsWith("/hard/auth")) {
           return;
         }
-        const target =
-          typeof data.target === "string" && data.target.startsWith("/")
-            ? data.target
-            : here;
-        // Sibling tab already cleared caches — follow without re-entering recovery loops.
-        window.location.replace(target);
+        // Sibling tab already cleared caches — reload this tab's route (never hijack to dashboard).
+        window.location.replace(here);
       };
     } catch {
       channel = null;

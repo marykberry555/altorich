@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { getServiceRoleServices } from "@/lib/services";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireFinanceAdmin } from "@/lib/auth/finance-auth";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { HARD_OPS_HOME } from "@/lib/hard-ops";
 
 export async function POST() {
   try {
-    const reviewer = await requireAdmin();
+    const reviewer = await requireFinanceAdmin("settlement.process");
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 
@@ -23,7 +23,7 @@ export async function POST() {
       metadata: { weekly: weeklyResults.length }
     });
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/admin/settlements/process" });
   }
 
   redirect(HARD_OPS_HOME);

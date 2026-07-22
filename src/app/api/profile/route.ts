@@ -65,6 +65,10 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const { enforceRateLimit } = await import("@/lib/security/rate-limit");
+    const limited = enforceRateLimit(request, "profileUpdate");
+    if (limited) return limited;
+
     const user = await requireSessionUser();
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
@@ -93,6 +97,6 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json(profile);
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/profile" });
   }
 }

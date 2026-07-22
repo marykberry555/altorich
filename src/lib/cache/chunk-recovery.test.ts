@@ -16,15 +16,16 @@ describe("isChunkLoadFailure", () => {
 });
 
 describe("safeRecoveryHref", () => {
-  it("soft-lands member app routes on dashboard", () => {
-    assert.equal(safeRecoveryHref("/wallet"), "/dashboard");
-    assert.equal(safeRecoveryHref("/deposits/123"), "/dashboard");
+  it("reloads member app routes in place after recovery", () => {
+    assert.equal(safeRecoveryHref("/wallet"), "/wallet");
+    assert.equal(safeRecoveryHref("/deposits/123"), "/deposits/123");
+    assert.equal(safeRecoveryHref("/profile"), "/profile");
   });
 
-  it("keeps auth and admin entry points stable", () => {
+  it("keeps auth and admin routes on their current path", () => {
     assert.equal(safeRecoveryHref("/auth/login"), "/auth/login");
-    assert.equal(safeRecoveryHref("/admin-app/deposits"), "/admin-app");
-    assert.equal(safeRecoveryHref("/hard/ops"), "/hard");
+    assert.equal(safeRecoveryHref("/admin-app/deposits"), "/admin-app/deposits");
+    assert.equal(safeRecoveryHref("/hard/ops"), "/hard/ops");
   });
 
   it("defaults marketing failures to home", () => {

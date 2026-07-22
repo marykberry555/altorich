@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import { persistApplicationError } from "@/lib/observability/error-log";
 import { AppError, isAppError } from "@/lib/errors";
 import { classifyAppErrorCode, type ErrorCategory } from "@/lib/errors/taxonomy";
+import { getRequestContext } from "@/lib/observability/request-context";
 
 type ApiErrorOptions = {
   route?: string;
@@ -15,8 +16,17 @@ type ApiErrorOptions = {
   fallback?: string;
 };
 
+function mergeOpts(options: ApiErrorOptions | string): ApiErrorOptions {
+  const opts: ApiErrorOptions = typeof options === "string" ? { fallback: options } : { ...options };
+  const ctx = getRequestContext();
+  if (!opts.requestId && ctx?.requestId) opts.requestId = ctx.requestId;
+  if (!opts.route && ctx?.route) opts.route = ctx.route;
+  if (opts.userId === undefined && ctx?.userId) opts.userId = ctx.userId;
+  return opts;
+}
+
 export async function apiErrorResponse(error: unknown, options: ApiErrorOptions | string = {}) {
-  const opts: ApiErrorOptions = typeof options === "string" ? { fallback: options } : options;
+  const opts = mergeOpts(options);
   const fallback =
     opts.fallback ??
     "We're sorry — an unexpected error occurred. Our team has been notified. Your request has not been processed.";
@@ -62,7 +72,14 @@ export async function apiErrorResponse(error: unknown, options: ApiErrorOptions 
       );
     }
 
-    logger.warn(error.message, { status: error.status, code: error.code, category });
+    logger.warn(error.message, {
+      status: error.status,
+      code: error.code,
+      category,
+      requestId: opts.requestId,
+      route: opts.route,
+      userId: opts.userId ?? undefined
+    });
     return NextResponse.json(
       {
         error: error.userMessage ?? error.message,
@@ -78,6 +95,11 @@ export async function apiErrorResponse(error: unknown, options: ApiErrorOptions 
   const stack = error instanceof Error ? error.stack : undefined;
 
   if (message.includes("not configured") || message.includes("User not allowed")) {
+    logger.warn("Platform not configured", {
+      requestId: opts.requestId,
+      route: opts.route,
+      code: "NOT_CONFIGURED"
+    });
     return NextResponse.json(
       {
         error: "The platform is not fully configured. Please contact support.",

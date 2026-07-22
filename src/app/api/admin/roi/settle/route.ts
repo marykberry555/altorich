@@ -5,13 +5,14 @@ import { currentTickerWindowLagos, SECONDS_IN_WEEK, clamp01 } from "@/lib/roi/ti
 import { resolveWeeklyRoiBps } from "@/config/investment-portfolios";
 import { getServiceRoleServices } from "@/lib/services";
 import { resolveSettlementPayoutRail } from "@/services/payments/settlement-router";
+import { withApiHandler } from "@/lib/api/route-handler";
 
 /**
  * Settle any ROI investments whose cycle has ended.
  * This is designed to be called by a scheduler at Monday 10:00.
  * Payout method is routed through the live Payment Rails configuration.
  */
-export async function POST() {
+export const POST = withApiHandler(async () => {
   const env = getPublicEnv();
   if (!env.NEXT_PUBLIC_ROI_MODE_ENABLED) {
     return NextResponse.json({ error: "ROI mode disabled" }, { status: 404 });
@@ -119,4 +120,4 @@ export async function POST() {
   }
 
   return NextResponse.json({ ok: true, settled: results.filter((r) => r.status === "settled").length, results });
-}
+}, "/api/admin/roi/settle");

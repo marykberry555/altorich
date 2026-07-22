@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CalendarClock } from "lucide-react";
 import { nextPayoutProcessingAt } from "@/lib/payout/schedule";
 import { useLiveNow } from "@/lib/hooks/use-live-now";
@@ -20,6 +20,9 @@ function splitSeconds(total: number) {
 }
 
 export function PayoutScheduleCard({ className }: { className?: string }) {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+
   const now = useLiveNow();
   const target = useMemo(() => nextPayoutProcessingAt(now), [now]);
   const remaining = useMemo(
@@ -53,13 +56,21 @@ export function PayoutScheduleCard({ className }: { className?: string }) {
         </div>
 
         <div className="flex items-center justify-center gap-2 sm:gap-3">
-          <AnimatedCountdownDigit value={String(days)} label="Days" />
-          <span className="pb-6 text-2xl font-light text-white/40">:</span>
-          <AnimatedCountdownDigit value={pad2(hours)} label="Hours" />
-          <span className="pb-6 text-2xl font-light text-white/40">:</span>
-          <AnimatedCountdownDigit value={pad2(minutes)} label="Mins" />
-          <span className="pb-6 text-2xl font-light text-white/40">:</span>
-          <AnimatedCountdownDigit value={pad2(seconds)} label="Secs" />
+          {hydrated ? (
+            <>
+              <AnimatedCountdownDigit value={String(days)} label="Days" />
+              <span className="pb-6 text-2xl font-light text-white/40">:</span>
+              <AnimatedCountdownDigit value={pad2(hours)} label="Hours" />
+              <span className="pb-6 text-2xl font-light text-white/40">:</span>
+              <AnimatedCountdownDigit value={pad2(minutes)} label="Mins" />
+              <span className="pb-6 text-2xl font-light text-white/40">:</span>
+              <AnimatedCountdownDigit value={pad2(seconds)} label="Secs" />
+            </>
+          ) : (
+            <div className="flex items-center gap-2 text-white/60" aria-hidden>
+              <span className="text-sm font-semibold uppercase tracking-[0.16em]">Loading schedule…</span>
+            </div>
+          )}
         </div>
       </div>
     </section>

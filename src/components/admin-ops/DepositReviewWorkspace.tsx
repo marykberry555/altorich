@@ -27,18 +27,27 @@ type DepositRow = {
 export function DepositReviewWorkspace() {
   const [deposits, setDeposits] = useState<DepositRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ id: string; action: string; title: string } | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/admin/deposits?status=pending", { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
+    setLoadError("");
+    try {
+      const res = await fetch("/api/admin/deposits?status=pending", { cache: "no-store", credentials: "same-origin" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Could not load pending deposits.");
+      }
       setDeposits(data.deposits ?? []);
+    } catch (err) {
+      setDeposits([]);
+      setLoadError(err instanceof Error ? err.message : "Could not load pending deposits.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -49,13 +58,18 @@ export function DepositReviewWorkspace() {
     setBusy(id);
     try {
       const res = await fetch(`/api/deposits/${id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ status })
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-AltoRich-Client": "admin-app"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ status })
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Action failed");
+        throw new Error(typeof data.error === "string" ? data.error : "Action failed");
       }
       await load();
     } finally {
@@ -74,11 +88,17 @@ export function DepositReviewWorkspace() {
 
   return (
     <div className="space-y-4">
-      {deposits.length === 0 ? (
+      {loadError ? (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {loadError}
+        </div>
+      ) : null}
+      {!loading && !loadError && deposits.length === 0 ? (
         <div className="rounded-xl border border-white/10 bg-zinc-900/80 p-8 text-center">
           <p className="text-sm text-zinc-300">No pending deposits awaiting review.</p>
         </div>
-      ) : (
+      ) : null}
+      {deposits.length === 0 ? null : (
         deposits.map((deposit) => (
           <article
             key={deposit.id}

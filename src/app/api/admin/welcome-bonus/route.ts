@@ -3,6 +3,8 @@ import { getAdminServices } from "@/lib/services";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { requireAdmin } from "@/lib/auth/session";
+import { requireFinanceAdmin } from "@/lib/auth/finance-auth";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -14,13 +16,16 @@ export async function GET() {
     const snapshot = await services.welcomeBonus.getAdminSnapshot();
     return NextResponse.json(snapshot);
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/admin/welcome-bonus" });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const admin = await requireAdmin();
+    const limited = enforceRateLimit(request, "adminFinanceAction");
+    if (limited) return limited;
+
+    const admin = await requireFinanceAdmin("welcome_bonus.admin");
     const services = await getAdminServices();
     if (!services) throw Errors.forbidden();
 
@@ -47,6 +52,6 @@ export async function POST(request: NextRequest) {
 
     throw Errors.badRequest("Unknown action");
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/admin/welcome-bonus" });
   }
 }

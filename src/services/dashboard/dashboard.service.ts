@@ -60,7 +60,13 @@ export class DashboardService {
       userId
     };
 
-    const profileResult = await this.supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+    const profileResult = await this.supabase
+      .from("profiles")
+      .select(
+        "id, username, full_name, phone, avatar_url, preferred_package_slug, location_state_code, location_city_area, account_status, vip_level, invite_code, referred_by, email_verified_at, must_change_pin, must_change_password, notification_preferences, auto_weekly_payout, created_at, updated_at"
+      )
+      .eq("id", userId)
+      .maybeSingle();
     if (profileResult.error) {
       logQueryFailure({ ...baseContext, fn: "profiles.select" }, profileResult.error);
     }
@@ -128,7 +134,7 @@ export class DashboardService {
     }
 
     return {
-      profile,
+      profile: profile as Database["public"]["Tables"]["profiles"]["Row"] | null,
       balance,
       pendingDeposits: depositStats.pending,
       pendingWithdrawals: pendingWithdrawalsResult.count ?? 0,

@@ -24,7 +24,12 @@ export async function GET() {
         "Cache-Control": `public, max-age=${LIVE_ACTIVITY_CONFIG.apiCacheSeconds}, stale-while-revalidate=120`
       }
     });
-  } catch {
+  } catch (error) {
+    const { logger } = await import("@/lib/logger");
+    logger.warn("Live activity fallback", {
+      message: error instanceof Error ? error.message : String(error),
+      route: "/api/social/live-activity"
+    });
     const body: LiveActivityApiResponse = {
       activities: buildFallbackActivities(),
       generatedAt

@@ -59,7 +59,12 @@ export async function persistApplicationError(input: PersistErrorInput): Promise
     route: input.route,
     action: input.action,
     requestId: input.requestId,
-    correlationId: input.correlationId
+    correlationId: input.correlationId,
+    environment,
+    classification: input.category,
+    severity: "error",
+    // Server-only: never forwarded to clients
+    stack: input.stack?.slice(0, 4000)
   });
 
   try {

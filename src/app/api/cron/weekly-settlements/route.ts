@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
     } catch {
       // non-blocking
     }
-    return NextResponse.json({ error: "Cron failed", detail: message }, { status: 500 });
+    logger.error("Cron failed", { message, stack: error instanceof Error ? error.stack : undefined });
+    return NextResponse.json({ error: "Cron failed" }, { status: 500 });
   }
 }

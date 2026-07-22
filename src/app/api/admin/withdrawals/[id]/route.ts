@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceRoleServices } from "@/lib/services";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireFinanceAdmin } from "@/lib/auth/finance-auth";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { logger } from "@/lib/logger";
@@ -14,7 +14,7 @@ type Context = {
 
 export async function PATCH(request: NextRequest, context: Context) {
   try {
-    const reviewer = await requireAdmin();
+    const reviewer = await requireFinanceAdmin("withdrawal.review");
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 
@@ -114,7 +114,7 @@ export async function PATCH(request: NextRequest, context: Context) {
 
 export async function POST(request: NextRequest, context: Context) {
   try {
-    const reviewer = await requireAdmin();
+    const reviewer = await requireFinanceAdmin("withdrawal.review");
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest, context: Context) {
     logger.error("Withdrawal review failed", {
       message: error instanceof Error ? error.message : String(error)
     });
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/admin/withdrawals/[id]" });
   }
 
   redirect(HARD_OPS_HOME);

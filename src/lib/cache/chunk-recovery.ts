@@ -239,28 +239,40 @@ function broadcastRecovery(target: string) {
   }
 }
 
-/** Stable landing after a chunk miss — never loop on the failing route. */
+/** Routes that reload in-place after runtime recovery (must stay aligned with middleware protectedRoutes). */
+const IN_APP_RECOVERY_PREFIXES = [
+  "/dashboard",
+  "/wallet",
+  "/portfolio",
+  "/investments",
+  "/deposits",
+  "/withdrawals",
+  "/profile",
+  "/team",
+  "/vip",
+  "/activities",
+  "/settings",
+  "/notifications",
+  "/security",
+  "/privacy",
+  "/documents",
+  "/announcements",
+  "/learn",
+  "/contact",
+  "/admin-app",
+  "/hard"
+] as const;
+
+function isInAppRecoveryPath(pathname: string) {
+  return IN_APP_RECOVERY_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
+/** Reload the current route after cache clear; only fall back when the path is unsafe. */
 export function safeRecoveryHref(pathname: string) {
-  if (pathname.startsWith("/admin-app") || pathname.startsWith("/hard")) {
-    return pathname.startsWith("/admin-app") ? "/admin-app" : "/hard";
-  }
   if (pathname.startsWith("/auth")) return "/auth/login";
-  if (
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/wallet") ||
-    pathname.startsWith("/deposits") ||
-    pathname.startsWith("/withdrawals") ||
-    pathname.startsWith("/investments") ||
-    pathname.startsWith("/portfolio") ||
-    pathname.startsWith("/settings") ||
-    pathname.startsWith("/profile") ||
-    pathname.startsWith("/notifications") ||
-    pathname.startsWith("/security") ||
-    pathname.startsWith("/documents") ||
-    pathname.startsWith("/announcements")
-  ) {
-    return "/dashboard";
-  }
+  if (isInAppRecoveryPath(pathname)) return pathname;
   return "/";
 }
 

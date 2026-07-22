@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth/session";
+import { requireFinanceAdmin } from "@/lib/auth/finance-auth";
 import { getServiceRoleServices } from "@/lib/services";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
@@ -20,13 +21,13 @@ export async function GET() {
     const pending = await services.liquidations.listPending();
     return NextResponse.json(pending);
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/admin/liquidations/[id]" });
   }
 }
 
 export async function PATCH(request: Request, { params }: Params) {
   try {
-    const admin = await requireAdmin();
+    const admin = await requireFinanceAdmin("liquidation.review");
     const { id } = await params;
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();

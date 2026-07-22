@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getServiceRoleServices } from "@/lib/services";
 import { requireAdmin } from "@/lib/auth/session";
+import { requireFinanceAdmin } from "@/lib/auth/finance-auth";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 
@@ -23,13 +24,13 @@ export async function GET() {
     const dashboard = await services.withdrawals.getSettlementDashboard();
     return NextResponse.json(dashboard);
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/admin/settlement-queue" });
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    const admin = await requireAdmin();
+    const admin = await requireFinanceAdmin("settlement.queue_config");
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 

@@ -12,6 +12,7 @@ import {
   normalizeReferralCode,
   referralCodeFromSearchParams
 } from "@/lib/referral/attribution";
+import { createRequestId } from "@/lib/observability/request-id";
 
 const protectedRoutes = [
   "/dashboard",
@@ -115,6 +116,13 @@ function withNoStore(response: NextResponse) {
   return applyDocumentNoStoreHeaders(response);
 }
 
+function attachRequestId(request: NextRequest, response: NextResponse) {
+  const incoming = request.headers.get("x-request-id")?.trim();
+  const requestId = incoming && /^[\w-]{8,64}$/.test(incoming) ? incoming : createRequestId();
+  response.headers.set("x-request-id", requestId);
+  return response;
+}
+
 /** Keep Supabase session cookies when replacing NextResponse (e.g. redirects). */
 function withSessionCookies(from: NextResponse, to: NextResponse) {
   from.cookies.getAll().forEach((cookie) => {
@@ -136,7 +144,7 @@ function withReferralAttribution(request: NextRequest, response: NextResponse) {
       secure: process.env.NODE_ENV === "production"
     });
   }
-  return withNoStore(response);
+  return attachRequestId(request, withNoStore(response));
 }
 
 export async function middleware(request: NextRequest) {
@@ -144,7 +152,11 @@ export async function middleware(request: NextRequest) {
   const userAgent = request.headers.get("user-agent");
 
   if (isBlockedBot(userAgent, pathname)) {
-    return botBlockedResponse();
+    const blocked = botBlockedResponse();
+    const headers = new Headers(blocked.headers);
+    const incoming = request.headers.get("x-request-id")?.trim();
+    headers.set("x-request-id", incoming && /^[\w-]{8,64}$/.test(incoming) ? incoming : createRequestId());
+    return new NextResponse(blocked.body, { status: blocked.status, headers });
   }
 
   // Short referral links: humans go to signup; social crawlers stay for Open Graph HTML.

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireAdminService } from "@/lib/auth/session";
 import { getPublicEnv } from "@/lib/env";
+import { withApiHandler } from "@/lib/api/route-handler";
 
 const schema = z.object({
   roi_exchange_rate: z
@@ -18,7 +20,7 @@ const schema = z.object({
     .optional()
 });
 
-export async function POST(req: Request) {
+export const POST = withApiHandler(async (req: NextRequest) => {
   const env = getPublicEnv();
   if (!env.NEXT_PUBLIC_ROI_MODE_ENABLED) {
     return NextResponse.json({ error: "ROI mode disabled" }, { status: 404 });
@@ -44,5 +46,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ ok: true });
-}
-
+}, "/api/admin/roi/settings");

@@ -13,7 +13,20 @@ function formatMessage(level: LogLevel, message: string, context?: LogContext) {
 }
 
 function write(level: LogLevel, message: string, context?: LogContext) {
-  const line = formatMessage(level, message, context);
+  const safeContext = context
+    ? Object.fromEntries(
+        Object.entries(context).filter(([key]) => !/pin_hash|password|secret|service_role/i.test(key))
+      )
+    : undefined;
+  // Never serialize credential material if nested under known keys
+  if (safeContext) {
+    for (const [key, value] of Object.entries(safeContext)) {
+      if (typeof value === "string" && /scrypt:|pin_hash/i.test(value)) {
+        safeContext[key] = "[redacted]";
+      }
+    }
+  }
+  const line = formatMessage(level, message, safeContext);
 
   switch (level) {
     case "debug":

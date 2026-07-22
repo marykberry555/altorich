@@ -40,7 +40,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { id: memberId } = await params;
     const body = schema.parse(await request.json());
 
-    const { data: beforeProfile } = await services.supabase.from("profiles").select("*").eq("id", memberId).single();
+    const { PROFILE_SAFE_COLUMNS, toPublicProfile } = await import("@/lib/security/profile-safe");
+    const { data: beforeProfile } = await services.supabase
+      .from("profiles")
+      .select(PROFILE_SAFE_COLUMNS)
+      .eq("id", memberId)
+      .single();
     if (!beforeProfile) throw Errors.notFound("Member");
 
     let result: Record<string, unknown> = {};
@@ -141,15 +146,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       result.withdrawalStatus = body.withdrawalStatus;
     }
 
-    const { data: afterProfile } = await services.supabase.from("profiles").select("*").eq("id", memberId).single();
+    const { data: afterProfile } = await services.supabase
+      .from("profiles")
+      .select(PROFILE_SAFE_COLUMNS)
+      .eq("id", memberId)
+      .single();
 
     await logAdminAction(services.audit, request, {
       actorId: admin.id,
       action: body.action === "update_full_name" ? "member.full_name_updated" : `member.${body.action}`,
       entityType: "profile",
       entityId: memberId,
-      before: beforeProfile as Record<string, unknown>,
-      after: (afterProfile ?? {}) as Record<string, unknown>,
+      before: toPublicProfile(beforeProfile as Record<string, unknown>) as Record<string, unknown>,
+      after: toPublicProfile((afterProfile ?? {}) as Record<string, unknown>) as Record<string, unknown>,
       metadata:
         body.action === "update_full_name"
           ? {
@@ -166,6 +175,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     return NextResponse.json({ ok: true, result });
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/admin/members/[id]/actions" });
   }
 }

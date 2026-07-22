@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getAdminServices } from "@/lib/services";
-import { requireSessionUser } from "@/lib/auth/session";
+import { requireFinanceAdmin } from "@/lib/auth/finance-auth";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
 
 const actionSchema = z.object({
   action: z.enum(["approve", "reject", "paid"]),
@@ -12,7 +13,10 @@ const actionSchema = z.object({
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireSessionUser();
+    const limited = enforceRateLimit(request, "adminFinanceAction");
+    if (limited) return limited;
+
+    const user = await requireFinanceAdmin("referral.payout.review");
     const services = await getAdminServices();
     if (!services) throw Errors.forbidden();
 
@@ -38,6 +42,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json(payout);
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/admin/referrals/payouts/[id]" });
   }
 }

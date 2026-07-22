@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { DEFAULT_HOMEPAGE_STATS } from "@/lib/homepage/homepage-stats";
 import { getServiceRoleServices } from "@/lib/services";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,11 @@ export async function GET() {
         }
       }
     );
-  } catch {
+  } catch (error) {
+    logger.warn("Homepage stats fallback", {
+      message: error instanceof Error ? error.message : String(error),
+      route: "/api/homepage/stats"
+    });
     return NextResponse.json({ stats: DEFAULT_HOMEPAGE_STATS });
   }
 }

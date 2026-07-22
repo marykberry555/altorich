@@ -10,7 +10,27 @@ import { assertValidPhone, DUPLICATE_IDENTITY_MESSAGE, normalizePhone } from "@/
 type Client = SupabaseClient<Database>;
 export type MemberAccountStatus = Database["public"]["Enums"]["member_account_status"];
 
-export type AdminMemberRow = Database["public"]["Tables"]["profiles"]["Row"] & {
+export type AdminMemberRow = {
+  id: string;
+  username: string | null;
+  full_name: string;
+  phone: string | null;
+  avatar_url: string | null;
+  preferred_package_slug: string | null;
+  location_state_code: string | null;
+  location_city_area: string | null;
+  account_status: MemberAccountStatus;
+  vip_level: number;
+  invite_code: string;
+  referred_by: string | null;
+  email_verified_at: string | null;
+  must_change_pin: boolean;
+  must_change_password: boolean;
+  notification_preferences: Database["public"]["Tables"]["profiles"]["Row"]["notification_preferences"];
+  auto_weekly_payout: boolean;
+  kyc_status?: Database["public"]["Enums"]["kyc_status"];
+  created_at: string;
+  updated_at: string;
   email: string | null;
   walletBalance: number;
 };
@@ -43,7 +63,10 @@ export class MemberAdminService {
   ) {
     let query = this.supabase
       .from("profiles")
-      .select("*", { count: "exact" })
+      .select(
+        "id, username, full_name, phone, avatar_url, preferred_package_slug, location_state_code, location_city_area, account_status, vip_level, invite_code, referred_by, email_verified_at, must_change_pin, must_change_password, notification_preferences, auto_weekly_payout, kyc_status, created_at, updated_at",
+        { count: "exact" }
+      )
       .order("created_at", { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
@@ -165,14 +188,15 @@ export class MemberAdminService {
   }
 
   async setAccountStatus(userId: string, status: MemberAccountStatus) {
+    const { PROFILE_SAFE_COLUMNS, toPublicProfile } = await import("@/lib/security/profile-safe");
     const { data, error } = await this.supabase
       .from("profiles")
       .update({ account_status: status })
       .eq("id", userId)
-      .select()
+      .select(PROFILE_SAFE_COLUMNS)
       .single();
     if (error) throw error;
-    return data;
+    return toPublicProfile(data as Record<string, unknown>) as typeof data;
   }
 
   private async assertDeletable(userId: string) {
@@ -236,7 +260,12 @@ export class MemberAdminService {
   }
 
   async getMemberDetail(userId: string) {
-    const { data: profile, error: profileError } = await this.supabase.from("profiles").select("*").eq("id", userId).single();
+    const { PROFILE_SAFE_COLUMNS, toPublicProfile } = await import("@/lib/security/profile-safe");
+    const { data: profile, error: profileError } = await this.supabase
+      .from("profiles")
+      .select(PROFILE_SAFE_COLUMNS)
+      .eq("id", userId)
+      .single();
     if (profileError || !profile) throw Errors.notFound("Member");
 
     const authResult = await this.supabase.auth.admin.getUserById(userId);
@@ -276,7 +305,7 @@ export class MemberAdminService {
     if (bankAccounts.error) throw bankAccounts.error;
 
     return {
-      profile,
+      profile: toPublicProfile(profile as Record<string, unknown>),
       email,
       walletBalance,
       walletTransactions,

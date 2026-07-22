@@ -63,9 +63,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id: memberId } = await params;
     const body = profileUpdateSchema.parse(await request.json());
 
+    const { PROFILE_SAFE_COLUMNS, toPublicProfile } = await import("@/lib/security/profile-safe");
     const { data: beforeProfile, error: beforeError } = await services.supabase
       .from("profiles")
-      .select("*")
+      .select(PROFILE_SAFE_COLUMNS)
       .eq("id", memberId)
       .single();
     if (beforeError || !beforeProfile) throw Errors.notFound("Member");
@@ -193,7 +194,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ ok: true, changes: [] });
     }
 
-    const { data: afterProfile } = await services.supabase.from("profiles").select("*").eq("id", memberId).single();
+    const { data: afterProfile } = await services.supabase
+      .from("profiles")
+      .select(PROFILE_SAFE_COLUMNS)
+      .eq("id", memberId)
+      .single();
 
     for (const change of fieldChanges) {
       await logAdminAction(services.audit, request, {
@@ -201,8 +206,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         action: "member.profile_field_updated",
         entityType: "profile",
         entityId: memberId,
-        before: beforeProfile as Record<string, unknown>,
-        after: (afterProfile ?? {}) as Record<string, unknown>,
+        before: toPublicProfile(beforeProfile as Record<string, unknown>) as Record<string, unknown>,
+        after: toPublicProfile((afterProfile ?? {}) as Record<string, unknown>) as Record<string, unknown>,
         metadata: {
           administrator: admin.id,
           member: memberId,

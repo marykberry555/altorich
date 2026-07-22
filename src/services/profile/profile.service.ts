@@ -8,6 +8,7 @@ import {
   normalizeAccountNumber,
   normalizePhone
 } from "@/lib/validation/identity";
+import { PROFILE_SAFE_COLUMNS, toPublicProfile } from "@/lib/security/profile-safe";
 
 type Client = SupabaseClient<Database>;
 
@@ -23,13 +24,11 @@ export class ProfileService {
   async getProfile(userId: string) {
     const { data, error } = await this.supabase
       .from("profiles")
-      .select(
-        "id, username, full_name, phone, avatar_url, preferred_package_slug, location_state_code, location_city_area, account_status, vip_level, invite_code, referred_by, email_verified_at, must_change_pin, must_change_password, notification_preferences, auto_weekly_payout, created_at, updated_at"
-      )
+      .select(PROFILE_SAFE_COLUMNS)
       .eq("id", userId)
       .single();
     if (error) throw error;
-    return data;
+    return toPublicProfile(data as Record<string, unknown>) as typeof data;
   }
 
   /** Registered legal name — members cannot change this via self-service. */
@@ -76,11 +75,11 @@ export class ProfileService {
       .from("profiles")
       .update(updates)
       .eq("id", userId)
-      .select()
+      .select(PROFILE_SAFE_COLUMNS)
       .single();
 
     if (error) throw error;
-    return data;
+    return toPublicProfile(data as Record<string, unknown>) as typeof data;
   }
 
   async updateNotificationPreferences(userId: string, prefs: Partial<NotificationPreferences>) {
@@ -92,11 +91,11 @@ export class ProfileService {
       .from("profiles")
       .update({ notification_preferences: merged as Json })
       .eq("id", userId)
-      .select()
+      .select(PROFILE_SAFE_COLUMNS)
       .single();
 
     if (error) throw error;
-    return data;
+    return toPublicProfile(data as Record<string, unknown>) as typeof data;
   }
 
   async listBankAccounts(userId: string) {
@@ -184,11 +183,11 @@ export class ProfileService {
       .from("profiles")
       .update({ auto_weekly_payout: enabled })
       .eq("id", userId)
-      .select()
+      .select(PROFILE_SAFE_COLUMNS)
       .single();
 
     if (error) throw error;
-    return data;
+    return toPublicProfile(data as Record<string, unknown>) as typeof data;
   }
 
   async deleteBankAccount(userId: string, accountId: string) {
@@ -208,7 +207,7 @@ export class ProfileService {
   async listMembers(page = 1, limit = 20, search?: string) {
     let query = this.supabase
       .from("profiles")
-      .select("*", { count: "exact" })
+      .select(PROFILE_SAFE_COLUMNS, { count: "exact" })
       .order("created_at", { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
@@ -218,6 +217,11 @@ export class ProfileService {
 
     const { data, error, count } = await query;
     if (error) throw error;
-    return { members: data ?? [], total: count ?? 0, page, limit };
+    return {
+      members: (data ?? []).map((row) => toPublicProfile(row as Record<string, unknown>)),
+      total: count ?? 0,
+      page,
+      limit
+    };
   }
 }

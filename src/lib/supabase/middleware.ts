@@ -10,7 +10,16 @@ export type SessionResult = {
 };
 
 export async function updateSession(request: NextRequest): Promise<SessionResult> {
-  let supabaseResponse = NextResponse.next({ request });
+  const requestHeaders = new Headers(request.headers);
+  if (!requestHeaders.get("x-request-id")) {
+    const { createRequestId } = await import("@/lib/observability/request-id");
+    requestHeaders.set("x-request-id", createRequestId());
+  }
+
+  let supabaseResponse = NextResponse.next({
+    request: { headers: requestHeaders }
+  });
+  supabaseResponse.headers.set("x-request-id", requestHeaders.get("x-request-id")!);
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return { response: supabaseResponse, user: null, supabase: null };
@@ -26,7 +35,10 @@ export async function updateSession(request: NextRequest): Promise<SessionResult
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
+          supabaseResponse = NextResponse.next({
+            request: { headers: requestHeaders }
+          });
+          supabaseResponse.headers.set("x-request-id", requestHeaders.get("x-request-id")!);
           cookiesToSet.forEach(({ name, value, options }) => {
             supabaseResponse.cookies.set(name, value, options);
           });

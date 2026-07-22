@@ -7,6 +7,7 @@ import { getSessionUser, hasAdminRole, requireSessionUser } from "@/lib/auth/ses
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { logger } from "@/lib/logger";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
 
 const depositSchema = z.object({
   memberName: z.string().min(2).optional(),
@@ -38,12 +39,15 @@ export async function GET() {
 
     return NextResponse.json(deposits);
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/deposits" });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = enforceRateLimit(request, "depositCreate");
+    if (limited) return limited;
+
     // Service role: deposit insert must work even when client RLS is locked down.
     const user = await requireSessionUser();
     const services = await getServiceRoleServices();

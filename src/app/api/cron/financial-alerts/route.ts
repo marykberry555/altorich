@@ -33,7 +33,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    logger.error("Financial alerts cron failed", { message });
-    return NextResponse.json({ error: "Cron failed", detail: message }, { status: 500 });
+    logger.error("Financial alerts cron failed", {
+      message,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return NextResponse.json({ error: "Cron failed" }, { status: 500 });
   }
 }

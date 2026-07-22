@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServiceRoleServices } from "@/lib/services";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireFinanceAdmin } from "@/lib/auth/finance-auth";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
 
 const schema = z.object({
   action: z.enum(["fund", "debit"]),
@@ -13,7 +14,10 @@ const schema = z.object({
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const admin = await requireAdmin();
+    const limited = enforceRateLimit(request, "adminFinanceAction");
+    if (limited) return limited;
+
+    const admin = await requireFinanceAdmin("member.wallet_adjust");
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 

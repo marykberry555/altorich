@@ -112,6 +112,21 @@ export class FinancialOpsService {
         .eq("status", "processing")
     ]);
 
+    for (const [label, result] of [
+      ["stuckDeposits", stuckDeposits],
+      ["stuckWithdrawals", stuckWithdrawals],
+      ["stuckReferralPayouts", stuckReferralPayouts],
+      ["openReconcile", openReconcile],
+      ["openDuplicates", openDuplicates],
+      ["recentEvents", recentEvents],
+      ["openWithdrawals", openWithdrawals],
+      ["processingWithdrawals", processingWithdrawals]
+    ] as const) {
+      if ("error" in result && result.error) {
+        logger.warn("Financial health query failed", { label, message: result.error.message });
+      }
+    }
+
     return {
       generatedAt: new Date().toISOString(),
       thresholds: {

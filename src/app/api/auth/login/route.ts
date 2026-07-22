@@ -32,6 +32,15 @@ export async function POST(req: Request) {
     }
 
     const body = schema.parse(await req.json());
+    if (body.intent === "admin-app" || body.intent === "ops") {
+      const adminLimited = rateLimit(`auth:admin-login:${ip}`, 15, 15 * 60_000);
+      if (!adminLimited.ok) {
+        return NextResponse.json(
+          { error: "Too many admin sign-in attempts. Please try again shortly." },
+          { status: 429, headers: { "Retry-After": String(adminLimited.retryAfter ?? 60) } }
+        );
+      }
+    }
     const userLimited = rateLimit(`auth:login:user:${body.username.toLowerCase()}`, 10, 15 * 60_000);
     if (!userLimited.ok) {
       return NextResponse.json(

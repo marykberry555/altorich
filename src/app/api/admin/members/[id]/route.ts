@@ -54,7 +54,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const { id } = await params;
     const body = statusSchema.parse(await request.json());
-    const { data: before } = await services.supabase.from("profiles").select("*").eq("id", id).single();
+    const { data: before } = await services.supabase
+      .from("profiles")
+      .select("id, username, full_name, account_status, phone")
+      .eq("id", id)
+      .single();
     const profile = await services.members.setAccountStatus(id, body.accountStatus);
 
     await logAdminAction(services.audit, request, {
