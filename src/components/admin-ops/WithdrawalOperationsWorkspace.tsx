@@ -15,19 +15,33 @@ export function WithdrawalOperationsWorkspace() {
   const [pending, setPending] = useState<Withdrawal[]>([]);
   const [recent, setRecent] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ id: string; status: string; title: string } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
-    const wdRes = await fetch("/api/admin/withdrawals/list", { cache: "no-store" });
-    if (wdRes.ok) {
-      const data = await wdRes.json();
+    setLoadError("");
+    try {
+      const wdRes = await fetch("/api/admin/withdrawals/list", {
+        cache: "no-store",
+        credentials: "same-origin"
+      });
+      const data = await wdRes.json().catch(() => ({}));
+      if (!wdRes.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Could not load withdrawals.");
+      }
       setPending(data.pending ?? []);
       setRecent(data.recent ?? []);
+    } catch (err) {
+      setPending([]);
+      setRecent([]);
+      setLoadError(err instanceof Error ? err.message : "Could not load withdrawals.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -36,14 +50,23 @@ export function WithdrawalOperationsWorkspace() {
 
   async function updateStatus(id: string, status: string) {
     setBusy(id);
+    setActionError("");
     try {
       const res = await fetch(`/api/admin/withdrawals/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-AltoRich-Client": "admin-app"
+        },
+        credentials: "same-origin",
         body: JSON.stringify({ status })
       });
-      if (!res.ok) throw new Error("Update failed");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Update failed");
       await load();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Update failed");
     } finally {
       setBusy(null);
       setConfirm(null);
@@ -62,6 +85,13 @@ export function WithdrawalOperationsWorkspace() {
     <div className="space-y-6">
       <SettlementQueueAdmin />
 
+      {loadError ? (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{loadError}</div>
+      ) : null}
+      {actionError ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">{actionError}</div>
+      ) : null}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-white">Open withdrawal requests ({pending.length})</h2>
         <a href="/api/admin/export?type=withdrawals" className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:underline">
@@ -69,7 +99,7 @@ export function WithdrawalOperationsWorkspace() {
         </a>
       </div>
 
-      {pending.length === 0 ? (
+      {!loadError && pending.length === 0 ? (
         <div className="rounded-xl border border-white/10 bg-zinc-900/80 p-8 text-center text-sm text-zinc-400">
           No open withdrawal requests in queue.
         </div>

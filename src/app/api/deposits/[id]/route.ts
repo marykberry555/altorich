@@ -10,6 +10,12 @@ import { HARD_OPS_HOME } from "@/lib/hard-ops";
 import { enforceRateLimit } from "@/lib/security/rate-limit";
 import { withApiRouteHandler, type RouteContext } from "@/lib/api/route-handler";
 
+function wantsJsonResponse(request: NextRequest) {
+  const accept = request.headers.get("accept") ?? "";
+  const client = request.headers.get("x-altorich-client") ?? "";
+  return accept.includes("application/json") || client === "admin-app";
+}
+
 async function patchDeposit(request: NextRequest, context: RouteContext) {
   const limited = enforceRateLimit(request, "adminFinanceAction");
   if (limited) return limited;
@@ -115,22 +121,25 @@ async function postDeposit(request: NextRequest, context: RouteContext) {
 
     logger.info("Deposit reviewed via form", { depositId: id, status, reviewerId: reviewer.id });
 
-    const wantsJson =
-      request.headers.get("accept")?.includes("application/json") ||
-      request.headers.get("x-altorich-client") === "admin-app" ||
-      request.headers.get("x-requested-with") === "fetch";
-
-    if (wantsJson) {
-      return NextResponse.json({ ok: true });
+    if (wantsJsonResponse(request)) {
+      return NextResponse.json({ ok: true, status });
     }
+    redirect(`${HARD_OPS_HOME}/deposits`);
   } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "digest" in error &&
+      typeof (error as { digest?: unknown }).digest === "string" &&
+      String((error as { digest: string }).digest).startsWith("NEXT_REDIRECT")
+    ) {
+      throw error;
+    }
     logger.error("Deposit review failed", {
       message: error instanceof Error ? error.message : String(error)
     });
     return apiErrorResponse(error, { route: "/api/deposits/[id]" });
   }
-
-  redirect(HARD_OPS_HOME);
 }
 
 export const PATCH = withApiRouteHandler(patchDeposit, "/api/deposits/[id]");

@@ -33,11 +33,11 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.
 
 const { error } = await supabase
   .from("profiles")
-  .update({ pin_hash: hashPin("123456"), must_change_password: false, must_change_pin: false })
-  .eq("username", "altorich_ops");
+  .update({ pin_hash: hashPin("212523"), must_change_password: false, must_change_pin: false })
+  .eq("username", "altorich3690");
 
 if (error) {
   console.error(error);
   process.exit(1);
 }
-console.log("altorich_ops PIN set to 123456 for incident verification");
+console.log("altorich3690 PIN set to 212523 for incident verification");

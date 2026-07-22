@@ -30,6 +30,16 @@ function withRequestIdHeader(response: Response, requestId: string): Response {
   });
 }
 
+function isNextRedirectError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    typeof (error as { digest?: unknown }).digest === "string" &&
+    String((error as { digest: string }).digest).startsWith("NEXT_REDIRECT")
+  );
+}
+
 async function enrichContext(request: NextRequest, route?: string) {
   setRequestRoute(route ?? request.nextUrl.pathname);
   try {
@@ -59,6 +69,7 @@ export function withApiHandler(
           const response = await handler(request);
           return withRequestIdHeader(response, requestId);
         } catch (error) {
+          if (isNextRedirectError(error)) throw error;
           const errRes = await apiErrorResponse(error, {
             route: route ?? request.nextUrl.pathname,
             requestId: getRequestId() ?? requestId
@@ -89,6 +100,7 @@ export function withApiRouteHandler(
           const response = await handler(request, context);
           return withRequestIdHeader(response, requestId);
         } catch (error) {
+          if (isNextRedirectError(error)) throw error;
           const errRes = await apiErrorResponse(error, {
             route: route ?? request.nextUrl.pathname,
             requestId: getRequestId() ?? requestId

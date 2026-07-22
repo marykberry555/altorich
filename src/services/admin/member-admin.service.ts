@@ -233,6 +233,35 @@ export class MemberAdminService {
   private async purgeMemberData(userId: string) {
     await this.assertDeletable(userId);
 
+    // Never hard-delete money records — block if pending funding/payouts remain.
+    const { count: pendingDeposits, error: pendingDepErr } = await this.supabase
+      .from("deposits")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "pending");
+    if (pendingDepErr) throw pendingDepErr;
+    if ((pendingDeposits ?? 0) > 0) {
+      throw new AppError(
+        "Cannot delete member with pending deposits. Review deposits first.",
+        409,
+        "PENDING_DEPOSITS"
+      );
+    }
+
+    const { count: openWithdrawals, error: pendingWdErr } = await this.supabase
+      .from("withdrawals")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .in("status", ["scheduled", "pending", "approved", "processing"]);
+    if (pendingWdErr) throw pendingWdErr;
+    if ((openWithdrawals ?? 0) > 0) {
+      throw new AppError(
+        "Cannot delete member with open withdrawals. Review withdrawals first.",
+        409,
+        "PENDING_WITHDRAWALS"
+      );
+    }
+
     // Detach welcome-bonus slots + audit actor refs before dependent deletes.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: prepareError } = await (this.supabase as any).rpc("admin_prepare_member_hard_delete", {
@@ -244,9 +273,15 @@ export class MemberAdminService {
     await this.deleteByUser("roi_investments", "user_id", userId);
     await this.deleteByUser("investments", "user_id", userId);
     await this.deleteByUser("capital_liquidation_requests", "user_id", userId);
+    // Keep deposit history for audit — detach from profile instead of deleting.
+    const { error: detachDepositsError } = await this.supabase
+      .from("deposits")
+      .update({ user_id: null, member_name: "Deleted member" })
+      .eq("user_id", userId);
+    if (detachDepositsError) throw detachDepositsError;
+    // Withdrawals.user_id is NOT NULL — delete settled history only after open-status check above.
     await this.deleteByUser("withdrawals", "user_id", userId);
     await this.deleteByUser("payment_transactions", "user_id", userId);
-    await this.deleteByUser("deposits", "user_id", userId);
     await this.deleteByUser("bank_accounts", "user_id", userId);
     await this.deleteByUser("member_crypto_wallets", "user_id", userId);
     await this.deleteByUser("kyc_documents", "user_id", userId);
