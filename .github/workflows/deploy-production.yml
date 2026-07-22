@@ -75,7 +75,11 @@ jobs:
             exit 0
           fi
           # .cpanel.yml intentionally skips build unless DEPLOY_ENABLED=1 on the server.
-          ssh -i ~/.ssh/deploy_key -p 21098 -o StrictHostKeyChecking=accept-new altosujd@162.254.39.13 bash -s <<'EOF'
+          ssh -i ~/.ssh/deploy_key -p 21098 \
+            -o StrictHostKeyChecking=accept-new \
+            -o ServerAliveInterval=20 \
+            -o ServerAliveCountMax=60 \
+            altosujd@162.254.39.13 bash -s <<'EOF'
           set -euo pipefail
           cd /home/altosujd/repositories/alto-app
           git fetch origin main 2>/dev/null || true
@@ -85,7 +89,14 @@ jobs:
           export DEPLOY_ENABLED=1
           export APP_ROOT=/home/altosujd/repositories/alto-app
           export LOG_DIR=/home/altosujd/logs
-          bash scripts/deploy/deploy-production.sh
+          mkdir -p "$LOG_DIR"
+          # Detach from Actions SSH so long webpack builds are not killed by session flaps (exit 255).
+          nohup env DEPLOY_ENABLED=1 APP_ROOT="$APP_ROOT" LOG_DIR="$LOG_DIR" \
+            bash scripts/deploy/deploy-production.sh \
+            >"$LOG_DIR/deploy-actions-last.log" 2>&1 &
+          echo "[deploy] started background PID=$! — log: $LOG_DIR/deploy-actions-last.log"
+          sleep 2
+          tail -n 20 "$LOG_DIR/deploy-actions-last.log" || true
           EOF
 
       - name: Wait for production health
@@ -96,8 +107,8 @@ jobs:
             exit 0
           fi
           echo "Waiting for cPanel build + Node restart..."
-          sleep 30
-          for i in $(seq 1 36); do
+          sleep 60
+          for i in $(seq 1 48); do
             if curl -fsS --max-time 15 https://altorich.com/api/health | grep -q '"status"[[:space:]]*:[[:space:]]*"ok"'; then
               html="$(curl -fsS -H 'Cache-Control: no-cache' "https://altorich.com/?_=$(date +%s)")"
               if echo "$html" | grep -q 'Grow Your Capital With Confidence' && echo "$html" | grep -q 'Meet Our Leadership' && echo "$html" | grep -q 'Karol Kemp'; then
@@ -106,9 +117,9 @@ jobs:
                 curl -fsS -o /dev/null -w '%{http_code}\n' -H 'Cache-Control: no-cache' https://altorich.com/packages | grep -q '^200$' && echo "Packages page OK"
                 exit 0
               fi
-              echo "Attempt $i/36 — site healthy but new homepage markers not visible yet..."
+              echo "Attempt $i/48 — site healthy but new homepage markers not visible yet..."
             else
-              echo "Attempt $i/36 — health not ready..."
+              echo "Attempt $i/48 — health not ready..."
             fi
             sleep 15
           done
