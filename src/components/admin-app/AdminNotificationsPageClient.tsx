@@ -23,15 +23,22 @@ export function AdminNotificationsPageClient() {
   const [items, setItems] = useState<AdminNotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState<AdminNotificationFilter>("all");
+  const [loadError, setLoadError] = useState("");
 
   const load = useCallback(async () => {
-    const params = new URLSearchParams({ limit: "100" });
-    if (filter !== "all") params.set("filter", filter);
-    const res = await fetch(`/api/admin/notifications?${params}`, { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
+    try {
+      const params = new URLSearchParams({ limit: "100" });
+      if (filter !== "all") params.set("filter", filter);
+      const res = await fetch(`/api/admin/notifications?${params}`, { cache: "no-store", credentials: "same-origin" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Could not load notifications.");
+      }
       setItems((data.items ?? []) as AdminNotificationItem[]);
       setUnreadCount(data.unreadCount ?? 0);
+      setLoadError("");
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Could not load notifications.");
     }
   }, [filter]);
 
@@ -93,7 +100,11 @@ export function AdminNotificationsPageClient() {
       </div>
 
       <ul className="space-y-3">
-        {items.length === 0 ? (
+        {loadError ? (
+          <li className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-8 text-center text-sm text-red-200">
+            {loadError}
+          </li>
+        ) : items.length === 0 ? (
           <li className="rounded-xl border border-white/10 bg-zinc-900/80 px-4 py-8 text-center text-sm text-zinc-400">
             You&apos;re all caught up — no notifications yet.
           </li>

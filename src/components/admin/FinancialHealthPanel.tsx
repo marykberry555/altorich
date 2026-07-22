@@ -73,13 +73,22 @@ function ago(iso: string) {
 
 export function FinancialHealthPanel() {
   const [data, setData] = useState<HealthSnapshot | null>(null);
+  const [loadError, setLoadError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/financial-health", { cache: "no-store" });
-    if (!res.ok) return;
-    setData((await res.json()) as HealthSnapshot);
+    try {
+      const res = await fetch("/api/admin/financial-health", { cache: "no-store", credentials: "same-origin" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof json.error === "string" ? json.error : "Could not load financial health.");
+      }
+      setData(json as HealthSnapshot);
+      setLoadError("");
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Could not load financial health.");
+    }
   }, []);
 
   useEffect(() => {
@@ -135,9 +144,18 @@ export function FinancialHealthPanel() {
   if (!data) {
     return (
       <Card variant="elevated" padding="md">
-        <p className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-          <Loader2 size={16} className="animate-spin" /> Loading financial health…
-        </p>
+        {loadError ? (
+          <div className="space-y-3">
+            <p className="text-sm text-red-600 dark:text-red-300">{loadError}</p>
+            <Button type="button" size="sm" variant="outline" onClick={() => void load()}>
+              <RefreshCw size={14} /> Retry
+            </Button>
+          </div>
+        ) : (
+          <p className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+            <Loader2 size={16} className="animate-spin" /> Loading financial health…
+          </p>
+        )}
       </Card>
     );
   }

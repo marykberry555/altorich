@@ -23,10 +23,20 @@ function locationLabel(row: ActivityRow) {
 
 export function AdminActivityPageClient() {
   const [rows, setRows] = useState<ActivityRow[]>([]);
+  const [loadError, setLoadError] = useState("");
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/login-activity?limit=100", { cache: "no-store" });
-    if (res.ok) setRows(await res.json());
+    try {
+      const res = await fetch("/api/admin/login-activity?limit=100", { cache: "no-store", credentials: "same-origin" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Could not load login activity.");
+      }
+      setRows(Array.isArray(data) ? data : (data.rows ?? []));
+      setLoadError("");
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Could not load login activity.");
+    }
   }, []);
 
   useEffect(() => {
@@ -51,7 +61,14 @@ export function AdminActivityPageClient() {
 
       {/* Mobile: stacked cards */}
       <ul className="space-y-3 md:hidden">
-        {rows.length === 0 ? (
+        {loadError ? (
+          <li
+            className="rounded-xl border px-4 py-8 text-center text-sm text-red-600 dark:text-red-300"
+            style={{ borderColor: "var(--admin-border)" }}
+          >
+            {loadError}
+          </li>
+        ) : rows.length === 0 ? (
           <li
             className="rounded-xl border px-4 py-8 text-center text-sm"
             style={{ borderColor: "var(--admin-border)", color: "var(--admin-muted)" }}
@@ -117,7 +134,13 @@ export function AdminActivityPageClient() {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {loadError ? (
+              <tr>
+                <td colSpan={9} className="px-4 py-8 text-center text-red-600 dark:text-red-300">
+                  {loadError}
+                </td>
+              </tr>
+            ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={9} className="px-4 py-8 text-center" style={{ color: "var(--admin-muted)" }}>
                   No login activity recorded yet

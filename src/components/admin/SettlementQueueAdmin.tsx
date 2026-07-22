@@ -58,6 +58,7 @@ function formatEta(iso: string) {
 
 export function SettlementQueueAdmin() {
   const [data, setData] = useState<Dashboard | null>(null);
+  const [loadError, setLoadError] = useState("");
   const [batchSize, setBatchSize] = useState("25");
   const [intervalMinutes, setIntervalMinutes] = useState("10");
   const [dailyLimit, setDailyLimit] = useState("");
@@ -65,15 +66,22 @@ export function SettlementQueueAdmin() {
   const [message, setMessage] = useState("");
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/settlement-queue", { cache: "no-store" });
-    if (!res.ok) return;
-    const json = (await res.json()) as Dashboard;
-    setData(json);
-    setBatchSize(String(json.config.batch_size));
-    setIntervalMinutes(String(json.config.batch_interval_minutes));
-    setDailyLimit(
-      json.config.max_daily_processing_limit == null ? "" : String(json.config.max_daily_processing_limit)
-    );
+    try {
+      const res = await fetch("/api/admin/settlement-queue", { cache: "no-store", credentials: "same-origin" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof json.error === "string" ? json.error : "Could not load settlement queue.");
+      }
+      setData(json as Dashboard);
+      setLoadError("");
+      setBatchSize(String(json.config.batch_size));
+      setIntervalMinutes(String(json.config.batch_interval_minutes));
+      setDailyLimit(
+        json.config.max_daily_processing_limit == null ? "" : String(json.config.max_daily_processing_limit)
+      );
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Could not load settlement queue.");
+    }
   }, []);
 
   useEffect(() => {
@@ -114,9 +122,18 @@ export function SettlementQueueAdmin() {
   if (!data) {
     return (
       <Card variant="elevated" padding="md">
-        <p className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-          <Loader2 size={16} className="animate-spin" /> Loading settlement queue…
-        </p>
+        {loadError ? (
+          <div className="space-y-3">
+            <p className="text-sm text-red-600 dark:text-red-300">{loadError}</p>
+            <Button type="button" size="sm" variant="outline" onClick={() => void load()}>
+              Retry
+            </Button>
+          </div>
+        ) : (
+          <p className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+            <Loader2 size={16} className="animate-spin" /> Loading settlement queue…
+          </p>
+        )}
       </Card>
     );
   }
