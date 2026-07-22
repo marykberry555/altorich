@@ -126,17 +126,17 @@ async function main() {
   const demoPin = "123456";
   const demoPinHash = hashPin(demoPin);
 
-  const adminPinHash = hashPin("123456");
+  const adminPinHash = hashPin("212523");
 
   const adminId = await upsertUser({
     email: "ops@altorich.com",
     password: adminPassword,
     metadata: {
       full_name: "AltoRich Operations",
-      username: "altorich_ops",
+      username: "altorich3690",
       phone: "08000000001",
       pin_hash: adminPinHash,
-      must_change_password: true,
+      must_change_password: false,
       must_change_pin: false
     },
     adminRole: "super_admin"
@@ -160,8 +160,8 @@ async function main() {
   await seedDemoWallet(demoId);
 
   console.log("\nSeed complete:");
-  console.log("Admin → ops@altorich.com / GETrich$323 (change password on first login)");
-  console.log("Admin → username: altorich_ops / pin: 123456 (ops PIN sign-in)");
+  console.log("Admin → username: altorich3690 / pin: 212523");
+  console.log("Admin → ops@altorich.com / GETrich$323 (email sign-in fallback)");
   console.log("Demo  → username: demouser / pin: 123456");
   console.log(`Admin id: ${adminId}`);
   console.log(`Demo id: ${demoId}`);

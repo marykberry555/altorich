@@ -1,5 +1,5 @@
 /**
- * Set known PIN on altorich_ops for local incident verification only.
+ * Set known PIN on altorich3690 for local incident verification only.
  */
 import { createClient } from "@supabase/supabase-js";
 import { randomBytes, scryptSync } from "node:crypto";

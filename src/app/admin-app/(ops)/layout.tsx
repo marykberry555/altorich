@@ -5,12 +5,7 @@ import { AdminAppPwaProvider } from "@/components/admin-app/AdminAppPwaProvider"
 import { SessionInactivityGuard } from "@/components/auth/SessionInactivityGuard";
 
 export default async function AdminAppOpsLayout({ children }: { children: React.ReactNode }) {
-  let allowed = false;
-  try {
-    allowed = await hasAdminRole();
-  } catch {
-    allowed = false;
-  }
+  const allowed = await hasAdminRole();
   if (!allowed) redirect("/admin/auth");
 
   return (
