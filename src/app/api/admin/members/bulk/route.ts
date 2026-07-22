@@ -27,9 +27,13 @@ export async function DELETE(request: Request) {
     });
 
     if (failed.length > 0) {
+      const okCount = results.length - failed.length;
       return NextResponse.json(
         {
-          error: failed.map((f) => f.error ?? "Delete failed").join("; "),
+          error:
+            failed.length === results.length
+              ? failed.map((f) => f.error ?? "Delete failed").join("; ")
+              : `Deleted ${okCount}, failed ${failed.length}: ${failed.map((f) => f.error ?? "Delete failed").join("; ")}`,
           results
         },
         { status: 422 }

@@ -206,21 +206,59 @@ export class MemberAdminService {
     }
   }
 
+  private formatDeleteError(error: unknown): string {
+    if (error instanceof AppError) return error.message;
+    if (error && typeof error === "object") {
+      const e = error as { message?: string; details?: string; hint?: string; code?: string; name?: string; status?: number };
+      const parts = [e.message, e.details, e.hint].filter(
+        (part): part is string => typeof part === "string" && part.trim().length > 0 && part.trim() !== "{}"
+      );
+      if (parts.length > 0) return parts.join(" — ");
+      if (typeof e.code === "string" && e.code) return `Delete failed (${e.code})`;
+      if (typeof e.name === "string" && e.name && e.name !== "Error") {
+        return `Delete failed (${e.name}${e.status ? ` ${e.status}` : ""})`;
+      }
+    }
+    if (error instanceof Error && error.message && error.message !== "{}") return error.message;
+    return "Delete failed";
+  }
+
+  private async deleteByUser(table: string, column: string, userId: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- purge covers tables not all typed in Database
+    const { error } = await (this.supabase as any).from(table).delete().eq(column, userId);
+    if (error) throw error;
+  }
+
   /** Remove dependent rows so auth user (and profile) can be deleted. */
   private async purgeMemberData(userId: string) {
     await this.assertDeletable(userId);
 
-    const deleteEq = async (table: keyof Database["public"]["Tables"], column: string) => {
-      const { error } = await this.supabase.from(table).delete().eq(column, userId);
-      if (error) throw error;
-    };
+    // Detach welcome-bonus slots + audit actor refs before dependent deletes.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: prepareError } = await (this.supabase as any).rpc("admin_prepare_member_hard_delete", {
+      p_user_id: userId
+    });
+    if (prepareError) throw prepareError;
 
-    await deleteEq("roi_payouts", "user_id");
-    await deleteEq("roi_investments", "user_id");
-    await deleteEq("investments", "user_id");
-    await deleteEq("withdrawals", "user_id");
-    await deleteEq("payment_transactions", "user_id");
-    await deleteEq("deposits", "user_id");
+    await this.deleteByUser("roi_payouts", "user_id", userId);
+    await this.deleteByUser("roi_investments", "user_id", userId);
+    await this.deleteByUser("investments", "user_id", userId);
+    await this.deleteByUser("capital_liquidation_requests", "user_id", userId);
+    await this.deleteByUser("withdrawals", "user_id", userId);
+    await this.deleteByUser("payment_transactions", "user_id", userId);
+    await this.deleteByUser("deposits", "user_id", userId);
+    await this.deleteByUser("bank_accounts", "user_id", userId);
+    await this.deleteByUser("member_crypto_wallets", "user_id", userId);
+    await this.deleteByUser("kyc_documents", "user_id", userId);
+    await this.deleteByUser("notifications", "user_id", userId);
+    await this.deleteByUser("activity_logs", "user_id", userId);
+    await this.deleteByUser("login_activity", "user_id", userId);
+    await this.deleteByUser("trusted_devices", "user_id", userId);
+    await this.deleteByUser("auth_otps", "user_id", userId);
+    await this.deleteByUser("security_events", "user_id", userId);
+    await this.deleteByUser("admin_notes", "member_id", userId);
+    await this.deleteByUser("referral_rewards", "referrer_id", userId);
+    await this.deleteByUser("referral_payouts", "user_id", userId);
 
     const { data: wallets, error: walletListError } = await this.supabase
       .from("wallets")
@@ -233,13 +271,19 @@ export class MemberAdminService {
       if (error) throw error;
     }
 
-    await deleteEq("wallets", "user_id");
+    await this.deleteByUser("wallets", "user_id", userId);
+
     const { error: referralsError } = await this.supabase
       .from("referrals")
       .delete()
       .or(`referrer_id.eq.${userId},referred_id.eq.${userId}`);
     if (referralsError) throw referralsError;
-    await this.supabase.from("profiles").update({ referred_by: null }).eq("referred_by", userId);
+
+    const { error: clearReferrerError } = await this.supabase
+      .from("profiles")
+      .update({ referred_by: null })
+      .eq("referred_by", userId);
+    if (clearReferrerError) throw clearReferrerError;
 
     const { error: authError } = await this.supabase.auth.admin.deleteUser(userId);
     if (authError) throw authError;
@@ -252,8 +296,7 @@ export class MemberAdminService {
         await this.purgeMemberData(id);
         results.push({ id, ok: true });
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Delete failed";
-        results.push({ id, ok: false, error: message });
+        results.push({ id, ok: false, error: this.formatDeleteError(error) });
       }
     }
     return results;
