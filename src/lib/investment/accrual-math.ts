@@ -34,7 +34,7 @@ export function watToUtc(year: number, month: number, day: number, hour: number,
   return new Date(Date.UTC(year, month - 1, day, hour - 1, minute, 0, 0));
 }
 
-/** Next Monday 09:00 WAT at or after the next 09:00 WAT slot (strictly after `from`). */
+/** Next Monday 9:00 AM at or after the next 9:00 AM slot (strictly after `from`). */
 export function nextMondayNineAmWat(from: Date): Date {
   const p = getWatParts(from);
   // Days until next Monday (1). If today is Monday, 0 unless we're at/past 09:00.

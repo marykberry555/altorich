@@ -66,7 +66,7 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
     }
     if (parsedAmount > availableBalance) {
       setMessage("Insufficient available balance.");
-      setNextHref("/deposits");
+      setNextHref(undefined);
       return;
     }
     if (!bank) {
@@ -233,11 +233,19 @@ export function PayoutRequestForm({ availableBalance, bank }: Props) {
             <InlineErrorNotice
               message={message}
               referenceId={referenceId}
-              nextAction={nextHref ? { label: "Fund wallet", href: nextHref } : undefined}
-              onRetry={() => {
-                const form = document.querySelector<HTMLFormElement>("#request");
-                form?.requestSubmit();
-              }}
+              nextAction={
+                nextHref && message !== "Insufficient available balance."
+                  ? { label: "Continue", href: nextHref }
+                  : undefined
+              }
+              onRetry={
+                message === "Insufficient available balance."
+                  ? undefined
+                  : () => {
+                      const form = document.querySelector<HTMLFormElement>("#request");
+                      form?.requestSubmit();
+                    }
+              }
             />
           ) : null}
         </form>

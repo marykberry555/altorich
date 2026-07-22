@@ -4,7 +4,7 @@ import { nextMondayAt9amLagos, currentTickerWindowLagos, weeklyCountdownTarget, 
 import { computeWeeklyTicker } from "@/lib/roi/math";
 import { getWatParts } from "@/lib/investment/accrual-math";
 
-test("nextMondayAt9amLagos returns Monday 09:00 WAT as a real UTC Instant", () => {
+test("nextMondayAt9amLagos returns Monday 9:00 AM as a real UTC Instant", () => {
   const now = new Date("2026-07-09T12:00:00.000Z"); // Thu afternoon UTC
   const target = nextMondayAt9amLagos(now);
   const parts = getWatParts(target);
@@ -22,7 +22,7 @@ test("weeklyCountdownTarget has positive remaining mid-week", () => {
 });
 
 test("weeklyCountdownTarget counts down to Monday morning WAT", () => {
-  // Monday 07:00 UTC = Monday 08:00 WAT → about 1 hour to 09:00 WAT
+  // Monday 07:00 UTC = Monday 08:00 WAT → about 1 hour to 9:00 AM
   const now = new Date("2026-07-20T07:00:00.000Z");
   const { secondsRemaining } = weeklyCountdownTarget(now);
   assert.ok(secondsRemaining > 3500 && secondsRemaining < 3700);

@@ -5,8 +5,8 @@ export const SECONDS_IN_WEEK = 7 * 24 * 60 * 60; // 604,800
 
 /**
  * Next Monday at 09:00 Africa/Lagos as a real UTC instant.
- * If currently Monday before 09:00 WAT, returns today 09:00 WAT.
- * If Monday at/after 09:00 WAT, returns next week's Monday 09:00 WAT.
+ * If currently Monday before 9:00 AM, returns today 9:00 AM.
+ * If Monday at/after 9:00 AM, returns next week's Monday 9:00 AM.
  */
 export function nextMondayAt9amLagos(now = new Date()): Date {
   const p = getWatParts(now);
@@ -30,7 +30,7 @@ export function weeklyCountdownTarget(now = new Date()): { target: Date; seconds
  */
 export function currentTickerWindowLagos(now = new Date()): { start: Date; end: Date } {
   const nextMon9 = nextMondayAt9amLagos(now);
-  // Monday 10:00 WAT = Monday 09:00 WAT + 1h
+  // Monday 10:00 WAT = Monday 9:00 AM + 1h
   const end = new Date(nextMon9.getTime() + 60 * 60 * 1000);
   // Previous Monday 10:01 WAT
   const start = new Date(end.getTime() - WEEK_MS + 60_000);

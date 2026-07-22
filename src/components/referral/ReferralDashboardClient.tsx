@@ -265,7 +265,7 @@ export function ReferralDashboardClient({ initialDashboard, vipLevels }: Props) 
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-[var(--text-muted)]">Next settlement</dt>
-              <dd className="text-right font-semibold text-[var(--heading)]">Monday 09:00 WAT</dd>
+              <dd className="text-right font-semibold text-[var(--heading)]">Monday 9:00 AM</dd>
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-[var(--text-muted)]">Withdrawal status</dt>

@@ -102,7 +102,7 @@ export function InvestmentStopPanel({
           <div className="rounded-[var(--radius-sm)] border border-[var(--gold)]/30 bg-[var(--gold-soft)]/40 p-4 text-sm">
             <p className="font-medium text-[var(--heading)]">Earnings withdrawal scheduled</p>
             <p className="mt-1 text-[var(--text-muted)]">
-              Interest credited so far ({formatNaira(totalEarned)}) pays to your wallet Monday 09:00 WAT. Principal stays
+              Interest credited so far ({formatNaira(totalEarned)}) pays to your wallet Monday 9:00 AM. Principal stays
               invested until capital liquidation is approved.
             </p>
             <Link href="/withdrawals" className="mt-3 inline-block">

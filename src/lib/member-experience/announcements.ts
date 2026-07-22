@@ -22,7 +22,7 @@ export const PLATFORM_ANNOUNCEMENTS: PlatformAnnouncement[] = [
     id: "ann-settlement-schedule",
     category: "education",
     title: "Understanding Monday settlements",
-    body: "Withdrawal processing opens every Monday at 9:00 AM WAT. Track your queue position from the Withdrawals page.",
+    body: "Withdrawal processing opens every Monday at 9:00 AM. Track your queue position from the Withdrawals page.",
     publishedAt: "2026-06-15T09:00:00.000Z",
     href: "/learn/withdrawal-process"
   },

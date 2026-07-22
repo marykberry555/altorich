@@ -215,7 +215,7 @@ export function resolveWelcomeBonusLifecycle(input: WelcomeBonusLifecycleInput):
       return {
         stage: "waiting_for_monday",
         title: "Qualification complete — awaiting Monday unlock",
-        description: "Your welcome bonus unlocks on the next Monday settlement at 09:00 WAT.",
+        description: "Your welcome bonus unlocks on the next Monday settlement at 9:00 AM.",
         tone: "navy",
         checklist: buildChecklist(input, "waiting_for_monday"),
         progressPercent: 100,

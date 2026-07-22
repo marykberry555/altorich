@@ -53,10 +53,10 @@ export function nextWithdrawalLabel(date = new Date()) {
   }).format(date);
 
   if (watDay === "Monday" || watDay === "Tuesday" || watDay === "Wednesday") {
-    return "Next window: Thursday, 8:00 AM WAT";
+    return "Next window: Thursday, 8:00 AM";
   }
 
-  return "Next window: Monday, 8:00 AM WAT";
+  return "Next window: Monday, 8:00 AM";
 }
 
 export function planTotalReturn(projectedDaily: number, cycleDays: number) {

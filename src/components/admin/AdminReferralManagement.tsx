@@ -119,7 +119,7 @@ export function AdminReferralManagement({
         </div>
 
         <p className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
-          Members can request referral withdrawals only on <strong className="text-[var(--heading)]">Monday from 09:00 WAT</strong>{" "}
+          Members can request referral withdrawals only on <strong className="text-[var(--heading)]">Monday from 9:00 AM</strong>{" "}
           when available rewards meet the minimum. Current settlement batch:{" "}
           <strong className="text-[var(--heading)]">{currentBatch}</strong>
         </p>

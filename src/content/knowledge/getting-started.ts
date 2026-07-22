@@ -252,7 +252,7 @@ export const GETTING_STARTED_ARTICLES: KnowledgeArticle[] = [
       {
         heading: "Settlement window",
         paragraphs: [
-          "Withdrawal processing typically opens Monday at 09:00 West Africa Time (WAT). Requests submitted before the window may queue until processing begins."
+          "Withdrawal processing typically opens Monday at 09:00 local time. Requests submitted before the window may queue until processing begins."
         ],
         blocks: [
           {

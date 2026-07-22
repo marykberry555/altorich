@@ -18,7 +18,7 @@ export type ReferralDashboard = {
   minPayoutThreshold: number;
   canRequestPayout: boolean;
   payoutGap: number;
-  /** ISO timestamp of next Monday 09:00 WAT settlement. */
+  /** ISO timestamp of next Monday 9:00 AM settlement. */
   nextSettlementAt: string;
   settlementWindowOpen: boolean;
   meetsPayoutThreshold: boolean;

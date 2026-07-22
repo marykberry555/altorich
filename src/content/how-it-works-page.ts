@@ -110,7 +110,7 @@ export const WEEKLY_SETTLEMENT_REASONS = {
       description: "Structured cycles align with how institutions manage reconciliation, approval, and release workflows."
     }
   ],
-  scheduleNote: "Primary settlement window: Monday, 09:00 West Africa Time (WAT), as published in your dashboard and help resources."
+  scheduleNote: "Primary settlement window: Monday, 09:00 local time, as published in your dashboard and help resources."
 } as const;
 
 export const TRANSPARENCY_HIGHLIGHTS = {
@@ -186,7 +186,7 @@ export const HOW_IT_WORKS_FAQ = [
   },
   {
     q: "How are withdrawals processed?",
-    a: "Submit a withdrawal request during published review windows (typically Monday and Thursday from 8:00 AM WAT). Requests are verified before funds are released to your registered bank account."
+    a: "Submit a withdrawal request during published review windows (typically Monday and Thursday from 8:00 AM). Requests are verified before funds are released to your registered bank account."
   },
   {
     q: "How do I monitor my investment?",

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* App theme is html[data-theme], not the Tailwind .dark class / prefers-color-scheme. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   color-scheme: light;
 

@@ -145,7 +145,7 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
     <Card variant="elevated" padding="md">
       <h2 className="text-lg font-bold text-[var(--heading)]">Referral withdrawal</h2>
       <p className="mt-1 text-sm text-[var(--text-muted)]">
-        Rewards settle every Monday at 09:00 WAT once you meet the minimum.
+        Rewards settle every Monday at 9:00 AM once you meet the minimum.
       </p>
 
       <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
@@ -163,7 +163,7 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
         </div>
         <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-3">
           <dt className="text-xs uppercase tracking-wide text-[var(--text-subtle)]">Next Settlement</dt>
-          <dd className="mt-1 text-sm font-semibold text-[var(--heading)]">Monday, 9:00 AM WAT</dd>
+          <dd className="mt-1 text-sm font-semibold text-[var(--heading)]">Monday, 9:00 AM</dd>
         </div>
         <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-3">
           <dt className="text-xs uppercase tracking-wide text-[var(--text-subtle)]">Eligibility</dt>
@@ -196,7 +196,7 @@ export function ReferralPayoutPanel({ dashboard, onSuccess }: Props) {
             <CalendarClock size={15} aria-hidden />
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">Next Referral Settlement</p>
           </div>
-          <p className="mt-2 text-xl font-bold tracking-tight">Monday, 9:00 AM WAT</p>
+          <p className="mt-2 text-xl font-bold tracking-tight">Monday, 9:00 AM</p>
           <p className="text-sm text-emerald-200">{liveEligibility.nextSettlementLabel}</p>
 
           <div className="mt-4 flex items-center gap-1.5 sm:gap-2">

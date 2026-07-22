@@ -34,7 +34,7 @@ export const SYSTEM_SERVICES: SystemServiceDefinition[] = [
   { id: "authentication", name: "Authentication", description: "Sign-in, registration, and account security." },
   { id: "email", name: "Email", description: "Verification and account notifications." },
   { id: "notifications", name: "Notifications", description: "In-app alerts and member updates." },
-  { id: "weekly_settlement", name: "Weekly Settlement", description: "Monday 09:00 WAT settlement processing." }
+  { id: "weekly_settlement", name: "Weekly Settlement", description: "Monday 9:00 AM settlement processing." }
 ];
 
 export const STATUS_LABELS: Record<ServiceStatus, string> = {

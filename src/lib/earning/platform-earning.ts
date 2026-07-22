@@ -21,7 +21,7 @@ export const PLATFORM_EARNING = {
   dailyReturnPercent: maxDaily,
   weeklyReturnPercent: maxWeekly,
   weeklyRoiBps: maxWeekly * 100,
-  payoutTiming: INVESTMENT_PORTFOLIOS[0]?.payoutTiming ?? ("Every Monday, 09:00 WAT" as const),
+  payoutTiming: INVESTMENT_PORTFOLIOS[0]?.payoutTiming ?? ("Every Monday, 9:00 AM" as const),
   settlementScheduleLabel: "Settlement Schedule",
   nextSettlementLabel: "Next Monday Settlement",
   currentDailyRateLabel: "Current Daily Rate",

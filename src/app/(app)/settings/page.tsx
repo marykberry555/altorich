@@ -84,7 +84,6 @@ export default async function SettingsPage() {
         <CryptoWalletsManager
           initialWallets={cryptoWallets}
           enabled={rails.cryptoWithdrawalOpen || rails.cryptoDepositOpen}
-          unavailableMessage={rails.messages.bankOnlyWithdrawal}
         />
       </div>
 

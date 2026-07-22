@@ -24,7 +24,7 @@ export type ReferralPayoutEligibility = {
   eligibilityMessage: string;
 };
 
-/** Monday 09:00 WAT through end of Monday — same ops window as platform settlement. */
+/** Monday 9:00 AM through end of Monday — same ops window as platform settlement. */
 export function isReferralSettlementWindowOpen(now = new Date()) {
   return isPayoutProcessingOpen(now);
 }
@@ -35,7 +35,7 @@ export function nextReferralSettlementAt(now = new Date()) {
 
 export function formatReferralSettlementLabel(at: Date) {
   const date = formatNextPayoutDate(at);
-  return `Monday, 9:00 AM WAT · ${date}`;
+  return `Monday, 9:00 AM · ${date}`;
 }
 
 /** Settlement batch key for admin grouping (WAT Monday date of the open window). */

@@ -43,7 +43,7 @@ export default function TermsPage() {
       <ul>
         <li>Deposits must be made to the active receiving account published in your dashboard.</li>
         <li>Wallet balances are updated only after administrator verification of bank credits.</li>
-        <li>Withdrawals are processed during published windows (Mondays and Thursdays from 8:00 AM WAT).</li>
+        <li>Withdrawals are processed during published windows (Mondays and Thursdays from 8:00 AM).</li>
         <li>We may request additional verification before processing large or unusual transactions.</li>
       </ul>
 

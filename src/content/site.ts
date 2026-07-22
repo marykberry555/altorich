@@ -197,7 +197,7 @@ export const aboutPage = {
     },
     {
       title: "Weekly settlement schedule",
-      description: "Settlements run every Monday at 09:00 WAT under the Platform Earning Model."
+      description: "Settlements run every Monday at 9:00 AM under the Platform Earning Model."
     },
     {
       title: "Dedicated Nigerian operations",

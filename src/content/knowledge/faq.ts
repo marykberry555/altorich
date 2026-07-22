@@ -66,7 +66,7 @@ export const KNOWLEDGE_FAQ: KnowledgeFaqItem[] = [
     category: "withdrawals",
     question: "When can I withdraw earnings?",
     answer:
-      "Withdrawal requests are accepted according to published settlement windows — typically Monday from 09:00 WAT for processed payouts. Check your withdrawal page for the current schedule and queue status.",
+      "Withdrawal requests are accepted according to published settlement windows — typically Monday from 9:00 AM for processed payouts. Check your withdrawal page for the current schedule and queue status.",
     keywords: ["withdraw", "payout", "monday", "settlement"]
   },
   {

@@ -89,7 +89,7 @@ export function WelcomeBonusSlotCounter({ className, compact = false, initialSta
           </p>
           {variant === "open" ? (
             <p className="mt-1 text-xs text-[var(--text-subtle)]">
-              Unlocks on Monday 09:00 WAT settlement
+              Unlocks on Monday 9:00 AM settlement
             </p>
           ) : null}
         </div>

@@ -95,13 +95,7 @@ export function CryptoPayoutRequestForm({ availableBalance, rails, wallets }: Pr
   }
 
   if (!rails.cryptoWithdrawalOpen) {
-    return (
-      <Card variant="elevated" padding="md">
-        <p className="text-sm text-[var(--text-muted)]">
-          {rails.rails.crypto.withdrawal.displayMessage || "Crypto withdrawals are currently unavailable."}
-        </p>
-      </Card>
-    );
+    return null;
   }
 
   return (

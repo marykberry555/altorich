@@ -122,7 +122,7 @@ export function SettlementQueueAdmin() {
   }
 
   const { stats, queue, config } = data;
-  const opensLabel = stats.opensLabel ?? "Monday 09:00 AM WAT";
+  const opensLabel = stats.opensLabel ?? "Monday 9:00 AM";
 
   return (
     <div className="space-y-6">
@@ -237,7 +237,7 @@ export function SettlementQueueAdmin() {
                       <p className="mt-1 font-mono text-xs text-[var(--heading)]">{row.settlement_reference}</p>
                     ) : null}
                     <p className="mt-1 text-xs text-[var(--text-subtle)]">
-                      ETA ≈ {formatEta(row.liveEstimatedProcessingAt)} WAT
+                      ETA ≈ {formatEta(row.liveEstimatedProcessingAt)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">

@@ -14,8 +14,8 @@ describe("welcome bonus schedule", () => {
     assert.equal(ends.toISOString(), new Date("2026-08-05T10:00:00+01:00").toISOString());
   });
 
-  it("unlocks on the first Monday 09:00 WAT after qualification", () => {
-    // Qualification ends Wednesday → next Monday 09:00 WAT
+  it("unlocks on the first Monday 9:00 AM after qualification", () => {
+    // Qualification ends Wednesday → next Monday 9:00 AM
     const registered = new Date("2026-07-01T12:00:00+01:00");
     const { qualificationEndsAt: ends, expectedUnlockAt } = expectedUnlockFromRegistration(registered, 35);
     assert.ok(ends.getTime() > registered.getTime());

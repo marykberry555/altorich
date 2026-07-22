@@ -62,7 +62,7 @@ export type InvestmentPortfolio = {
   metadata: Record<string, string | number | boolean>;
 };
 
-const PAYOUT_TIMING = "Every Monday, 09:00 WAT";
+const PAYOUT_TIMING = "Every Monday, 9:00 AM";
 
 /** The single source of truth for all investment portfolio definitions. */
 export const INVESTMENT_PORTFOLIOS: readonly InvestmentPortfolio[] = [

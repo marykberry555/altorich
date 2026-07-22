@@ -72,13 +72,13 @@ export function formatSettlementOpenLabel(config: SettlementQueueConfig) {
   const hour12 = ((config.opens_hour + 11) % 12) + 1;
   const ampm = config.opens_hour >= 12 ? "PM" : "AM";
   const minute = String(config.opens_minute).padStart(2, "0");
-  return `${day} ${hour12}:${minute} ${ampm} WAT`;
+  return `${day} ${hour12}:${minute} ${ampm}`;
 }
 
-/** Monday 09:00 WAT for the settlement cycle that `now` belongs to (or next if window closed). */
+/** Monday 9:00 AM for the settlement cycle that `now` belongs to (or next if window closed). */
 export function settlementWindowStart(now = new Date()): Date {
   if (isPayoutProcessingOpen(now)) {
-    // Today is Monday ≥ 09:00 — window started today at 09:00 WAT.
+    // Today is Monday ≥ 09:00 — window started today at 9:00 AM.
     const next = nextPayoutProcessingAt(now);
     // nextMondayAt9amLagos after Monday 09:00 returns *next* Monday; reconstruct today 09:00.
     return new Date(next.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -170,8 +170,8 @@ export function formatSettlementEtaShort(at: Date, now = new Date()) {
     now.toLocaleDateString("en-CA", { timeZone: "Africa/Lagos" });
 
   return sameCalendarDay
-    ? `Today by approximately ${time} WAT`
-    : `${dayLabel} by approximately ${time} WAT`;
+    ? `Today by approximately ${time}`
+    : `${dayLabel} by approximately ${time}`;
 }
 
 export function buildQueuedScheduleMessage(input: {
@@ -180,7 +180,7 @@ export function buildQueuedScheduleMessage(input: {
   settlementReference?: string | null;
 }) {
   const etaShort = formatSettlementEtaShort(input.estimatedAt);
-  const approx = etaShort.replace(/^Today by approximately /, "").replace(/ WAT$/, " WAT");
+  const approx = etaShort.replace(/^Today by approximately /, "");
   const refLine = input.settlementReference ? `\n\nSettlement reference: ${input.settlementReference}.` : "";
   return (
     `Your withdrawal request has been queued successfully.\n\n` +

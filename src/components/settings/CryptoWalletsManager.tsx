@@ -11,10 +11,9 @@ import type { CryptoAssetCode, CryptoNetworkCode } from "@/config/payment-rails"
 type Props = {
   initialWallets: MemberCryptoWallet[];
   enabled: boolean;
-  unavailableMessage?: string;
 };
 
-export function CryptoWalletsManager({ initialWallets, enabled, unavailableMessage }: Props) {
+export function CryptoWalletsManager({ initialWallets, enabled }: Props) {
   const [wallets, setWallets] = useState(initialWallets);
   const [asset, setAsset] = useState<CryptoAssetCode>("USDT");
   const [network, setNetwork] = useState<CryptoNetworkCode>("TRC20");
@@ -24,14 +23,7 @@ export function CryptoWalletsManager({ initialWallets, enabled, unavailableMessa
   const [message, setMessage] = useState("");
 
   if (!enabled) {
-    return (
-      <Card variant="elevated" padding="md">
-        <h3 className="font-semibold text-[var(--heading)]">Crypto wallets</h3>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">
-          {unavailableMessage || "Crypto payouts are currently unavailable, so wallet management is hidden."}
-        </p>
-      </Card>
-    );
+    return null;
   }
 
   async function persist(next: MemberCryptoWallet[]) {

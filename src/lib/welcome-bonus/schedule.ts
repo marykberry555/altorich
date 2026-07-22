@@ -6,9 +6,9 @@ export function qualificationEndsAt(registeredAt: Date, days: number): Date {
 }
 
 /**
- * First Monday 09:00 WAT settlement window AFTER the qualification period completes.
+ * First Monday 9:00 AM settlement window AFTER the qualification period completes.
  * Never unlocks at the exact qualification instant unless that instant is already
- * inside/before Monday 09:00 WAT and a later Monday is required by nextMondayAt9amLagos.
+ * inside/before Monday 9:00 AM and a later Monday is required by nextMondayAt9amLagos.
  */
 export function expectedWelcomeBonusUnlockAt(qualificationEndsAt: Date, now = new Date()): Date {
   // Unlock is never before qualification completes.

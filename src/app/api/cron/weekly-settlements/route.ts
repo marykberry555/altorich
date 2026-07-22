@@ -78,12 +78,12 @@ export async function POST(request: NextRequest) {
 
         const html = stopping
           ? `<p>Hi ${name},</p>
-           <p>You requested to stop your investment. Your guaranteed interest will be paid to your wallet this Monday at 09:00 WAT.</p>
+           <p>You requested to stop your investment. Your guaranteed interest will be paid to your wallet this Monday at 9:00 AM.</p>
            <p>After credit, <a href="${site}/withdrawals">withdraw from your wallet</a>.</p>
            <p>${COMPANY.legalName}</p>`
           : `<p>Hi ${name},</p>
            <p>Your active investment earns <strong>${formatNaira(weeklyDue)}</strong> this week (guaranteed).</p>
-           <p>Earnings auto-reinvest every Monday at 09:00 WAT. To cash out interest instead, <a href="${site}/portfolio">stop your investment</a> before the next cycle.</p>
+           <p>Earnings auto-reinvest every Monday at 9:00 AM. To cash out interest instead, <a href="${site}/portfolio">stop your investment</a> before the next cycle.</p>
            <p>${COMPANY.legalName}</p>`;
 
         const ok = await sendEmail({ to: email, subject, html });

@@ -91,7 +91,7 @@ export const PLATFORM_GUIDE_ARTICLES: KnowledgeArticle[] = [
       {
         heading: "Settlement windows",
         paragraphs: [
-          "Alto Rich processes certain payouts on published weekly windows — typically Monday from 09:00 WAT. Investment earnings and withdrawal batches follow separate but related schedules documented in your dashboard."
+          "Alto Rich processes certain payouts on published weekly windows — typically Monday from 9:00 AM. Investment earnings and withdrawal batches follow separate but related schedules documented in your dashboard."
         ]
       },
       {

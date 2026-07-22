@@ -18,7 +18,7 @@ function lagosParts(date: Date) {
   };
 }
 
-/** Whether ops processing is active for the current weekly cycle (Monday from 09:00 WAT). */
+/** Whether ops processing is active for the current weekly cycle (Monday from 9:00 AM). */
 export function isPayoutProcessingOpen(now = new Date()) {
   const { weekday, hour, minute } = lagosParts(now);
   if (weekday !== "Monday") return false;

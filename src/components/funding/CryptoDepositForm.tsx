@@ -113,13 +113,7 @@ export function CryptoDepositForm({ rails, enabled }: Props) {
   }
 
   if (!enabled) {
-    return (
-      <Card variant="elevated" padding="md">
-        <p className="text-sm text-[var(--text-muted)]">
-          {rails.rails.crypto.deposit.displayMessage || "Crypto deposits are currently unavailable."}
-        </p>
-      </Card>
-    );
+    return null;
   }
 
   return (

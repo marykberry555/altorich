@@ -517,7 +517,7 @@ export class InvestmentService {
       throw new AppError("Only active investments can be stopped.", 409, "INVALID_STATUS");
     }
     if ((inv as { stop_requested_at?: string | null }).stop_requested_at) {
-      throw new AppError("Stop already requested. Earnings pay out on Monday 09:00 WAT.", 409, "ALREADY_STOPPING");
+      throw new AppError("Stop already requested. Earnings pay out on Monday 9:00 AM.", 409, "ALREADY_STOPPING");
     }
 
     const { data, error: updateError } = await this.supabase
@@ -535,7 +535,7 @@ export class InvestmentService {
     await this.notifications.dispatch({
       userId,
       title: "Stop investment scheduled",
-      body: "Your earnings will be paid to your wallet on Monday at 09:00 WAT. You can then withdraw from your wallet.",
+      body: "Your earnings will be paid to your wallet on Monday at 9:00 AM. You can then withdraw from your wallet.",
       channel: "in_app",
       metadata: { investment_id: investmentId }
     });

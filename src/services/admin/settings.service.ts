@@ -96,7 +96,7 @@ export class SettingsService {
 
   async getWithdrawalWindows() {
     const data = await this.get<{ description: string }>("withdrawal_windows");
-    return data?.description ?? "Mondays and Thursdays from 8:00 AM WAT";
+    return data?.description ?? "Mondays and Thursdays from 8:00 AM";
   }
 
   async getCryptoWallets() {

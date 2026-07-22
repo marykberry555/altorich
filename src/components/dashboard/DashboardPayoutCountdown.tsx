@@ -70,7 +70,7 @@ export function DashboardPayoutCountdown({ active = true, className }: Props) {
           <p className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">
             Monday <span className="font-medium text-white/75">· {payoutDate}</span>
           </p>
-          <p className="text-sm font-medium text-emerald-200">9:00 AM WAT</p>
+          <p className="text-sm font-medium text-emerald-200">9:00 AM</p>
         </div>
 
         <div className="flex items-center justify-start gap-1.5 sm:justify-end sm:gap-2">

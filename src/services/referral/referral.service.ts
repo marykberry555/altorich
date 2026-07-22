@@ -493,7 +493,7 @@ export class ReferralService {
 
     if (!eligibility.settlementWindowOpen) {
       throw new AppError(
-        "Referral withdrawals open every Monday from 09:00 WAT. Your rewards remain available until then.",
+        "Referral withdrawals open every Monday from 9:00 AM. Your rewards remain available until then.",
         403,
         "SETTLEMENT_WINDOW_CLOSED"
       );

@@ -22,7 +22,7 @@ describe("referral settlement eligibility", () => {
     assert.equal(result.eligibilityStatus, "awaiting_settlement");
   });
 
-  it("enables withdrawal on Monday 09:00 WAT when threshold is met", () => {
+  it("enables withdrawal on Monday 9:00 AM when threshold is met", () => {
     const mondayOpen = wat(2026, 7, 20, 9, 0);
     const result = evaluateReferralPayoutEligibility({
       availableBalance: 20_000,
@@ -49,7 +49,7 @@ describe("referral settlement eligibility", () => {
     assert.match(result.eligibilityMessage, /₦3,000 more/);
   });
 
-  it("disables before Monday 09:00 WAT", () => {
+  it("disables before Monday 9:00 AM", () => {
     const mondayMorning = wat(2026, 7, 20, 8, 59);
     const result = evaluateReferralPayoutEligibility({
       availableBalance: 20_000,

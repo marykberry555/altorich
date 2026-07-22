@@ -71,7 +71,7 @@ export function resolveNextAction(state: DashboardConversionState): NextAction {
       eyebrow: "Status",
       title: "Investment Active",
       description:
-        "Your capital is working for you. Daily earnings accrue automatically and are settled every Monday at 9:00 AM WAT.",
+        "Your capital is working for you. Daily earnings accrue automatically and are settled every Monday at 9:00 AM.",
       href: "/portfolio",
       cta: "View Portfolio",
       tone: "emerald",
