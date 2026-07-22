@@ -123,6 +123,24 @@ function attachRequestId(request: NextRequest, response: NextResponse) {
   return response;
 }
 
+/** Public/health endpoints — skip Supabase session round-trip. */
+function isSessionExemptPath(pathname: string) {
+  return (
+    pathname.startsWith("/api/health") ||
+    pathname === "/api/homepage/stats" ||
+    pathname === "/api/roi/tiers" ||
+    pathname === "/api/social/live-activity" ||
+    pathname === "/api/welcome-bonus/programme" ||
+    pathname === "/api/build-id" ||
+    pathname === "/api/payment-rails" ||
+    pathname.startsWith("/api/cron/")
+  );
+}
+
+function hasSupabaseAuthCookie(request: NextRequest) {
+  return request.cookies.getAll().some((cookie) => /auth-token|sb-.*-auth/i.test(cookie.name));
+}
+
 /** Keep Supabase session cookies when replacing NextResponse (e.g. redirects). */
 function withSessionCookies(from: NextResponse, to: NextResponse) {
   from.cookies.getAll().forEach((cookie) => {
@@ -184,9 +202,24 @@ export async function middleware(request: NextRequest) {
     return withReferralAttribution(request, NextResponse.redirect(buildPublicUrl(target, request), 308));
   }
 
+  if (isSessionExemptPath(pathname)) {
+    return attachRequestId(request, NextResponse.next());
+  }
+
+  const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
+  const isHardOps = isHardOpsRoute(pathname);
+  const isAdminApp = isAdminAppProtectedRoute(pathname);
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+  const needsSession = isProtected || isHardOps || isAdminApp || isAuthRoute || hasSupabaseAuthCookie(request);
+
+  // Anonymous public pages — skip Auth getUser round-trip (~0.5–1s saved).
+  if (!needsSession) {
+    return withReferralAttribution(request, NextResponse.next());
+  }
+
   const { response, user, supabase } = await updateSession(request);
 
-  if (authRoutes.some((route) => pathname.startsWith(route))) {
+  if (isAuthRoute) {
     if (user && pathname.startsWith("/auth/login")) {
       let isAdminRole = false;
       if (supabase) {
@@ -207,10 +240,6 @@ export async function middleware(request: NextRequest) {
     }
     return withReferralAttribution(request, response);
   }
-
-  const isProtected = protectedRoutes.some((route) => pathname.startsWith(route));
-  const isHardOps = isHardOpsRoute(pathname);
-  const isAdminApp = isAdminAppProtectedRoute(pathname);
 
   if (!isProtected && !isHardOps && !isAdminApp) {
     return withReferralAttribution(request, response);

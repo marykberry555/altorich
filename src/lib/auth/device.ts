@@ -26,7 +26,7 @@ export function getStableDeviceId(): string {
       return existing.toLowerCase();
     }
 
-    const id = `td_${crypto.randomUUID().replace(/-/g, "")}`;
+    const id = `td_${crypto.randomUUID().replace(/-/g, "").toLowerCase()}`;
     window.localStorage.setItem(DEVICE_ID_KEY, id);
     return id;
   } catch {

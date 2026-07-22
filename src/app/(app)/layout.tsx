@@ -3,6 +3,8 @@ import { getUserServices } from "@/lib/services";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { SessionInactivityGuard } from "@/components/auth/SessionInactivityGuard";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   const services = await getUserServices();

@@ -280,7 +280,7 @@ export class NotificationService {
       },
       "welcome_bonus.awarded": {
         title: "Welcome Bonus awarded",
-        body: `${formatNaira(Number(data.amount ?? 0))} Welcome Bonus locked for your 35-day qualification period. It unlocks on the first Monday settlement after qualification.`
+        body: `${formatNaira(Number(data.amount ?? 0))} Welcome Bonus reserved. It unlocks on the next eligible Monday settlement.`
       },
       "welcome_bonus.unlocked": {
         title: "Welcome Bonus unlocked",

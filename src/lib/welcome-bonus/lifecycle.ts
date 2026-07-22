@@ -155,7 +155,7 @@ export function resolveWelcomeBonusLifecycle(input: WelcomeBonusLifecycleInput):
       return {
         stage: "email_pending",
         title: "Verify your email to reserve a slot",
-        description: `Verify your email to claim up to ${programme.remaining} remaining welcome bonus slots. Bonus unlocks after a ${programme.qualificationDays}-day qualification period.`,
+        description: `Verify your email to claim up to ${programme.remaining} remaining welcome bonus slots.`,
         tone: "gold",
         checklist: buildChecklist(input, "email_pending"),
         ...progress,
@@ -215,7 +215,7 @@ export function resolveWelcomeBonusLifecycle(input: WelcomeBonusLifecycleInput):
       return {
         stage: "waiting_for_monday",
         title: "Qualification complete — awaiting Monday unlock",
-        description: `Your ${programme.qualificationDays}-day qualification period is complete. Your bonus unlocks on the next Monday settlement at 09:00 WAT.`,
+        description: "Your welcome bonus unlocks on the next Monday settlement at 09:00 WAT.",
         tone: "navy",
         checklist: buildChecklist(input, "waiting_for_monday"),
         progressPercent: 100,
@@ -229,7 +229,7 @@ export function resolveWelcomeBonusLifecycle(input: WelcomeBonusLifecycleInput):
       return {
         stage: "slot_reserved",
         title: "Welcome bonus slot reserved",
-        description: `Your ₦${memberView.amount.toLocaleString("en-NG")} welcome bonus is reserved. Complete the ${programme.qualificationDays}-day qualification period to unlock it.`,
+        description: `Your ₦${memberView.amount.toLocaleString("en-NG")} welcome bonus is reserved and will unlock on the next eligible Monday settlement.`,
         tone: "emerald",
         checklist: buildChecklist(input, "slot_reserved"),
         ...progress,
@@ -240,7 +240,7 @@ export function resolveWelcomeBonusLifecycle(input: WelcomeBonusLifecycleInput):
     return {
       stage: "qualification_in_progress",
       title: "Qualification in progress",
-      description: `Keep your account in good standing. Qualification ends ${formatLagosDate(memberView.qualificationEndsAt)}.`,
+      description: `Keep your account in good standing. Your bonus unlocks on ${formatLagosDate(memberView.expectedUnlockAt)}.`,
       tone: "gold",
       checklist: buildChecklist(input, "qualification_in_progress"),
       ...progress,

@@ -331,16 +331,14 @@ export class AuthService {
     }
     if (!verifyPin(input.pin, profile.pin_hash)) throw new AppError("Invalid username or pin.", 401, "INVALID_CREDENTIALS");
 
-    const { data: authUser, error: authErr } = await this.supabase.auth.admin.getUserById(profile.id);
+    const [{ data: authUser, error: authErr }, { data: adminRole }] = await Promise.all([
+      this.supabase.auth.admin.getUserById(profile.id),
+      this.supabase.from("admin_roles").select("role").eq("user_id", profile.id).maybeSingle()
+    ]);
     if (authErr || !authUser.user?.email) throw Errors.internal();
-
-    const { data: adminRole } = await this.supabase
-      .from("admin_roles")
-      .select("role")
-      .eq("user_id", profile.id)
-      .maybeSingle();
     const isAdminAccount = Boolean(adminRole);
 
+    const fingerprint = input.deviceFingerprint.trim().toLowerCase();
     const skipDeviceOtp =
       isAdminAccount ||
       (process.env.NODE_ENV !== "production" &&
@@ -349,25 +347,16 @@ export class AuthService {
           username === "demouser"));
 
     if (!skipDeviceOtp) {
-      const ttlDays = await this.getTrustedDeviceTtlDays();
-      const ttlMs = ttlDays * 86400000;
-
+      // Once a device is verified, trust it permanently until the member revokes it.
+      // Do not re-send OTP on every login — that burns email quota.
       const { data: trusted } = await this.supabase
         .from("trusted_devices")
         .select("id, last_seen_at")
         .eq("user_id", profile.id)
-        .eq("device_fingerprint", input.deviceFingerprint)
+        .eq("device_fingerprint", fingerprint)
         .maybeSingle();
 
-      const trustedValid =
-        trusted &&
-        Date.now() - new Date(trusted.last_seen_at ?? 0).getTime() <= ttlMs;
-
-      if (!trustedValid) {
-        if (trusted?.id) {
-          await this.supabase.from("trusted_devices").delete().eq("id", trusted.id);
-        }
-
+      if (!trusted) {
         const otp = await this.createOtp(authUser.user.email, "login_device", profile.id);
         const magicToken = randomBytes(24).toString("hex");
         await this.supabase.from("auth_otps").insert({
@@ -441,18 +430,19 @@ export class AuthService {
 
     const meta = this.deviceDisplayMeta(input.userAgent);
     const trustedToken = randomBytes(16).toString("hex");
+    const fingerprint = input.deviceFingerprint.trim().toLowerCase();
 
     const { data: existing } = await this.supabase
       .from("trusted_devices")
       .select("id")
       .eq("user_id", otp.user_id)
-      .eq("device_fingerprint", input.deviceFingerprint)
+      .eq("device_fingerprint", fingerprint)
       .maybeSingle();
 
     const { error: upsertError } = await this.supabase.from("trusted_devices").upsert(
       {
         user_id: otp.user_id,
-        device_fingerprint: input.deviceFingerprint,
+        device_fingerprint: fingerprint,
         user_agent: input.userAgent,
         last_seen_at: new Date().toISOString(),
         device_name: meta.device_name,
@@ -495,12 +485,6 @@ export class AuthService {
       mustChangePin: profile?.must_change_pin ?? false,
       mustChangePassword: profile?.must_change_password ?? false
     };
-  }
-
-  private async getTrustedDeviceTtlDays(): Promise<number> {
-    const { data } = await this.supabase.from("settings").select("value").eq("key", "auth_settings").maybeSingle();
-    const days = Number((data?.value as { trusted_device_days?: number } | null)?.trusted_device_days ?? 90);
-    return Number.isFinite(days) && days >= 7 ? days : 90;
   }
 
   async emailPasswordLogin(input: { email: string; password: string }) {

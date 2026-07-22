@@ -146,7 +146,7 @@ export class WelcomeBonusService {
         unlockedAt: null,
         withdrawableBalance: 0,
         settlementReference: null,
-        unlockHint: "The first eligible Monday settlement after your qualification period."
+        unlockHint: "Unlocks on the next eligible Monday settlement."
       };
     }
 
@@ -167,7 +167,7 @@ export class WelcomeBonusService {
       unlockedAt: bonus.unlocked_at,
       withdrawableBalance: withdrawable,
       settlementReference: bonus.settlement_reference,
-      unlockHint: "The first eligible Monday settlement after your qualification period."
+      unlockHint: "Unlocks on the next eligible Monday settlement."
     };
   }
 
@@ -446,7 +446,7 @@ export class WelcomeBonusService {
     if (!bonus) throw new AppError("No Welcome Bonus allocation found.", 404, "NOT_FOUND");
     if (bonus.status === "locked") {
       throw new AppError(
-        "Your Welcome Bonus is still in the qualification period.",
+        "Your Welcome Bonus is still locked until the next eligible Monday settlement.",
         403,
         "BONUS_LOCKED"
       );

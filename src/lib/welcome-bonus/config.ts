@@ -64,9 +64,9 @@ export const WELCOME_BONUS_DISPLAY: WelcomeBonusDisplayConfig = {
   },
   member: {
     awardedNotification:
-      "Welcome Bonus locked for your {qualificationDays}-day qualification period. It unlocks on the first Monday settlement after qualification.",
+      "Welcome Bonus reserved. It unlocks on the first eligible Monday settlement.",
     unlockedNotification: "Your Welcome Bonus is available for Monday withdrawal.",
-    qualificationComplete: "Qualification complete — awaiting unlock on the next Monday settlement."
+    qualificationComplete: "Welcome Bonus ready — awaiting unlock on the next Monday settlement."
   },
   admin: {
     panelTitle: "Welcome Bonus programme",

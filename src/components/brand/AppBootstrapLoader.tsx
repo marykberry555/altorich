@@ -4,18 +4,17 @@ import { useEffect, useState } from "react";
 import { AppLoader } from "@/components/brand/AppLoader";
 import { cn } from "@/lib/utils";
 
-const MIN_VISIBLE_MS = 320;
-const DELAY_BEFORE_SHOW_MS = 220;
-/** Hard cap — never leave "Hold On" stuck if `load` never fires (blocked asset, hung SW). */
-const MAX_VISIBLE_MS = 1600;
+const MIN_VISIBLE_MS = 180;
+const DELAY_BEFORE_SHOW_MS = 120;
+/** Hard cap — keep splash brief so the app feels instant. */
+const MAX_VISIBLE_MS = 700;
 const BOOT_SEEN_KEY = "altorich:boot-seen";
 
 export function AppBootstrapLoader() {
   const [phase, setPhase] = useState<"hidden" | "visible" | "exiting">("hidden");
 
   useEffect(() => {
-    // Skip splash on recovery reloads and after the first paint this session —
-    // repeated "Hold On" flashes felt like the app was broken on phones/PWA.
+    // Skip splash after first paint this session.
     try {
       if (sessionStorage.getItem(BOOT_SEEN_KEY) === "1") return;
       if (new URLSearchParams(window.location.search).has("_recover")) {
@@ -46,7 +45,7 @@ export function AppBootstrapLoader() {
 
       hideTimer = window.setTimeout(() => {
         setPhase("exiting");
-        exitTimer = window.setTimeout(() => setPhase("hidden"), 280);
+        exitTimer = window.setTimeout(() => setPhase("hidden"), 180);
       }, remaining);
     };
 
