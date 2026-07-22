@@ -29,14 +29,14 @@ export function DashboardNotificationsPreview({
   const visible = filterActionableNotifications(notifications);
 
   return (
-    <DashboardPanelCard title="Action needed" href="/notifications" viewLabel="View all notifications" accent="slate">
+    <DashboardPanelCard title="Action needed" href="/notifications" viewLabel="View all alerts" accent="slate">
       {visible.length === 0 ? (
         <div className="flex flex-col items-center py-8 text-center">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--gray-100)]">
             <Bell className="h-5 w-5 text-[var(--text-subtle)]" aria-hidden />
           </div>
           <p className="text-sm font-medium text-[var(--heading)]">Nothing needs your attention right now.</p>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">Deposit, investment, and withdrawal updates will appear here.</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Funding, investment, and withdrawal updates will appear here.</p>
         </div>
       ) : (
         <ul className="space-y-3">

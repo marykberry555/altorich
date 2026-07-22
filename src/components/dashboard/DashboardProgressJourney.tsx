@@ -15,41 +15,29 @@ export function DashboardProgressJourney({ state, className }: Props) {
   return (
     <Card variant="elevated" padding="md" className={className}>
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-subtle)]">Your journey</p>
-      <ol className="relative mt-5 space-y-0" aria-label="Member journey progress">
+      <ol className="mt-4 flex flex-col gap-0 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
         {steps.map((step, index) => (
-          <li key={step.id} className="relative flex gap-4 pb-6 last:pb-0">
-            {index < steps.length - 1 ? (
-              <span
-                className={cn(
-                  "absolute left-[15px] top-8 h-[calc(100%-1rem)] w-px",
-                  step.complete ? "bg-[var(--emerald)]" : "bg-[var(--border)]"
-                )}
-                aria-hidden
-              />
-            ) : null}
-            <span
+          <li key={step.id} className="flex items-center gap-2 sm:gap-0">
+            <div
               className={cn(
-                "relative z-[1] flex size-8 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition",
-                step.complete && "border-[var(--emerald)] bg-[var(--emerald)] text-white",
-                step.current && !step.complete && "animate-pulse border-[var(--gold)] bg-[var(--gold)] text-white shadow-[var(--shadow-sm)]",
-                !step.complete && !step.current && "border-[var(--border)] bg-[var(--gray-50)] text-[var(--text-muted)]"
+                "flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition",
+                step.complete && "bg-[var(--emerald-soft)] text-[var(--emerald)]",
+                step.current && !step.complete && "bg-[var(--navy)] text-white shadow-[var(--shadow-sm)]",
+                !step.complete && !step.current && "bg-[var(--gray-100)] text-[var(--text-muted)]"
               )}
             >
-              {step.complete ? <Check size={14} aria-hidden /> : index + 1}
-            </span>
-            <div className="min-w-0 pt-1">
-              <p
-                className={cn(
-                  "font-semibold",
-                  step.current ? "text-[var(--heading)]" : step.complete ? "text-[var(--emerald)]" : "text-[var(--text-muted)]"
-                )}
-              >
-                {step.label}
-              </p>
-              {step.current ? (
-                <p className="mt-0.5 text-xs text-[var(--text-muted)]">You are here</p>
-              ) : null}
+              {step.complete ? (
+                <Check size={14} aria-hidden />
+              ) : (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-current/15 text-[10px]">{index + 1}</span>
+              )}
+              {step.label}
             </div>
+            {index < steps.length - 1 ? (
+              <span className="mx-1 hidden text-[var(--text-subtle)] sm:inline" aria-hidden>
+                →
+              </span>
+            ) : null}
           </li>
         ))}
       </ol>
