@@ -9,6 +9,7 @@ import { addDays, makeInvestmentReference, type SettlementFrequency } from "@/li
 import { buildPlanDefaults, type CreatePlanInput } from "@/lib/packages/plan-defaults";
 import { platformProjectedDaily } from "@/lib/earning/platform-earning";
 import {
+  getPortfolioByInvestmentAmount,
   getPortfolioWeeklyRoiBps,
   isPortfolioSlug,
   resolveWeeklyRoiBps,
@@ -129,13 +130,14 @@ export class InvestmentService {
   }
 
   /**
-   * After funding approval: invest the member's full wallet balance into their preferred portfolio
-   * when balance is within that portfolio's configured investment range.
+   * After any wallet funding credit: invest the member's full available NGN balance
+   * into the portfolio that matches the amount (preferred package used when it still fits).
+   * Accrual starts immediately via purchasePlan started_at + settlement schedule.
    */
   async autoInvestFromPreferredPackage(
     userId: string,
     creditedAmount: number,
-    context?: { depositId?: string; walletBefore?: number }
+    context?: { depositId?: string; walletBefore?: number; source?: string }
   ): Promise<Investment | null> {
     const { data: profile } = await this.supabase
       .from("profiles")
@@ -143,67 +145,82 @@ export class InvestmentService {
       .eq("id", userId)
       .maybeSingle();
 
-    const slug = profile?.preferred_package_slug?.trim();
-    if (!slug) {
-      if (context?.walletBefore != null) {
-        const wallet = await this.wallet.getWalletByUserId(userId);
-        const walletAfter = await this.wallet.getBalance(wallet.id);
-        assertDepositInvestReconciliation({
-          walletBefore: context.walletBefore,
-          depositAmount: creditedAmount,
-          investedAmount: 0,
-          walletAfter
-        });
-      }
-      return null;
-    }
-
-    const plan = await this.getPlanBySlug(slug);
-    if (!plan) return null;
-
+    const preferredSlug = profile?.preferred_package_slug?.trim() ?? "";
     const wallet = await this.wallet.getWalletByUserId(userId);
     const balance = await this.wallet.getBalance(wallet.id);
     const walletBefore = context?.walletBefore ?? Math.max(0, balance - creditedAmount);
 
-    const leaveInWallet = async (title: string, body: string) => {
-      assertDepositInvestReconciliation({
-        walletBefore,
-        depositAmount: creditedAmount,
-        investedAmount: 0,
-        walletAfter: balance
-      });
+    const leaveInWallet = async (title: string, body: string, meta: Record<string, unknown> = {}) => {
+      if (context?.walletBefore != null || creditedAmount > 0) {
+        assertDepositInvestReconciliation({
+          walletBefore,
+          depositAmount: creditedAmount,
+          investedAmount: 0,
+          walletAfter: balance
+        });
+      }
       await this.notifications.dispatch({
         userId,
         title,
         body,
         channel: "in_app",
-        metadata: { preferred_package: slug, deposit_id: context?.depositId ?? null }
+        metadata: {
+          preferred_package: preferredSlug || null,
+          deposit_id: context?.depositId ?? null,
+          source: context?.source ?? null,
+          ...meta
+        }
       });
       return null;
     };
 
-    if (isPortfolioSlug(slug)) {
-      const validation = validateInvestmentAmount(slug, balance);
-      if (!validation.ok) {
-        if (validation.code === "BELOW_MINIMUM") {
-          return leaveInWallet("Wallet funded — top up to invest", `${plan.name}: ${validation.message} Your funds are in your wallet.`);
-        }
-        if (validation.code === "ABOVE_MAXIMUM") {
-          return leaveInWallet(
-            "Wallet funded — amount above portfolio range",
-            `${plan.name}: ${validation.message} Funds remain in your wallet — invest manually or choose a higher portfolio.`
-          );
-        }
-        return leaveInWallet("Wallet funded — portfolio unavailable", `${plan.name} is not available for auto-invest. Funds remain in your wallet.`);
-      }
-    } else {
-      const min = Number(plan.min_investment ?? plan.price);
-      if (balance < min) {
-        return leaveInWallet(
-          "Wallet funded — top up to invest",
-          `${plan.name} needs at least ₦${min.toLocaleString("en-NG")}. Your funds are in your wallet.`
-        );
-      }
+    if (balance <= 0) {
+      return null;
+    }
+
+    // Prefer the member's chosen package when the balance still fits its range;
+    // otherwise match the portfolio configured for this amount.
+    let matchedSlug: PortfolioSlug | null = null;
+    if (preferredSlug && isPortfolioSlug(preferredSlug)) {
+      const preferredOk = validateInvestmentAmount(preferredSlug, balance);
+      if (preferredOk.ok) matchedSlug = preferredSlug;
+    }
+    if (!matchedSlug) {
+      matchedSlug = getPortfolioByInvestmentAmount(balance)?.slug ?? null;
+    }
+
+    if (!matchedSlug) {
+      return leaveInWallet(
+        "Wallet funded — amount outside portfolio ranges",
+        `₦${balance.toLocaleString("en-NG")} does not match an active investment portfolio range. Funds remain in your wallet.`,
+        { balance }
+      );
+    }
+
+    const plan = await this.getPlanBySlug(matchedSlug);
+    if (!plan || !plan.is_active || plan.plan_status !== "active") {
+      return leaveInWallet(
+        "Wallet funded — portfolio unavailable",
+        `No active ${matchedSlug} portfolio is available for auto-invest. Funds remain in your wallet.`,
+        { matched_slug: matchedSlug }
+      );
+    }
+
+    const validation = validateInvestmentAmount(matchedSlug, balance);
+    if (!validation.ok) {
+      return leaveInWallet(
+        validation.code === "BELOW_MINIMUM" ? "Wallet funded — top up to invest" : "Wallet funded — amount above portfolio range",
+        `${plan.name}: ${validation.message} Your funds are in your wallet.`,
+        { matched_slug: matchedSlug, code: validation.code }
+      );
+    }
+
+    // Keep profile preference aligned with the portfolio that actually received capital.
+    if (preferredSlug !== matchedSlug) {
+      await this.supabase
+        .from("profiles")
+        .update({ preferred_package_slug: matchedSlug })
+        .eq("id", userId);
     }
 
     // Consume entire available wallet balance — no partial invest, no leftover cash.
@@ -224,6 +241,8 @@ export class InvestmentService {
       logger.error("Auto-invest purchase failed; no partial investment retained", {
         userId,
         depositId: context?.depositId,
+        source: context?.source,
+        matchedSlug,
         error: err instanceof Error ? err.message : String(err)
       });
       throw err;
@@ -243,6 +262,7 @@ export class InvestmentService {
       logger.error("Deposit/auto-invest ledger reconciliation failed — rolling back investment", {
         userId,
         depositId: context?.depositId,
+        source: context?.source,
         investmentId: created.id,
         walletBefore,
         creditedAmount,
@@ -264,10 +284,21 @@ export class InvestmentService {
           deposit_id: context?.depositId ?? null,
           investment_id: created.id,
           healing: true,
-          one_time: true
+          one_time: true,
+          source: context?.source ?? null
         }
       });
     }
+
+    logger.info("Auto-invested wallet balance into matched portfolio", {
+      userId,
+      investmentId: created.id,
+      amount: investedAmount,
+      matchedSlug,
+      preferredSlug: preferredSlug || null,
+      depositId: context?.depositId ?? null,
+      source: context?.source ?? null
+    });
 
     return created;
   }

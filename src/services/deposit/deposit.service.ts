@@ -350,7 +350,8 @@ export class DepositService {
       const investments = new InvestmentService(this.supabase);
       const created = await investments.autoInvestFromPreferredPackage(userId, Number(deposit.amount), {
         depositId,
-        walletBefore
+        walletBefore,
+        source: "deposit_approval"
       });
       if (created) {
         investmentId = created.id;

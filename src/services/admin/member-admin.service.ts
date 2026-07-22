@@ -4,6 +4,8 @@ import type { Database } from "@/types/database";
 import { AppError, Errors } from "@/lib/errors";
 import { hashPin, isValidPin } from "@/lib/auth/pin";
 import { WalletService } from "@/services/wallet/wallet.service";
+import { InvestmentService } from "@/services/investment/investment.service";
+import { logger } from "@/lib/logger";
 import { assertIdentityAvailable } from "@/lib/validation/check-identity";
 import { assertValidPhone, DUPLICATE_IDENTITY_MESSAGE, normalizePhone } from "@/lib/validation/identity";
 
@@ -37,9 +39,11 @@ export type AdminMemberRow = {
 
 export class MemberAdminService {
   private readonly wallet: WalletService;
+  private readonly investments: InvestmentService;
 
   constructor(private readonly supabase: Client) {
     this.wallet = new WalletService(supabase);
+    this.investments = new InvestmentService(supabase);
   }
 
   private internalPassword() {
@@ -398,8 +402,10 @@ export class MemberAdminService {
   async adjustWallet(userId: string, amount: number, note?: string) {
     const wallet = await this.wallet.getWalletByUserId(userId);
     const reference = `ADM-${Date.now()}-${randomBytes(4).toString("hex")}`;
+    let investment: { id: string; amount: number; reference: string | null } | null = null;
 
     if (amount > 0) {
+      const walletBefore = await this.wallet.getBalance(wallet.id);
       await this.wallet.postTransaction({
         walletId: wallet.id,
         type: "credit",
@@ -408,6 +414,27 @@ export class MemberAdminService {
         reason: "adjustment",
         metadata: { admin_note: note ?? "Admin credit", source: "admin" }
       });
+
+      try {
+        const created = await this.investments.autoInvestFromPreferredPackage(userId, amount, {
+          walletBefore,
+          source: "admin_credit"
+        });
+        if (created) {
+          investment = {
+            id: created.id,
+            amount: Number(created.amount),
+            reference: created.reference
+          };
+        }
+      } catch (autoInvestError) {
+        logger.error("Admin credit auto-invest failed; funds remain in wallet", {
+          userId,
+          amount,
+          reference,
+          error: autoInvestError instanceof Error ? autoInvestError.message : String(autoInvestError)
+        });
+      }
     } else if (amount < 0) {
       const debitAmount = Math.abs(amount);
       const balance = await this.wallet.getBalance(wallet.id);
@@ -425,6 +452,6 @@ export class MemberAdminService {
     }
 
     const balance = await this.wallet.getBalance(wallet.id);
-    return { walletId: wallet.id, balance };
+    return { walletId: wallet.id, balance, investment, reference };
   }
 }

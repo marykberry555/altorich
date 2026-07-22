@@ -114,7 +114,13 @@ export function AdminMemberProfileView({ memberId }: { memberId: string }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Wallet action failed");
-      setMessage(`Wallet updated · balance ${formatNaira(data.balance)}`);
+      setMessage(
+        action === "fund"
+          ? data.investment
+            ? `Funded ${formatNaira(amount)} · auto-invested ${formatNaira(data.investment.amount)} · wallet ${formatNaira(data.balance)}`
+            : `Funded ${formatNaira(amount)} · wallet ${formatNaira(data.balance)} (no matching portfolio range yet)`
+          : `Debited ${formatNaira(amount)}. New balance: ${formatNaira(data.balance)}`
+      );
       await load();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Action failed");

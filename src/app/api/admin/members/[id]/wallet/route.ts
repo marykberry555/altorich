@@ -31,7 +31,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       action: body.action === "fund" ? "member.wallet_funded" : "member.wallet_debited",
       entityType: "profile",
       entityId: id,
-      metadata: { amount: body.amount, note: body.note, balance: result.balance }
+      metadata: {
+        amount: body.amount,
+        note: body.note,
+        balance: result.balance,
+        investment_id: result.investment?.id ?? null,
+        invested_amount: result.investment?.amount ?? null,
+        reference: result.reference
+      }
     });
 
     return NextResponse.json(result);

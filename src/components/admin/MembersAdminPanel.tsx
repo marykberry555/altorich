@@ -202,7 +202,13 @@ export function MembersAdminPanel({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Wallet update failed");
-      setMessage(`${action === "fund" ? "Funded" : "Debited"} ${formatNaira(amount)}. New balance: ${formatNaira(data.balance)}`);
+      setMessage(
+        action === "fund"
+          ? data.investment
+            ? `Funded ${formatNaira(amount)} · auto-invested ${formatNaira(data.investment.amount)}. Wallet: ${formatNaira(data.balance)}`
+            : `Funded ${formatNaira(amount)}. Wallet: ${formatNaira(data.balance)} (no matching portfolio range yet)`
+          : `Debited ${formatNaira(amount)}. New balance: ${formatNaira(data.balance)}`
+      );
       await load();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Wallet update failed");

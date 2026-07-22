@@ -4,6 +4,7 @@ import { AppError } from "@/lib/errors";
 import { PaymentService, type PaymentProviderName } from "./payment.service";
 import { DepositService } from "@/services/deposit/deposit.service";
 import { WalletService } from "@/services/wallet/wallet.service";
+import { InvestmentService } from "@/services/investment/investment.service";
 import { NotificationService } from "@/services/notification/notification.service";
 import { AuditService } from "@/services/audit/audit.service";
 import { logger } from "@/lib/logger";
@@ -14,6 +15,7 @@ export class PaymentOrchestratorService {
   private readonly payments: PaymentService;
   private readonly deposits: DepositService;
   private readonly wallet: WalletService;
+  private readonly investments: InvestmentService;
   private readonly notifications: NotificationService;
   private readonly audit: AuditService;
 
@@ -29,6 +31,7 @@ export class PaymentOrchestratorService {
     this.payments = new PaymentService(bankConfig);
     this.deposits = new DepositService(supabase);
     this.wallet = new WalletService(supabase);
+    this.investments = new InvestmentService(supabase);
     this.notifications = new NotificationService(supabase);
     this.audit = new AuditService(supabase);
   }
@@ -126,9 +129,11 @@ export class PaymentOrchestratorService {
     }
 
     let walletTxId: string | null = null;
+    let investmentId: string | null = null;
 
     if (paymentTx.deposit_id) {
       const wallet = await this.wallet.getWalletByUserId(paymentTx.user_id);
+      const walletBefore = await this.wallet.getBalance(wallet.id);
       const tx = await this.wallet.creditDeposit(wallet.id, amount, paymentTx.deposit_id);
       walletTxId = tx.id;
 
@@ -140,6 +145,22 @@ export class PaymentOrchestratorService {
           reviewed_at: new Date().toISOString()
         })
         .eq("id", paymentTx.deposit_id);
+
+      try {
+        const created = await this.investments.autoInvestFromPreferredPackage(paymentTx.user_id, amount, {
+          depositId: paymentTx.deposit_id,
+          walletBefore,
+          source: "payment_credit"
+        });
+        investmentId = created?.id ?? null;
+      } catch (autoInvestError) {
+        logger.error("Payment credit auto-invest failed; funds remain in wallet", {
+          userId: paymentTx.user_id,
+          depositId: paymentTx.deposit_id,
+          amount,
+          error: autoInvestError instanceof Error ? autoInvestError.message : String(autoInvestError)
+        });
+      }
     }
 
     await this.notifications.notifyEvent("payment.received", paymentTx.user_id, {
@@ -153,9 +174,14 @@ export class PaymentOrchestratorService {
       action: "payment.completed",
       entityType: "payment_transaction",
       entityId: paymentTx.id,
-      metadata: { reference: paymentTx.reference, amount, wallet_transaction_id: walletTxId }
+      metadata: {
+        reference: paymentTx.reference,
+        amount,
+        wallet_transaction_id: walletTxId,
+        investment_id: investmentId
+      }
     });
 
-    return { success: true, reference: paymentTx.reference, walletTransactionId: walletTxId };
+    return { success: true, reference: paymentTx.reference, walletTransactionId: walletTxId, investmentId };
   }
 }
