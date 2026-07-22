@@ -16,15 +16,24 @@ const severityStyles = {
 export function FraudDetectionCenter() {
   const [alerts, setAlerts] = useState<FraudAlert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/admin/fraud-alerts", { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
+    setLoadError("");
+    try {
+      const res = await fetch("/api/admin/fraud-alerts", { cache: "no-store", credentials: "same-origin" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Could not load fraud alerts.");
+      }
       setAlerts(data.alerts ?? []);
+    } catch (err) {
+      setAlerts([]);
+      setLoadError(err instanceof Error ? err.message : "Could not load fraud alerts.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -41,6 +50,10 @@ export function FraudDetectionCenter() {
         <p className="flex items-center gap-2 text-sm text-zinc-400">
           <Loader2 size={16} className="animate-spin" /> Analysing patterns…
         </p>
+      ) : loadError ? (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-8 text-center text-sm text-red-200">
+          {loadError}
+        </div>
       ) : alerts.length === 0 ? (
         <div className="rounded-xl border border-white/10 bg-zinc-900/80 p-8 text-center text-sm text-zinc-400">
           No fraud indicators detected at this time.

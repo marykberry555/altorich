@@ -8,12 +8,17 @@ import type { SupportOpsMetrics } from "@/lib/admin-ops/types";
 export function SupportOperationsPanel() {
   const [metrics, setMetrics] = useState<SupportOpsMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/admin/live-metrics", { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
+    setLoadError("");
+    try {
+      const res = await fetch("/api/admin/live-metrics", { cache: "no-store", credentials: "same-origin" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Could not load support metrics.");
+      }
       setMetrics({
         openTickets: data.supportItemsOpen ?? 0,
         pendingReplies: 0,
@@ -25,8 +30,12 @@ export function SupportOperationsPanel() {
           { label: "Account verification", count: data.pendingKyc ?? 0 }
         ].filter((i) => i.count > 0)
       });
+    } catch (err) {
+      setMetrics(null);
+      setLoadError(err instanceof Error ? err.message : "Could not load support metrics.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -47,6 +56,8 @@ export function SupportOperationsPanel() {
         <p className="flex items-center gap-2 text-sm text-zinc-400">
           <Loader2 size={16} className="animate-spin" /> Loading support metrics…
         </p>
+      ) : loadError ? (
+        <p className="text-sm text-red-300">{loadError}</p>
       ) : metrics ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-white/10 bg-zinc-900/80 p-4">

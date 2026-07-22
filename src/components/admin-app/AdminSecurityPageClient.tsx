@@ -35,10 +35,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export function AdminSecurityPageClient() {
   const [data, setData] = useState<SecuritySnapshot | null>(null);
+  const [loadError, setLoadError] = useState("");
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/security", { cache: "no-store" });
-    if (res.ok) setData(await res.json());
+    try {
+      const res = await fetch("/api/admin/security", { cache: "no-store", credentials: "same-origin" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof json.error === "string" ? json.error : "Could not load security center.");
+      }
+      setData(json as SecuritySnapshot);
+      setLoadError("");
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Could not load security center.");
+    }
   }, []);
 
   useEffect(() => {
@@ -54,6 +64,8 @@ export function AdminSecurityPageClient() {
         <h1 className="mt-2 text-2xl font-bold text-white">Security center</h1>
         <p className="mt-2 text-sm text-zinc-400">Failed logins, locked accounts, credential changes, and funding activity.</p>
       </header>
+
+      {loadError ? <p className="text-sm text-red-300">{loadError}</p> : null}
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-white">Admin profile · Install</h2>

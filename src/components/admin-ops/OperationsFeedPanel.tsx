@@ -27,20 +27,32 @@ type Props = {
 export function OperationsFeedPanel({ compact, limit = 50, className }: Props) {
   const [events, setEvents] = useState<OperationsFeedEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [category, setCategory] = useState<OperationsFeedCategory>("all");
   const [q, setQ] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({ limit: String(limit) });
-    if (category !== "all") params.set("category", category);
-    if (q.trim()) params.set("q", q.trim());
-    const res = await fetch(`/api/admin/operations-feed?${params}`, { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
+    setLoadError("");
+    try {
+      const params = new URLSearchParams({ limit: String(limit) });
+      if (category !== "all") params.set("category", category);
+      if (q.trim()) params.set("q", q.trim());
+      const res = await fetch(`/api/admin/operations-feed?${params}`, {
+        cache: "no-store",
+        credentials: "same-origin"
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Could not load operations feed.");
+      }
       setEvents(data.events ?? []);
+    } catch (err) {
+      setEvents([]);
+      setLoadError(err instanceof Error ? err.message : "Could not load operations feed.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [category, limit, q]);
 
   useEffect(() => {
@@ -106,7 +118,9 @@ export function OperationsFeedPanel({ compact, limit = 50, className }: Props) {
         </p>
       ) : (
         <ul className="mt-4 space-y-2">
-          {display.length === 0 ? (
+          {loadError ? (
+            <li className="text-sm text-red-300">{loadError}</li>
+          ) : display.length === 0 ? (
             <li className="text-sm text-zinc-400">No operational events match your filters.</li>
           ) : (
             display.map((event) => {

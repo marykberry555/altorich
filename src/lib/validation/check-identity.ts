@@ -5,11 +5,39 @@ import { DUPLICATE_IDENTITY_MESSAGE, normalizePhone } from "@/lib/validation/ide
 
 type Client = SupabaseClient<Database>;
 
+const DELETED_EMAIL_SUFFIX = "@deleted.altorich.invalid";
+
 export async function findUserByEmail(supabase: Client, email: string) {
   const normalized = email.trim().toLowerCase();
-  const { data, error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  if (error) throw error;
-  return data.users.find((u) => u.email?.toLowerCase() === normalized) ?? null;
+  if (!normalized || normalized.endsWith(DELETED_EMAIL_SUFFIX)) return null;
+
+  // Prefer direct lookup when available (avoids paging caps).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = supabase.auth.admin as any;
+  if (typeof admin.getUserByEmail === "function") {
+    const { data, error } = await admin.getUserByEmail(normalized);
+    if (!error && data?.user?.email?.toLowerCase() === normalized) {
+      if (String(data.user.email).toLowerCase().endsWith(DELETED_EMAIL_SUFFIX)) return null;
+      return data.user;
+    }
+  }
+
+  let page = 1;
+  const perPage = 200;
+  for (;;) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const users = data.users ?? [];
+    const match = users.find((u) => u.email?.toLowerCase() === normalized) ?? null;
+    if (match) {
+      if (match.email?.toLowerCase().endsWith(DELETED_EMAIL_SUFFIX)) return null;
+      return match;
+    }
+    if (users.length < perPage) break;
+    page += 1;
+    if (page > 50) break;
+  }
+  return null;
 }
 
 export async function assertIdentityAvailable(

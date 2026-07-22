@@ -266,12 +266,26 @@ export class MemberAdminService {
       );
     }
 
-    // Detach welcome-bonus slots + audit actor refs before dependent deletes.
+    // Detach welcome-bonus slots + audit actor refs + free username/phone/invite_code.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: prepareError } = await (this.supabase as any).rpc("admin_prepare_member_hard_delete", {
       p_user_id: userId
     });
     if (prepareError) throw prepareError;
+
+    // Free the auth email before deleteUser so re-signup works even if auth purge is delayed.
+    const releasedEmail = `deleted+${userId.replace(/-/g, "")}@deleted.altorich.invalid`;
+    const { error: releaseEmailError } = await this.supabase.auth.admin.updateUserById(userId, {
+      email: releasedEmail,
+      email_confirm: true,
+      user_metadata: { deleted: true, deleted_at: new Date().toISOString() }
+    });
+    if (releaseEmailError) {
+      logger.warn("Could not rewrite auth email before delete; continuing with deleteUser", {
+        userId,
+        message: releaseEmailError.message
+      });
+    }
 
     await this.deleteByUser("roi_payouts", "user_id", userId);
     await this.deleteByUser("roi_investments", "user_id", userId);
@@ -324,7 +338,7 @@ export class MemberAdminService {
       .eq("referred_by", userId);
     if (clearReferrerError) throw clearReferrerError;
 
-    const { error: authError } = await this.supabase.auth.admin.deleteUser(userId);
+    const { error: authError } = await this.supabase.auth.admin.deleteUser(userId, false);
     if (authError) throw authError;
   }
 

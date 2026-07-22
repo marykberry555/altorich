@@ -11,13 +11,19 @@ import type { AdminLiveMetrics } from "@/services/admin/live-metrics.service";
 
 export function ExecutiveOperationsDashboard() {
   const [metrics, setMetrics] = useState<AdminLiveMetrics | null>(null);
+  const [loadError, setLoadError] = useState("");
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/live-metrics", { cache: "no-store" });
-      if (res.ok) setMetrics((await res.json()) as AdminLiveMetrics);
-    } catch {
-      /* keep last snapshot */
+      const res = await fetch("/api/admin/live-metrics", { cache: "no-store", credentials: "same-origin" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Could not load executive metrics.");
+      }
+      setMetrics(data as AdminLiveMetrics);
+      setLoadError("");
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Could not load executive metrics.");
     }
   }, []);
 
@@ -31,6 +37,7 @@ export function ExecutiveOperationsDashboard() {
 
   return (
     <div className="space-y-6">
+      {loadError ? <p className="text-sm text-red-300">{loadError}</p> : null}
       <section aria-label="Executive KPIs">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-white">Command center</h2>

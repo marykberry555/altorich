@@ -54,28 +54,37 @@ export function AdminLiveDashboard() {
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loadError, setLoadError] = useState("");
 
   const refresh = useCallback(async () => {
     try {
       const [metricsRes, activityRes, notificationsRes] = await Promise.all([
-        fetch("/api/admin/live-metrics", { cache: "no-store" }),
-        fetch("/api/admin/login-activity?limit=8", { cache: "no-store" }),
-        fetch("/api/admin/notifications?limit=8", { cache: "no-store" })
+        fetch("/api/admin/live-metrics", { cache: "no-store", credentials: "same-origin" }),
+        fetch("/api/admin/login-activity?limit=8", { cache: "no-store", credentials: "same-origin" }),
+        fetch("/api/admin/notifications?limit=8", { cache: "no-store", credentials: "same-origin" })
       ]);
 
+      const errors: string[] = [];
       if (metricsRes.ok) {
         setMetrics((await metricsRes.json()) as LiveMetrics);
+      } else {
+        errors.push("metrics");
       }
       if (activityRes.ok) {
         const data = await activityRes.json();
         setActivity(Array.isArray(data) ? data : []);
+      } else {
+        errors.push("activity");
       }
       if (notificationsRes.ok) {
         const data = await notificationsRes.json();
         setNotifications(data.items ?? []);
+      } else {
+        errors.push("notifications");
       }
+      setLoadError(errors.length ? `Could not refresh: ${errors.join(", ")}.` : "");
     } catch {
-      // Keep last good snapshot — never crash the admin shell on a metrics fetch failure.
+      setLoadError("Could not refresh live dashboard.");
     }
   }, []);
 
@@ -87,6 +96,7 @@ export function AdminLiveDashboard() {
 
   return (
     <div className="space-y-6">
+      {loadError ? <p className="text-sm text-red-300">{loadError}</p> : null}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricStatCard title="Online members" value={String(metrics?.onlineMembers ?? "—")} accent="emerald" icon={<Users size={16} aria-hidden />} href={adminAppPath("/members")} />
         <MetricStatCard title="Offline members" value={String(metrics?.offlineMembers ?? "—")} accent="sky" icon={<Users size={16} aria-hidden />} href={adminAppPath("/members")} />
