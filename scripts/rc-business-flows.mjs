@@ -80,7 +80,30 @@ async function loginViaApi(request, username, pin, intent) {
   if (intent) payload.intent = intent;
   const res = await request.post(`${BASE}/api/auth/login`, { data: payload });
   const body = await res.json().catch(() => ({}));
-  return { ok: res.ok(), status: res.status(), body };
+
+  // Production may challenge new/unknown devices — complete OTP before treating login as success.
+  if (res.ok() && body.requiresDeviceOtp && body.email) {
+    const code = await fetchOtp(body.email, "login_device");
+    if (!code || code.length !== 6) {
+      return { ok: false, status: 401, body: { error: "device OTP not found", email: body.email } };
+    }
+    const verify = await request.post(`${BASE}/api/auth/verify-device`, {
+      data: {
+        email: body.email,
+        code,
+        deviceFingerprint: payload.deviceFingerprint,
+        userAgent: payload.userAgent
+      }
+    });
+    const verifyBody = await verify.json().catch(() => ({}));
+    return {
+      ok: verify.ok() && verifyBody.ok === true,
+      status: verify.status(),
+      body: verifyBody
+    };
+  }
+
+  return { ok: res.ok() && body.ok === true && !body.requiresDeviceOtp, status: res.status(), body };
 }
 
 function rcClientIp(octet) {
@@ -100,9 +123,26 @@ async function registerMember(request, payload, ipOctet = 1) {
 async function verifyEmail(request, email) {
   const code = await fetchOtp(email, "register");
   if (!code || code.length !== 6) return { ok: false, note: `OTP not found (${code})` };
-  const res = await request.post(`${BASE}/api/auth/verify-otp`, { data: { email, code } });
-  const body = await res.json().catch(() => ({}));
-  return { ok: res.ok(), status: res.status(), body };
+
+  let lastError = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await request.post(`${BASE}/api/auth/verify-otp`, {
+        data: { email, code },
+        timeout: 60_000
+      });
+      const body = await res.json().catch(() => ({}));
+      return { ok: res.ok(), status: res.status(), body };
+    } catch (err) {
+      lastError = err;
+      console.warn(`verify-otp attempt ${attempt}/3 failed:`, err instanceof Error ? err.message : String(err));
+      await new Promise((r) => setTimeout(r, 1500 * attempt));
+    }
+  }
+  return {
+    ok: false,
+    note: lastError instanceof Error ? lastError.message : String(lastError ?? "verify-otp failed")
+  };
 }
 
 async function captureScreenshots(ctx, paths, prefix) {
@@ -124,13 +164,16 @@ function terminalDepositStatus(status) {
   return status === "approved" || status === "completed";
 }
 
+const ADMIN_USERNAME = process.env.RC_ADMIN_USERNAME || "altorich3690";
+const ADMIN_PIN = process.env.RC_ADMIN_PIN || "212523";
+
 async function ensureAdminPin() {
   const salt = randomBytes(16).toString("hex");
-  const derived = scryptSync("123456", salt, 64).toString("hex");
+  const derived = scryptSync(ADMIN_PIN, salt, 64).toString("hex");
   await supabase
     .from("profiles")
     .update({ pin_hash: `scrypt:${salt}:${derived}`, must_change_password: false, must_change_pin: false })
-    .eq("username", "altorich_ops");
+    .eq("username", ADMIN_USERNAME);
 }
 
 async function main() {
@@ -292,8 +335,8 @@ async function main() {
 
   // ── ADMIN: Login ──────────────────────────────────────────────────
   {
-    const login = await loginViaApi(adminReq, "altorich_ops", "123456", "admin-app");
-    record("Admin: Login", login.ok, login.body.redirect ?? "");
+    const login = await loginViaApi(adminReq, ADMIN_USERNAME, ADMIN_PIN, "admin-app");
+    record("Admin: Login", login.ok, login.ok ? login.body.redirect ?? "" : JSON.stringify(login.body));
     if (!login.ok) {
       await browser.close();
       return finish();
@@ -482,7 +525,7 @@ async function main() {
   // ── REFERRAL flow ─────────────────────────────────────────────────
   let refReq = null;
   let refCtx = null;
-  {
+  try {
     const { data: referrerProfile } = await supabase
       .from("profiles")
       .select("invite_code")
@@ -511,44 +554,53 @@ async function main() {
           .eq("referred_id", referredUserId)
           .maybeSingle();
         const tracked = refRow?.referrer_id === memberUserId;
-        record("Referral: Signup + tracking", verify.ok && tracked, tracked ? `status=${refRow.status}` : "referral row missing");
+        record("Referral: Signup + tracking", verify.ok && tracked, tracked ? `status=${refRow.status}` : verify.note ?? "referral row missing");
 
         // Qualification: referred member funds wallet → admin approves → commission
-        const refDep = await refReq.post(`${BASE}/api/deposits`, {
-          data: { amount: 35000, paymentReference: `RC-REF-${RUN_ID}` },
-          headers: { "Idempotency-Key": `rc-ref-dep-${RUN_ID}` }
-        });
-        const refDepBody = await refDep.json().catch(() => ({}));
-        if (refDep.ok() && refDepBody.id) {
-          const approveRef = await adminReq.patch(`${BASE}/api/deposits/${refDepBody.id}`, {
-            headers: { Accept: "application/json", "Content-Type": "application/json", "X-AltoRich-Client": "admin-app" },
-            data: { status: "approved" }
+        if (verify.ok) {
+          const refDep = await refReq.post(`${BASE}/api/deposits`, {
+            data: { amount: 35000, paymentReference: `RC-REF-${RUN_ID}` },
+            headers: { "Idempotency-Key": `rc-ref-dep-${RUN_ID}` },
+            timeout: 60_000
           });
-          await approveRef.json().catch(() => ({}));
-          const { data: refAfter } = await supabase
-            .from("referrals")
-            .select("status, commission_amount, wallet_transaction_id")
-            .eq("referred_id", referredUserId)
-            .maybeSingle();
-          const qualified = refAfter && ["verified", "qualified"].includes(String(refAfter.status));
-          record(
-            "Referral: Qualification + commission",
-            approveRef.ok() && qualified && Number(refAfter.commission_amount) > 0,
-            refAfter ? `status=${refAfter.status} commission=₦${refAfter.commission_amount}` : "no referral row"
-          );
+          const refDepBody = await refDep.json().catch(() => ({}));
+          if (refDep.ok() && refDepBody.id) {
+            const approveRef = await adminReq.patch(`${BASE}/api/deposits/${refDepBody.id}`, {
+              headers: { Accept: "application/json", "Content-Type": "application/json", "X-AltoRich-Client": "admin-app" },
+              data: { status: "approved" },
+              timeout: 120_000
+            });
+            await approveRef.json().catch(() => ({}));
+            const { data: refAfter } = await supabase
+              .from("referrals")
+              .select("status, commission_amount, wallet_transaction_id")
+              .eq("referred_id", referredUserId)
+              .maybeSingle();
+            const qualified = refAfter && ["verified", "qualified"].includes(String(refAfter.status));
+            record(
+              "Referral: Qualification + commission",
+              approveRef.ok() && qualified && Number(refAfter.commission_amount) > 0,
+              refAfter ? `status=${refAfter.status} commission=₦${refAfter.commission_amount}` : "no referral row"
+            );
 
-          const { data: rewards } = await supabase
-            .from("referral_rewards")
-            .select("reward_type, amount")
-            .eq("referrer_id", memberUserId)
-            .order("created_at", { ascending: false })
-            .limit(5);
-          record("Referral: Commission history", (rewards ?? []).length > 0, (rewards ?? []).map((r) => `${r.reward_type} ₦${r.amount}`).join("; ") || "none");
+            const { data: rewards } = await supabase
+              .from("referral_rewards")
+              .select("reward_type, amount")
+              .eq("referrer_id", memberUserId)
+              .order("created_at", { ascending: false })
+              .limit(5);
+            record("Referral: Commission history", (rewards ?? []).length > 0, (rewards ?? []).map((r) => `${r.reward_type} ₦${r.amount}`).join("; ") || "none");
+          } else {
+            record("Referral: Qualification + commission", false, JSON.stringify(refDepBody));
+          }
         } else {
-          record("Referral: Qualification + commission", false, JSON.stringify(refDepBody));
+          record("Referral: Qualification + commission", false, "referred verify failed");
+          record("Referral: Commission history", false, "skipped");
         }
       }
     }
+  } catch (err) {
+    record("Referral: flow error", false, err instanceof Error ? err.message : String(err));
   }
 
   // ── WELCOME BONUS ─────────────────────────────────────────────────
