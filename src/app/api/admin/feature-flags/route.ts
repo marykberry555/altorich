@@ -37,6 +37,29 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) throw Errors.badRequest("Invalid feature flag payload.");
 
     await services.settings.updateFeatureFlags(parsed.data, reviewer.id);
+
+    // Keep payment_rails in sync — member UI gates on rails, not feature flags alone.
+    if (
+      parsed.data.enable_crypto_funding !== undefined ||
+      parsed.data.enable_crypto_payouts !== undefined
+    ) {
+      await services.paymentRails.updateLiveState(
+        {
+          rails: {
+            crypto: {
+              ...(parsed.data.enable_crypto_funding !== undefined
+                ? { deposit: { enabled: parsed.data.enable_crypto_funding } }
+                : {}),
+              ...(parsed.data.enable_crypto_payouts !== undefined
+                ? { withdrawal: { enabled: parsed.data.enable_crypto_payouts } }
+                : {})
+            }
+          }
+        },
+        reviewer.id
+      );
+    }
+
     await services.audit.log({
       actorId: reviewer.id,
       action: "settings.feature_flags_updated",

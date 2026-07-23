@@ -10,8 +10,10 @@ import { TrustedDevicesManager } from "@/components/settings/TrustedDevicesManag
 import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import { getAuthService } from "@/lib/auth/service";
-import { mergePaymentRails, toPublicPaymentRailsSnapshot } from "@/lib/payments/payment-rails";
+import { loadPublicPaymentRailsSnapshot } from "@/lib/payments/load-public-rails";
 import { readPayoutPreferences } from "@/lib/payments/member-destinations";
+
+export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const user = await getSessionUser();
@@ -34,9 +36,7 @@ export default async function SettingsPage() {
     sms: boolean;
   };
 
-  const rails = services
-    ? await services.paymentRails.getPublicSnapshot().catch(() => toPublicPaymentRailsSnapshot(mergePaymentRails(null)))
-    : toPublicPaymentRailsSnapshot(mergePaymentRails(null));
+  const rails = await loadPublicPaymentRailsSnapshot();
   const cryptoWallets = readPayoutPreferences(profile?.notification_preferences).cryptoWallets ?? [];
 
   return (

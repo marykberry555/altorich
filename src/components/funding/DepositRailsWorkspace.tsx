@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FundingAccountsGrid } from "@/components/funding/FundingAccountCard";
 import { InvestmentFundingForm } from "@/components/funding/InvestmentFundingForm";
 import { CryptoDepositForm } from "@/components/funding/CryptoDepositForm";
@@ -20,11 +20,38 @@ type Props = {
   bankAccounts: AccountView[];
 };
 
-export function DepositRailsWorkspace({ rails, bankAccounts }: Props) {
+export function DepositRailsWorkspace({ rails: initialRails, bankAccounts }: Props) {
+  const [rails, setRails] = useState(initialRails);
+
+  useEffect(() => {
+    setRails(initialRails);
+  }, [initialRails]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/payment-rails", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data && typeof data === "object" && Array.isArray(data.depositMethods)) {
+          setRails(data as PublicPaymentRailsSnapshot);
+        }
+      })
+      .catch(() => null);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const methods = rails.depositMethods;
   const [method, setMethod] = useState<"bank" | "crypto">(
     (methods[0] as "bank" | "crypto" | undefined) ?? "bank"
   );
+
+  useEffect(() => {
+    if (!methods.includes(method) && methods[0]) {
+      setMethod(methods[0] as "bank" | "crypto");
+    }
+  }, [methods, method]);
 
   if (!rails.anyDepositOpen) {
     return (

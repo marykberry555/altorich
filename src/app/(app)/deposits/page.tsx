@@ -7,8 +7,7 @@ import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import { buildDepositTrackerView, findActiveDeposit } from "@/lib/financial-events/deposit-tracker";
 import type { Deposit } from "@/types/database";
-import { toPublicPaymentRailsSnapshot, mergePaymentRails } from "@/lib/payments/payment-rails";
-
+import { loadPublicPaymentRailsSnapshot } from "@/lib/payments/load-public-rails";
 import { memberPageMetadata } from "@/lib/seo/page-metadata";
 
 export const metadata: Metadata = memberPageMetadata(
@@ -16,6 +15,8 @@ export const metadata: Metadata = memberPageMetadata(
   "/deposits",
   "Submit a deposit, track verification status, and view your deposit history."
 );
+
+export const dynamic = "force-dynamic";
 
 export default async function DepositsPage() {
   const user = await getSessionUser();
@@ -25,9 +26,7 @@ export default async function DepositsPage() {
     ? await services.fundingAccounts.listActive().catch(() => [])
     : [];
 
-  const rails = services
-    ? await services.paymentRails.getPublicSnapshot().catch(() => toPublicPaymentRailsSnapshot(mergePaymentRails(null)))
-    : toPublicPaymentRailsSnapshot(mergePaymentRails(null));
+  const rails = await loadPublicPaymentRailsSnapshot();
 
   let balance = 0;
   let pendingFunding = 0;

@@ -55,4 +55,14 @@ describe("payment rails merge + routing", () => {
     assert.equal(next.rails?.bank?.deposit?.enabled, true);
     assert.equal(next.rails?.crypto?.deposit?.enabled, true);
   });
+
+  it("keeps legacy addresses when live platformAddresses is an empty array", () => {
+    const resolved = mergePaymentRails(
+      { rails: { crypto: { deposit: { enabled: true } } }, platformAddresses: [] },
+      undefined,
+      [{ asset: "USDT", network: "TRC20", address: "TLegacyAddress123" }]
+    );
+    assert.equal(resolved.cryptoDepositOpen, true);
+    assert.equal(resolved.platformAddresses[0]?.address, "TLegacyAddress123");
+  });
 });

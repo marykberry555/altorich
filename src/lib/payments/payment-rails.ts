@@ -187,7 +187,7 @@ export function mergePaymentRails(
     }
   }
 
-  if (legacyAddresses?.length && (!live?.platformAddresses || live.platformAddresses.length === 0)) {
+  if (legacyAddresses?.length) {
     base.platformAddresses = legacyAddresses;
   }
 
@@ -219,7 +219,10 @@ export function mergePaymentRails(
       }
     }
 
-    if (live.platformAddresses) base.platformAddresses = live.platformAddresses;
+    // Empty [] must not wipe legacy/default addresses — only apply when addresses are published.
+    if (Array.isArray(live.platformAddresses) && live.platformAddresses.length > 0) {
+      base.platformAddresses = live.platformAddresses;
+    }
     if (live.bothDepositsDisabledMessage) base.bothDepositsDisabledMessage = live.bothDepositsDisabledMessage;
     if (live.bothWithdrawalsDisabledMessage) {
       base.bothWithdrawalsDisabledMessage = live.bothWithdrawalsDisabledMessage;

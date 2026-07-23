@@ -81,6 +81,13 @@ export function PaymentRailsAdminPanel({ initialResolved, initialLive }: Props) 
     setSaving(true);
     setMessage("");
     try {
+      const trimmedAddresses = addresses.filter((a) => a.address.trim());
+      if (cryptoDeposit && trimmedAddresses.length === 0 && initialResolved.platformAddresses.length === 0) {
+        setMessage("Add at least one platform receive address before enabling crypto deposits.");
+        setSaving(false);
+        return;
+      }
+
       const res = await fetch("/api/admin/payment-rails", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -108,7 +115,8 @@ export function PaymentRailsAdminPanel({ initialResolved, initialLive }: Props) 
             warning: n.warning,
             displayName: n.displayName
           })),
-          platformAddresses: addresses.filter((a) => a.address.trim())
+          // Only send addresses when publishing some — never wipe existing rows with an empty save.
+          ...(trimmedAddresses.length > 0 ? { platformAddresses: trimmedAddresses } : {})
         })
       });
       const data = await res.json().catch(() => ({}));
@@ -116,7 +124,11 @@ export function PaymentRailsAdminPanel({ initialResolved, initialLive }: Props) 
         setMessage(typeof data.error === "string" ? data.error : "Unable to save payment rails.");
         return;
       }
-      setMessage("Payment rails saved — changes are live immediately.");
+      setMessage(
+        cryptoDeposit && trimmedAddresses.length === 0
+          ? "Payment rails saved. Crypto deposits stay limited until you publish a receive address."
+          : "Payment rails saved — changes are live immediately."
+      );
     } catch {
       setMessage("Network error while saving.");
     } finally {
@@ -237,6 +249,10 @@ export function PaymentRailsAdminPanel({ initialResolved, initialLive }: Props) 
           <legend className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
             Platform receive addresses
           </legend>
+          <p className="text-xs text-zinc-400">
+            Members only see usable crypto deposit addresses after you publish at least one row below. Leaving rows
+            blank when saving will not wipe addresses that are already live.
+          </p>
           {addresses.map((row, index) => (
             <div key={index} className="grid gap-2 rounded-lg border border-white/10 p-3 sm:grid-cols-4">
               <label className="grid gap-1 text-xs text-zinc-400">

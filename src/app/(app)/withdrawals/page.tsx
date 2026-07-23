@@ -9,7 +9,7 @@ import { getUserServices } from "@/lib/services";
 import { getSessionUser } from "@/lib/auth/session";
 import { buildWithdrawalTrackerView, findActiveWithdrawal } from "@/lib/financial-events/withdrawal-tracker";
 import type { Withdrawal } from "@/types/database";
-import { mergePaymentRails, toPublicPaymentRailsSnapshot } from "@/lib/payments/payment-rails";
+import { loadPublicPaymentRailsSnapshot } from "@/lib/payments/load-public-rails";
 import { readPayoutPreferences } from "@/lib/payments/member-destinations";
 
 import { memberPageMetadata } from "@/lib/seo/page-metadata";
@@ -19,6 +19,8 @@ export const metadata: Metadata = memberPageMetadata(
   "/withdrawals",
   "Request a withdrawal, view settlement schedule, and track withdrawal history."
 );
+
+export const dynamic = "force-dynamic";
 
 export default async function WithdrawalsPage() {
   const user = await getSessionUser();
@@ -36,9 +38,7 @@ export default async function WithdrawalsPage() {
   } | null = null;
   let wallets = readPayoutPreferences(null).cryptoWallets ?? [];
 
-  const rails = services
-    ? await services.paymentRails.getPublicSnapshot().catch(() => toPublicPaymentRailsSnapshot(mergePaymentRails(null)))
-    : toPublicPaymentRailsSnapshot(mergePaymentRails(null));
+  const rails = await loadPublicPaymentRailsSnapshot();
 
   if (user && services) {
     const wallet = await services.wallet.getWalletByUserId(user.id).catch(() => null);

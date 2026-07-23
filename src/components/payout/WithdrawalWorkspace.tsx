@@ -24,9 +24,10 @@ export function WithdrawalWorkspace({
   availableBalance,
   registeredFullName,
   initialBank,
-  rails,
+  rails: initialRails,
   wallets
 }: Props) {
+  const [rails, setRails] = useState(initialRails);
   const [bank, setBank] = useState<WithdrawalBankAccount | null>(initialBank);
   const [loading, setLoading] = useState(false);
   const methods = rails.withdrawalMethods;
@@ -35,8 +36,33 @@ export function WithdrawalWorkspace({
   );
 
   useEffect(() => {
+    setRails(initialRails);
+  }, [initialRails]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/payment-rails", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data && typeof data === "object" && Array.isArray(data.withdrawalMethods)) {
+          setRails(data as PublicPaymentRailsSnapshot);
+        }
+      })
+      .catch(() => null);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     setBank(initialBank);
   }, [initialBank]);
+
+  useEffect(() => {
+    if (!methods.includes(method) && methods[0]) {
+      setMethod(methods[0] as "bank" | "crypto");
+    }
+  }, [methods, method]);
 
   useEffect(() => {
     if (initialBank || !rails.bankWithdrawalOpen) return;

@@ -79,7 +79,8 @@ export function AdminFeatureFlags({ initial }: Props) {
         <h2 className="text-lg font-semibold text-[var(--heading)]">Feature flags</h2>
       </div>
       <p className="mt-1 text-sm text-[var(--text-muted)]">
-        Control launch features. Crypto and KYC stay hidden from members until enabled here.
+        Control launch features. Enabling crypto funding/withdrawals here also opens the matching payment rails for
+        members.
       </p>
 
       <div className="mt-5 space-y-6">
