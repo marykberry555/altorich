@@ -42,15 +42,17 @@ export async function PATCH(request: NextRequest) {
     await logAdminAction(services.audit, request, {
       actorId: reviewer.id,
       action: "settings.payment_rails_updated",
-      entityType: "settings",
+      entityType: "payment_rails",
       entityId: "payment_rails",
       before: before as Record<string, unknown>,
       after: after as Record<string, unknown>,
-      metadata: { reason: parsed.data.lastChangeReason ?? null }
+      metadata: {
+        reason: parsed.data.lastChangeReason ?? null
+      }
     });
 
     return NextResponse.json({ ok: true, resolved, live: after });
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/admin/payment-rails", action: "update" });
   }
 }

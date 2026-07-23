@@ -59,7 +59,7 @@ export function AdminAuditPageClient() {
 
   useEffect(() => {
     void load();
-  }, []); // initial load only; filters applied on Submit
+  }, [load]);
 
   function presetToday() {
     const now = new Date();

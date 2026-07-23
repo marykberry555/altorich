@@ -5,6 +5,7 @@ import { assertValidAccountNumber, normalizeAccountNumber } from "@/lib/validati
 import { WalletService, REFERRAL_WALLET_CURRENCY } from "@/services/wallet/wallet.service";
 import { SettingsService } from "@/services/admin/settings.service";
 import { NotificationService } from "@/services/notification/notification.service";
+import { AuditService } from "@/services/audit/audit.service";
 import { evaluateReferralPayoutEligibility, referralSettlementBatchForCreatedAt } from "@/lib/referral/settlement";
 import {
   batchNumberForPosition,
@@ -38,11 +39,13 @@ export class ReferralService {
   private readonly wallet: WalletService;
   private readonly settings: SettingsService;
   private readonly notifications: NotificationService;
+  private readonly audit: AuditService;
 
   constructor(private readonly supabase: Client) {
     this.wallet = new WalletService(supabase);
     this.settings = new SettingsService(supabase);
     this.notifications = new NotificationService(supabase);
+    this.audit = new AuditService(supabase);
   }
 
   async getProgramConfig(): Promise<ReferralProgramConfig> {
@@ -135,12 +138,12 @@ export class ReferralService {
       .eq("level", level);
     if (error) throw error;
 
-    await this.supabase.from("audit_logs").insert({
-      actor_id: updatedBy ?? null,
+    await this.audit.log({
+      actorId: updatedBy ?? null,
       action: "vip_level.updated",
-      entity_type: "vip_level",
-      entity_id: null,
-      metadata: { level, ...updates } as Json
+      entityType: "vip_level",
+      entityId: String(level),
+      metadata: { level, ...updates }
     });
   }
 

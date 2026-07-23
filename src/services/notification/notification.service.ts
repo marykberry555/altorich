@@ -9,6 +9,8 @@ import {
   walletFundedEmailHtml
 } from "@/lib/email/activity-templates";
 import { formatNaira } from "@/lib/domain";
+import { recordSecondaryFailure } from "@/lib/resilience/secondary-failures";
+import { unknownErrorMessage } from "@/lib/errors";
 
 export type NotificationPayload = {
   userId: string;
@@ -112,49 +114,64 @@ export class NotificationService {
   }
 
   async dispatch(payload: NotificationPayload): Promise<void> {
-    const channel = payload.channel ?? "in_app";
+    try {
+      const channel = payload.channel ?? "in_app";
 
-    if (channel === "in_app") {
-      const { error } = await this.supabase.from("notifications").insert({
-        user_id: payload.userId,
-        title: payload.title,
-        body: payload.body,
-        channel: "in_app",
-        metadata: (payload.metadata ?? {}) as Json,
-        read_at: null
-      });
-
-      if (error) {
-        logger.error("Failed to persist in-app notification", {
-          userId: payload.userId,
-          error: error.message
+      if (channel === "in_app") {
+        const { error } = await this.supabase.from("notifications").insert({
+          user_id: payload.userId,
+          title: payload.title,
+          body: payload.body,
+          channel: "in_app",
+          metadata: (payload.metadata ?? {}) as Json,
+          read_at: null
         });
-        throw error;
-      }
-      return;
-    }
 
-    if (channel === "email") {
-      if (!process.env.RESEND_API_KEY) {
-        logger.warn("RESEND_API_KEY not configured — skipping email notification", {
-          userId: payload.userId
+        if (error) {
+          recordSecondaryFailure("notifications.in_app", error.message, {
+            userId: payload.userId
+          });
+        }
+        return;
+      }
+
+      if (channel === "email") {
+        if (!process.env.RESEND_API_KEY) {
+          logger.warn("RESEND_API_KEY not configured — skipping email notification", {
+            userId: payload.userId
+          });
+          return;
+        }
+        const email = await this.getUserEmail(payload.userId);
+        if (!email) return;
+        await sendEmail({
+          to: email,
+          subject: `${payload.title} · AltoRich`,
+          html: payload.body
         });
         return;
       }
-      const email = await this.getUserEmail(payload.userId);
-      if (!email) return;
-      await sendEmail({
-        to: email,
-        subject: `${payload.title} · AltoRich`,
-        html: payload.body
-      });
-      return;
-    }
 
-    logger.warn("Notification channel not implemented", { channel, userId: payload.userId });
+      logger.warn("Notification channel not implemented", { channel, userId: payload.userId });
+    } catch (error) {
+      recordSecondaryFailure("notifications.dispatch", unknownErrorMessage(error), {
+        userId: payload.userId
+      });
+    }
   }
 
   async notifyEvent(event: NotificationEvent, userId: string, data: Record<string, unknown> = {}) {
+    try {
+      await this.notifyEventUnsafe(event, userId, data);
+    } catch (error) {
+      recordSecondaryFailure("notifications.notifyEvent", unknownErrorMessage(error), {
+        event,
+        userId
+      });
+    }
+  }
+
+  private async notifyEventUnsafe(event: NotificationEvent, userId: string, data: Record<string, unknown> = {}) {
     const rail = typeof data.rail === "string" ? data.rail : typeof data.method === "string" ? data.method : null;
     const railLabel = rail === "crypto" ? "crypto" : rail === "bank" ? "bank" : null;
 

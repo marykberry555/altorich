@@ -8,6 +8,7 @@ import { InvestmentService } from "@/services/investment/investment.service";
 import { NotificationService } from "@/services/notification/notification.service";
 import { AuditService } from "@/services/audit/audit.service";
 import { logger } from "@/lib/logger";
+import { runSecondary } from "@/lib/resilience/run-secondary";
 
 type Client = SupabaseClient<Database>;
 
@@ -163,24 +164,28 @@ export class PaymentOrchestratorService {
       }
     }
 
-    await this.notifications.notifyEvent("payment.received", paymentTx.user_id, {
-      amount,
-      payment_reference: paymentTx.reference,
-      deposit_id: paymentTx.deposit_id
-    });
-
-    await this.audit.log({
-      actorId: actorId ?? null,
-      action: "payment.completed",
-      entityType: "payment_transaction",
-      entityId: paymentTx.id,
-      metadata: {
-        reference: paymentTx.reference,
+    await runSecondary("payment.received.notify", () =>
+      this.notifications.notifyEvent("payment.received", paymentTx.user_id, {
         amount,
-        wallet_transaction_id: walletTxId,
-        investment_id: investmentId
-      }
-    });
+        payment_reference: paymentTx.reference,
+        deposit_id: paymentTx.deposit_id
+      })
+    );
+
+    await runSecondary("payment.completed.audit", () =>
+      this.audit.log({
+        actorId: actorId ?? null,
+        action: "payment.completed",
+        entityType: "payment_transaction",
+        entityId: paymentTx.id,
+        metadata: {
+          reference: paymentTx.reference,
+          amount,
+          wallet_transaction_id: walletTxId,
+          investment_id: investmentId
+        }
+      })
+    );
 
     return { success: true, reference: paymentTx.reference, walletTransactionId: walletTxId, investmentId };
   }

@@ -228,7 +228,6 @@ export class MemberAdminService {
   }
 
   private async deleteByUser(table: string, column: string, userId: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- purge covers tables not all typed in Database
     const { error } = await (this.supabase as any).from(table).delete().eq(column, userId);
     if (error) throw error;
   }
@@ -267,7 +266,6 @@ export class MemberAdminService {
     }
 
     // Detach welcome-bonus slots + audit actor refs + free username/phone/invite_code.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: prepareError } = await (this.supabase as any).rpc("admin_prepare_member_hard_delete", {
       p_user_id: userId
     });

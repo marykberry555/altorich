@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 import { persistApplicationError } from "@/lib/observability/error-log";
 import { AppError, isAppError, unknownErrorMessage } from "@/lib/errors";
 import { classifyAppErrorCode, type ErrorCategory } from "@/lib/errors/taxonomy";
+import { mapInfrastructureError } from "@/lib/errors/map-infrastructure-error";
 import { getRequestContext } from "@/lib/observability/request-context";
 
 type ApiErrorOptions = {
@@ -41,6 +42,11 @@ export async function apiErrorResponse(error: unknown, options: ApiErrorOptions 
       },
       { status: 400 }
     );
+  }
+
+  const mapped = mapInfrastructureError(error);
+  if (mapped) {
+    return apiErrorResponse(mapped, opts);
   }
 
   if (isAppError(error)) {

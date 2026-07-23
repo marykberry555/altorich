@@ -1,5 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/database";
+import { coerceAuditEntityId } from "@/lib/audit/entity-id";
+import { unknownErrorMessage } from "@/lib/errors";
+import { recordSecondaryFailure } from "@/lib/resilience/secondary-failures";
 
 type Client = SupabaseClient<Database>;
 export type AuditLogRow = Database["public"]["Tables"]["audit_logs"]["Row"];
@@ -33,6 +36,9 @@ function metadataReference(metadata: Json): string | null {
 export class AuditService {
   constructor(private readonly supabase: Client) {}
 
+  /**
+   * Secondary write — never throws. Failures are recorded; primary mutations must not depend on this.
+   */
   async log(input: {
     actorId: string | null;
     action: string;
@@ -41,16 +47,33 @@ export class AuditService {
     metadata?: Record<string, unknown>;
     ipAddress?: string;
   }) {
-    const { error } = await this.supabase.from("audit_logs").insert({
-      actor_id: input.actorId,
-      action: input.action,
-      entity_type: input.entityType,
-      entity_id: input.entityId ?? null,
-      metadata: (input.metadata ?? {}) as Json,
-      ip_address: input.ipAddress ?? null
-    });
+    try {
+      const { entityId } = coerceAuditEntityId(input.entityId);
 
-    if (error) throw error;
+      const { error } = await this.supabase.from("audit_logs").insert({
+        actor_id: input.actorId,
+        action: input.action,
+        entity_type: input.entityType,
+        entity_id: entityId,
+        metadata: (input.metadata ?? {}) as Json,
+        ip_address: input.ipAddress ?? null
+      });
+
+      if (error) {
+        recordSecondaryFailure("audit.log", error.message, {
+          action: input.action,
+          entityType: input.entityType,
+          entityId,
+          code: error.code
+        });
+      }
+    } catch (error) {
+      recordSecondaryFailure("audit.log", unknownErrorMessage(error), {
+        action: input.action,
+        entityType: input.entityType,
+        entityId: input.entityId ?? null
+      });
+    }
   }
 
   async list(input?: AuditLogFilters): Promise<EnrichedAuditLog[]> {

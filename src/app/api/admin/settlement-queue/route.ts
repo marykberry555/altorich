@@ -42,13 +42,13 @@ export async function PUT(request: NextRequest) {
     await services.audit.log({
       actorId: admin.id,
       action: "settlement_queue.settings_updated",
-      entityType: "settings",
+      entityType: "settlement_queue",
       entityId: "settlement_queue",
-      metadata: parsed.data
+      metadata: { ...parsed.data }
     });
 
     return NextResponse.json(config);
   } catch (error) {
-    return apiErrorResponse(error);
+    return apiErrorResponse(error, { route: "/api/admin/settlement-queue", action: "update" });
   }
 }

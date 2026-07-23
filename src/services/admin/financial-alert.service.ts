@@ -62,6 +62,11 @@ export class FinancialAlertService {
           }
         });
 
+        if (!row) {
+          sent.push({ kind: draft.kind, notificationId: null, skipped: "create_failed" });
+          continue;
+        }
+
         await this.push.sendForNotification({
           eventType: draft.kind,
           title: draft.title,

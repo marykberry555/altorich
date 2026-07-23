@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/database";
 import type { AdminNotificationFilter } from "@/lib/admin-app/notification-events";
+import { coerceAuditEntityId } from "@/lib/audit/entity-id";
+import { logger } from "@/lib/logger";
 
 type Client = SupabaseClient<Database>;
 
@@ -31,6 +33,9 @@ const FILTER_TYPES: Record<Exclude<AdminNotificationFilter, "all">, string[]> = 
 export class AdminNotificationService {
   constructor(private readonly supabase: Client) {}
 
+  /**
+   * Secondary side effect — never throw. Callers use this after primary mutations.
+   */
   async create(input: {
     eventType: string;
     title: string;
@@ -39,20 +44,37 @@ export class AdminNotificationService {
     entityId?: string;
     metadata?: Record<string, unknown>;
   }) {
-    const { data, error } = await this.supabase
-      .from("admin_notifications")
-      .insert({
-        event_type: input.eventType,
-        title: input.title,
-        body: input.body,
-        entity_type: input.entityType ?? null,
-        entity_id: input.entityId ?? null,
-        metadata: (input.metadata ?? {}) as Json
-      })
-      .select("id")
-      .single();
-    if (error) throw error;
-    return data;
+    try {
+      const { entityId } = coerceAuditEntityId(input.entityId);
+
+      const { data, error } = await this.supabase
+        .from("admin_notifications")
+        .insert({
+          event_type: input.eventType,
+          title: input.title,
+          body: input.body,
+          entity_type: input.entityType ?? null,
+          entity_id: entityId,
+          metadata: (input.metadata ?? {}) as Json
+        })
+        .select("id")
+        .single();
+      if (error) {
+        logger.error("Admin notification create failed (fail-soft)", {
+          eventType: input.eventType,
+          message: error.message,
+          code: error.code
+        });
+        return null;
+      }
+      return data;
+    } catch (error) {
+      logger.error("Admin notification create failed (fail-soft)", {
+        eventType: input.eventType,
+        message: error instanceof Error ? error.message : String(error)
+      });
+      return null;
+    }
   }
 
   async list(limit = 40, unreadOnly = false, filter: AdminNotificationFilter | "payouts" = "all") {

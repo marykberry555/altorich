@@ -8,6 +8,7 @@ import { RoiService } from "@/services/roi/roi.service";
 import { FinancialOpsService } from "@/services/admin/financial-ops.service";
 import { getPublicEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { runSecondary } from "@/lib/resilience/run-secondary";
 import type { DepositWorkflowPhase } from "@/lib/finance/deposit-workflow";
 import { isTerminalDepositWorkflow } from "@/lib/finance/deposit-workflow";
 
@@ -271,15 +272,18 @@ export class DepositService {
         } as never);
         phase = "wallet_credited";
 
-        await this.notifications.notifyEvent("deposit.approved", userId, {
-          amount: Number(deposit.amount),
-          deposit_id: depositId
-        });
+        await runSecondary("deposit.approved.notify", () =>
+          this.notifications.notifyEvent("deposit.approved", userId, {
+            amount: Number(deposit.amount),
+            deposit_id: depositId
+          })
+        );
 
-        if (getPublicEnv().NEXT_PUBLIC_ROI_MODE_ENABLED) {
+        await runSecondary("deposit.approved.roi_reset", async () => {
+          if (!getPublicEnv().NEXT_PUBLIC_ROI_MODE_ENABLED) return;
           const roi = new RoiService(this.supabase);
-          await roi.resetWeeklyCycle(userId).catch(() => null);
-        }
+          await roi.resetWeeklyCycle(userId);
+        });
 
         // Continue with invest using walletBefore captured above.
         return this.continueInvestAndComplete(deposit, reviewerId, userId, walletBefore, previousStatus);
@@ -499,11 +503,13 @@ export class DepositService {
     if (error) throw error;
 
     if (deposit.user_id) {
-      await this.notifications.notifyEvent("deposit.rejected", deposit.user_id, {
-        amount: Number(deposit.amount),
-        reason: reason || "Your deposit could not be verified.",
-        deposit_id: depositId
-      });
+      await runSecondary("deposit.rejected.notify", () =>
+        this.notifications.notifyEvent("deposit.rejected", deposit.user_id!, {
+          amount: Number(deposit.amount),
+          reason: reason || "Your deposit could not be verified.",
+          deposit_id: depositId
+        })
+      );
     }
 
     return data;

@@ -12,7 +12,6 @@ export async function findUserByEmail(supabase: Client, email: string) {
   if (!normalized || normalized.endsWith(DELETED_EMAIL_SUFFIX)) return null;
 
   // Prefer direct lookup when available (avoids paging caps).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = supabase.auth.admin as any;
   if (typeof admin.getUserByEmail === "function") {
     const { data, error } = await admin.getUserByEmail(normalized);
