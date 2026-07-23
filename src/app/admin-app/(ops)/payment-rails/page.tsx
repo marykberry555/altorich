@@ -18,8 +18,8 @@ export default async function AdminPaymentRailsPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">Payments</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-white">Payment rails</h1>
         <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-          Instantly enable or disable Bank and Crypto deposits/withdrawals. Member screens adapt automatically.
-          Bank receiving accounts remain on{" "}
+          Enable bank or crypto with four switches. Crypto unlocks the fixed USDT / USDC / BTC / ETH catalog and
+          receive addresses. Bank accounts stay on{" "}
           <Link href="/admin-app/funding-accounts" className="font-semibold text-emerald-400 hover:underline">
             Funding accounts
           </Link>

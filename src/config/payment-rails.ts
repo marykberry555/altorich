@@ -126,6 +126,51 @@ const railDirection = (enabled: boolean, message = ""): RailDirectionConfig => (
   displayMessage: message
 });
 
+/** Fixed member-facing crypto catalog — not toggled per-asset in admin. */
+export const SUPPORTED_CRYPTO_ASSETS: CryptoAssetConfig[] = [
+  { code: "USDT", displayName: "Tether (USDT)", enabled: true, networks: ["TRC20", "ERC20", "BEP20"], decimals: 6 },
+  { code: "USDC", displayName: "USD Coin (USDC)", enabled: true, networks: ["ERC20", "BEP20", "POLYGON"], decimals: 6 },
+  { code: "BTC", displayName: "Bitcoin (BTC)", enabled: true, networks: ["BITCOIN"], decimals: 8 },
+  { code: "ETH", displayName: "Ethereum (ETH)", enabled: true, networks: ["ERC20"], decimals: 18 }
+];
+
+export const SUPPORTED_CRYPTO_NETWORKS: CryptoNetworkConfig[] = [
+  {
+    code: "TRC20",
+    displayName: "TRON (TRC20)",
+    enabled: true,
+    warning: "Send only TRC20 tokens to this address. ERC20 or BEP20 will be lost."
+  },
+  {
+    code: "ERC20",
+    displayName: "Ethereum (ERC20)",
+    enabled: true,
+    warning: "Use the Ethereum network only. High gas fees may apply."
+  },
+  {
+    code: "BEP20",
+    displayName: "BNB Smart Chain (BEP20)",
+    enabled: true,
+    warning: "Use BNB Smart Chain only. Do not send from TRON or Ethereum."
+  },
+  {
+    code: "POLYGON",
+    displayName: "Polygon",
+    enabled: true,
+    warning: "Use the Polygon network only."
+  },
+  {
+    code: "BITCOIN",
+    displayName: "Bitcoin",
+    enabled: true,
+    warning: "Send only BTC on the Bitcoin network."
+  }
+];
+
+export function networksForAsset(asset: CryptoAssetCode): CryptoNetworkCode[] {
+  return SUPPORTED_CRYPTO_ASSETS.find((a) => a.code === asset)?.networks ?? [];
+}
+
 export const DEFAULT_PAYMENT_RAILS: PaymentRailsDefaults = {
   version: 1,
   rails: {
@@ -152,44 +197,8 @@ export const DEFAULT_PAYMENT_RAILS: PaymentRailsDefaults = {
       providerIds: ["manual_crypto", "nowpayments", "coinbase_commerce", "binance_pay", "yellow_card"]
     }
   },
-  cryptoAssets: [
-    { code: "USDT", displayName: "Tether (USDT)", enabled: true, networks: ["TRC20", "ERC20", "BEP20"], decimals: 6 },
-    { code: "USDC", displayName: "USD Coin (USDC)", enabled: false, networks: ["ERC20", "BEP20", "POLYGON"], decimals: 6 },
-    { code: "BTC", displayName: "Bitcoin (BTC)", enabled: false, networks: ["BITCOIN"], decimals: 8 },
-    { code: "ETH", displayName: "Ethereum (ETH)", enabled: false, networks: ["ERC20"], decimals: 18 }
-  ],
-  cryptoNetworks: [
-    {
-      code: "TRC20",
-      displayName: "TRON (TRC20)",
-      enabled: true,
-      warning: "Send only TRC20 tokens to this address. ERC20 or BEP20 will be lost."
-    },
-    {
-      code: "ERC20",
-      displayName: "Ethereum (ERC20)",
-      enabled: true,
-      warning: "Use the Ethereum network only. High gas fees may apply."
-    },
-    {
-      code: "BEP20",
-      displayName: "BNB Smart Chain (BEP20)",
-      enabled: true,
-      warning: "Use BNB Smart Chain only. Do not send from TRON or Ethereum."
-    },
-    {
-      code: "POLYGON",
-      displayName: "Polygon",
-      enabled: false,
-      warning: "Use the Polygon network only."
-    },
-    {
-      code: "BITCOIN",
-      displayName: "Bitcoin",
-      enabled: true,
-      warning: "Send only BTC on the Bitcoin network."
-    }
-  ],
+  cryptoAssets: structuredClone(SUPPORTED_CRYPTO_ASSETS),
+  cryptoNetworks: structuredClone(SUPPORTED_CRYPTO_NETWORKS),
   platformAddresses: [],
   bothDepositsDisabledMessage:
     "Deposits are temporarily unavailable. Please check back shortly or contact support.",

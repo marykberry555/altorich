@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import type { MemberCryptoWallet } from "@/lib/payments/member-destinations";
 import type { CryptoAssetCode, CryptoNetworkCode } from "@/config/payment-rails";
+import { networksForAsset, SUPPORTED_CRYPTO_ASSETS } from "@/config/payment-rails";
 
 type Props = {
   initialWallets: MemberCryptoWallet[];
@@ -54,6 +55,11 @@ export function CryptoWalletsManager({ initialWallets, enabled }: Props) {
   function addWallet() {
     if (address.trim().length < 8) {
       setMessage("Enter a valid wallet address.");
+      return;
+    }
+    const allowed = networksForAsset(asset);
+    if (!allowed.includes(network)) {
+      setMessage(`Choose a valid network for ${asset}.`);
       return;
     }
     const next: MemberCryptoWallet[] = [
@@ -114,10 +120,19 @@ export function CryptoWalletsManager({ initialWallets, enabled }: Props) {
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         <label className="grid gap-1 text-sm">
           Asset
-          <select className="field" value={asset} onChange={(e) => setAsset(e.target.value as CryptoAssetCode)}>
-            {(["USDT", "USDC", "BTC", "ETH"] as CryptoAssetCode[]).map((code) => (
-              <option key={code} value={code}>
-                {code}
+          <select
+            className="field"
+            value={asset}
+            onChange={(e) => {
+              const next = e.target.value as CryptoAssetCode;
+              setAsset(next);
+              const nets = networksForAsset(next);
+              if (nets[0]) setNetwork(nets[0]);
+            }}
+          >
+            {SUPPORTED_CRYPTO_ASSETS.map((row) => (
+              <option key={row.code} value={row.code}>
+                {row.code}
               </option>
             ))}
           </select>
@@ -125,7 +140,7 @@ export function CryptoWalletsManager({ initialWallets, enabled }: Props) {
         <label className="grid gap-1 text-sm">
           Network
           <select className="field" value={network} onChange={(e) => setNetwork(e.target.value as CryptoNetworkCode)}>
-            {(["TRC20", "ERC20", "BEP20", "POLYGON", "BITCOIN"] as CryptoNetworkCode[]).map((code) => (
+            {networksForAsset(asset).map((code) => (
               <option key={code} value={code}>
                 {code}
               </option>
