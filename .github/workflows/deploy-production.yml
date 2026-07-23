@@ -107,21 +107,25 @@ jobs:
             exit 0
           fi
           echo "Waiting for cPanel build + Node restart..."
-          sleep 60
-          for i in $(seq 1 48); do
-            if curl -fsS --max-time 15 https://altorich.com/api/health | grep -q '"status"[[:space:]]*:[[:space:]]*"ok"'; then
-              html="$(curl -fsS -H 'Cache-Control: no-cache' "https://altorich.com/?_=$(date +%s)")"
+          # Builds often take several minutes; curl -f must not abort the loop under bash -e.
+          sleep 90
+          for i in $(seq 1 60); do
+            health="$(curl -sS --max-time 15 https://altorich.com/api/health || true)"
+            if echo "$health" | grep -q '"status"[[:space:]]*:[[:space:]]*"ok"'; then
+              html="$(curl -sS --max-time 20 -H 'Cache-Control: no-cache' "https://altorich.com/?_=$(date +%s)" || true)"
               if echo "$html" | grep -q 'Grow Your Capital With Confidence' && echo "$html" | grep -q 'Meet Our Leadership' && echo "$html" | grep -q 'Karol Kemp'; then
                 echo "Production health OK + homepage copy + leadership verified"
-                curl -fsS https://altorich.com/site.webmanifest | grep -q '"/auth/login"' && echo "PWA start_url OK"
-                curl -fsS -o /dev/null -w '%{http_code}\n' -H 'Cache-Control: no-cache' https://altorich.com/packages | grep -q '^200$' && echo "Packages page OK"
+                curl -sS --max-time 15 https://altorich.com/site.webmanifest | grep -q '"/auth/login"' && echo "PWA start_url OK"
+                code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 -H 'Cache-Control: no-cache' https://altorich.com/packages || true)"
+                echo "Packages page HTTP $code"
+                [ "$code" = "200" ] && echo "Packages page OK"
                 exit 0
               fi
-              echo "Attempt $i/48 — site healthy but new homepage markers not visible yet..."
+              echo "Attempt $i/60 — site healthy but new homepage markers not visible yet..."
             else
-              echo "Attempt $i/48 — health not ready..."
+              echo "Attempt $i/60 — health not ready..."
             fi
-            sleep 15
+            sleep 20
           done
           echo "Production verification timed out"
           exit 1
