@@ -146,7 +146,7 @@ export class InvestmentService {
       .maybeSingle();
 
     const preferredSlug = profile?.preferred_package_slug?.trim() ?? "";
-    const wallet = await this.wallet.getWalletByUserId(userId);
+    const wallet = await this.wallet.ensureWallet(userId);
     const balance = await this.wallet.getBalance(wallet.id);
     const walletBefore = context?.walletBefore ?? Math.max(0, balance - creditedAmount);
 
@@ -349,7 +349,7 @@ export class InvestmentService {
     }
 
     const reference = referenceOverride?.trim() || makeInvestmentReference(userId);
-    const wallet = await this.wallet.getWalletByUserId(userId);
+    const wallet = await this.wallet.ensureWallet(userId);
     const balance = await this.wallet.getBalance(wallet.id);
 
     if (balance < amount) {

@@ -18,6 +18,37 @@ export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;
 }
 
+/** Normalize thrown values (Error, PostgREST objects, strings) for logs and workflow_error. */
+export function unknownErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message && error.message !== "[object Object]") {
+    return error.message;
+  }
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object") {
+    const e = error as {
+      message?: unknown;
+      details?: unknown;
+      hint?: unknown;
+      code?: unknown;
+    };
+    const parts = [e.message, e.details, e.hint]
+      .filter((part): part is string => typeof part === "string" && part.trim().length > 0 && part !== "{}")
+      .map((part) => part.trim());
+    if (parts.length > 0) {
+      const code = typeof e.code === "string" && e.code ? ` (${e.code})` : "";
+      return `${parts.join(" — ")}${code}`;
+    }
+    try {
+      const json = JSON.stringify(error);
+      if (json && json !== "{}" && json !== "null") return json;
+    } catch {
+      /* ignore */
+    }
+  }
+  if (error instanceof Error) return error.message || error.name || "Unknown error";
+  return String(error);
+}
+
 export const Errors = {
   notConfigured: () =>
     new AppError(

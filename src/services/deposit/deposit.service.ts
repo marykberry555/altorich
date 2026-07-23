@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Deposit } from "@/types/database";
-import { AppError, Errors } from "@/lib/errors";
+import { AppError, Errors, unknownErrorMessage } from "@/lib/errors";
 import { WalletService } from "@/services/wallet/wallet.service";
 import { NotificationService } from "@/services/notification/notification.service";
 import { InvestmentService } from "@/services/investment/investment.service";
@@ -236,14 +236,14 @@ export class DepositService {
           } as never);
         }
 
-        const wallet = await this.wallet.getWalletByUserId(userId);
+        const wallet = await this.wallet.ensureWallet(userId);
         const walletBefore = await this.wallet.getBalance(wallet.id);
 
         try {
           const tx = await this.wallet.creditDeposit(wallet.id, Number(deposit.amount), depositId);
           walletTxId = tx.id;
         } catch (creditError) {
-          const message = creditError instanceof Error ? creditError.message : String(creditError);
+          const message = unknownErrorMessage(creditError);
           if (!/duplicate|unique/i.test(message)) throw creditError;
           const { data: existing } = await this.supabase
             .from("wallet_transactions")
@@ -310,7 +310,7 @@ export class DepositService {
           } as never);
         }
 
-        const wallet = await this.wallet.getWalletByUserId(userId);
+        const wallet = await this.wallet.ensureWallet(userId);
         const balance = await this.wallet.getBalance(wallet.id);
         // After credit: balance ≈ prior + deposit → recover prior for reconciliation.
         const walletBefore = Math.max(0, Math.round((balance - Number(deposit.amount)) * 100) / 100);
@@ -320,7 +320,7 @@ export class DepositService {
       if (phase === "completed") return deposit;
       return deposit;
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message = unknownErrorMessage(err);
       await this.setWorkflowPhase(depositId, "failed", { workflow_error: message } as never).catch(() => null);
       await this.ops.recordEvent({
         eventType: "reconcile_failed",
@@ -371,7 +371,7 @@ export class DepositService {
         autoInvestError && typeof autoInvestError === "object" && "code" in autoInvestError
           ? String((autoInvestError as { code?: string }).code)
           : "";
-      const message = autoInvestError instanceof Error ? autoInvestError.message : String(autoInvestError);
+      const message = unknownErrorMessage(autoInvestError);
       if (code === "LEDGER_RECONCILIATION_FAILED") {
         await this.ops.recordEvent({
           eventType: "reconcile_failed",
@@ -460,7 +460,7 @@ export class DepositService {
         results.push({
           id: deposit.id,
           ok: false,
-          error: err instanceof Error ? err.message : String(err)
+          error: unknownErrorMessage(err)
         });
       }
     }

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { logger } from "@/lib/logger";
 import { persistApplicationError } from "@/lib/observability/error-log";
-import { AppError, isAppError } from "@/lib/errors";
+import { AppError, isAppError, unknownErrorMessage } from "@/lib/errors";
 import { classifyAppErrorCode, type ErrorCategory } from "@/lib/errors/taxonomy";
 import { getRequestContext } from "@/lib/observability/request-context";
 
@@ -91,7 +91,7 @@ export async function apiErrorResponse(error: unknown, options: ApiErrorOptions 
     );
   }
 
-  const message = error instanceof Error ? error.message : String(error);
+  const message = unknownErrorMessage(error);
   const stack = error instanceof Error ? error.stack : undefined;
 
   if (message.includes("not configured") || message.includes("User not allowed")) {

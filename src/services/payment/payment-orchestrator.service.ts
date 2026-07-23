@@ -132,7 +132,7 @@ export class PaymentOrchestratorService {
     let investmentId: string | null = null;
 
     if (paymentTx.deposit_id) {
-      const wallet = await this.wallet.getWalletByUserId(paymentTx.user_id);
+      const wallet = await this.wallet.ensureWallet(paymentTx.user_id);
       const walletBefore = await this.wallet.getBalance(wallet.id);
       const tx = await this.wallet.creditDeposit(wallet.id, amount, paymentTx.deposit_id);
       walletTxId = tx.id;

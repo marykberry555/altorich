@@ -149,17 +149,7 @@ export class ReferralService {
   }
 
   async ensureReferralWallet(userId: string) {
-    try {
-      return await this.getReferralWallet(userId);
-    } catch {
-      const { data, error } = await this.supabase
-        .from("wallets")
-        .insert({ user_id: userId, currency: REFERRAL_WALLET_CURRENCY })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    }
+    return this.wallet.ensureWallet(userId, REFERRAL_WALLET_CURRENCY);
   }
 
   async processFirstInvestmentActivated(

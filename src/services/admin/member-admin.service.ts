@@ -414,7 +414,7 @@ export class MemberAdminService {
   }
 
   async adjustWallet(userId: string, amount: number, note?: string) {
-    const wallet = await this.wallet.getWalletByUserId(userId);
+    const wallet = await this.wallet.ensureWallet(userId);
     const reference = `ADM-${Date.now()}-${randomBytes(4).toString("hex")}`;
     let investment: { id: string; amount: number; reference: string | null } | null = null;
 

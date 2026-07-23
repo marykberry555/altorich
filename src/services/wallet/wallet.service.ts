@@ -27,10 +27,55 @@ export class WalletService {
       .select("*")
       .eq("user_id", userId)
       .eq("currency", currency)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) {
+      throw new AppError(
+        `Wallet not found for user (${currency}).`,
+        404,
+        "WALLET_NOT_FOUND",
+        "This member does not have a wallet yet. Try again — one will be created automatically."
+      );
+    }
     return data;
+  }
+
+  /** Get or create a wallet for the member (NGN / REF / welcome-bonus currencies). */
+  async ensureWallet(userId: string, currency = "NGN") {
+    const { data: existing, error: existingError } = await this.supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("currency", currency)
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+    if (existing) return existing;
+
+    const { data: created, error: insertError } = await this.supabase
+      .from("wallets")
+      .insert({ user_id: userId, currency })
+      .select("*")
+      .single();
+
+    if (!insertError && created) return created;
+
+    // Concurrent create race — unique (user_id, currency) — re-fetch.
+    const message = insertError?.message ?? "";
+    if (/duplicate|unique/i.test(message)) {
+      const { data: raced, error: raceError } = await this.supabase
+        .from("wallets")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("currency", currency)
+        .maybeSingle();
+      if (raceError) throw raceError;
+      if (raced) return raced;
+    }
+
+    if (insertError) throw insertError;
+    throw new AppError("Could not create wallet.", 500, "WALLET_CREATE_FAILED");
   }
 
   async getBalance(walletId: string): Promise<number> {
