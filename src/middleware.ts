@@ -220,15 +220,33 @@ export async function middleware(request: NextRequest) {
   const { response, user, supabase } = await updateSession(request);
 
   if (isAuthRoute) {
-    if (user && pathname.startsWith("/auth/login")) {
-      let isAdminRole = false;
-      if (supabase) {
-        try {
-          const { data } = await supabase.rpc("has_admin_role");
-          isAdminRole = Boolean(data);
-        } catch {
-          isAdminRole = false;
+    if (user && pathname.startsWith("/auth/login") && supabase) {
+      const { data: loginProfile } = await supabase
+        .from("profiles")
+        .select("account_status")
+        .eq("id", user.id)
+        .maybeSingle();
+      const { canAccessMemberApp, normalizeAccountStatus } = await import("@/lib/account-status/policy");
+      const loginStatus = normalizeAccountStatus(loginProfile?.account_status as string | undefined);
+      if (!canAccessMemberApp(loginStatus)) {
+        await supabase.auth.signOut();
+        const loginUrl = buildPublicUrl("/auth/login", request);
+        if (request.nextUrl.searchParams.get("locked") !== loginStatus) {
+          loginUrl.searchParams.set("locked", loginStatus);
+          return withReferralAttribution(
+            request,
+            withSessionCookies(response, NextResponse.redirect(loginUrl))
+          );
         }
+        return withReferralAttribution(request, response);
+      }
+
+      let isAdminRole = false;
+      try {
+        const { data } = await supabase.rpc("has_admin_role");
+        isAdminRole = Boolean(data);
+      } catch {
+        isAdminRole = false;
       }
       return withReferralAttribution(
         request,
@@ -267,9 +285,22 @@ export async function middleware(request: NextRequest) {
   if (supabase && isProtected) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("must_change_pin, must_change_password")
+      .select("must_change_pin, must_change_password, account_status")
       .eq("id", user.id)
       .maybeSingle();
+
+    const { canAccessMemberApp, normalizeAccountStatus } = await import("@/lib/account-status/policy");
+    const status = normalizeAccountStatus(profile?.account_status as string | undefined);
+    if (!canAccessMemberApp(status)) {
+      // Clear local session cookies so blocked users cannot loop auth ↔ dashboard.
+      await supabase.auth.signOut();
+      const loginUrl = buildPublicUrl("/auth/login", request);
+      loginUrl.searchParams.set("locked", status);
+      return withReferralAttribution(
+        request,
+        withSessionCookies(response, NextResponse.redirect(loginUrl))
+      );
+    }
 
     if (profile?.must_change_pin && !pathname.startsWith("/auth/change-pin")) {
       return withReferralAttribution(

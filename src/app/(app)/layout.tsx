@@ -2,6 +2,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { getUserServices } from "@/lib/services";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { SessionInactivityGuard } from "@/components/auth/SessionInactivityGuard";
+import { AccountPausedBanner } from "@/components/account/AccountPausedBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let fullName = "Member";
   let username: string | null = null;
   let avatarUrl: string | null = null;
+  let accountStatus: string | null = null;
 
   if (user) {
     fullName = user.email?.split("@")[0] ?? "Member";
@@ -20,7 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (user && services) {
     const { data: profile, error: profileError } = await services.supabase
       .from("profiles")
-      .select("full_name, avatar_url, username")
+      .select("full_name, avatar_url, username, account_status")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -35,11 +37,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     if (profile?.full_name) fullName = profile.full_name;
     username = profile?.username ?? null;
     avatarUrl = profile?.avatar_url ?? null;
+    accountStatus = (profile?.account_status as string | null) ?? null;
   }
 
   return (
     <DashboardShell fullName={fullName} username={username} avatarUrl={avatarUrl}>
       <SessionInactivityGuard />
+      <AccountPausedBanner status={accountStatus} />
       {children}
     </DashboardShell>
   );

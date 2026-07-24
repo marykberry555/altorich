@@ -293,6 +293,9 @@ export class WithdrawalService {
     /** Debit NGN investment wallet (default) or Welcome Bonus WB wallet. */
     fundSource?: "ngn_wallet" | "welcome_bonus";
   }) {
+    const { assertCanTransact } = await import("@/lib/account-status/enforce");
+    await assertCanTransact(this.supabase, input.userId);
+
     const accountNumber = normalizeAccountNumber(input.accountNumber);
     assertValidAccountNumber(accountNumber);
     const fundSource = input.fundSource ?? "ngn_wallet";

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { makeReference } from "@/lib/domain";
 import { MIN_FUNDING_AMOUNT_NGN } from "@/lib/payments";
 import { getPublicServices, getServiceRoleServices } from "@/lib/services";
-import { getSessionUser, hasAdminRole, requireSessionUser } from "@/lib/auth/session";
+import { getSessionUser, hasAdminRole, requireDepositUser, requireSessionUser } from "@/lib/auth/session";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { logger } from "@/lib/logger";
@@ -48,8 +48,7 @@ export async function POST(request: NextRequest) {
     const limited = enforceRateLimit(request, "depositCreate");
     if (limited) return limited;
 
-    // Service role: deposit insert must work even when client RLS is locked down.
-    const user = await requireSessionUser();
+    const user = await requireDepositUser();
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceRoleServices } from "@/lib/services";
-import { requireSessionUser } from "@/lib/auth/session";
+import { requireDepositUser } from "@/lib/auth/session";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { STORAGE_BUCKETS } from "@/services/storage/storage.service";
@@ -8,7 +8,7 @@ import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireSessionUser();
+    const user = await requireDepositUser();
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 

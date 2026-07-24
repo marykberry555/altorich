@@ -12,10 +12,6 @@ const schema = z.object({
   action: z.enum([
     "reset_pin",
     "reset_password",
-    "disable_login",
-    "enable_login",
-    "suspend",
-    "unsuspend",
     "change_package",
     "assign_package",
     "update_full_name"
@@ -68,22 +64,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         result = { mustChangePassword: true };
         break;
       }
-      case "disable_login":
-        await services.members.setAccountStatus(memberId, "disabled");
-        result = { accountStatus: "disabled" };
-        break;
-      case "enable_login":
-        await services.members.setAccountStatus(memberId, "active");
-        result = { accountStatus: "active" };
-        break;
-      case "suspend":
-        await services.members.setAccountStatus(memberId, "paused");
-        result = { accountStatus: "paused" };
-        break;
-      case "unsuspend":
-        await services.members.setAccountStatus(memberId, "active");
-        result = { accountStatus: "active" };
-        break;
       case "change_package":
       case "assign_package": {
         if (!body.packageSlug) throw Errors.badRequest("Package slug required.");
@@ -123,7 +103,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         break;
       }
       default:
-        throw Errors.badRequest("Unsupported action.");
+        throw Errors.badRequest("Unsupported action. Use PATCH /api/admin/members/[id] to change account status.");
     }
 
     if (body.depositId && body.depositStatus) {

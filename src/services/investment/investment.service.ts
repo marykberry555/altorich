@@ -139,6 +139,10 @@ export class InvestmentService {
     creditedAmount: number,
     context?: { depositId?: string; walletBefore?: number; source?: string }
   ): Promise<Investment | null> {
+    const { assertEligibleForAutomatedFinance } = await import("@/lib/account-status/enforce");
+    const eligible = await assertEligibleForAutomatedFinance(this.supabase, userId);
+    if (!eligible) return null;
+
     const { data: profile } = await this.supabase
       .from("profiles")
       .select("preferred_package_slug")
@@ -333,6 +337,9 @@ export class InvestmentService {
     referenceOverride?: string,
     sourceDepositId?: string
   ): Promise<Investment> {
+    const { assertCanTransact } = await import("@/lib/account-status/enforce");
+    await assertCanTransact(this.supabase, userId);
+
     const plan = await this.getPlanById(planId);
     if (!plan) throw Errors.notFound("Investment portfolio");
 

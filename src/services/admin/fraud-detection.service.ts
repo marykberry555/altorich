@@ -29,7 +29,7 @@ export class FraudDetectionService {
       this.supabase
         .from("profiles")
         .select("id, full_name, account_status")
-        .in("account_status", ["paused", "disabled", "deactivated"])
+        .in("account_status", ["paused", "blocked"])
         .limit(50)
     ]);
 

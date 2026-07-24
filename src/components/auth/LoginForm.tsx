@@ -33,6 +33,7 @@ function resolveDeviceFingerprint(): string {
 export function LoginForm() {
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
+  const lockedParam = searchParams.get("locked");
 
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
@@ -43,6 +44,20 @@ export function LoginForm() {
   const [pendingEmail, setPendingEmail] = useState("");
 
   const loading = phase !== "idle";
+
+  useEffect(() => {
+    if (!lockedParam) return;
+    void (async () => {
+      const { loginBlockedMessage, normalizeAccountStatus } = await import("@/lib/account-status/policy");
+      const message = loginBlockedMessage(normalizeAccountStatus(lockedParam));
+      if (message) setError(message);
+      try {
+        await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+      } catch {
+        // best-effort session clear
+      }
+    })();
+  }, [lockedParam]);
 
   useEffect(() => {
     if (!loading) {

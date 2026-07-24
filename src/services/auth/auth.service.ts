@@ -326,8 +326,18 @@ export class AuthService {
       .maybeSingle();
     if (error) throw error;
     if (!profile?.pin_hash) throw new AppError("Invalid username or pin.", 401, "INVALID_CREDENTIALS");
-    if (profile.account_status !== "active") {
-      throw new AppError("This account is not available. Contact support.", 403, "ACCOUNT_SUSPENDED");
+    {
+      const { canLogin, loginBlockedMessage, normalizeAccountStatus } = await import(
+        "@/lib/account-status/policy"
+      );
+      const status = normalizeAccountStatus(profile.account_status);
+      if (!canLogin(status)) {
+        throw new AppError(
+          loginBlockedMessage(status) || "This account is not available. Contact support.",
+          403,
+          "ACCOUNT_BLOCKED"
+        );
+      }
     }
     if (!verifyPin(input.pin, profile.pin_hash)) throw new AppError("Invalid username or pin.", 401, "INVALID_CREDENTIALS");
 
@@ -512,8 +522,18 @@ export class AuthService {
       .eq("id", data.user.id)
       .maybeSingle();
 
-    if (profile?.account_status && profile.account_status !== "active") {
-      throw new AppError("This account is not available. Contact support.", 403, "ACCOUNT_SUSPENDED");
+    if (profile?.account_status) {
+      const { canLogin, loginBlockedMessage, normalizeAccountStatus } = await import(
+        "@/lib/account-status/policy"
+      );
+      const status = normalizeAccountStatus(profile.account_status);
+      if (!canLogin(status)) {
+        throw new AppError(
+          loginBlockedMessage(status) || "This account is not available. Contact support.",
+          403,
+          "ACCOUNT_BLOCKED"
+        );
+      }
     }
 
     return {

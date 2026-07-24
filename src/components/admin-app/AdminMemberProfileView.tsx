@@ -7,8 +7,10 @@ import { formatNaira } from "@/lib/domain";
 import { adminAppPath } from "@/lib/admin-app/constants";
 import { Button } from "@/components/ui/Button";
 import { AdminQuickActions, type AdminQuickAction } from "@/components/admin-app/AdminQuickActions";
+import { MemberAccountStatusControl } from "@/components/admin/MemberAccountStatusControl";
 import { MemberAvatar } from "@/components/profile/MemberAvatar";
 import type { Database } from "@/types/database";
+import { normalizeAccountStatus } from "@/lib/account-status/policy";
 
 type MemberDetail = {
   profile: Database["public"]["Tables"]["profiles"]["Row"];
@@ -50,7 +52,6 @@ export function AdminMemberProfileView({ memberId }: { memberId: string }) {
   const [email, setEmail] = useState("");
   const [stateCode, setStateCode] = useState("");
   const [cityArea, setCityArea] = useState("");
-  const [accountStatus, setAccountStatus] = useState("active");
   const [kycStatus, setKycStatus] = useState("pending");
   const [bankName, setBankName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -77,7 +78,6 @@ export function AdminMemberProfileView({ memberId }: { memberId: string }) {
       setEmail(detailData.email ?? "");
       setStateCode(detailData.profile?.location_state_code ?? "");
       setCityArea(detailData.profile?.location_city_area ?? "");
-      setAccountStatus(detailData.profile?.account_status ?? "active");
       setKycStatus(detailData.profile?.kyc_status ?? "pending");
       const bank = detailData.bankAccounts?.[0];
       setBankName(bank?.bank_name ?? "");
@@ -187,12 +187,8 @@ export function AdminMemberProfileView({ memberId }: { memberId: string }) {
       }
 
       const map: Partial<Record<AdminQuickAction, string>> = {
-        suspend: "suspend",
-        unsuspend: "unsuspend",
         reset_pin: "reset_pin",
         reset_password: "reset_password",
-        disable_login: "disable_login",
-        enable_login: "enable_login",
         assign_package: "assign_package",
         change_package: "change_package"
       };
@@ -236,7 +232,6 @@ export function AdminMemberProfileView({ memberId }: { memberId: string }) {
         email: email.trim() || undefined,
         locationStateCode: stateCode.trim() || undefined,
         locationCityArea: cityArea.trim() || undefined,
-        accountStatus,
         kycStatus
       };
       if (nameChanged) {
@@ -333,7 +328,9 @@ export function AdminMemberProfileView({ memberId }: { memberId: string }) {
             </div>
             <div className="rounded-xl border border-white/10 bg-zinc-900/80 p-4">
               <p className="text-xs text-zinc-400">Account status</p>
-              <p className="mt-1 text-xl font-semibold capitalize text-white">{detail.profile.account_status}</p>
+              <p className="mt-1 text-xl font-semibold capitalize text-white">
+                {normalizeAccountStatus(detail.profile.account_status)}
+              </p>
             </div>
             <div className="rounded-xl border border-white/10 bg-zinc-900/80 p-4">
               <p className="text-xs text-zinc-400">VIP level</p>
@@ -342,6 +339,23 @@ export function AdminMemberProfileView({ memberId }: { memberId: string }) {
             <div className="rounded-xl border border-white/10 bg-zinc-900/80 p-4">
               <p className="text-xs text-zinc-400">Referrals</p>
               <p className="mt-1 text-xl font-semibold text-white">{referralCount}</p>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-white/10 bg-zinc-900/80 p-4">
+            <h2 className="text-sm font-semibold text-white">Account status</h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              Active = full access. Paused = review state (deposits allowed; invest/withdraw/earnings locked). Blocked =
+              no access.
+            </p>
+            <div className="mt-4">
+              <MemberAccountStatusControl
+                memberId={memberId}
+                currentStatus={detail.profile.account_status}
+                disabled={busy}
+                dark
+                onUpdated={() => void load()}
+              />
             </div>
           </section>
 
@@ -406,20 +420,7 @@ export function AdminMemberProfileView({ memberId }: { memberId: string }) {
                   className="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-white"
                 />
               </label>
-              <label className="grid gap-1.5 text-sm">
-                <span className="text-zinc-400">Account status</span>
-                <select
-                  value={accountStatus}
-                  onChange={(e) => setAccountStatus(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-white"
-                >
-                  <option value="active">active</option>
-                  <option value="paused">paused</option>
-                  <option value="disabled">disabled</option>
-                  <option value="deactivated">deactivated</option>
-                </select>
-              </label>
-              <label className="grid gap-1.5 text-sm">
+              <label className="grid gap-1.5 text-sm sm:col-span-2">
                 <span className="text-zinc-400">Verification status</span>
                 <select
                   value={kycStatus}

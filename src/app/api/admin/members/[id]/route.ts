@@ -7,7 +7,8 @@ import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 
 const statusSchema = z.object({
-  accountStatus: z.enum(["active", "paused", "disabled", "deactivated"])
+  accountStatus: z.enum(["active", "paused", "blocked"]),
+  reason: z.string().trim().min(3).max(500)
 });
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -59,7 +60,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       .select("id, username, full_name, account_status, phone")
       .eq("id", id)
       .single();
-    const profile = await services.members.setAccountStatus(id, body.accountStatus);
+    const { clientIpFromHeaders } = await import("@/lib/auth/user-agent");
+    const profile = await services.members.setAccountStatus(id, body.accountStatus, {
+      reason: body.reason,
+      changedBy: admin.id,
+      ipAddress: clientIpFromHeaders(request.headers),
+      requestId: request.headers.get("x-request-id")
+    });
 
     await logAdminAction(services.audit, request, {
       actorId: admin.id,
@@ -68,7 +75,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       entityId: id,
       before: (before ?? {}) as Record<string, unknown>,
       after: profile as Record<string, unknown>,
-      metadata: { accountStatus: body.accountStatus }
+      metadata: {
+        previousStatus: before?.account_status ?? null,
+        newStatus: body.accountStatus,
+        reason: body.reason
+      }
     });
 
     return NextResponse.json({ profile });

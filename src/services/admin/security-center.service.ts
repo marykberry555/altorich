@@ -72,7 +72,7 @@ export class SecurityCenterService {
       this.supabase
         .from("profiles")
         .select("id, full_name, username, account_status, updated_at")
-        .in("account_status", ["paused", "disabled", "deactivated"])
+        .in("account_status", ["paused", "blocked"])
         .order("updated_at", { ascending: false })
         .limit(30),
       this.supabase

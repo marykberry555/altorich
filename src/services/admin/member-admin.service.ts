@@ -191,15 +191,69 @@ export class MemberAdminService {
     return { userId: created.user.id, email, username };
   }
 
-  async setAccountStatus(userId: string, status: MemberAccountStatus) {
+  async setAccountStatus(
+    userId: string,
+    status: MemberAccountStatus,
+    options?: {
+      reason?: string | null;
+      changedBy?: string | null;
+      ipAddress?: string | null;
+      requestId?: string | null;
+    }
+  ) {
+    const reason = options?.reason?.trim() ?? "";
+    if (reason.length < 3) {
+      throw new AppError("A reason is required when changing account status.", 400, "STATUS_REASON_REQUIRED");
+    }
+
     const { PROFILE_SAFE_COLUMNS, toPublicProfile } = await import("@/lib/security/profile-safe");
+    const { mustRevokeSessions, normalizeAccountStatus } = await import("@/lib/account-status/policy");
+    const { revokeMemberSessions, clearMemberAuthBan } = await import(
+      "@/lib/account-status/revoke-sessions"
+    );
+
+    const { data: before, error: beforeError } = await this.supabase
+      .from("profiles")
+      .select("account_status")
+      .eq("id", userId)
+      .maybeSingle();
+    if (beforeError) throw beforeError;
+
+    const previous = normalizeAccountStatus(before?.account_status as string | undefined);
+    const next = normalizeAccountStatus(status);
+
     const { data, error } = await this.supabase
       .from("profiles")
-      .update({ account_status: status })
+      .update({ account_status: next })
       .eq("id", userId)
       .select(PROFILE_SAFE_COLUMNS)
       .single();
     if (error) throw error;
+
+    try {
+      await this.supabase.from("account_status_history" as never).insert({
+        user_id: userId,
+        previous_status: previous,
+        new_status: next,
+        reason,
+        changed_by: options?.changedBy ?? null,
+        ip_address: options?.ipAddress ?? null,
+        request_id: options?.requestId ?? null,
+        metadata: {}
+      } as never);
+    } catch (historyError) {
+      logger.warn("account_status_history insert failed", {
+        userId,
+        message: historyError instanceof Error ? historyError.message : String(historyError)
+      });
+    }
+
+    if (mustRevokeSessions(next)) {
+      await revokeMemberSessions(this.supabase, userId);
+    } else if (next === "active" && mustRevokeSessions(previous)) {
+      await clearMemberAuthBan(this.supabase, userId);
+    }
+
     return toPublicProfile(data as Record<string, unknown>) as typeof data;
   }
 

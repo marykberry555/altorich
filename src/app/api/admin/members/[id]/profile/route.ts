@@ -18,7 +18,6 @@ const profileUpdateSchema = z
     email: z.string().email().optional(),
     locationStateCode: z.string().min(2).max(8).optional(),
     locationCityArea: z.string().min(2).max(64).optional(),
-    accountStatus: z.enum(["active", "paused", "disabled", "deactivated"]).optional(),
     kycStatus: z.enum(["pending", "approved", "rejected", "requires_update"]).optional(),
     bankName: z.string().min(2).max(120).optional(),
     accountNumber: accountNumberSchema.optional()
@@ -114,15 +113,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         field: "location_city_area",
         oldValue: beforeProfile.location_city_area,
         newValue: body.locationCityArea
-      });
-    }
-
-    if (body.accountStatus !== undefined && body.accountStatus !== beforeProfile.account_status) {
-      profileUpdates.account_status = body.accountStatus;
-      fieldChanges.push({
-        field: "account_status",
-        oldValue: beforeProfile.account_status,
-        newValue: body.accountStatus
       });
     }
 

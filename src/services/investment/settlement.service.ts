@@ -65,9 +65,16 @@ export class SettlementService {
 
     if (error) throw error;
 
+    const userIds = [...new Set((active ?? []).map((row) => String(row.user_id)))];
+    const { filterActiveUserIds } = await import("@/lib/account-status/enforce");
+    const activeUsers = await filterActiveUserIds(this.supabase, userIds);
+
     const results: { investmentId: string; amount: number; action: "reinvest" | "payout" }[] = [];
 
     for (const investment of active ?? []) {
+      if (!activeUsers.has(String(investment.user_id))) {
+        continue;
+      }
       const planRel = investment.investment_plans as
         | { weekly_roi_bps?: number | null; tier?: string | null }
         | { weekly_roi_bps?: number | null; tier?: string | null }[]

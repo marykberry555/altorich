@@ -40,7 +40,7 @@ export function AdvancedMemberSearchBar({ filters, onChange, onSearch }: Props) 
               <option value="">Any</option>
               <option value="active">Active</option>
               <option value="paused">Paused</option>
-              <option value="disabled">Disabled</option>
+              <option value="blocked">Blocked</option>
             </select>
           </label>
           <label className="text-xs text-zinc-500">

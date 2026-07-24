@@ -360,6 +360,10 @@ export class WelcomeBonusService {
     if (!claim.claimed) return { ok: true, reason: "already" };
 
     const userId = String(claim.user_id);
+    const { assertEligibleForAutomatedFinance } = await import("@/lib/account-status/enforce");
+    const eligible = await assertEligibleForAutomatedFinance(this.supabase, userId);
+    if (!eligible) return { ok: false, reason: "account_not_active" };
+
     const amount = Number(claim.amount);
     let walletId = claim.wallet_id ? String(claim.wallet_id) : null;
 

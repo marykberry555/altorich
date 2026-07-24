@@ -164,6 +164,10 @@ export class ReferralService {
     const config = await this.getProgramConfig();
     if (!config.enabled) return null;
 
+    const { filterActiveUserIds } = await import("@/lib/account-status/enforce");
+    const activeUsers = await filterActiveUserIds(this.supabase, [referredUserId]);
+    if (!activeUsers.has(referredUserId)) return null;
+
     const { count: priorActive } = await this.supabase
       .from("investments")
       .select("id", { count: "exact", head: true })
@@ -185,6 +189,9 @@ export class ReferralService {
 
     const referrerId = String(referral.referrer_id);
     const referralId = String(referral.id);
+
+    const referrerActive = await filterActiveUserIds(this.supabase, [referrerId]);
+    if (!referrerActive.has(referrerId)) return null;
 
     // Row lock + pending→qualified claim (exactly-once commission).
     const { data: claimPayload } = await this.supabase.rpc(

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getServiceRoleServices } from "@/lib/services";
-import { requireSessionUser } from "@/lib/auth/session";
+import { requireFinancialUser } from "@/lib/auth/session";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { accountNumberSchema } from "@/lib/validation/schemas";
@@ -16,7 +16,7 @@ const payoutSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireSessionUser();
+    const user = await requireFinancialUser();
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 

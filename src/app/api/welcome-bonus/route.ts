@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserServices } from "@/lib/services";
-import { requireSessionUser } from "@/lib/auth/session";
+import { requireFinancialUser, requireSessionUser } from "@/lib/auth/session";
 import { Errors } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 
@@ -18,7 +18,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireSessionUser();
+    const user = await requireFinancialUser();
     const services = await getUserServices();
     if (!services) throw Errors.notConfigured();
 

@@ -73,6 +73,11 @@ export class DepositService {
     userId?: string;
     proofUrl?: string;
   }) {
+    if (input.userId) {
+      const { assertCanDeposit } = await import("@/lib/account-status/enforce");
+      await assertCanDeposit(this.supabase, input.userId);
+    }
+
     const { data, error } = await this.supabase
       .from("deposits")
       .insert({

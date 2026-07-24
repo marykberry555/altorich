@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getPublicServices, getServiceRoleServices } from "@/lib/services";
-import { getSessionUser, hasAdminRole, requireSessionUser } from "@/lib/auth/session";
+import { getSessionUser, hasAdminRole, requireFinancialUser, requireSessionUser } from "@/lib/auth/session";
 import { AppError, Errors, isAppError } from "@/lib/errors";
 import { apiErrorResponse } from "@/lib/errors/api-response";
 import { logger } from "@/lib/logger";
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     const limited = enforceRateLimit(request, "withdrawalCreate");
     if (limited) return limited;
 
-    const user = await requireSessionUser();
+    const user = await requireFinancialUser();
     const services = await getServiceRoleServices();
     if (!services) throw Errors.notConfigured();
 

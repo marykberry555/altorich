@@ -42,7 +42,10 @@ export async function resolveReferralCode(raw: string | null | undefined): Promi
     throw new AppError(REFERRAL_INVALID_MESSAGE, 400, "REFERRAL_INVALID");
   }
 
-  if (referrer.account_status === "disabled" || referrer.account_status === "deactivated") {
+  const { isEligibleForAutomatedFinance, normalizeAccountStatus } = await import(
+    "@/lib/account-status/policy"
+  );
+  if (!isEligibleForAutomatedFinance(normalizeAccountStatus(referrer.account_status as string))) {
     throw new AppError(REFERRAL_INVALID_MESSAGE, 400, "REFERRAL_INVALID");
   }
 

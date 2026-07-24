@@ -35,7 +35,7 @@ export type Database = {
           preferred_package_slug: string | null;
           location_state_code: string | null;
           location_city_area: string | null;
-          account_status: "active" | "paused" | "disabled" | "deactivated";
+          account_status: "active" | "paused" | "blocked";
           auto_weekly_payout: boolean;
           created_at: string;
           updated_at: string;
@@ -58,7 +58,7 @@ export type Database = {
           preferred_package_slug?: string | null;
           location_state_code?: string | null;
           location_city_area?: string | null;
-          account_status?: "active" | "paused" | "disabled" | "deactivated";
+          account_status?: "active" | "paused" | "blocked";
           auto_weekly_payout?: boolean;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]> & {
@@ -864,7 +864,7 @@ export type Database = {
       payout_method: "bank" | "crypto";
       auth_otp_purpose: "register" | "login_device" | "recover_pin" | "recover_username";
       funding_account_status: "active" | "inactive" | "maintenance";
-      member_account_status: "active" | "paused" | "disabled" | "deactivated";
+      member_account_status: "active" | "paused" | "blocked";
     };
     CompositeTypes: Record<string, never>;
     Functions: {

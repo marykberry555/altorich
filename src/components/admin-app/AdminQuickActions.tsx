@@ -12,12 +12,8 @@ export type AdminQuickAction =
   | "reject_deposit"
   | "approve_withdrawal"
   | "reject_withdrawal"
-  | "suspend"
-  | "unsuspend"
   | "reset_pin"
   | "reset_password"
-  | "disable_login"
-  | "enable_login"
   | "assign_package"
   | "change_package";
 
@@ -28,12 +24,8 @@ const ACTIONS: { id: AdminQuickAction; label: string }[] = [
   { id: "reject_deposit", label: "Reject deposit" },
   { id: "approve_withdrawal", label: "Approve withdrawal" },
   { id: "reject_withdrawal", label: "Reject withdrawal" },
-  { id: "suspend", label: "Suspend account" },
-  { id: "unsuspend", label: "Unsuspend account" },
   { id: "reset_pin", label: "Reset PIN" },
   { id: "reset_password", label: "Reset password" },
-  { id: "disable_login", label: "Disable login" },
-  { id: "enable_login", label: "Enable login" },
   { id: "assign_package", label: "Assign package" },
   { id: "change_package", label: "Change package" }
 ];

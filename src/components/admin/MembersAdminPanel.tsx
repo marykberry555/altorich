@@ -27,12 +27,6 @@ type Member = {
   walletBalance: number;
 };
 
-const STATUS_BY_ACTION: Partial<Record<MemberAction, string>> = {
-  pause: "paused",
-  disable: "disabled",
-  deactivate: "deactivated"
-};
-
 export function MembersAdminPanel({
   profileBasePath,
   dark = false
@@ -163,25 +157,6 @@ export function MembersAdminPanel({
     }
   };
 
-  const setStatus = async (id: string, accountStatus: string) => {
-    setBusy(`status-${id}`);
-    setMessage(null);
-    try {
-      const res = await fetch(`/api/admin/members/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountStatus })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Update failed");
-      await load();
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Update failed");
-    } finally {
-      setBusy(null);
-    }
-  };
-
   const walletAction = async (id: string, action: "fund" | "debit") => {
     const raw = window.prompt(action === "fund" ? "Amount to fund (₦):" : "Amount to debit (₦):");
     if (!raw) return;
@@ -218,12 +193,7 @@ export function MembersAdminPanel({
   };
 
   const handleMemberAction = (member: Member, action: MemberAction) => {
-    if (action === "fund" || action === "debit") {
-      void walletAction(member.id, action);
-      return;
-    }
-    const accountStatus = STATUS_BY_ACTION[action];
-    if (accountStatus) void setStatus(member.id, accountStatus);
+    void walletAction(member.id, action);
   };
 
   return (
@@ -356,8 +326,8 @@ export function MembersAdminPanel({
                     </span>
                   </button>
                   <MemberActionsMenu
-                    busy={busy === `wallet-${member.id}` || busy === `status-${member.id}`}
-                    disabled={Boolean(busy && busy !== `wallet-${member.id}` && busy !== `status-${member.id}`)}
+                    busy={busy === `wallet-${member.id}`}
+                    disabled={Boolean(busy && busy !== `wallet-${member.id}`)}
                     onAction={(action) => handleMemberAction(member, action)}
                   />
                 </div>
@@ -429,8 +399,8 @@ export function MembersAdminPanel({
                       </TableCell>
                       <TableCell className="text-right">
                         <MemberActionsMenu
-                          busy={busy === `wallet-${member.id}` || busy === `status-${member.id}`}
-                          disabled={Boolean(busy && busy !== `wallet-${member.id}` && busy !== `status-${member.id}`)}
+                          busy={busy === `wallet-${member.id}`}
+                          disabled={Boolean(busy && busy !== `wallet-${member.id}`)}
                           onAction={(action) => handleMemberAction(member, action)}
                         />
                       </TableCell>
