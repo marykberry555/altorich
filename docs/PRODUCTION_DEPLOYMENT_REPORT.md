@@ -1,67 +1,116 @@
 # Production Deployment Report
 
-**Release:** Audit resilience + `entity_id` TEXT  
-**Commits deployed:** `b069c5a` (resilience) → `6158069` (stop doc; superseded by live deploy of main including harness follow-ups)  
-**Deploy workflow:** [30005847823](https://github.com/marykberry555/altorich/actions/runs/30005847823)  
-**Live BUILD_ID:** `k2vBbUhp0vQOG_Cco3xwV`  
-**Date:** 2026-07-23  
-**Status:** **RELEASE SUCCESSFUL** (post-deploy RC clean; begin 60-minute observation)
+**Release:** Account status simplification (`active` / `paused` / `blocked`)  
+**Commit:** `885294e` — *Enforce simplified account status: active, paused, blocked.*  
+**Date:** 2026-07-24  
+**Status:** **HOLD — migration gate** (code pushed; production deploy **not** started)
 
 ---
 
-## Deployment
+## Pre-deployment validation
 
-| Step | Result |
-|------|--------|
-| Migration `audit_logs.entity_id` → TEXT | **PASS** (manual SQL Editor) |
-| Migration `admin_notifications.entity_id` → TEXT | **PASS** |
-| Verify column types | `text` / `text` |
-| Push + cPanel deploy | **PASS** (workflow success) |
-| Health `/api/health` | **PASS** — `status: ok` |
-| Readiness `/api/health/ready` | **PASS** — all checks true |
-| Release gate | **PASS** — 18/18 |
-
----
-
-## Post-deploy verification
-
-| Suite | Result |
+| Check | Result |
 |-------|--------|
-| Ledger integrity | **PASS** — 6/6 |
-| Release gate (new BUILD_ID) | **PASS** |
-| RC Business Flows (`mrxhg9pm`) | **PASS** — **40/40** |
-
-### RC flows covered
-
-Registration · Login · Profile · Deposit submit · Idempotency · Admin approve/reject · Auto-invest · Notifications · Second fund · Withdrawal approve/paid · Referral invite/qualify/commission · Welcome Bonus lock · Ledger/audit consistency · Integrity checks · Screenshots
-
----
-
-## Performance / incidents
-
-| Item | Notes |
-|------|-------|
-| Initial RC false fail | Harness treated `requiresDeviceOtp` HTTP 200 as login success; fixed device-OTP completion + admin username `altorich3690` |
-| One RC run | `verify-otp` ETIMEDOUT on referral signup; hardened retries; full re-run clean |
-| `/status` page | Previously returned 500 when probed as readiness; readiness endpoint is `/api/health/ready` (**200**) — non-blocking for this release |
-| Financial integrity | No ledger failures; wallet RPC matched computed ledger in RC |
+| `npm run lint` | **PASS** (type-check + eslint, max-warnings 0) |
+| `npm run type-check` | **PASS** |
+| `npm test` | **PASS** — 128/128 |
+| `npm run build` | **PASS** |
+| Debug scan (new account-status paths) | **PASS** — no TODO/FIXME/HACK/console.log |
+| Unrelated refactors | **None** |
 
 ---
 
-## Monitoring (60 minutes)
+## Migration review
 
-**Started:** ~2026-07-23T12:27Z (after RC pass)  
-**Watch:** 5xx, unhandled exceptions, Supabase errors, cron, slow queries, auth, admin ops, deposit approvals, withdrawals, memory/CPU, logs  
+**File:** `supabase/migrations/20260724010000_account_status_active_paused_blocked.sql`
 
-Observation should continue through **~2026-07-23T13:27Z**. If quiet, treat monitoring window as complete.
+| Criterion | Assessment |
+|-----------|------------|
+| Order | After existing member status / delete helpers — OK |
+| Financial tables | **Not modified** (no wallets / ledger / deposits / withdrawals) |
+| Destructive | Rebuilds enum via `DROP TYPE` **after** column cast — intentional, scoped to `member_account_status` only |
+| Accidental DROP of money tables | **None** |
+| Data normalize | `suspended` / `disabled` / `deactivated` → `blocked` on `profiles` only |
+| History | Creates `account_status_history` + RLS |
+| Soft-delete function | Sets `blocked` instead of `deactivated` |
+| Rollback path | Recreate enum with prior labels + cast back; restore from PITR / status snapshot |
+
+### Pre-migration data snapshot (logical backup)
+
+Taken via service role before deploy (gitignored under `tmp/`):
+
+- **Profiles:** 13  
+- **Status counts:** `{ "active": 13 }`  
+- **No paused/disabled rows** to remap at apply time  
+
+**Automated Supabase project backup / PITR:** confirm in Dashboard → Project Settings → Database (CLI/MCP cannot access AltoRich org from this machine).
 
 ---
 
-## Final health
+## Deployment blocker
 
-- App: healthy + ready  
-- DB: audit model TEXT live  
-- Money paths: RC end-to-end green  
-- Secondary writes: fail-soft (deployed)
+| Access path | Result |
+|-------------|--------|
+| Supabase MCP `execute_sql` / `apply_migration` | **Denied** — MCP account does not include project `zqnuvqfzdzoxkdmcijpp` |
+| `supabase db push --linked` | **Denied** — same privilege gap |
+| Browser SQL Editor (automation) | Session landed on **yikeltd** org; cannot run SQL on AltoRich |
 
-**Release declaration:** Successful pending quiet observation window.
+**Decision:** Do **not** deploy app code that writes `blocked` until the migration is applied on production Postgres.
+
+Code is on `origin/main` (`885294e`) but **cPanel deploy workflow was not triggered**.
+
+---
+
+## Required: apply migration (manual)
+
+1. Confirm a recent Supabase backup / PITR recovery point.  
+2. Open SQL Editor for project `zqnuvqfzdzoxkdmcijpp`.  
+3. Paste and run the full contents of:
+
+`supabase/migrations/20260724010000_account_status_active_paused_blocked.sql`
+
+4. Verify:
+
+```sql
+SELECT e.enumlabel
+FROM pg_type t
+JOIN pg_enum e ON t.oid = e.enumtypid
+JOIN pg_namespace n ON n.oid = t.typnamespace
+WHERE n.nspname = 'public' AND t.typname = 'member_account_status'
+ORDER BY e.enumsortorder;
+-- expect: active, paused, blocked
+
+SELECT EXISTS (
+  SELECT 1 FROM information_schema.tables
+  WHERE table_schema = 'public' AND table_name = 'account_status_history'
+) AS history_ok;
+```
+
+5. Reply **continue deploy** (or re-run this controlled deploy). Then:
+
+```bash
+gh workflow run deploy-production.yml -f confirm=DEPLOY
+```
+
+---
+
+## Post-deploy plan (after migration + deploy)
+
+| Area | Checks |
+|------|--------|
+| Auth | Register / login / logout / reset |
+| Account status | Active; paused login+deposit; paused invest/withdraw denied; blocked login denied |
+| Payments | Deposit / approve / invest / withdraw / settlement / ledger |
+| Admin | Status control + reason; audit / history |
+| System | Health, cron, smoke, RC harness |
+| Monitor | 5xx, auth, Postgres, cron, payments |
+
+---
+
+## Explicit non-actions this run
+
+- Migration **not** applied  
+- Production deploy workflow **not** started  
+- No business-logic changes beyond already-approved commit  
+
+**Release declaration:** Not successful yet — waiting on migration apply + deploy + verification.
