@@ -1,116 +1,117 @@
 # Production Deployment Report
 
 **Release:** Account status simplification (`active` / `paused` / `blocked`)  
-**Commit:** `885294e` — *Enforce simplified account status: active, paused, blocked.*  
+**Commits:** `885294e` (feature) → `efe5473` (hold doc)  
+**Deploy workflow:** [30075588735](https://github.com/marykberry555/altorich/actions/runs/30075588735)  
+**Live BUILD_ID:** `KOhRaTUqaTDj8RmG-OPlX`  
 **Date:** 2026-07-24  
-**Status:** **HOLD — migration gate** (code pushed; production deploy **not** started)
+**Status:** **RELEASE SUCCESSFUL** (begin observation window)
 
 ---
 
-## Pre-deployment validation
+## Deployment summary
 
-| Check | Result |
-|-------|--------|
-| `npm run lint` | **PASS** (type-check + eslint, max-warnings 0) |
-| `npm run type-check` | **PASS** |
-| `npm test` | **PASS** — 128/128 |
-| `npm run build` | **PASS** |
-| Debug scan (new account-status paths) | **PASS** — no TODO/FIXME/HACK/console.log |
-| Unrelated refactors | **None** |
+| Step | Result |
+|------|--------|
+| Pre-deploy lint / type-check / test / build | **PASS** (128 tests) |
+| Logical status snapshot (pre-migration) | **PASS** — 13 profiles, all `active` |
+| Migration `account_status_active_paused_blocked` | **PASS** (verified live: enum accepts `blocked`; `account_status_history` readable) |
+| Push to `origin/main` | **PASS** |
+| GitHub Actions production deploy | **PASS** — [30075588735](https://github.com/marykberry555/altorich/actions/runs/30075588735) |
+| cPanel background build swap | **PASS** — BUILD_ID `k2vBbUhp0vQOG_Cco3xwV` → `KOhRaTUqaTDj8RmG-OPlX` |
+| Health `/api/health` | **PASS** — `status: ok` |
+| Readiness `/api/health/ready` | **PASS** — all checks true |
+
+### Transient during build
+
+Workflow health step can succeed against the previous Node process while `deploy-production.sh` still builds. During swap, `/packages` and `/admin/auth` briefly returned HTTP 500, then recovered when the new BUILD_ID went live (~2 minutes after workflow success).
 
 ---
 
-## Migration review
+## Migrations applied
 
 **File:** `supabase/migrations/20260724010000_account_status_active_paused_blocked.sql`
 
-| Criterion | Assessment |
-|-----------|------------|
-| Order | After existing member status / delete helpers — OK |
-| Financial tables | **Not modified** (no wallets / ledger / deposits / withdrawals) |
-| Destructive | Rebuilds enum via `DROP TYPE` **after** column cast — intentional, scoped to `member_account_status` only |
-| Accidental DROP of money tables | **None** |
-| Data normalize | `suspended` / `disabled` / `deactivated` → `blocked` on `profiles` only |
-| History | Creates `account_status_history` + RLS |
-| Soft-delete function | Sets `blocked` instead of `deactivated` |
-| Rollback path | Recreate enum with prior labels + cast back; restore from PITR / status snapshot |
+| Change | Status |
+|--------|--------|
+| Enum → `active \| paused \| blocked` | **Live** |
+| Normalize legacy lockout statuses → `blocked` | **N/A data** (all rows were already `active`) |
+| `account_status_history` + RLS | **Live** |
+| Soft-delete helper uses `blocked` | **Applied** |
+| Financial ledger tables | **Untouched** |
 
-### Pre-migration data snapshot (logical backup)
-
-Taken via service role before deploy (gitignored under `tmp/`):
-
-- **Profiles:** 13  
-- **Status counts:** `{ "active": 13 }`  
-- **No paused/disabled rows** to remap at apply time  
-
-**Automated Supabase project backup / PITR:** confirm in Dashboard → Project Settings → Database (CLI/MCP cannot access AltoRich org from this machine).
+**Rollback:** PITR / recreate prior enum labels + cast; restore status snapshot from `tmp/account_status_backup_*.json` if needed.
 
 ---
 
-## Deployment blocker
+## Verification results
 
-| Access path | Result |
-|-------------|--------|
-| Supabase MCP `execute_sql` / `apply_migration` | **Denied** — MCP account does not include project `zqnuvqfzdzoxkdmcijpp` |
-| `supabase db push --linked` | **Denied** — same privilege gap |
-| Browser SQL Editor (automation) | Session landed on **yikeltd** org; cannot run SQL on AltoRich |
+| Suite | Result |
+|-------|--------|
+| Production smoke | **PASS** — **28/28** |
+| Ledger integrity | **PASS** — **6/6** |
+| Release gate | **PASS** — **18/18** |
+| Account-status unit tests | **PASS** — **13/13** |
+| DB probe (`blocked` write + history select) | **PASS** |
 
-**Decision:** Do **not** deploy app code that writes `blocked` until the migration is applied on production Postgres.
+### Smoke coverage (live)
 
-Code is on `origin/main` (`885294e`) but **cPanel deploy workflow was not triggered**.
+Homepage · health · auth redirects · login/packages/download · admin auth/install/download · protected APIs · security headers · live activity
 
----
+### Not re-run this pass
 
-## Required: apply migration (manual)
-
-1. Confirm a recent Supabase backup / PITR recovery point.  
-2. Open SQL Editor for project `zqnuvqfzdzoxkdmcijpp`.  
-3. Paste and run the full contents of:
-
-`supabase/migrations/20260724010000_account_status_active_paused_blocked.sql`
-
-4. Verify:
-
-```sql
-SELECT e.enumlabel
-FROM pg_type t
-JOIN pg_enum e ON t.oid = e.enumtypid
-JOIN pg_namespace n ON n.oid = t.typnamespace
-WHERE n.nspname = 'public' AND t.typname = 'member_account_status'
-ORDER BY e.enumsortorder;
--- expect: active, paused, blocked
-
-SELECT EXISTS (
-  SELECT 1 FROM information_schema.tables
-  WHERE table_schema = 'public' AND table_name = 'account_status_history'
-) AS history_ok;
-```
-
-5. Reply **continue deploy** (or re-run this controlled deploy). Then:
-
-```bash
-gh workflow run deploy-production.yml -f confirm=DEPLOY
-```
+Full RC business-flows harness (registration → deposit → withdraw → referral → WB) — prior release was 40/40; this release is authorization/policy-focused. Spot-check account status in admin after deploy if desired.
 
 ---
 
-## Post-deploy plan (after migration + deploy)
+## Account status (production behavior)
 
-| Area | Checks |
-|------|--------|
-| Auth | Register / login / logout / reset |
-| Account status | Active; paused login+deposit; paused invest/withdraw denied; blocked login denied |
-| Payments | Deposit / approve / invest / withdraw / settlement / ledger |
-| Admin | Status control + reason; audit / history |
-| System | Health, cron, smoke, RC harness |
-| Monitor | 5xx, auth, Postgres, cron, payments |
+| Status | Expected |
+|--------|----------|
+| Active | Full access |
+| Paused | Login + deposits; invest/withdraw/earn blocked; banner: *Your account is temporarily under review.* |
+| Blocked | No login; sessions revoked; ignored by cron |
+
+Current profile distribution after deploy: **13 active**.
 
 ---
 
-## Explicit non-actions this run
+## Production health
 
-- Migration **not** applied  
-- Production deploy workflow **not** started  
-- No business-logic changes beyond already-approved commit  
+- App: healthy + ready  
+- BUILD_ID: `KOhRaTUqaTDj8RmG-OPlX`  
+- Ledger: reconciled  
+- No deploy-time financial integrity failures detected  
 
-**Release declaration:** Not successful yet — waiting on migration apply + deploy + verification.
+---
+
+## Issues encountered
+
+| Issue | Resolution |
+|-------|------------|
+| Initial HOLD — no DDL access via MCP/CLI | Migration applied out-of-band; verified before continue-deploy |
+| Workflow “health OK” before BUILD_ID swap | Polled until new BUILD_ID; smoke re-run clean |
+| Brief 500s on `/packages`, `/admin/auth` during restart | Self-resolved with new build |
+
+---
+
+## Monitoring (recommended 60 minutes)
+
+**Started:** ~2026-07-24T07:33Z  
+**Watch through:** ~2026-07-24T08:33Z  
+
+Watch for: HTTP 5xx, auth failures, Postgres/PostgREST errors, cron failures, payment failures, unhandled exceptions, performance degradation. Especially admin status changes (pause/block) and paused-member deposit vs invest paths.
+
+---
+
+## Success criteria
+
+| Criterion | Met |
+|-----------|-----|
+| Health checks pass | **Yes** |
+| Smoke tests pass | **Yes** (28/28) |
+| No financial integrity issues | **Yes** (ledger 6/6) |
+| No unexpected DB errors on status model | **Yes** |
+| Server errors after swap | **None observed** in gate/smoke |
+
+**Release declaration:** Successful. Begin observation window.
